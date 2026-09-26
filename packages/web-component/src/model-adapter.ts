@@ -9,7 +9,8 @@ function paragraphNode(paragraph: Paragraph) {
 		'paragraph',
 		{
 			id: paragraph.id,
-			align: paragraph.align || 'left',
+			align: paragraph.align ?? null,
+			direction: paragraph.direction ?? null,
 			style: paragraph.style || '',
 			spacingBeforeTwips: paragraph.spacingBeforeTwips ?? null,
 			spacingAfterTwips: paragraph.spacingAfterTwips ?? null,
@@ -78,6 +79,10 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 				'strike',
 				'highlight',
 				'verticalAlign',
+				'language',
+				'eastAsiaLanguage',
+				'bidiLanguage',
+				'rtl',
 				'fontFamily',
 				'fontSize',
 				'color',
@@ -96,6 +101,10 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 		'strike',
 		'highlight',
 		'verticalAlign',
+		'language',
+		'eastAsiaLanguage',
+		'bidiLanguage',
+		'rtl',
 		'fontFamily',
 		'fontSize',
 		'color',
@@ -131,6 +140,7 @@ export function docToModel(
 			previous &&
 			sameRuns(previous.runs, runs) &&
 			(previous.align || 'left') === (node.attrs.align || 'left') &&
+			previous.direction === (node.attrs.direction ?? undefined) &&
 			(previous.style || '') === (node.attrs.style || '') &&
 			previous.spacingBeforeTwips === (node.attrs.spacingBeforeTwips ?? undefined) &&
 			previous.spacingAfterTwips === (node.attrs.spacingAfterTwips ?? undefined) &&
@@ -148,9 +158,8 @@ export function docToModel(
 			type: 'paragraph',
 			id,
 			runs,
-			...(node.attrs.align === 'left' && previous?.align == null
-				? {}
-				: { align: node.attrs.align }),
+			...(node.attrs.align != null ? { align: node.attrs.align } : {}),
+			...(node.attrs.direction != null ? { direction: node.attrs.direction } : {}),
 			...(node.attrs.style ? { style: node.attrs.style } : {}),
 			...(node.attrs.spacingBeforeTwips != null
 				? { spacingBeforeTwips: node.attrs.spacingBeforeTwips }

@@ -26,6 +26,10 @@ features:
 
 Each route builds the same demo from `demos/demo-vanilla`, selecting one public framework adapter at build time.
 
+The [coauthoring demo](/demo/collaboration.html) connects two editors through a local
+in-memory authority. Pause delivery to try concurrent changes and resume to merge them.
+Read the [collaboration integration guide](/collaboration) before connecting a server.
+
 | Framework          | Demo                        | Guide                                      |
 | ------------------ | --------------------------- | ------------------------------------------ |
 | React              | [Open demo](/demo/)         | [React integration](/frameworks/react)     |

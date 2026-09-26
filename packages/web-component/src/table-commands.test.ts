@@ -70,6 +70,15 @@ function run(view: EditorView, action: TableCommand) {
 
 describe('table structural commands', () => {
 	afterEach(() => document.body.replaceChildren());
+	it('uses the row index when the selected column differs from the selected row', () => {
+		const { view } = setup(makeTable(3, 2), 'cell-2-0');
+		expect(run(view, 'deleteRow')).toBe(true);
+		expect(grid(view)).toEqual([
+			['r0c0', 'r0c1'],
+			['r1c0', 'r1c1'],
+		]);
+		view.destroy();
+	});
 
 	it.each([
 		[

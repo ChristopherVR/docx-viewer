@@ -68,6 +68,35 @@ describe('legacy .doc', () => {
 		await expect(loadLegacyDoc(encrypted)).rejects.toThrow(/Encrypted legacy Word/);
 	});
 
+	it.each([
+		['language', 'ar-SA'],
+		['eastAsiaLanguage', 'ja-JP'],
+		['bidiLanguage', 'he-IL'],
+		['rtl', false],
+		['strike', true],
+		['highlight', 'yellow'],
+		['verticalAlign', 'superscript'],
+	])('rejects unsupported run property %s instead of silently dropping it', async (key, value) => {
+		const loaded = await loadLegacyDoc(new Uint8Array(await readFile(fixture)));
+		const paragraph = loaded.model.blocks[0];
+		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+		Object.assign(paragraph.runs[0], { [String(key)]: value });
+		await expect(loaded.save()).rejects.toThrow(/formatting edits are unsupported/);
+	});
+
+	it('rejects paragraph direction, spacing and new line breaks in legacy DOC output', async () => {
+		for (const change of [{ direction: 'rtl' }, { lineSpacingTwips: 480 }]) {
+			const loaded = await loadLegacyDoc(new Uint8Array(await readFile(fixture)));
+			Object.assign(loaded.model.blocks[0], change);
+			await expect(loaded.save()).rejects.toThrow(/formatting edits are unsupported/);
+		}
+		const loaded = await loadLegacyDoc(new Uint8Array(await readFile(fixture)));
+		const paragraph = loaded.model.blocks[0];
+		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+		paragraph.runs[0].text += '\nAnother line';
+		await expect(loaded.save()).rejects.toThrow(/line breaks/);
+	});
+
 	it('saves supported paragraph text edits and can reopen them', async () => {
 		const loaded = await loadLegacyDoc(new Uint8Array(await readFile(fixture)));
 		const first = loaded.model.blocks[0];

@@ -73,7 +73,11 @@ describe('paragraph line breaks and spacing adapter', () => {
 	it('uses Word line spacing as a line multiplier by default', () => {
 		const paragraph = schema.nodes.paragraph.create({ lineSpacingTwips: 360 });
 		const dom = schema.nodes.paragraph.spec.toDOM?.(paragraph);
-		expect(dom).toEqual(['p', { style: 'text-align:left;line-height:1.5', 'data-id': '' }, 0]);
+		expect(dom).toEqual([
+			'p',
+			{ style: 'text-align:left;line-height:1.5', dir: null, 'data-id': '' },
+			0,
+		]);
 	});
 
 	it('preserves a line spacing rule even if its value is absent during another edit', () => {

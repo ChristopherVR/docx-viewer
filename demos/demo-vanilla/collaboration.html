@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>DOCX Viewer | Coauthoring demo</title>
+	</head>
+	<body>
+		<header class="collab-header">
+			<a class="brand" href="./"><span class="brand-icon">W</span> DOCX Viewer</a>
+			<strong>Coauthoring demo</strong>
+			<button
+				id="theme-toggle"
+				type="button"
+				aria-label="Switch to dark theme"
+				aria-pressed="false"
+			>
+				Dark
+			</button>
+		</header>
+		<main class="collab-workspace">
+			<p>
+				Two editors share one document through a local, in-memory authority. Pause delivery to try
+				concurrent edits, then resume to merge them. Nothing is sent over the network.
+			</p>
+			<div class="collab-actions">
+				<button id="pause-delivery" type="button" aria-pressed="false">Pause delivery</button>
+				<label><input type="checkbox" id="peer-readonly" /> Editor B read only</label>
+				<span id="collaboration-status" role="status">Connecting editors…</span>
+			</div>
+			<div class="collab-editors">
+				<section aria-label="Editor A">
+					<h2>Editor A</h2>
+					<div id="peer-a"></div>
+				</section>
+				<section aria-label="Editor B">
+					<h2>Editor B</h2>
+					<div id="peer-b"></div>
+				</section>
+			</div>
+			<p>
+				This demonstrates step synchronization and rebasing. A production service must provide
+				authentication, permissions, storage and reconnect handling. Presence cursors and comments
+				are not implemented.
+			</p>
+		</main>
+		<script type="module" src="./collaboration-demo.ts"></script>
+	</body>
+</html>

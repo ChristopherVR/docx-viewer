@@ -1,0 +1,66 @@
+.collab-header {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	padding: 12px 20px;
+	background: var(--demo-surface);
+	border-bottom: 1px solid var(--demo-line);
+}
+.collab-header .brand {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	text-decoration: none;
+	color: inherit;
+}
+.collab-header #theme-toggle {
+	margin-inline-start: auto;
+}
+.collab-workspace {
+	padding: 12px 20px;
+}
+.collab-workspace > p {
+	max-width: 1000px;
+	color: var(--demo-muted);
+}
+.collab-actions {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 18px;
+	margin-block: 16px;
+}
+.collab-editors {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+}
+.collab-editors section {
+	min-width: 0;
+}
+.collab-editors h2 {
+	font-size: 14px;
+	margin: 8px 0;
+}
+#peer-a,
+#peer-b {
+	height: 620px;
+}
+.collab-header button,
+.collab-actions button {
+	border: 1px solid var(--demo-line);
+	padding: 7px 12px;
+	border-radius: 4px;
+	background: var(--demo-surface);
+	color: var(--demo-ink);
+	cursor: pointer;
+}
+@media (max-width: 900px) {
+	.collab-editors {
+		grid-template-columns: 1fr;
+	}
+	.collab-header {
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+}

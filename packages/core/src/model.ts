@@ -8,6 +8,14 @@ export interface TextRun {
 	/** Word named highlight color, such as `yellow` or `lightGray`. */
 	highlight?: string;
 	verticalAlign?: 'superscript' | 'subscript';
+	/** Direct Word run language tag (`w:lang/@w:val`), without automatic detection. */
+	language?: string;
+	/** Direct East Asian script language tag (`w:lang/@w:eastAsia`). */
+	eastAsiaLanguage?: string;
+	/** Direct complex-script language tag (`w:lang/@w:bidi`). */
+	bidiLanguage?: string;
+	/** Explicit run-level bidirectional override; `false` means direct off, undefined inherits. */
+	rtl?: boolean;
 	/** Font size in points. */
 	fontSize?: number;
 	fontFamily?: string;
@@ -20,6 +28,8 @@ export interface Paragraph {
 	id: string;
 	runs: TextRun[];
 	align?: 'left' | 'center' | 'right' | 'justify';
+	/** Paragraph base direction from direct `w:bidi`; undefined inherits. */
+	direction?: 'ltr' | 'rtl';
 	style?: string;
 	/** Word paragraph spacing and indentation values, kept in their native twip units (1/20 pt). */
 	spacingBeforeTwips?: number;

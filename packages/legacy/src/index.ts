@@ -31,11 +31,11 @@ function paragraphText(model: DocumentModel): string[] {
 	}
 	return (model.blocks as Paragraph[]).map((p) => {
 		if (
-			p.align ||
-			p.style ||
-			p.runs.some(
-				(run) =>
-					run.bold || run.italic || run.underline || run.fontSize || run.fontFamily || run.color,
+			Object.entries(p).some(
+				([key, value]) => !['type', 'id', 'runs'].includes(key) && value !== undefined,
+			) ||
+			p.runs.some((run) =>
+				Object.entries(run).some(([key, value]) => key !== 'text' && value !== undefined),
 			)
 		) {
 			throw new LegacyDocError(
@@ -111,6 +111,10 @@ export async function loadLegacyDoc(input: Uint8Array | ArrayBuffer): Promise<Lo
 			let output = original;
 			for (let i = 0; i < updated.length; i++) {
 				if (updated[i] === paragraphs[i]) continue;
+				if (/[\r\n]/u.test(updated[i]!))
+					throw new LegacyDocError(
+						'Adding line breaks in legacy .doc paragraph text is unsupported.',
+					);
 				const result = writeOleDocParagraphEdit(output, i, updated[i]!);
 				if (result === output)
 					throw new LegacyDocError(

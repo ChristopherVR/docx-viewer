@@ -11,6 +11,19 @@ function marksForRun(run: TextRun): Mark[] {
 	if (run.highlight) marks.push(schema.marks.highlight.create({ color: run.highlight }));
 	if (run.verticalAlign)
 		marks.push(schema.marks.verticalAlign.create({ value: run.verticalAlign }));
+	if (
+		run.language !== undefined ||
+		run.eastAsiaLanguage !== undefined ||
+		run.bidiLanguage !== undefined
+	)
+		marks.push(
+			schema.marks.language.create({
+				language: run.language ?? null,
+				eastAsiaLanguage: run.eastAsiaLanguage ?? null,
+				bidiLanguage: run.bidiLanguage ?? null,
+			}),
+		);
+	if (run.rtl !== undefined) marks.push(schema.marks.runRtl.create({ value: run.rtl }));
 	if (run.fontFamily || run.fontSize || run.color)
 		marks.push(
 			schema.marks.font.create({
@@ -51,6 +64,13 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 	if (highlight?.attrs.color) run.highlight = highlight.attrs.color;
 	const verticalAlign = propertyOfMark(child, 'verticalAlign');
 	if (verticalAlign?.attrs.value) run.verticalAlign = verticalAlign.attrs.value;
+	const language = propertyOfMark(child, 'language');
+	if (language?.attrs.language != null) run.language = language.attrs.language;
+	if (language?.attrs.eastAsiaLanguage != null)
+		run.eastAsiaLanguage = language.attrs.eastAsiaLanguage;
+	if (language?.attrs.bidiLanguage != null) run.bidiLanguage = language.attrs.bidiLanguage;
+	const rtl = propertyOfMark(child, 'runRtl');
+	if (rtl) run.rtl = rtl.attrs.value;
 	const font = propertyOfMark(child, 'font');
 	if (font?.attrs.family) run.fontFamily = font.attrs.family;
 	if (font?.attrs.size) run.fontSize = font.attrs.size;
@@ -63,6 +83,10 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 		'strike',
 		'highlight',
 		'verticalAlign',
+		'language',
+		'eastAsiaLanguage',
+		'bidiLanguage',
+		'rtl',
 		'fontFamily',
 		'fontSize',
 		'color',

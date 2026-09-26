@@ -34,7 +34,12 @@ export const wordHighlightColors = {
 
 function paragraphStyle(attrs: Record<string, unknown>): string {
 	const declarations = [
-		attrs.align && `text-align:${safeCssValue(attrs.align)}`,
+		attrs.align
+			? `text-align:${safeCssValue(attrs.align)}`
+			: attrs.direction === 'rtl'
+				? null
+				: 'text-align:left',
+		attrs.direction && `direction:${safeCssValue(attrs.direction)}`,
 		twipsCss(attrs.spacingBeforeTwips) && `margin-top:${twipsCss(attrs.spacingBeforeTwips)}`,
 		twipsCss(attrs.spacingAfterTwips) && `margin-bottom:${twipsCss(attrs.spacingAfterTwips)}`,
 		twipsCss(attrs.indentLeftTwips) && `margin-left:${twipsCss(attrs.indentLeftTwips)}`,
@@ -72,7 +77,8 @@ export const schema = new Schema({
 			content: 'inline*',
 			group: 'block',
 			attrs: {
-				align: { default: 'left' },
+				align: { default: null },
+				direction: { default: null },
 				id: { default: '' },
 				style: { default: '' },
 				spacingBeforeTwips: { default: null },
@@ -90,7 +96,8 @@ export const schema = new Schema({
 				{
 					tag: 'p',
 					getAttrs: (el) => ({
-						align: (el as HTMLElement).style.textAlign || 'left',
+						align: (el as HTMLElement).style.textAlign || null,
+						direction: (el as HTMLElement).dir || (el as HTMLElement).style.direction || null,
 						id: (el as HTMLElement).dataset.id || '',
 						style: '',
 						spacingBeforeTwips: null,
@@ -106,7 +113,15 @@ export const schema = new Schema({
 					}),
 				},
 			],
-			toDOM: (node) => ['p', { style: paragraphStyle(node.attrs), 'data-id': node.attrs.id }, 0],
+			toDOM: (node) => [
+				'p',
+				{
+					style: paragraphStyle(node.attrs),
+					dir: node.attrs.direction || null,
+					'data-id': node.attrs.id,
+				},
+				0,
+			],
 		},
 		text: { group: 'inline' },
 		hardBreak: {
@@ -172,6 +187,40 @@ export const schema = new Schema({
 				{ tag: 'sub', attrs: { value: 'subscript' } },
 			],
 			toDOM: (mark) => [mark.attrs.value === 'subscript' ? 'sub' : 'sup', 0],
+		},
+		language: {
+			attrs: {
+				language: { default: null },
+				eastAsiaLanguage: { default: null },
+				bidiLanguage: { default: null },
+			},
+			parseDOM: [
+				{
+					tag: 'span[lang], span[data-docx-east-asia-language], span[data-docx-bidi-language]',
+					getAttrs: (el) => ({
+						language: (el as HTMLElement).getAttribute('lang'),
+						eastAsiaLanguage: (el as HTMLElement).dataset.docxEastAsiaLanguage || null,
+						bidiLanguage: (el as HTMLElement).dataset.docxBidiLanguage || null,
+					}),
+				},
+			],
+			toDOM: (mark) => {
+				const attrs: Record<string, string> = {};
+				if (mark.attrs.language) attrs.lang = mark.attrs.language;
+				if (mark.attrs.eastAsiaLanguage)
+					attrs['data-docx-east-asia-language'] = mark.attrs.eastAsiaLanguage;
+				if (mark.attrs.bidiLanguage) attrs['data-docx-bidi-language'] = mark.attrs.bidiLanguage;
+				return ['span', attrs, 0];
+			},
+		},
+		runRtl: {
+			attrs: { value: { default: true } },
+			excludes: 'runRtl',
+			parseDOM: [
+				{ tag: 'span[dir="rtl"]', attrs: { value: true } },
+				{ tag: 'span[dir="ltr"]', attrs: { value: false } },
+			],
+			toDOM: (mark) => ['span', { dir: mark.attrs.value ? 'rtl' : 'ltr' }, 0],
 		},
 		font: {
 			attrs: { family: { default: null }, size: { default: null }, color: { default: null } },

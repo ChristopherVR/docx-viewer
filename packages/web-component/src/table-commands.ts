@@ -40,7 +40,7 @@ function context(view: EditorView): Context | null {
 		table,
 		tablePos: $from.before(tableDepth),
 		tableDepth,
-		rowIndex: $from.index(tableDepth + 1),
+		rowIndex: $from.index(tableDepth),
 		columnIndex: $from.index(tableDepth + 1),
 	};
 }

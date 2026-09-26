@@ -1,5 +1,5 @@
 import type { Paragraph } from './model.js';
-import { first, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
+import { children, first, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
 
 function setAttribute(element: XmlElement, local: string, value: string): void {
 	element.setAttributeNS(WORD_NS, `w:${local}`, value);
@@ -12,6 +12,25 @@ function setWordValue(
 ): void {
 	if (value === undefined) element.removeAttributeNS(WORD_NS, local);
 	else setAttribute(element, local, String(value));
+}
+
+function updateDirection(
+	doc: XmlDocument,
+	props: XmlElement,
+	paragraph: Paragraph,
+	base?: Paragraph,
+): void {
+	if (base && paragraph.direction === base.direction) return;
+	let bidi = first(props, 'bidi');
+	if (paragraph.direction === undefined) {
+		for (const element of children(props, 'bidi')) props.removeChild(element);
+	} else {
+		if (!bidi) {
+			bidi = makeW(doc, 'bidi');
+			props.appendChild(bidi);
+		}
+		setAttribute(bidi, 'val', paragraph.direction === 'rtl' ? '1' : '0');
+	}
 }
 
 function updateSpacing(
@@ -55,12 +74,10 @@ function updateIndent(
 		indent = makeW(doc, 'ind');
 		props.appendChild(indent);
 	}
-	if (!base || paragraph.indentLeftTwips !== base.indentLeftTwips) {
+	if (!base || paragraph.indentLeftTwips !== base.indentLeftTwips)
 		setWordValue(indent, 'left', paragraph.indentLeftTwips);
-	}
-	if (!base || paragraph.indentRightTwips !== base.indentRightTwips) {
+	if (!base || paragraph.indentRightTwips !== base.indentRightTwips)
 		setWordValue(indent, 'right', paragraph.indentRightTwips);
-	}
 	if (!base || paragraph.indentStartTwips !== base.indentStartTwips)
 		setWordValue(indent, 'start', paragraph.indentStartTwips);
 	if (!base || paragraph.indentEndTwips !== base.indentEndTwips)
@@ -78,6 +95,7 @@ export function writeParagraphProperties(
 	paragraph: Paragraph,
 	base?: Paragraph,
 ): void {
+	updateDirection(doc, props, paragraph, base);
 	const spacingKeys = [
 		'spacingBeforeTwips',
 		'spacingAfterTwips',

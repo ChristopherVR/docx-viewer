@@ -53,6 +53,15 @@ function parseRun(node: XmlElement): TextRun {
 		})
 		.join('');
 	const run: TextRun = { text };
+	const language = first(props, 'lang');
+	const languageValue = getW(language, 'val');
+	const eastAsiaLanguage = getW(language, 'eastAsia');
+	const bidiLanguage = getW(language, 'bidi');
+	if (languageValue !== undefined) run.language = languageValue;
+	if (eastAsiaLanguage !== undefined) run.eastAsiaLanguage = eastAsiaLanguage;
+	if (bidiLanguage !== undefined) run.bidiLanguage = bidiLanguage;
+	const rtl = first(props, 'rtl');
+	if (rtl) run.rtl = on(rtl);
 	if (props && on(first(props, 'b'))) run.bold = true;
 	if (props && on(first(props, 'i'))) run.italic = true;
 	if (props && on(first(props, 'u'))) run.underline = true;
@@ -85,6 +94,8 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 	}
 	if (!runs.length) runs.push({ text: '' });
 	const paragraph: Paragraph = { type: 'paragraph', id, runs };
+	const bidi = first(props, 'bidi');
+	if (bidi) paragraph.direction = on(bidi) ? 'rtl' : 'ltr';
 	if (
 		alignment === 'left' ||
 		alignment === 'center' ||

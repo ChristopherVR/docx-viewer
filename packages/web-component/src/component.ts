@@ -1,41 +1,32 @@
-import { EditorState, Transaction, type Command } from 'prosemirror-state';
+import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { history, undo, redo } from 'prosemirror-history';
-import { baseKeymap, toggleMark } from 'prosemirror-commands';
-import { keymap } from 'prosemirror-keymap';
-import type { DocumentModel, Paragraph } from '@christophervr/docx-core';
+import { history } from 'prosemirror-history';
+import type { DocumentModel } from '@christophervr/docx-core';
 import { createDocument, saveDocx } from '@christophervr/docx-core';
 import { loadDocument } from '@christophervr/docx-document';
-import { schema } from './schema';
 import { createRibbon, type RibbonAction } from './ribbon';
 import { syncFontControls, syncParagraphControls, syncFormatControls } from './ribbon-controls';
-import {
-	applyFont,
-	applyPageStyles,
-	clearFormatting,
-	insertTable,
-	updateParagraphs,
-	updatePage,
-} from './ribbon-commands';
+import { applyPageStyles } from './ribbon-commands';
 import { assignMissingParagraphIds, docToModel, modelToDoc } from './model-adapter';
 import styleText from './style.css?inline';
-import { applyHighlight, toggleVerticalAlign } from './inline-commands';
-import { executeTableCommand, canExecuteTableCommand } from './table-commands';
-import { insertHardBreak } from './hard-break-command';
+import { canExecuteTableCommand } from './table-commands';
+import { editorKeymap, runRibbonCommand } from './editor-commands';
+import { countWords } from './word-count';
+import { createSearchPanel, type SearchPanelHandle } from './search-panel';
+import {
+	CollaborationClient,
+	type CollaborationConfig,
+	type ClientReceiveResult,
+	type StepBatch,
+} from './collaboration';
+import {
+	repairCollaborativeDocumentIds,
+	createCollaborationIdGenerator,
+} from './collaboration-identity';
+import { syncMultilingualControls } from './multilingual-ribbon';
 
 const HTMLElementBase: typeof HTMLElement =
 	typeof HTMLElement === 'undefined' ? (class {} as typeof HTMLElement) : HTMLElement;
-const markCommands = {
-	bold: toggleMark(schema.marks.bold),
-	italic: toggleMark(schema.marks.italic),
-	underline: toggleMark(schema.marks.underline),
-	strike: toggleMark(schema.marks.strike),
-};
-const editableCommand =
-	(command: Command): Command =>
-	(state, dispatch, view) =>
-		view?.editable === false ? false : command(state, dispatch, view);
-
 export class DocxEditorElement extends HTMLElementBase {
 	private model: DocumentModel = createDocument();
 	private view?: EditorView;
@@ -45,11 +36,18 @@ export class DocxEditorElement extends HTMLElementBase {
 	private toolbar?: HTMLElement;
 	private paper?: HTMLElement;
 	private zoom = 1;
+	private searchPanel?: SearchPanelHandle;
+	private collaboration?: CollaborationClient;
+	private collaborationIds?: (kind: string) => string;
+	private detachedState?: EditorState;
+	private sendScheduled = false;
 
 	get documentModel() {
 		return this.model;
 	}
 	set documentModel(value: DocumentModel | null) {
+		this.assertDocumentReplaceable();
+		this.detachedState = undefined;
 		this.loadGeneration++;
 		this.loaded = undefined;
 		this.model = value || createDocument();
@@ -71,17 +69,20 @@ export class DocxEditorElement extends HTMLElementBase {
 	}
 
 	disconnectedCallback() {
+		this.detachedState = this.view?.state;
 		this.view?.destroy();
 		this.view = undefined;
 	}
 
 	async load(input: Uint8Array | ArrayBuffer): Promise<void> {
+		this.assertDocumentReplaceable();
 		const generation = ++this.loadGeneration;
 		try {
 			const session = await loadDocument(input);
 			if (generation !== this.loadGeneration) return;
 			this.loaded = session;
 			this.model = session.model;
+			this.detachedState = undefined;
 			if (this.isConnected) this.renderDocument();
 		} catch (cause) {
 			const error = cause instanceof Error ? cause : new Error(String(cause));
@@ -95,6 +96,8 @@ export class DocxEditorElement extends HTMLElementBase {
 	}
 
 	setLoadedDocument(session: Awaited<ReturnType<typeof loadDocument>>) {
+		this.assertDocumentReplaceable();
+		this.detachedState = undefined;
 		this.loadGeneration++;
 		this.loaded = session;
 		this.model = session.model;
@@ -103,6 +106,60 @@ export class DocxEditorElement extends HTMLElementBase {
 
 	async save(): Promise<Uint8Array> {
 		return this.loaded ? this.loaded.save(this.model) : saveDocx(this.model);
+	}
+
+	/** Join only after loading the authority's matching document snapshot and version. */
+	startCollaboration(config: CollaborationConfig): void {
+		if (this.collaboration) throw new Error('Stop the current collaboration session first.');
+		if (!this.view) throw new Error('Mount and load the document before starting collaboration.');
+		this.collaboration = new CollaborationClient(config);
+		this.collaborationIds = createCollaborationIdGenerator(config.clientId);
+		this.loadGeneration++;
+		this.detachedState = undefined;
+		this.renderDocument();
+	}
+
+	getPendingCollaboration(): StepBatch | null {
+		const state = this.view?.state ?? this.detachedState;
+		return state && this.collaboration ? this.collaboration.createPendingBatch(state) : null;
+	}
+
+	receiveCollaboration(batch: unknown): ClientReceiveResult['status'] {
+		if (!this.collaboration || !this.view) throw new Error('No mounted collaboration session.');
+		const result = this.collaboration.receive(this.view.state, batch);
+		if (result.status === 'applied') this.applyTransaction(result.transaction, true);
+		return result.status;
+	}
+
+	/** Stopping with pending edits requires an explicit discard of the transport queue. */
+	stopCollaboration(discardPending = false): void {
+		const state = this.view?.state ?? this.detachedState;
+		if (!discardPending && state && this.collaboration?.pendingStepCount(state))
+			throw new Error(
+				'Acknowledge pending collaboration edits before stopping, or explicitly discard the queue.',
+			);
+		this.collaboration = undefined;
+		this.collaborationIds = undefined;
+		this.detachedState = undefined;
+		if (this.isConnected) this.renderDocument();
+	}
+
+	private assertDocumentReplaceable() {
+		if (this.collaboration) throw new Error('Stop collaboration before replacing the document.');
+	}
+
+	private scheduleCollaborationSend() {
+		if (!this.collaboration || this.sendScheduled) return;
+		this.sendScheduled = true;
+		queueMicrotask(() => {
+			this.sendScheduled = false;
+			if (!this.isConnected) return;
+			const batch = this.getPendingCollaboration();
+			if (batch)
+				this.dispatchEvent(
+					new CustomEvent('collaboration-send', { detail: batch, bubbles: true, composed: true }),
+				);
+		});
 	}
 
 	private buildShell() {
@@ -127,7 +184,11 @@ export class DocxEditorElement extends HTMLElementBase {
 		paper.className = 'dve-paper';
 		paper.setAttribute('aria-label', 'Document page');
 		canvas.append(paper);
-		frame.append(toolbar, canvas);
+		this.searchPanel = createSearchPanel({
+			getView: () => this.view,
+			onClose: () => this.view?.focus(),
+		});
+		frame.append(toolbar, this.searchPanel.element, canvas);
 		root.append(style, frame);
 		this.toolbar = toolbar;
 		this.paper = paper;
@@ -140,38 +201,38 @@ export class DocxEditorElement extends HTMLElementBase {
 		this.view?.destroy();
 		this.paper.replaceChildren();
 		applyPageStyles(this.paper, this.model, this.zoom);
-		const state = EditorState.create({
-			doc: modelToDoc(this.model),
-			plugins: [
-				history(),
-				keymap(
-					Object.fromEntries(
-						Object.entries({
-							...baseKeymap,
-							'Mod-z': undo,
-							'Mod-y': redo,
-							'Mod-Shift-z': redo,
-							'Mod-b': markCommands.bold,
-							'Mod-i': markCommands.italic,
-							'Mod-u': markCommands.underline,
-							'Shift-Enter': insertHardBreak,
-						}).map(([key, command]) => [key, editableCommand(command)]),
-					),
-				),
-			],
-		});
+		const state =
+			this.detachedState ??
+			EditorState.create({
+				doc: modelToDoc(this.model),
+				plugins: [
+					history(),
+					editorKeymap(() => this.showSearch()),
+					...(this.collaboration ? [this.collaboration.plugin] : []),
+				],
+			});
 		this.view = new EditorView(this.paper, {
 			state,
 			editable: () => !this._readOnly,
 			dispatchTransaction: (transaction: Transaction) => this.applyTransaction(transaction),
 		});
+		this.detachedState = undefined;
 		this.refreshControls();
+		this.scheduleCollaborationSend();
 	}
 
-	private applyTransaction(transaction: Transaction) {
+	private applyTransaction(transaction: Transaction, remote = false) {
 		if (!this.view) return;
 		const applied = this.view.state.applyTransaction(transaction).state;
-		const repaired = assignMissingParagraphIds(applied);
+		const repaired = remote
+			? null
+			: this.collaboration
+				? repairCollaborativeDocumentIds(
+						applied,
+						this.collaboration.clientId,
+						this.collaborationIds,
+					)
+				: assignMissingParagraphIds(applied);
 		this.view.updateState(repaired ? applied.apply(repaired) : applied);
 		if (transaction.docChanged) {
 			this.model = docToModel(this.view.state.doc, this.model);
@@ -181,87 +242,54 @@ export class DocxEditorElement extends HTMLElementBase {
 			);
 		}
 		this.refreshControls();
+		if (transaction.docChanged || remote) this.scheduleCollaborationSend();
 	}
 
-	private command(
-		command: (
-			state: EditorState,
-			dispatch?: (transaction: Transaction) => void,
-			view?: EditorView,
-		) => boolean,
-	) {
-		if (this.view && !this._readOnly) command(this.view.state, this.view.dispatch, this.view);
-	}
-
-	private setAlignment(align: Paragraph['align']) {
-		if (!this.view || this._readOnly) return;
-		const { from, to } = this.view.state.selection;
-		const positions: number[] = [];
-		this.view.state.doc.nodesBetween(from, to, (node, pos) => {
-			if (node.type.name === 'paragraph') positions.push(pos);
-		});
-		if (!positions.length && this.view.state.selection.$from.parent.type.name === 'paragraph')
-			positions.push(this.view.state.selection.$from.before());
-		let transaction = this.view.state.tr;
-		for (const pos of positions) {
-			const node = transaction.doc.nodeAt(pos);
-			if (node) transaction = transaction.setNodeMarkup(pos, undefined, { ...node.attrs, align });
-		}
-		if (transaction.docChanged) this.view.dispatch(transaction);
+	private showSearch() {
+		this.searchPanel?.open();
 	}
 
 	private handleRibbonAction(action: RibbonAction) {
-		if (this._readOnly && action.type !== 'zoom') return;
-		if (action.type === 'format') {
-			if (action.key === 'superscript' || action.key === 'subscript') {
-				if (this.view) toggleVerticalAlign(this.view, action.key);
-			} else this.command(markCommands[action.key]);
-		} else if (action.type === 'align') this.setAlignment(action.value);
-		else if (action.type === 'history') this.command(action.key === 'undo' ? undo : redo);
-		else if (action.type === 'font' && this.view) {
-			if (action.key === 'highlight') applyHighlight(this.view, action.value);
-			else applyFont(this.view, action.key, action.value);
-		} else if (action.type === 'tableEdit' && this.view) executeTableCommand(this.view, action.key);
-		else if (action.type === 'clear' && this.view) clearFormatting(this.view);
-		else if (action.type === 'table' && this.view) insertTable(this.view);
-		else if (action.type === 'page') this.setPage(action.key, action.value);
-		else if (action.type === 'paragraph' && this.view)
-			updateParagraphs(this.view, action.key, action.value);
+		if (action.type === 'search') this.showSearch();
 		else if (action.type === 'zoom') {
 			this.zoom = action.value / 100;
 			if (this.paper) applyPageStyles(this.paper, this.model, this.zoom);
+		} else if (this.view) {
+			runRibbonCommand(this.view, action, this.collaborationIds);
+			if (typeof document.execCommand === 'function') this.view.focus();
 		}
-		if (action.type !== 'zoom' && typeof document.execCommand === 'function') this.view?.focus();
-	}
-
-	private setPage(key: 'margin' | 'orientation', value: string) {
-		if (this.view) updatePage(this.view, key, value);
 	}
 
 	private refreshControls() {
+		this.searchPanel?.refresh();
 		this.toolbar
-			?.querySelectorAll<HTMLButtonElement | HTMLSelectElement>(
-				'.ribbon-group button, .ribbon-group select:not([aria-label="Zoom"])',
+			?.querySelectorAll<HTMLButtonElement | HTMLSelectElement | HTMLInputElement>(
+				'.ribbon-group button, .ribbon-group input, .ribbon-group select:not([aria-label="Zoom"])',
 			)
 			.forEach((control) => {
-				control.disabled = this._readOnly;
+				control.disabled =
+					this._readOnly && control.getAttribute('aria-label') !== 'Find and replace';
 			});
 		if (!this.view) return;
 		const { state } = this.view;
 		if (this.toolbar) {
+			syncMultilingualControls(this.toolbar, state);
 			syncFormatControls(this.toolbar, state);
 			for (const button of this.toolbar.querySelectorAll<HTMLButtonElement>(
 				'button[data-action]',
 			)) {
 				const action = JSON.parse(button.dataset.action!) as RibbonAction;
 				if (action.type === 'tableEdit')
-					button.disabled = this._readOnly || !canExecuteTableCommand(this.view, action.key);
+					button.disabled =
+						this._readOnly ||
+						Boolean(this.collaboration) ||
+						!canExecuteTableCommand(this.view, action.key);
 			}
 			syncFontControls(this.toolbar, state);
 			syncParagraphControls(this.toolbar, state);
 		}
 		const content = state.doc.textBetween(0, state.doc.content.size, ' ').trim();
-		const words = content ? content.split(/\s+/).length : 0;
+		const words = countWords(content, this.lang || undefined);
 		const status = this.toolbar?.parentElement?.querySelector('.dve-status');
 		if (status) status.textContent = `Page 1 · ${words} words`;
 	}

@@ -15,6 +15,7 @@ import { writeTable as writeTableContent } from './write-table.js';
 import { createRun } from './write-run.js';
 import { isWordHighlightToken } from './highlight.js';
 import { hasSpecialBreak } from './breaks.js';
+import { isValidLanguageTag } from './language.js';
 
 const twips = (pixels: number): string => String(Math.round(pixels * 15));
 function setAttribute(element: XmlElement, local: string, value: string): void {
@@ -52,6 +53,8 @@ const modeledRunProperties = new Set([
 	'sz',
 	'rFonts',
 	'color',
+	'lang',
+	'rtl',
 ]);
 function hasUnexpectedAttributes(element: XmlElement, allowed: string[]): boolean {
 	for (const attribute of Array.from(element.attributes)) {
@@ -75,14 +78,30 @@ function runHasUnknownProperties(run: XmlElement): boolean {
 		const allowed =
 			property.localName === 'rFonts'
 				? ['ascii', 'hAnsi']
-				: ['b', 'i', 'strike', 'u', 'highlight', 'vertAlign', 'sz', 'color'].includes(
-							property.localName,
-					  )
-					? ['val']
-					: [];
+				: property.localName === 'lang'
+					? ['val', 'eastAsia', 'bidi']
+					: ['b', 'i', 'strike', 'u', 'highlight', 'vertAlign', 'sz', 'color', 'rtl'].includes(
+								property.localName,
+						  )
+						? ['val']
+						: [];
 		if (hasUnexpectedAttributes(property, allowed) || elements(property).length > 0) return true;
 		const value = getW(property, 'val');
 		if (property.localName === 'highlight' && value && !isWordHighlightToken(value)) return true;
+		if (
+			property.localName === 'rtl' &&
+			value &&
+			!['1', 'true', 'on', '0', 'false', 'off', 'no'].includes(value)
+		)
+			return true;
+		if (
+			property.localName === 'lang' &&
+			['val', 'eastAsia', 'bidi'].some((key) => {
+				const language = getW(property, key);
+				return language !== undefined && !isValidLanguageTag(language);
+			})
+		)
+			return true;
 		if (property.localName === 'vertAlign' && value !== 'superscript' && value !== 'subscript')
 			return true;
 		if (

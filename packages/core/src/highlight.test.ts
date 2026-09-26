@@ -71,7 +71,7 @@ describe('Word highlight tokens', () => {
 
 	it('rejects run splitting when it could drop unsupported run properties', async () => {
 		const original = await packageWith(
-			`<w:document xmlns:w="${ns}"><w:body><w:p><w:r><w:rPr><w:lang w:val="en-US"/></w:rPr><w:t>Formatted</w:t></w:r></w:p><w:sectPr/></w:body></w:document>`,
+			`<w:document xmlns:w="${ns}"><w:body><w:p><w:r><w:rPr><w:shd w:fill="ABCDEF"/></w:rPr><w:t>Formatted</w:t></w:r></w:p><w:sectPr/></w:body></w:document>`,
 		);
 		const loaded = await loadDocx(original);
 		const paragraph = loaded.model.blocks[0];

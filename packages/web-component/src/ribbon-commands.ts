@@ -37,14 +37,14 @@ export function clearFormatting(view: EditorView) {
 }
 
 let tableId = 0;
-export function insertTable(view: EditorView) {
+export function insertTable(view: EditorView, idGenerator?: (kind: string) => string) {
 	const ids = new Set<string>();
 	view.state.doc.descendants((node) => {
 		if (typeof node.attrs.id === 'string' && node.attrs.id) ids.add(node.attrs.id);
 	});
 	const nextId = (kind: string) => {
 		let candidate = '';
-		do candidate = `dve-${kind}-${++tableId}`;
+		do candidate = idGenerator ? idGenerator(kind) : `dve-${kind}-${++tableId}`;
 		while (ids.has(candidate));
 		ids.add(candidate);
 		return candidate;

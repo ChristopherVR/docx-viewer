@@ -1,5 +1,6 @@
 import type { TableCommand } from './table-commands';
 import { lineSpacingOptions } from './line-spacing';
+import { createMultilingualControls, type MultilingualAction } from './multilingual-ribbon';
 
 export type RibbonAction =
 	| {
@@ -17,7 +18,9 @@ export type RibbonAction =
 			key: 'indent' | 'spacingBefore' | 'spacingAfter' | 'lineSpacing';
 			value: string;
 	  }
-	| { type: 'zoom'; value: number };
+	| { type: 'zoom'; value: number }
+	| MultilingualAction
+	| { type: 'search' };
 
 const button = (label: string, text: string, action: RibbonAction, className = '') => {
 	const el = document.createElement('button');
@@ -67,7 +70,7 @@ export function createRibbon(): HTMLElement {
 	tabs.setAttribute('role', 'tablist');
 	tabs.setAttribute('aria-label', 'Ribbon tabs');
 	const panels = new Map<string, HTMLElement>();
-	for (const name of ['Home', 'Insert', 'Layout', 'View', 'Table']) {
+	for (const name of ['Home', 'Insert', 'Layout', 'Review', 'View', 'Table']) {
 		const id = `dve-tab-${name.toLowerCase()}`;
 		const tab = document.createElement('button');
 		tab.type = 'button';
@@ -246,6 +249,8 @@ export function createRibbon(): HTMLElement {
 			button('Redo', '↷', { type: 'history', key: 'redo' }),
 		),
 	);
+	home.append(group(button('Find and replace', 'Find and replace', { type: 'search' })));
+	panels.get('Review')!.append(createMultilingualControls());
 	panels.get('Insert')!.append(group(button('Insert table', '▦ Table', { type: 'table' })));
 	panels.get('Layout')!.append(
 		group(

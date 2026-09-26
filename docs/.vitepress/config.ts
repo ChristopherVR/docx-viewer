@@ -64,6 +64,8 @@ export default defineConfig({
 					{ text: 'Overview', link: '/' },
 					{ text: 'Architecture', link: '/architecture' },
 					{ text: 'Framework bindings', link: '/bindings' },
+					{ text: 'Editing text', link: '/editing' },
+					{ text: 'Collaboration', link: '/collaboration' },
 					{ text: 'Support roadmap', link: '/parity-roadmap' },
 					{ text: 'Shared format code', link: '/reuse-audit' },
 					{ text: 'Package releases', link: '/releasing' },

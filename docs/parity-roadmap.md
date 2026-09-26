@@ -22,6 +22,21 @@ disable structural commands; export independently checks the source XML. Widths,
 borders and other unmodeled table styling are retained where supported, but are
 not rendered with Word layout fidelity or exposed as editing controls.
 
+The shared editor also supports literal Unicode-aware find/replace, paragraph
+LTR/RTL direction, three Word language metadata fields, run direction overrides,
+and Unicode word counting. See [editing text](/editing) for the behavior and limits.
+Language metadata does not provide translation, spellchecking, UI localization or
+proof of full complex-script/IME parity.
+
+The [collaboration protocol](/collaboration) synchronizes versioned ProseMirror
+steps through an authority, rebases supported concurrent edits and preserves
+pending edits while waiting for acknowledgements. The [local coauthoring demo](/demo/collaboration.html)
+provides two editors and paused delivery for testing concurrency. Production
+networking, permissions, persistence, presence cursors and shared-save coordination
+remain application responsibilities. Structural table commands are disabled during
+collaboration because their whole-table replacements are not yet conflict-aware;
+editing text inside tables remains available.
+
 ## 2. Fidelity and document model
 
 Resolve document defaults, paragraph/character styles, theme fonts/colors, numbering and tabs. Model sections, breaks, headers/footers, images, relationships, hyperlinks, notes and merged tables. Use ordered OOXML preservation with explicit unsupported-edit errors. Introduce Word-authored fixtures with corresponding expected text and package checks before extending each feature.

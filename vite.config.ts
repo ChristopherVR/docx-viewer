@@ -4,7 +4,17 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
 	plugins: [tailwindcss(), svelte()],
-	build: { target: 'es2022' },
+	build: {
+		target: 'es2022',
+		rollupOptions: {
+			input: {
+				editor: fileURLToPath(new URL('./demos/demo-vanilla/index.html', import.meta.url)),
+				collaboration: fileURLToPath(
+					new URL('./demos/demo-vanilla/collaboration.html', import.meta.url),
+				),
+			},
+		},
+	},
 	resolve: {
 		alias: [
 			{

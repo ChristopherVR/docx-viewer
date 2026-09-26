@@ -2,6 +2,7 @@
 import type { TextRun } from './model.js';
 import { children, first, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
 import { isWordHighlightToken } from './highlight.js';
+import { isValidLanguageTag } from './language.js';
 
 function setAttribute(element: XmlElement, local: string, value: string): void {
 	element.setAttributeNS(WORD_NS, `w:${local}`, value);
@@ -12,6 +13,47 @@ function removeChildren(element: XmlElement, local: string): void {
 function setToggle(doc: XmlDocument, props: XmlElement, local: string, enabled: boolean): void {
 	removeChildren(props, local);
 	if (enabled) props.appendChild(makeW(doc, local));
+}
+
+function setBooleanAttribute(
+	doc: XmlDocument,
+	props: XmlElement,
+	local: string,
+	value: boolean | undefined,
+): void {
+	let element = first(props, local);
+	if (value === undefined) {
+		removeChildren(props, local);
+		return;
+	}
+	if (!element) {
+		element = makeW(doc, local);
+		props.appendChild(element);
+	}
+	setAttribute(element, 'val', value ? '1' : '0');
+}
+
+function setLanguageAttribute(
+	doc: XmlDocument,
+	props: XmlElement,
+	attribute: 'val' | 'eastAsia' | 'bidi',
+	value: string | undefined,
+): void {
+	let language = first(props, 'lang');
+	if (value !== undefined && value !== '' && !isValidLanguageTag(value))
+		throw new Error(`Invalid BCP 47 language tag: ${value}`);
+	if (value === undefined || value === '') {
+		if (!language) return;
+		language.removeAttributeNS(WORD_NS, attribute);
+	} else {
+		if (!language) {
+			language = makeW(doc, 'lang');
+			props.appendChild(language);
+		}
+		setAttribute(language, attribute, value);
+	}
+	if (language && !language.attributes.length && !language.childNodes.length)
+		props.removeChild(language);
 }
 
 function setRunProperties(
@@ -30,6 +72,10 @@ function setRunProperties(
 			run.strike ||
 			run.highlight ||
 			run.verticalAlign ||
+			run.language !== undefined ||
+			run.eastAsiaLanguage !== undefined ||
+			run.bidiLanguage !== undefined ||
+			run.rtl !== undefined ||
 			run.fontSize ||
 			run.fontFamily ||
 			run.color)
@@ -70,6 +116,11 @@ function setRunProperties(
 			props.appendChild(verticalAlign);
 		}
 	}
+	if (changed('language')) setLanguageAttribute(doc, props, 'val', run.language);
+	if (changed('eastAsiaLanguage'))
+		setLanguageAttribute(doc, props, 'eastAsia', run.eastAsiaLanguage);
+	if (changed('bidiLanguage')) setLanguageAttribute(doc, props, 'bidi', run.bidiLanguage);
+	if (changed('rtl')) setBooleanAttribute(doc, props, 'rtl', run.rtl);
 	if (changed('fontSize')) {
 		removeChildren(props, 'sz');
 		if (run.fontSize !== undefined) {
