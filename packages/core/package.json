@@ -1,0 +1,35 @@
+{
+	"name": "@christophervr/docx-core",
+	"version": "0.1.0",
+	"description": "Framework-neutral DOCX document model, parser and serializer",
+	"license": "Apache-2.0",
+	"author": "ChristopherVR",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ChristopherVR/docx-viewer.git",
+		"directory": "packages/core"
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE",
+		"NOTICE"
+	],
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./embedded": {
+			"types": "./dist/embedded.d.ts",
+			"import": "./dist/embedded.js"
+		}
+	},
+	"dependencies": {
+		"@xmldom/xmldom": "^0.9.12",
+		"jszip": "^3.10.2"
+	}
+}

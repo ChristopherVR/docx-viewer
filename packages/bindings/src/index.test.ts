@@ -1,0 +1,52 @@
+// @vitest-environment jsdom
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createDocument } from '@christophervr/docx-core';
+import { mountEditor } from './index';
+afterEach(() => document.body.replaceChildren());
+describe('shared binding lifecycle', () => {
+	it('does not overwrite edits on unrelated parent updates or model feedback', () => {
+		const host = document.createElement('div');
+		document.body.append(host);
+		const source = createDocument();
+		const change = vi.fn();
+		const binding = mountEditor(host, { documentModel: source, onDocumentChange: change });
+		const edited = createDocument();
+		edited.blocks = [{ type: 'paragraph', id: 'p1', runs: [{ text: 'In progress' }] }];
+		binding.element.documentModel = edited;
+		binding.element.dispatchEvent(new CustomEvent('document-change', { detail: edited }));
+		expect(change).toHaveBeenCalledWith(edited);
+		binding.update({ documentModel: source, readOnly: true });
+		expect(binding.element.documentModel).toBe(edited);
+		expect(binding.element.readOnly).toBe(true);
+		binding.update({ documentModel: edited });
+		expect(binding.element.documentModel).toBe(edited);
+		const replacement = createDocument();
+		binding.update({ documentModel: replacement });
+		expect(binding.element.documentModel).toBe(replacement);
+		binding.destroy();
+	});
+	it('forwards latest callbacks and removes listeners and owned element on destroy', () => {
+		const host = document.createElement('div');
+		document.body.append(host);
+		const sentinel = document.createElement('span');
+		host.append(sentinel);
+		const first = vi.fn();
+		const second = vi.fn();
+		const error = vi.fn();
+		const binding = mountEditor(host, { onDocumentChange: first });
+		binding.update({ onDocumentChange: second, onDocumentError: error });
+		const model = createDocument();
+		const failure = new Error('Expected test failure');
+		binding.element.dispatchEvent(new CustomEvent('document-change', { detail: model }));
+		binding.element.dispatchEvent(new CustomEvent('document-error', { detail: failure }));
+		expect(first).not.toHaveBeenCalled();
+		expect(second).toHaveBeenCalledWith(model);
+		expect(error).toHaveBeenCalledWith(failure);
+		binding.destroy();
+		binding.destroy();
+		binding.element.dispatchEvent(new CustomEvent('document-change', { detail: model }));
+		expect(second).toHaveBeenCalledTimes(1);
+		expect(host.children).toHaveLength(1);
+		expect(host.firstChild).toBe(sentinel);
+	});
+});

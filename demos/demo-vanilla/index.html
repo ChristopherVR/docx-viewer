@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>DOCX Viewer | Document editor</title>
+	</head>
+	<body class="min-h-screen min-w-[320px] bg-docx-canvas font-docx text-docx-ink antialiased">
+		<header
+			class="app-header flex h-[52px] items-center gap-7 border-b border-docx-line bg-docx-surface px-6 text-docx-ink max-[760px]:gap-3 max-[760px]:px-3 max-[560px]:gap-2 max-[560px]:px-2"
+		>
+			<a
+				class="brand flex items-center gap-2.5 whitespace-nowrap text-base font-semibold text-docx-ink no-underline max-[560px]:gap-1.5 max-[560px]:text-[13px]"
+				href="./"
+				aria-label="DOCX Viewer home"
+				><span class="brand-icon">W</span><span>DOCX Viewer</span></a
+			>
+			<button
+				id="theme-toggle"
+				class="theme-toggle ml-auto flex-none rounded border border-docx-line bg-docx-surface px-2.5 text-[11px] font-medium text-docx-ink max-[560px]:px-2"
+				type="button"
+				aria-label="Switch to dark theme"
+				aria-pressed="false"
+			>
+				Dark
+			</button>
+			<span class="privacy text-[11px] text-docx-muted max-[760px]:hidden"
+				>Files stay on your device</span
+			>
+		</header>
+		<main
+			class="workspace mx-auto flex h-[calc(100dvh-52px)] min-h-[420px] w-full max-w-none flex-col px-4 pt-3 pb-2 max-[760px]:px-[7px] max-[760px]:py-2 max-[560px]:py-2"
+		>
+			<div
+				class="document-titlebar flex min-h-[52px] items-center justify-between gap-4 rounded-t-md border border-docx-line border-b-0 bg-docx-surface p-2 max-[760px]:flex-col max-[760px]:items-start max-[560px]:gap-1.5 max-[560px]:p-2"
+			>
+				<div class="title-left flex items-center gap-2.5 max-[560px]:max-w-full">
+					<span class="file-icon">W</span><strong id="filename">Untitled.docx</strong
+					><span id="state">Ready</span>
+				</div>
+				<div
+					class="file-actions flex items-center gap-2.5 max-[760px]:flex-wrap max-[560px]:w-full max-[560px]:gap-1"
+				>
+					<button id="new">New</button
+					><label class="open-button" for="file"
+						>Open<input id="file" type="file" accept=".docx,.doc" hidden /></label
+					><button id="export-docx">Export DOCX</button
+					><button id="save" class="primary">Save</button>
+				</div>
+			</div>
+			<div class="editor-options">
+				<label><input id="readonly" type="checkbox" /> Read only</label
+				><span>Shared document editor</span>
+			</div>
+			<div id="editor"></div>
+			<p id="status" role="status" aria-live="polite">Open a document or begin writing.</p>
+			<details class="fidelity">
+				<summary>Format support and fidelity</summary>
+				<p>
+					This editor supports paragraphs, direct text formatting, alignment, simple tables and
+					basic page settings. It uses a continuous editing surface without Word pagination. Images,
+					lists, headers, footers, fields, tracked changes and other advanced features are not
+					rendered. Unsupported content is preserved when possible; edits that cannot be retained
+					safely are rejected with a warning. Legacy DOC editing is limited to imported paragraph
+					text. Export DOCX creates a new document from visible content.
+				</p>
+				<ul id="warnings"></ul>
+			</details>
+		</main>
+		<script type="module" src="./src.ts"></script>
+	</body>
+</html>

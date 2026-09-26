@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.playwright/
+playwright-report/
+test-results/
+artifacts/
+.release-types/

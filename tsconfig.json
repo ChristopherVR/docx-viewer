@@ -1,0 +1,32 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"strict": true,
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"resolveJsonModule": true,
+		"jsx": "react-jsx",
+		"experimentalDecorators": true,
+		"useDefineForClassFields": false,
+		"baseUrl": ".",
+		"paths": {
+			"@christophervr/docx-core": ["packages/core/src/index.ts"],
+			"@christophervr/docx-core/embedded": ["packages/core/src/embedded.ts"],
+			"@christophervr/docx-legacy": ["packages/legacy/src/index.ts"],
+			"@christophervr/docx-web-component": ["packages/web-component/src/index.ts"],
+			"@christophervr/docx-document": ["packages/document/src/index.ts"]
+		},
+		"types": ["node", "vitest/globals", "vite/client"]
+	},
+	"include": [
+		"packages/**/*.ts",
+		"packages/**/*.tsx",
+		"packages/**/*.svelte",
+		"demos/**/*.ts",
+		"tests/**/*.ts",
+		"*.ts"
+	]
+}

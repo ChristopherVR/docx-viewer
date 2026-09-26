@@ -1,0 +1,13 @@
+{
+	"name": "docx-viewer-docs",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"docs:build": "node ../scripts/build-pages.mjs",
+		"docs:dev": "vitepress dev .",
+		"docs:preview": "vitepress preview ."
+	},
+	"devDependencies": {
+		"vitepress": "^1.6.4"
+	}
+}

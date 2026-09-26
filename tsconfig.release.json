@@ -1,0 +1,18 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"noEmit": false,
+		"rootDir": ".",
+		"outDir": ".release-types",
+		"types": ["node", "vite/client"]
+	},
+	"include": ["packages/**/*.ts", "packages/**/*.tsx"],
+	"exclude": [
+		"packages/**/*.test.ts",
+		"packages/**/*.test.tsx",
+		"packages/**/__tests__/**",
+		"packages/**/dist/**"
+	]
+}

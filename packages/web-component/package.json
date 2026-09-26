@@ -1,0 +1,37 @@
+{
+	"name": "@christophervr/docx-web-component",
+	"version": "0.1.0",
+	"description": "Browser custom element for editing DOCX documents",
+	"license": "Apache-2.0",
+	"author": "ChristopherVR",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ChristopherVR/docx-viewer.git",
+		"directory": "packages/web-component"
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE",
+		"NOTICE"
+	],
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"dependencies": {
+		"@christophervr/docx-core": "0.1.0",
+		"@christophervr/docx-document": "0.1.0",
+		"prosemirror-commands": "^1.7.1",
+		"prosemirror-history": "^1.4.1",
+		"prosemirror-keymap": "^1.2.3",
+		"prosemirror-model": "^1.25.0",
+		"prosemirror-state": "^1.4.3",
+		"prosemirror-view": "^1.40.0"
+	}
+}
