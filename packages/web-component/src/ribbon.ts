@@ -1,9 +1,15 @@
+import type { TableCommand } from './table-commands';
+
 export type RibbonAction =
-	| { type: 'format'; key: 'bold' | 'italic' | 'underline' }
+	| {
+			type: 'format';
+			key: 'bold' | 'italic' | 'underline' | 'strike' | 'superscript' | 'subscript';
+	  }
 	| { type: 'history'; key: 'undo' | 'redo' }
 	| { type: 'align'; value: 'left' | 'center' | 'right' | 'justify' }
-	| { type: 'font'; key: 'family' | 'size' | 'color'; value: string }
+	| { type: 'font'; key: 'family' | 'size' | 'color' | 'highlight'; value: string }
 	| { type: 'clear' | 'table' }
+	| { type: 'tableEdit'; key: TableCommand }
 	| { type: 'page'; key: 'margin' | 'orientation'; value: string }
 	| { type: 'paragraph'; key: 'indent' | 'spacingBefore' | 'spacingAfter'; value: string }
 	| { type: 'zoom'; value: number };
@@ -56,7 +62,7 @@ export function createRibbon(): HTMLElement {
 	tabs.setAttribute('role', 'tablist');
 	tabs.setAttribute('aria-label', 'Ribbon tabs');
 	const panels = new Map<string, HTMLElement>();
-	for (const name of ['Home', 'Insert', 'Layout', 'View']) {
+	for (const name of ['Home', 'Insert', 'Layout', 'View', 'Table']) {
 		const id = `dve-tab-${name.toLowerCase()}`;
 		const tab = document.createElement('button');
 		tab.type = 'button';
@@ -128,6 +134,9 @@ export function createRibbon(): HTMLElement {
 			button('Bold', 'B', { type: 'format', key: 'bold' }, 'tool-bold'),
 			button('Italic', 'I', { type: 'format', key: 'italic' }, 'tool-italic'),
 			button('Underline', 'U', { type: 'format', key: 'underline' }, 'tool-underline'),
+			button('Strikethrough', 'S̶', { type: 'format', key: 'strike' }, 'tool-strike'),
+			button('Superscript', 'x²', { type: 'format', key: 'superscript' }),
+			button('Subscript', 'x₂', { type: 'format', key: 'subscript' }),
 			select(
 				'Font color',
 				[
@@ -141,9 +150,45 @@ export function createRibbon(): HTMLElement {
 				],
 				(value) => ({ type: 'font', key: 'color', value }),
 			),
+			select(
+				'Text highlight',
+				[
+					['none', 'No highlight'],
+					['yellow', 'Yellow'],
+					['green', 'Green'],
+					['cyan', 'Cyan'],
+					['magenta', 'Magenta'],
+					['blue', 'Blue'],
+					['red', 'Red'],
+					['darkBlue', 'Dark blue'],
+					['darkCyan', 'Dark cyan'],
+					['darkGreen', 'Dark green'],
+					['darkMagenta', 'Dark magenta'],
+					['darkRed', 'Dark red'],
+					['darkYellow', 'Dark yellow'],
+					['darkGray', 'Dark gray'],
+					['lightGray', 'Light gray'],
+					['black', 'Black'],
+					['white', 'White'],
+				],
+				(value) => ({ type: 'font', key: 'highlight', value }),
+			),
 			button('Clear formatting', 'Clear', { type: 'clear' }),
 		),
 	);
+	panels
+		.get('Table')!
+		.append(
+			group(
+				button('Insert row above', '↑ Row', { type: 'tableEdit', key: 'rowBefore' }),
+				button('Insert row below', '↓ Row', { type: 'tableEdit', key: 'rowAfter' }),
+				button('Delete row', '− Row', { type: 'tableEdit', key: 'deleteRow' }),
+				button('Insert column left', '← Column', { type: 'tableEdit', key: 'columnBefore' }),
+				button('Insert column right', '→ Column', { type: 'tableEdit', key: 'columnAfter' }),
+				button('Delete column', '− Column', { type: 'tableEdit', key: 'deleteColumn' }),
+				button('Delete table', 'Delete table', { type: 'tableEdit', key: 'deleteTable' }),
+			),
+		);
 	home.append(
 		group(
 			button('Decrease indent', '⇤', { type: 'paragraph', key: 'indent', value: 'decrease' }),
@@ -233,6 +278,7 @@ export function createRibbon(): HTMLElement {
 	root.querySelector<HTMLSelectElement>('[aria-label="Font family"]')!.value = 'Calibri';
 	root.querySelector<HTMLSelectElement>('[aria-label="Font size"]')!.value = '11';
 	root.querySelector<HTMLSelectElement>('[aria-label="Font color"]')!.value = '#000000';
+	root.querySelector<HTMLSelectElement>('[aria-label="Text highlight"]')!.value = 'none';
 	root.querySelector<HTMLSelectElement>('[aria-label="Zoom"]')!.value = '100';
 	root.prepend(tabs);
 	root.addEventListener('click', (event) => {

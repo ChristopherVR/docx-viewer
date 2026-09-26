@@ -177,6 +177,42 @@ describe('DOCX core', () => {
 		expect(savedFirst.runs[0].text).toBe('X\tY\nZ');
 	});
 
+	it('roundtrips direct strike, highlight and vertical alignment and clears edited values', async () => {
+		const zip = new JSZip();
+		zip.file(
+			'word/document.xml',
+			'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:rPr><w:strike/><w:highlight w:val="yellow"/><w:vertAlign w:val="superscript"/><w:lang w:val="en-US"/></w:rPr><w:t>Formatted</w:t></w:r><w:r><w:t> Plain</w:t></w:r></w:p><w:sectPr/></w:body></w:document>',
+		);
+		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
+		const paragraph = loaded.model.blocks[0];
+		if (paragraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		expect(paragraph.runs[0]).toMatchObject({
+			text: 'Formatted',
+			strike: true,
+			highlight: 'yellow',
+			verticalAlign: 'superscript',
+		});
+		paragraph.runs[0].strike = false;
+		paragraph.runs[0].highlight = undefined;
+		paragraph.runs[0].verticalAlign = 'subscript';
+		paragraph.runs[1].strike = true;
+		paragraph.runs[1].highlight = 'cyan';
+		const saved = await JSZip.loadAsync(await loaded.save());
+		const xml = (await saved.file('word/document.xml')?.async('string')) ?? '';
+		expect(xml.match(/<w:strike(?:\s|\/>|>)/g)).toHaveLength(1);
+		expect(xml).not.toContain('<w:highlight w:val="yellow"');
+		expect(xml).toContain('<w:vertAlign w:val="subscript"');
+		expect(xml).toContain('<w:highlight w:val="cyan"');
+		expect(xml).toContain('<w:lang w:val="en-US"');
+		const reopened = await loadDocx(await saved.generateAsync({ type: 'uint8array' }));
+		const savedParagraph = reopened.model.blocks[0];
+		if (savedParagraph.type !== 'paragraph') throw new Error('Expected a paragraph');
+		expect(savedParagraph.runs[0]).toMatchObject({ text: 'Formatted', verticalAlign: 'subscript' });
+		expect(savedParagraph.runs[0].strike).toBeUndefined();
+		expect(savedParagraph.runs[0].highlight).toBeUndefined();
+		expect(savedParagraph.runs[1]).toMatchObject({ strike: true, highlight: 'cyan' });
+	});
+
 	it('keeps unknown body nodes in place while blocks are reordered', async () => {
 		const zip = new JSZip();
 		zip.file(

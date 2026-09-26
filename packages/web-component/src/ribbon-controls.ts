@@ -45,6 +45,67 @@ export function syncFontControls(toolbar: HTMLElement, state: EditorState) {
 	}
 }
 
+/** Synchronize inline-format buttons and the highlight picker with the current selection. */
+export function syncFormatControls(toolbar: HTMLElement, state: EditorState) {
+	const marked = new Map<string, Set<boolean>>();
+	for (const key of ['bold', 'italic', 'underline', 'strike', 'verticalAlign'])
+		marked.set(key, new Set());
+	const highlights = new Set<string>();
+	const addMarks = (marks: readonly Mark[]) => {
+		for (const key of ['bold', 'italic', 'underline', 'strike'])
+			marked.get(key)!.add(marks.some((mark) => mark.type.name === key));
+		const align = marks.find((mark) => mark.type.name === 'verticalAlign');
+		marked.get('verticalAlign')!.add(Boolean(align));
+		highlights.add(marks.find((mark) => mark.type.name === 'highlight')?.attrs.color || 'none');
+	};
+	if (state.selection.empty) addMarks(state.storedMarks || state.selection.$from.marks());
+	else {
+		let found = false;
+		state.doc.nodesBetween(state.selection.from, state.selection.to, (node) => {
+			if (!node.isText) return;
+			found = true;
+			addMarks(node.marks);
+		});
+		if (!found) addMarks(state.selection.$from.marks());
+	}
+	const labels: Record<string, string> = {
+		bold: 'Bold',
+		italic: 'Italic',
+		underline: 'Underline',
+		strike: 'Strikethrough',
+	};
+	for (const [key, label] of Object.entries(labels)) {
+		const values = marked.get(key)!;
+		toolbar
+			.querySelector(`[aria-label="${label}"]`)
+			?.setAttribute('aria-pressed', String(values.size === 1 && values.has(true)));
+	}
+	const superButton = toolbar.querySelector('[aria-label="Superscript"]');
+	const subButton = toolbar.querySelector('[aria-label="Subscript"]');
+	const aligns = new Set<string>();
+	if (state.selection.empty) {
+		const align = (state.storedMarks || state.selection.$from.marks()).find(
+			(mark) => mark.type.name === 'verticalAlign',
+		);
+		aligns.add(align?.attrs.value || 'none');
+	} else {
+		let found = false;
+		state.doc.nodesBetween(state.selection.from, state.selection.to, (node) => {
+			if (!node.isText) return;
+			found = true;
+			aligns.add(
+				node.marks.find((mark) => mark.type.name === 'verticalAlign')?.attrs.value || 'none',
+			);
+		});
+		if (!found) aligns.add('none');
+	}
+	superButton?.setAttribute('aria-pressed', String(aligns.size === 1 && aligns.has('superscript')));
+	subButton?.setAttribute('aria-pressed', String(aligns.size === 1 && aligns.has('subscript')));
+	const highlight = toolbar.querySelector<HTMLSelectElement>('[aria-label="Text highlight"]');
+	if (highlight && highlights.size === 1) highlight.value = [...highlights][0];
+	else if (highlight) highlight.selectedIndex = -1;
+}
+
 export function syncParagraphControls(toolbar: HTMLElement, state: EditorState) {
 	const values: Record<'Spacing before' | 'Spacing after', Set<string>> = {
 		'Spacing before': new Set(),

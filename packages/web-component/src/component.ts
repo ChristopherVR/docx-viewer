@@ -1,4 +1,4 @@
-import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorState, Transaction, type Command } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { history, undo, redo } from 'prosemirror-history';
 import { baseKeymap, toggleMark } from 'prosemirror-commands';
@@ -8,7 +8,7 @@ import { createDocument, saveDocx } from '@christophervr/docx-core';
 import { loadDocument } from '@christophervr/docx-document';
 import { schema } from './schema';
 import { createRibbon, type RibbonAction } from './ribbon';
-import { syncFontControls, syncParagraphControls } from './ribbon-controls';
+import { syncFontControls, syncParagraphControls, syncFormatControls } from './ribbon-controls';
 import {
 	applyFont,
 	applyPageStyles,
@@ -19,6 +19,8 @@ import {
 } from './ribbon-commands';
 import { assignMissingParagraphIds, docToModel, modelToDoc } from './model-adapter';
 import styleText from './style.css?inline';
+import { applyHighlight, toggleVerticalAlign } from './inline-commands';
+import { executeTableCommand, canExecuteTableCommand } from './table-commands';
 
 const HTMLElementBase: typeof HTMLElement =
 	typeof HTMLElement === 'undefined' ? (class {} as typeof HTMLElement) : HTMLElement;
@@ -26,7 +28,12 @@ const markCommands = {
 	bold: toggleMark(schema.marks.bold),
 	italic: toggleMark(schema.marks.italic),
 	underline: toggleMark(schema.marks.underline),
+	strike: toggleMark(schema.marks.strike),
 };
+const editableCommand =
+	(command: Command): Command =>
+	(state, dispatch, view) =>
+		view?.editable === false ? false : command(state, dispatch, view);
 
 export class DocxEditorElement extends HTMLElementBase {
 	private model: DocumentModel = createDocument();
@@ -136,8 +143,19 @@ export class DocxEditorElement extends HTMLElementBase {
 			doc: modelToDoc(this.model),
 			plugins: [
 				history(),
-				keymap({ 'Mod-z': undo, 'Mod-y': redo, 'Mod-Shift-z': redo }),
-				keymap(baseKeymap),
+				keymap(
+					Object.fromEntries(
+						Object.entries({
+							...baseKeymap,
+							'Mod-z': undo,
+							'Mod-y': redo,
+							'Mod-Shift-z': redo,
+							'Mod-b': markCommands.bold,
+							'Mod-i': markCommands.italic,
+							'Mod-u': markCommands.underline,
+						}).map(([key, command]) => [key, editableCommand(command)]),
+					),
+				),
 			],
 		});
 		this.view = new EditorView(this.paper, {
@@ -193,11 +211,15 @@ export class DocxEditorElement extends HTMLElementBase {
 	private handleRibbonAction(action: RibbonAction) {
 		if (this._readOnly && action.type !== 'zoom') return;
 		if (action.type === 'format') {
-			const command = markCommands[action.key];
-			this.command(command);
+			if (action.key === 'superscript' || action.key === 'subscript') {
+				if (this.view) toggleVerticalAlign(this.view, action.key);
+			} else this.command(markCommands[action.key]);
 		} else if (action.type === 'align') this.setAlignment(action.value);
 		else if (action.type === 'history') this.command(action.key === 'undo' ? undo : redo);
-		else if (action.type === 'font' && this.view) applyFont(this.view, action.key, action.value);
+		else if (action.type === 'font' && this.view) {
+			if (action.key === 'highlight') applyHighlight(this.view, action.value);
+			else applyFont(this.view, action.key, action.value);
+		} else if (action.type === 'tableEdit' && this.view) executeTableCommand(this.view, action.key);
 		else if (action.type === 'clear' && this.view) clearFormatting(this.view);
 		else if (action.type === 'table' && this.view) insertTable(this.view);
 		else if (action.type === 'page') this.setPage(action.key, action.value);
@@ -224,32 +246,15 @@ export class DocxEditorElement extends HTMLElementBase {
 			});
 		if (!this.view) return;
 		const { state } = this.view;
-		const { from, to, empty } = state.selection;
-		const active = (mark: string) => {
-			if (empty)
-				return (state.storedMarks || state.selection.$from.marks()).some(
-					(item) => item.type.name === mark,
-				);
-			let found = false;
-			let all = true;
-			state.doc.nodesBetween(from, to, (node) => {
-				if (!node.isText) return;
-				found = true;
-				if (!node.marks.some((item) => item.type.name === mark)) all = false;
-			});
-			return found && all;
-		};
-		const marks = [
-			['Bold', 'bold'],
-			['Italic', 'italic'],
-			['Underline', 'underline'],
-		];
-		for (const [label, mark] of marks) {
-			this.toolbar
-				?.querySelector(`[aria-label="${label}"]`)
-				?.setAttribute('aria-pressed', String(active(mark)));
-		}
 		if (this.toolbar) {
+			syncFormatControls(this.toolbar, state);
+			for (const button of this.toolbar.querySelectorAll<HTMLButtonElement>(
+				'button[data-action]',
+			)) {
+				const action = JSON.parse(button.dataset.action!) as RibbonAction;
+				if (action.type === 'tableEdit')
+					button.disabled = this._readOnly || !canExecuteTableCommand(this.view, action.key);
+			}
 			syncFontControls(this.toolbar, state);
 			syncParagraphControls(this.toolbar, state);
 		}

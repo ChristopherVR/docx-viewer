@@ -1,7 +1,19 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
-import type { Block, DocumentModel, Paragraph, TextRun } from './model.js';
-import { children, first, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
+import type { Block, DocumentModel, Paragraph } from './model.js';
+import {
+	children,
+	elements,
+	first,
+	getW,
+	makeW,
+	type XmlDocument,
+	type XmlElement,
+	WORD_NS,
+} from './xml.js';
 import { writeParagraphProperties } from './write-paragraph-properties.js';
+import { writeTable as writeTableContent } from './write-table.js';
+import { createRun } from './write-run.js';
+import { isWordHighlightToken } from './highlight.js';
 
 const twips = (pixels: number): string => String(Math.round(pixels * 15));
 function setAttribute(element: XmlElement, local: string, value: string): void {
@@ -9,85 +21,6 @@ function setAttribute(element: XmlElement, local: string, value: string): void {
 }
 function removeChildren(element: XmlElement, local: string): void {
 	for (const child of children(element, local)) element.removeChild(child);
-}
-function setToggle(doc: XmlDocument, props: XmlElement, local: string, enabled: boolean): void {
-	removeChildren(props, local);
-	if (enabled) props.appendChild(makeW(doc, local));
-}
-
-function setRunProperties(
-	doc: XmlDocument,
-	runNode: XmlElement,
-	run: TextRun,
-	base?: TextRun,
-): void {
-	let props = first(runNode, 'rPr');
-	const changed = (key: keyof TextRun): boolean => !base || run[key] !== base[key];
-	if (
-		!props &&
-		(run.bold || run.italic || run.underline || run.fontSize || run.fontFamily || run.color)
-	) {
-		props = makeW(doc, 'rPr');
-		runNode.insertBefore(props, runNode.firstChild);
-	}
-	if (!props) return;
-	if (changed('bold')) setToggle(doc, props, 'b', run.bold === true);
-	if (changed('italic')) setToggle(doc, props, 'i', run.italic === true);
-	if (changed('underline')) {
-		removeChildren(props, 'u');
-		if (run.underline) {
-			const underline = makeW(doc, 'u');
-			setAttribute(underline, 'val', 'single');
-			props.appendChild(underline);
-		}
-	}
-	if (changed('fontSize')) {
-		removeChildren(props, 'sz');
-		if (run.fontSize !== undefined) {
-			const size = makeW(doc, 'sz');
-			setAttribute(size, 'val', String(Math.round(run.fontSize * 2)));
-			props.appendChild(size);
-		}
-	}
-	if (changed('fontFamily')) {
-		removeChildren(props, 'rFonts');
-		if (run.fontFamily) {
-			const fonts = makeW(doc, 'rFonts');
-			setAttribute(fonts, 'ascii', run.fontFamily);
-			setAttribute(fonts, 'hAnsi', run.fontFamily);
-			props.appendChild(fonts);
-		}
-	}
-	if (changed('color')) {
-		removeChildren(props, 'color');
-		if (run.color) {
-			const color = makeW(doc, 'color');
-			setAttribute(color, 'val', run.color.replace(/^#/, ''));
-			props.appendChild(color);
-		}
-	}
-	if (!props.childNodes.length) runNode.removeChild(props);
-}
-
-function createRun(doc: XmlDocument, run: TextRun, base?: TextRun, old?: XmlElement): XmlElement {
-	const node = old ?? makeW(doc, 'r');
-	setRunProperties(doc, node, run, base);
-	for (const child of Array.from(node.childNodes))
-		if (child.nodeType !== 1 || (child as XmlElement).localName !== 'rPr') node.removeChild(child);
-	const pieces = run.text.split(/(\n|\t)/);
-	for (const piece of pieces) {
-		if (piece === '\n') node.appendChild(makeW(doc, 'br'));
-		else if (piece === '\t') node.appendChild(makeW(doc, 'tab'));
-		else if (piece) {
-			const text = makeW(doc, 't');
-			if (/^\s|\s$/.test(piece))
-				text.setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:space', 'preserve');
-			text.appendChild(doc.createTextNode(piece));
-			node.appendChild(text);
-		}
-	}
-	if (!run.text) node.appendChild(makeW(doc, 't'));
-	return node;
 }
 
 function hasUnsafeInline(paragraph: XmlElement): boolean {
@@ -104,6 +37,78 @@ function hasUnsafeInline(paragraph: XmlElement): boolean {
 		}
 	}
 	return false;
+}
+
+const modeledRunProperties = new Set([
+	'b',
+	'i',
+	'strike',
+	'u',
+	'highlight',
+	'vertAlign',
+	'sz',
+	'rFonts',
+	'color',
+]);
+function hasUnexpectedAttributes(element: XmlElement, allowed: string[]): boolean {
+	for (const attribute of Array.from(element.attributes)) {
+		if (attribute.namespaceURI === 'http://www.w3.org/2000/xmlns/') continue;
+		if (attribute.namespaceURI !== WORD_NS || !allowed.includes(attribute.localName)) return true;
+	}
+	return false;
+}
+function runHasUnknownProperties(run: XmlElement): boolean {
+	const properties = first(run, 'rPr');
+	if (!properties) return false;
+	if (hasUnexpectedAttributes(properties, [])) return true;
+	for (const node of Array.from(properties.childNodes)) {
+		if (node.nodeType !== 1) {
+			if (node.nodeType === 3 && node.textContent?.trim()) return true;
+			continue;
+		}
+		const property = node as XmlElement;
+		if (property.namespaceURI !== WORD_NS || !modeledRunProperties.has(property.localName))
+			return true;
+		const allowed =
+			property.localName === 'rFonts'
+				? ['ascii', 'hAnsi']
+				: ['b', 'i', 'strike', 'u', 'highlight', 'vertAlign', 'sz', 'color'].includes(
+							property.localName,
+					  )
+					? ['val']
+					: [];
+		if (hasUnexpectedAttributes(property, allowed) || elements(property).length > 0) return true;
+		const value = getW(property, 'val');
+		if (property.localName === 'highlight' && value && !isWordHighlightToken(value)) return true;
+		if (property.localName === 'vertAlign' && value !== 'superscript' && value !== 'subscript')
+			return true;
+		if (
+			property.localName === 'u' &&
+			value &&
+			!['single', 'none', '0', 'false', 'off', '1', 'true', 'on'].includes(value)
+		)
+			return true;
+		if (property.localName === 'sz' && value && !/^\d+$/.test(value)) return true;
+		if (property.localName === 'color' && value && !/^[0-9a-f]{6}$/i.test(value)) return true;
+	}
+	return false;
+}
+
+function rejectUnsafeRunSegmentation(
+	paragraph: Paragraph,
+	base: Paragraph | undefined,
+	oldRuns: XmlElement[],
+): void {
+	if (!base || !oldRuns.some(runHasUnknownProperties)) return;
+	const sameText =
+		paragraph.runs.map((run) => run.text).join('') === base.runs.map((run) => run.text).join('');
+	const sameBoundaries =
+		paragraph.runs.length === base.runs.length &&
+		paragraph.runs.every((run, index) => run.text === base.runs[index]?.text);
+	if (sameBoundaries || (!sameText && paragraph.runs.length === base.runs.length)) return;
+	throw new Error(
+		`Cannot edit paragraph ${paragraph.id}: changing run boundaries could drop unsupported run properties. The original DOCX package remains unchanged.`,
+	);
 }
 
 function writeParagraph(
@@ -140,6 +145,7 @@ function writeParagraph(
 	}
 	writeParagraphProperties(doc, pPr, paragraph, base);
 	const oldRuns = children(node, 'r');
+	rejectUnsafeRunSegmentation(paragraph, base, oldRuns);
 	for (const run of oldRuns) node.removeChild(run);
 	const newRuns = paragraph.runs.map((run, i) => createRun(doc, run, base?.runs[i], oldRuns[i]));
 	let anchor: any = pPr;
@@ -189,41 +195,6 @@ function replaceSlots(
 	for (const node of nextNodes.slice(shared)) parent.insertBefore(node, insertionAnchor);
 }
 
-function writeTable(
-	doc: XmlDocument,
-	table: Extract<Block, { type: 'table' }>,
-	node: XmlElement,
-	base?: Extract<Block, { type: 'table' }>,
-): XmlElement {
-	if (base && JSON.stringify(table) === JSON.stringify(base)) return node;
-	const oldRows = children(node, 'tr');
-	const nextRows: XmlElement[] = [];
-	table.rows.forEach((row, ri) => {
-		const tr = oldRows[ri] ?? makeW(doc, 'tr');
-		const oldCells = children(tr, 'tc');
-		const nextCells: XmlElement[] = [];
-		row.forEach((cell, ci) => {
-			const tc = oldCells[ci] ?? makeW(doc, 'tc');
-			const oldParagraphs = children(tc, 'p');
-			const nextParagraphs = cell.paragraphs.map((paragraph, pi) =>
-				writeParagraph(
-					doc,
-					paragraph,
-					oldParagraphs[pi] ?? makeW(doc, 'p'),
-					base?.rows[ri]?.[ci]?.paragraphs.find((candidate) => candidate.id === paragraph.id),
-				),
-			);
-			if (!nextParagraphs.length && !oldParagraphs.length) nextParagraphs.push(makeW(doc, 'p'));
-			replaceSlots(doc, tc, oldParagraphs, nextParagraphs);
-			nextCells.push(tc);
-		});
-		replaceSlots(doc, tr, oldCells, nextCells);
-		nextRows.push(tr);
-	});
-	replaceSlots(doc, node, oldRows, nextRows);
-	return node;
-}
-
 function baseMap(blocks: Block[]): Map<string, Block> {
 	return new Map(blocks.map((block) => [block.id, block]));
 }
@@ -258,7 +229,14 @@ export function applyModel(doc: XmlDocument, model: DocumentModel, original: Blo
 		else
 			output.push(
 				old
-					? writeTable(doc, block, old, base?.type === 'table' ? base : undefined)
+					? writeTableContent(
+							doc,
+							block,
+							old,
+							base?.type === 'table' ? base : undefined,
+							writeParagraph,
+							replaceSlots,
+						)
 					: createTable(doc, block),
 			);
 	}

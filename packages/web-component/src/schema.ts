@@ -1,4 +1,5 @@
 import { Schema } from 'prosemirror-model';
+import { isWordHighlightToken, type WordHighlightToken } from '@christophervr/docx-core';
 
 function parseFontSize(value: string): number | null {
 	const match = /^\s*(\d+(?:\.\d+)?)\s*(pt|px)?\s*$/i.exec(value);
@@ -10,6 +11,26 @@ function parseFontSize(value: string): number | null {
 const safeCssValue = (value: unknown): string => String(value ?? '').replace(/[;{}]/g, '');
 const twipsCss = (value: unknown): string | null =>
 	Number.isSafeInteger(value) ? `${Number(value) / 15}px` : null;
+
+/** Word's highlight palette tokens mapped to stable browser colors. */
+export const wordHighlightColors = {
+	black: '#000000',
+	blue: '#0000ff',
+	cyan: '#00ffff',
+	green: '#00ff00',
+	magenta: '#ff00ff',
+	red: '#ff0000',
+	yellow: '#ffff00',
+	white: '#ffffff',
+	darkBlue: '#000080',
+	darkCyan: '#008080',
+	darkGreen: '#008000',
+	darkMagenta: '#800080',
+	darkRed: '#800000',
+	darkYellow: '#808000',
+	darkGray: '#808080',
+	lightGray: '#c0c0c0',
+} satisfies Record<Exclude<WordHighlightToken, 'none'>, string>;
 
 function paragraphStyle(attrs: Record<string, unknown>): string {
 	const declarations = [
@@ -91,7 +112,7 @@ export const schema = new Schema({
 		table: {
 			content: 'tableRow+',
 			group: 'block',
-			attrs: { id: { default: '' } },
+			attrs: { id: { default: '' }, structureEditable: { default: true } },
 			parseDOM: [{ tag: 'table' }],
 			toDOM: () => ['table', ['tbody', 0]],
 		},
@@ -106,6 +127,43 @@ export const schema = new Schema({
 		bold: { parseDOM: [{ tag: 'strong' }, { tag: 'b' }], toDOM: () => ['strong', 0] },
 		italic: { parseDOM: [{ tag: 'em' }, { tag: 'i' }], toDOM: () => ['em', 0] },
 		underline: { parseDOM: [{ tag: 'u' }], toDOM: () => ['u', 0] },
+		strike: {
+			parseDOM: [{ tag: 's' }, { tag: 'del' }, { style: 'text-decoration=line-through' }],
+			toDOM: () => ['s', 0],
+		},
+		highlight: {
+			attrs: { color: { default: null } },
+			parseDOM: [
+				{
+					tag: 'span[style*="background-color"]',
+					getAttrs: (el) => {
+						const color = (el as HTMLElement).style.backgroundColor.toLowerCase();
+						const entry = Object.entries(wordHighlightColors).find(([, css]) => {
+							const hex = css.slice(1);
+							const rgb = `rgb(${parseInt(hex.slice(0, 2), 16)}, ${parseInt(hex.slice(2, 4), 16)}, ${parseInt(hex.slice(4, 6), 16)})`;
+							return css.toLowerCase() === color || rgb === color;
+						});
+						return entry ? { color: entry[0] } : false;
+					},
+				},
+			],
+			toDOM: (mark) => {
+				const value = String(mark.attrs.color || '');
+				const token = isWordHighlightToken(value) && value !== 'none' ? value : null;
+				return token
+					? ['span', { style: `background-color:${wordHighlightColors[token]}` }, 0]
+					: ['span', 0];
+			},
+		},
+		verticalAlign: {
+			attrs: { value: { default: 'superscript' } },
+			excludes: 'verticalAlign',
+			parseDOM: [
+				{ tag: 'sup', attrs: { value: 'superscript' } },
+				{ tag: 'sub', attrs: { value: 'subscript' } },
+			],
+			toDOM: (mark) => [mark.attrs.value === 'subscript' ? 'sub' : 'sup', 0],
+		},
 		font: {
 			attrs: { family: { default: null }, size: { default: null }, color: { default: null } },
 			parseDOM: [

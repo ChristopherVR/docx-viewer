@@ -10,6 +10,10 @@ function paragraphNode(paragraph: Paragraph) {
 			if (run.bold) marks.push(schema.marks.bold.create());
 			if (run.italic) marks.push(schema.marks.italic.create());
 			if (run.underline) marks.push(schema.marks.underline.create());
+			if (run.strike) marks.push(schema.marks.strike.create());
+			if (run.highlight) marks.push(schema.marks.highlight.create({ color: run.highlight }));
+			if (run.verticalAlign)
+				marks.push(schema.marks.verticalAlign.create({ value: run.verticalAlign }));
 			if (run.fontFamily || run.fontSize || run.color) {
 				marks.push(
 					schema.marks.font.create({
@@ -52,7 +56,15 @@ export function modelToDoc(model: DocumentModel) {
 				row.map((cell) => schema.node('tableCell', null, cell.paragraphs.map(paragraphNode))),
 			),
 		);
-		return schema.node('table', { id: block.id }, rows);
+		return schema.node(
+			'table',
+			{
+				id: block.id,
+				structureEditable:
+					(block as Table & { structureEditable?: boolean }).structureEditable !== false,
+			},
+			rows,
+		);
 	});
 	return schema.node(
 		'doc',
@@ -76,12 +88,16 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 				bold: run.bold || undefined,
 				italic: run.italic || undefined,
 				underline: run.underline || undefined,
+				strike: run.strike || undefined,
 			};
 			const previous = result.at(-1);
 			const fields: (keyof TextRun)[] = [
 				'bold',
 				'italic',
 				'underline',
+				'strike',
+				'highlight',
+				'verticalAlign',
 				'fontFamily',
 				'fontSize',
 				'color',
@@ -97,6 +113,9 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 		'bold',
 		'italic',
 		'underline',
+		'strike',
+		'highlight',
+		'verticalAlign',
 		'fontFamily',
 		'fontSize',
 		'color',
@@ -130,6 +149,11 @@ export function docToModel(
 			if (child.marks.some((mark) => mark.type.name === 'bold')) run.bold = true;
 			if (child.marks.some((mark) => mark.type.name === 'italic')) run.italic = true;
 			if (child.marks.some((mark) => mark.type.name === 'underline')) run.underline = true;
+			if (child.marks.some((mark) => mark.type.name === 'strike')) run.strike = true;
+			const highlight = child.marks.find((mark) => mark.type.name === 'highlight');
+			if (highlight?.attrs.color) run.highlight = highlight.attrs.color;
+			const verticalAlign = child.marks.find((mark) => mark.type.name === 'verticalAlign');
+			if (verticalAlign?.attrs.value) run.verticalAlign = verticalAlign.attrs.value;
 			const font = child.marks.find((mark) => mark.type.name === 'font');
 			if (font?.attrs.family) run.fontFamily = font.attrs.family;
 			if (font?.attrs.size) run.fontSize = font.attrs.size;
@@ -139,6 +163,9 @@ export function docToModel(
 				'bold',
 				'italic',
 				'underline',
+				'strike',
+				'highlight',
+				'verticalAlign',
 				'fontFamily',
 				'fontSize',
 				'color',
@@ -216,7 +243,12 @@ export function docToModel(
 				});
 				rows.push(cells);
 			});
-			blocks.push({ type: 'table', id: String(node.attrs.id || `t-edit-${++nextId}`), rows });
+			blocks.push({
+				type: 'table',
+				id: String(node.attrs.id || `t-edit-${++nextId}`),
+				rows,
+				...(node.attrs.structureEditable === false ? { structureEditable: false } : {}),
+			} as Table);
 		}
 	});
 	return {

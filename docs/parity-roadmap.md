@@ -6,6 +6,16 @@ Parity is measured separately for import, visual layout, editing, export, preser
 
 Shared editor, five lifecycle adapters, DOCX paragraphs/direct formatting/alignment/simple tables, a restricted plain-paragraph DOC text path, no-op preservation, original-format save, shared CFB and legacy Word binary code, unit and browser contracts. The editor currently uses a continuous editing surface and does not reproduce Word pagination. This establishes the architecture; it is not a Word replacement release.
 
+Direct formatting includes bold, italic, underline, strikethrough, highlight,
+superscript/subscript, font family/size/color and paragraph spacing/indentation.
+Highlight values follow the [WordprocessingML color enumeration](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.highlightcolorvalues?view=openxml-3.0.1).
+Simple rectangular tables support row/column insertion and deletion, whole-table
+deletion, and independent undo/redo. Existing cell XML follows retained paragraph
+identities when rows or columns move. Merged, nested and complex imported tables
+disable structural commands; export independently checks the source XML. Widths,
+borders and other unmodeled table styling are retained where supported, but are
+not rendered with Word layout fidelity or exposed as editing controls.
+
 ## 2. Fidelity and document model
 
 Resolve document defaults, paragraph/character styles, theme fonts/colors, numbering and tabs. Model sections, breaks, headers/footers, images, relationships, hyperlinks, notes and merged tables. Use ordered OOXML preservation with explicit unsupported-edit errors. Introduce Word-authored fixtures with corresponding expected text and package checks before extending each feature.

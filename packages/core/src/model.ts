@@ -4,6 +4,10 @@ export interface TextRun {
 	bold?: boolean;
 	italic?: boolean;
 	underline?: boolean;
+	strike?: boolean;
+	/** Word named highlight color, such as `yellow` or `lightGray`. */
+	highlight?: string;
+	verticalAlign?: 'superscript' | 'subscript';
 	/** Font size in points. */
 	fontSize?: number;
 	fontFamily?: string;
@@ -36,6 +40,8 @@ export interface TableCell {
 export interface Table {
 	type: 'table';
 	id: string;
+	/** Whether row, cell and paragraph structure can be edited without losing unsupported table XML. */
+	structureEditable?: boolean;
 	rows: TableCell[][];
 }
 export type Block = Paragraph | Table;

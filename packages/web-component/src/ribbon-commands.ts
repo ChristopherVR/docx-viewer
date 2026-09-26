@@ -1,5 +1,6 @@
 import type { DocumentModel } from '@christophervr/docx-core';
 import type { EditorView } from 'prosemirror-view';
+import { closeHistory } from 'prosemirror-history';
 import { schema } from './schema';
 
 export function applyFont(view: EditorView, key: 'family' | 'size' | 'color', value: string) {
@@ -57,7 +58,7 @@ export function insertTable(view: EditorView) {
 			),
 		),
 	);
-	view.dispatch(view.state.tr.replaceSelectionWith(table).scrollIntoView());
+	view.dispatch(closeHistory(view.state.tr.replaceSelectionWith(table)).scrollIntoView());
 }
 
 export function updatePage(view: EditorView, key: 'margin' | 'orientation', value: string) {
@@ -89,6 +90,12 @@ export function updateParagraphs(
 	value: string,
 ) {
 	const { state } = view;
+	if (
+		key !== 'indent' &&
+		value !== 'inherit' &&
+		(!Number.isFinite(Number(value)) || Number(value) < 0)
+	)
+		return;
 	const positions: number[] = [];
 	state.doc.nodesBetween(state.selection.from, state.selection.to, (node, pos) => {
 		if (node.type.name === 'paragraph') positions.push(pos);
@@ -106,17 +113,17 @@ export function updateParagraphs(
 			const next = Math.max(0, current + (value === 'increase' ? 360 : -360));
 			transaction = transaction.setNodeMarkup(pos, undefined, {
 				...node.attrs,
-				[attr]: next || null,
+				[attr]: next,
 			});
 		} else if (key === 'spacingAfter') {
 			transaction = transaction.setNodeMarkup(pos, undefined, {
 				...node.attrs,
-				spacingAfterTwips: Number(value),
+				spacingAfterTwips: value === 'inherit' ? null : Number(value),
 			});
 		} else {
 			transaction = transaction.setNodeMarkup(pos, undefined, {
 				...node.attrs,
-				spacingBeforeTwips: Number(value),
+				spacingBeforeTwips: value === 'inherit' ? null : Number(value),
 			});
 		}
 	}

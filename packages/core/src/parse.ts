@@ -22,6 +22,7 @@ import {
 	WORD_NS,
 } from './xml.js';
 import { remember, saveDocx } from './save.js';
+import { canEditTableStructure } from './write-table.js';
 
 const px = (twips: string | undefined, fallback: number): number =>
 	twips === undefined ? fallback : (Number(twips) * 96) / 1440;
@@ -56,6 +57,12 @@ function parseRun(node: XmlElement): TextRun {
 	if (props && on(first(props, 'b'))) run.bold = true;
 	if (props && on(first(props, 'i'))) run.italic = true;
 	if (props && on(first(props, 'u'))) run.underline = true;
+	if (props && on(first(props, 'strike') ?? first(props, 'dstrike'))) run.strike = true;
+	const highlight = getW(first(props, 'highlight'), 'val');
+	if (highlight) run.highlight = highlight;
+	const verticalAlign = getW(first(props, 'vertAlign'), 'val');
+	if (verticalAlign === 'superscript' || verticalAlign === 'subscript')
+		run.verticalAlign = verticalAlign;
 	const size = points(getW(first(props, 'sz'), 'val'));
 	if (size !== undefined) run.fontSize = size;
 	const fonts = first(props, 'rFonts');
@@ -116,7 +123,7 @@ function parseTable(node: XmlElement, id: string): Table {
 			paragraphs: children(cell, 'p').map((p, pi) => parseParagraph(p, `${id}-r${ri}c${ci}p${pi}`)),
 		})),
 	);
-	return { type: 'table', id, rows };
+	return { type: 'table', id, rows, structureEditable: canEditTableStructure(node) };
 }
 
 function hasAny(document: XmlDocument, names: string[]): boolean {
@@ -212,6 +219,10 @@ export async function readPackage(
 	if (blocks.some((block) => block.type === 'table'))
 		model.warnings.push(
 			'Table text and cell structure are supported; table widths, borders, shading and cell formatting are not modeled.',
+		);
+	if (blocks.some((block) => block.type === 'table' && !block.structureEditable))
+		model.warnings.push(
+			'Merged, nested, or complex tables can be read, but their row and column structure cannot be edited safely.',
 		);
 	const context = { original, sourceXml, base: structuredClone(model) };
 	remember(model, context);
