@@ -1,4 +1,5 @@
 import type { TableCommand } from './table-commands';
+import { lineSpacingOptions } from './line-spacing';
 
 export type RibbonAction =
 	| {
@@ -11,7 +12,11 @@ export type RibbonAction =
 	| { type: 'clear' | 'table' }
 	| { type: 'tableEdit'; key: TableCommand }
 	| { type: 'page'; key: 'margin' | 'orientation'; value: string }
-	| { type: 'paragraph'; key: 'indent' | 'spacingBefore' | 'spacingAfter'; value: string }
+	| {
+			type: 'paragraph';
+			key: 'indent' | 'spacingBefore' | 'spacingAfter' | 'lineSpacing';
+			value: string;
+	  }
 	| { type: 'zoom'; value: number };
 
 const button = (label: string, text: string, action: RibbonAction, className = '') => {
@@ -196,25 +201,30 @@ export function createRibbon(): HTMLElement {
 			select(
 				'Spacing after',
 				[
-					['inherit', 'Style default'],
-					['0', 'No paragraph space'],
-					['120', '6 pt after'],
-					['240', '12 pt after'],
-					['360', '18 pt after'],
+					['inherit', 'After: style default'],
+					['0', 'After: no paragraph space'],
+					['120', 'After: 6 pt'],
+					['240', 'After: 12 pt'],
+					['360', 'After: 18 pt'],
 				],
 				(value) => ({ type: 'paragraph', key: 'spacingAfter', value }),
 			),
 			select(
 				'Spacing before',
 				[
-					['inherit', 'Style default'],
-					['0', 'No paragraph space'],
-					['120', '6 pt before'],
-					['240', '12 pt before'],
-					['360', '18 pt before'],
+					['inherit', 'Before: style default'],
+					['0', 'Before: no paragraph space'],
+					['120', 'Before: 6 pt'],
+					['240', 'Before: 12 pt'],
+					['360', 'Before: 18 pt'],
 				],
 				(value) => ({ type: 'paragraph', key: 'spacingBefore', value }),
 			),
+			select('Line spacing', lineSpacingOptions, (value) => ({
+				type: 'paragraph',
+				key: 'lineSpacing',
+				value,
+			})),
 		),
 	);
 	home.append(

@@ -45,7 +45,7 @@ function paragraphStyle(attrs: Record<string, unknown>): string {
 		twipsCss(attrs.hangingTwips) && `text-indent:-${twipsCss(attrs.hangingTwips)}`,
 		Number.isSafeInteger(attrs.lineSpacingTwips) &&
 			`line-height:${
-				attrs.lineSpacingRule === 'auto'
+				attrs.lineSpacingRule == null || attrs.lineSpacingRule === 'auto'
 					? Number(attrs.lineSpacingTwips) / 240
 					: attrs.lineSpacingRule === 'atLeast'
 						? `max(1.35em, ${Number(attrs.lineSpacingTwips) / 15}px)`
@@ -109,6 +109,15 @@ export const schema = new Schema({
 			toDOM: (node) => ['p', { style: paragraphStyle(node.attrs), 'data-id': node.attrs.id }, 0],
 		},
 		text: { group: 'inline' },
+		hardBreak: {
+			group: 'inline',
+			inline: true,
+			atom: true,
+			selectable: false,
+			leafText: () => '\n',
+			parseDOM: [{ tag: 'br' }],
+			toDOM: () => ['br'],
+		},
 		table: {
 			content: 'tableRow+',
 			group: 'block',

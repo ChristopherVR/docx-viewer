@@ -1,6 +1,7 @@
 import type { EditorState } from 'prosemirror-state';
 import type { Mark } from 'prosemirror-model';
 import { schema } from './schema';
+import { lineSpacingLabel, lineSpacingValue } from './line-spacing';
 
 export function syncFontControls(toolbar: HTMLElement, state: EditorState) {
 	const type = schema.marks.font;
@@ -107,13 +108,15 @@ export function syncFormatControls(toolbar: HTMLElement, state: EditorState) {
 }
 
 export function syncParagraphControls(toolbar: HTMLElement, state: EditorState) {
-	const values: Record<'Spacing before' | 'Spacing after', Set<string>> = {
+	const values: Record<'Spacing before' | 'Spacing after' | 'Line spacing', Set<string>> = {
 		'Spacing before': new Set(),
 		'Spacing after': new Set(),
+		'Line spacing': new Set(),
 	};
 	const add = (attrs: Record<string, unknown>) => {
 		values['Spacing before'].add(String(attrs.spacingBeforeTwips ?? 'inherited'));
 		values['Spacing after'].add(String(attrs.spacingAfterTwips ?? 'inherited'));
+		values['Line spacing'].add(lineSpacingValue(attrs));
 	};
 	if (state.selection.empty) add(state.selection.$from.parent.attrs);
 	else {
@@ -125,12 +128,21 @@ export function syncParagraphControls(toolbar: HTMLElement, state: EditorState) 
 		const control = toolbar.querySelector<HTMLSelectElement>(`[aria-label="${label}"]`);
 		if (!control) continue;
 		const distinct = [...values[label]];
+		if (label === 'Line spacing') {
+			for (const value of distinct) {
+				if ([...control.options].some((option) => option.value === value)) continue;
+				const option = document.createElement('option');
+				option.value = value;
+				option.textContent = lineSpacingLabel(value);
+				control.append(option);
+			}
+		}
 		if (distinct.length !== 1) {
 			let mixed = control.querySelector<HTMLOptionElement>('option[value="mixed"]');
 			if (!mixed) {
 				mixed = document.createElement('option');
 				mixed.value = 'mixed';
-				mixed.textContent = 'Mixed';
+				mixed.textContent = label === 'Line spacing' ? 'Mixed paragraphs' : 'Mixed';
 				control.append(mixed);
 			}
 			control.value = 'mixed';
@@ -141,6 +153,17 @@ export function syncParagraphControls(toolbar: HTMLElement, state: EditorState) 
 			continue;
 		}
 		const value = distinct[0];
+		if (label === 'Line spacing') {
+			let option = [...control.options].find((item) => item.value === value);
+			if (!option) {
+				option = document.createElement('option');
+				option.value = value;
+				option.textContent = lineSpacingLabel(value);
+				control.append(option);
+			}
+			control.value = value;
+			continue;
+		}
 		if (![...control.options].some((option) => option.value === value)) {
 			const option = document.createElement('option');
 			option.value = value;

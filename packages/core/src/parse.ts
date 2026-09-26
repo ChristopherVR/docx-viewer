@@ -23,6 +23,7 @@ import {
 } from './xml.js';
 import { remember, saveDocx } from './save.js';
 import { canEditTableStructure } from './write-table.js';
+import { hasSpecialBreak } from './breaks.js';
 
 const px = (twips: string | undefined, fallback: number): number =>
 	twips === undefined ? fallback : (Number(twips) * 96) / 1440;
@@ -33,13 +34,11 @@ const twipValue = (value: string | undefined): number | undefined => {
 	const parsed = Number(value);
 	return Number.isSafeInteger(parsed) ? parsed : undefined;
 };
-const on = (element: XmlElement | undefined): boolean =>
-	Boolean(
-		element &&
-		getW(element, 'val') !== '0' &&
-		getW(element, 'val') !== 'false' &&
-		getW(element, 'val') !== 'none',
-	);
+const on = (element: XmlElement | undefined): boolean => {
+	if (!element) return false;
+	const value = getW(element, 'val')?.toLowerCase();
+	return !['0', 'false', 'off', 'no', 'none'].includes(value ?? '');
+};
 
 function parseRun(node: XmlElement): TextRun {
 	const props = first(node, 'rPr');
@@ -86,7 +85,12 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 	}
 	if (!runs.length) runs.push({ text: '' });
 	const paragraph: Paragraph = { type: 'paragraph', id, runs };
-	if (alignment === 'center' || alignment === 'right' || alignment === 'both')
+	if (
+		alignment === 'left' ||
+		alignment === 'center' ||
+		alignment === 'right' ||
+		alignment === 'both'
+	)
 		paragraph.align = alignment === 'both' ? 'justify' : alignment;
 	const style = getW(first(props, 'pStyle'), 'val');
 	if (style) paragraph.style = style;
@@ -98,9 +102,10 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 	if (after !== undefined) paragraph.spacingAfterTwips = after;
 	if (line !== undefined) {
 		paragraph.lineSpacingTwips = line;
-		const rule = getW(spacing, 'lineRule');
-		paragraph.lineSpacingRule = rule === 'exact' || rule === 'atLeast' ? rule : 'auto';
 	}
+	const rule = getW(spacing, 'lineRule');
+	if (rule === 'auto' || rule === 'exact' || rule === 'atLeast') paragraph.lineSpacingRule = rule;
+	else if (line !== undefined) paragraph.lineSpacingRule = 'auto';
 	const indent = first(props, 'ind');
 	const indentLeft = twipValue(getW(indent, 'left'));
 	const indentRight = twipValue(getW(indent, 'right'));
@@ -158,6 +163,15 @@ function warningsFor(document: XmlDocument): string[] {
 		],
 	];
 	for (const [names, message] of features) if (hasAny(document, names)) warnings.push(message);
+	const specialBreak =
+		Array.from(document.getElementsByTagNameNS(WORD_NS, 'br')).some(hasSpecialBreak) ||
+		Array.from(document.getElementsByTagNameNS(WORD_NS, 'cr')).some(
+			(cr: XmlElement) => cr.attributes.length > 0,
+		);
+	if (specialBreak)
+		warnings.push(
+			'Page, column, and other non-line breaks are not distinguished from line breaks in the document model; edits to paragraphs containing them are rejected to preserve the original XML.',
+		);
 	return warnings;
 }
 

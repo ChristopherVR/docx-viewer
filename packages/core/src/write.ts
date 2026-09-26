@@ -14,6 +14,7 @@ import { writeParagraphProperties } from './write-paragraph-properties.js';
 import { writeTable as writeTableContent } from './write-table.js';
 import { createRun } from './write-run.js';
 import { isWordHighlightToken } from './highlight.js';
+import { hasSpecialBreak } from './breaks.js';
 
 const twips = (pixels: number): string => String(Math.round(pixels * 15));
 function setAttribute(element: XmlElement, local: string, value: string): void {
@@ -33,6 +34,8 @@ function hasUnsafeInline(paragraph: XmlElement): boolean {
 			if (runChild.nodeType !== 1) continue;
 			const runElement = runChild as XmlElement;
 			if (runElement.localName === 'rPr') continue;
+			if (runElement.localName === 'br' && hasSpecialBreak(runElement)) return true;
+			if (runElement.localName === 'cr' && runElement.attributes.length > 0) return true;
 			if (!['t', 'tab', 'br', 'cr', 'noBreakHyphen'].includes(runElement.localName)) return true;
 		}
 	}

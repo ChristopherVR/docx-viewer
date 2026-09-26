@@ -101,7 +101,31 @@ try {
 	];
 	const imports = packageNames.map((name) => `await import('@christophervr/${name}');`).join('\n');
 	const consumer = path.join(work, 'consumer.mjs');
-	await writeFile(consumer, imports);
+	await writeFile(
+		consumer,
+		`${imports}
+import assert from 'node:assert/strict';
+import { createDocument, saveDocx } from '@christophervr/docx-core';
+import { loadDocument } from '@christophervr/docx-document';
+const model = createDocument();
+model.blocks[0].runs = [{ text: 'Packed first line\\nSecond line', bold: true }];
+model.blocks[0].lineSpacingTwips = 360;
+model.blocks[0].lineSpacingRule = 'auto';
+const bytes = await saveDocx(model);
+const loaded = await loadDocument(bytes);
+assert.equal(loaded.model.blocks[0].runs[0].text, 'Packed first line\\nSecond line');
+assert.equal(loaded.model.blocks[0].runs[0].bold, true);
+assert.equal(loaded.model.blocks[0].lineSpacingTwips, 360);
+assert.equal(loaded.model.blocks[0].lineSpacingRule, 'auto');
+assert.deepEqual(await loaded.save(), bytes);
+loaded.model.blocks[0].lineSpacingRule = 'exact';
+loaded.model.blocks[0].lineSpacingTwips = 300;
+const edited = await loadDocument(await loaded.save());
+assert.equal(edited.model.blocks[0].lineSpacingRule, 'exact');
+assert.equal(edited.model.blocks[0].lineSpacingTwips, 300);
+assert.equal(edited.model.blocks[0].runs[0].text, 'Packed first line\\nSecond line');
+`,
+	);
 	run('node', [consumer], { cwd: work });
 	const bindings = JSON.parse(
 		await readFile(path.join(scope, 'docx-bindings', 'package.json'), 'utf8'),
@@ -120,7 +144,7 @@ try {
 		'web component CSS must be bundled as runtime text',
 	);
 	console.log(
-		'Packed consumer imports succeeded for all JavaScript entry points; Svelte source compiles and its declaration export is present.',
+		'Packed consumer imports and DOCX edit round trips succeeded; Svelte source compiles and its declaration export is present.',
 	);
 } finally {
 	await rm(work, { recursive: true, force: true });

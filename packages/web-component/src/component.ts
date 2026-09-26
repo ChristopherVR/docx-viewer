@@ -21,6 +21,7 @@ import { assignMissingParagraphIds, docToModel, modelToDoc } from './model-adapt
 import styleText from './style.css?inline';
 import { applyHighlight, toggleVerticalAlign } from './inline-commands';
 import { executeTableCommand, canExecuteTableCommand } from './table-commands';
+import { insertHardBreak } from './hard-break-command';
 
 const HTMLElementBase: typeof HTMLElement =
 	typeof HTMLElement === 'undefined' ? (class {} as typeof HTMLElement) : HTMLElement;
@@ -153,6 +154,7 @@ export class DocxEditorElement extends HTMLElementBase {
 							'Mod-b': markCommands.bold,
 							'Mod-i': markCommands.italic,
 							'Mod-u': markCommands.underline,
+							'Shift-Enter': insertHardBreak,
 						}).map(([key, command]) => [key, editableCommand(command)]),
 					),
 				),

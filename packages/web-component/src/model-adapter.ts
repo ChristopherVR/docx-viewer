@@ -1,30 +1,10 @@
 import { EditorState, Transaction } from 'prosemirror-state';
 import type { DocumentModel, Block, Paragraph, Table, TextRun } from '@christophervr/docx-core';
 import { schema } from './schema';
+import { appendInlineNode, runToInlineNodes } from './run-adapter';
 
 function paragraphNode(paragraph: Paragraph) {
-	const children = paragraph.runs
-		.filter((run) => run.text.length)
-		.map((run) => {
-			const marks = [];
-			if (run.bold) marks.push(schema.marks.bold.create());
-			if (run.italic) marks.push(schema.marks.italic.create());
-			if (run.underline) marks.push(schema.marks.underline.create());
-			if (run.strike) marks.push(schema.marks.strike.create());
-			if (run.highlight) marks.push(schema.marks.highlight.create({ color: run.highlight }));
-			if (run.verticalAlign)
-				marks.push(schema.marks.verticalAlign.create({ value: run.verticalAlign }));
-			if (run.fontFamily || run.fontSize || run.color) {
-				marks.push(
-					schema.marks.font.create({
-						family: run.fontFamily || null,
-						size: run.fontSize || null,
-						color: run.color || null,
-					}),
-				);
-			}
-			return schema.text(run.text, marks);
-		});
+	const children = paragraph.runs.flatMap(runToInlineNodes);
 	return schema.node(
 		'paragraph',
 		{
@@ -143,37 +123,7 @@ export function docToModel(
 
 	const convertParagraph = (node: typeof doc): Paragraph => {
 		const runs: TextRun[] = [];
-		node.forEach((child) => {
-			if (!child.isText) return;
-			const run: TextRun = { text: child.text || '' };
-			if (child.marks.some((mark) => mark.type.name === 'bold')) run.bold = true;
-			if (child.marks.some((mark) => mark.type.name === 'italic')) run.italic = true;
-			if (child.marks.some((mark) => mark.type.name === 'underline')) run.underline = true;
-			if (child.marks.some((mark) => mark.type.name === 'strike')) run.strike = true;
-			const highlight = child.marks.find((mark) => mark.type.name === 'highlight');
-			if (highlight?.attrs.color) run.highlight = highlight.attrs.color;
-			const verticalAlign = child.marks.find((mark) => mark.type.name === 'verticalAlign');
-			if (verticalAlign?.attrs.value) run.verticalAlign = verticalAlign.attrs.value;
-			const font = child.marks.find((mark) => mark.type.name === 'font');
-			if (font?.attrs.family) run.fontFamily = font.attrs.family;
-			if (font?.attrs.size) run.fontSize = font.attrs.size;
-			if (font?.attrs.color) run.color = font.attrs.color;
-			const previousRun = runs.at(-1);
-			const fields: (keyof TextRun)[] = [
-				'bold',
-				'italic',
-				'underline',
-				'strike',
-				'highlight',
-				'verticalAlign',
-				'fontFamily',
-				'fontSize',
-				'color',
-			];
-			if (previousRun && fields.every((field) => previousRun[field] === run[field]))
-				previousRun.text += run.text;
-			else runs.push(run);
-		});
+		node.forEach((child) => appendInlineNode(runs, child));
 		if (!runs.length) runs.push({ text: '' });
 		const id = String(node.attrs.id || `p-edit-${++nextId}`);
 		const previous = previousParagraphs.get(id);
@@ -211,7 +161,7 @@ export function docToModel(
 			...(node.attrs.lineSpacingTwips != null
 				? { lineSpacingTwips: node.attrs.lineSpacingTwips }
 				: {}),
-			...(node.attrs.lineSpacingTwips != null && node.attrs.lineSpacingRule
+			...(node.attrs.lineSpacingRule != null
 				? { lineSpacingRule: node.attrs.lineSpacingRule }
 				: {}),
 			...(node.attrs.indentLeftTwips != null

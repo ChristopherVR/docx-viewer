@@ -38,10 +38,10 @@ function updateSpacing(
 		setWordValue(
 			spacing,
 			'lineRule',
-			paragraph.lineSpacingTwips === undefined ? undefined : (paragraph.lineSpacingRule ?? 'auto'),
+			paragraph.lineSpacingRule ?? (paragraph.lineSpacingTwips === undefined ? undefined : 'auto'),
 		);
 	}
-	if (!spacing.attributes.length) props.removeChild(spacing);
+	if (!spacing.attributes.length && !spacing.childNodes.length) props.removeChild(spacing);
 }
 
 function updateIndent(

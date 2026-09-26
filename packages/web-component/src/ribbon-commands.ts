@@ -2,6 +2,7 @@ import type { DocumentModel } from '@christophervr/docx-core';
 import type { EditorView } from 'prosemirror-view';
 import { closeHistory } from 'prosemirror-history';
 import { schema } from './schema';
+import { parseLineSpacingValue } from './line-spacing';
 
 export function applyFont(view: EditorView, key: 'family' | 'size' | 'color', value: string) {
 	const attr = key === 'family' ? 'family' : key === 'size' ? 'size' : 'color';
@@ -86,11 +87,13 @@ export function updatePage(view: EditorView, key: 'margin' | 'orientation', valu
 
 export function updateParagraphs(
 	view: EditorView,
-	key: 'indent' | 'spacingBefore' | 'spacingAfter',
+	key: 'indent' | 'spacingBefore' | 'spacingAfter' | 'lineSpacing',
 	value: string,
 ) {
 	const { state } = view;
-	if (
+	if (key === 'lineSpacing') {
+		if (value !== 'inherit' && !parseLineSpacingValue(value)) return;
+	} else if (
 		key !== 'indent' &&
 		value !== 'inherit' &&
 		(!Number.isFinite(Number(value)) || Number(value) < 0)
@@ -120,14 +123,21 @@ export function updateParagraphs(
 				...node.attrs,
 				spacingAfterTwips: value === 'inherit' ? null : Number(value),
 			});
-		} else {
+		} else if (key === 'spacingBefore') {
 			transaction = transaction.setNodeMarkup(pos, undefined, {
 				...node.attrs,
 				spacingBeforeTwips: value === 'inherit' ? null : Number(value),
 			});
+		} else {
+			const lineSpacing = value === 'inherit' ? null : parseLineSpacingValue(value);
+			transaction = transaction.setNodeMarkup(pos, undefined, {
+				...node.attrs,
+				lineSpacingTwips: lineSpacing?.twips ?? null,
+				lineSpacingRule: lineSpacing?.rule ?? null,
+			});
 		}
 	}
-	if (transaction.docChanged) view.dispatch(transaction.scrollIntoView());
+	if (transaction.docChanged) view.dispatch(closeHistory(transaction).scrollIntoView());
 }
 
 export function applyPageStyles(paper: HTMLElement, model: DocumentModel, zoom: number) {
