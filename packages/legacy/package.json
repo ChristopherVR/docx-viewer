@@ -26,6 +26,6 @@
 	},
 	"dependencies": {
 		"@christophervr/docx-core": "0.1.0",
-		"@christophervr/ole2": "0.1.0"
+		"@christophervr/ole2": "0.2.0"
 	}
 }

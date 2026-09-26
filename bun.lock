@@ -80,7 +80,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@christophervr/docx-core": "0.1.0",
-        "@christophervr/ole2": "0.1.0",
+        "@christophervr/ole2": "0.2.0",
       },
     },
     "packages/web-component": {
@@ -127,7 +127,7 @@
 
     "@christophervr/docx-web-component": ["@christophervr/docx-web-component@workspace:packages/web-component"],
 
-    "@christophervr/ole2": ["@christophervr/ole2@0.1.0", "", {}, "sha512-S22dhVAGTyHE2X5yH12Tj9r8YxOfoXhkR/pyEXLZgATLjMBgoN32Trxln/sDJQVECPeaptPQaZfHcSvo+MPjoA=="],
+    "@christophervr/ole2": ["@christophervr/ole2@0.2.0", "", {}, "sha512-rMFBcdZRDfjnLt1iH4HMYO1L8BkCa0uklG1tDPMiZr4qQ8/lhcsIaoDhjsxCyTdd3v2rUwNTZLy6PskWFBxEJQ=="],
 
     "@csstools/color-helpers": ["@csstools/color-helpers@5.1.0", "", {}, "sha512-S11EXWJyy0Mz5SYvRmY8nJYTFFd1LCNV+7cXyAgQtOOuzb4EsgfqDufL+9esx72/eLhsRdGZwaldu/h+E4t4BA=="],
 

@@ -52,7 +52,7 @@ sample.blocks = [
 		runs: [
 			{ text: 'A document workspace. ', bold: true },
 			{
-				text: 'Select text to format it, insert a simple table, open a DOCX file, or start a new document. The shared editing surface works across supported framework bindings.',
+				text: 'Use the ribbon to format text, add a simple table, or adjust page settings. Open a DOCX file to continue working, or start a new document.',
 			},
 		],
 	},
