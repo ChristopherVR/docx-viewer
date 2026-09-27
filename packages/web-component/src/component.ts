@@ -63,7 +63,7 @@ export class DocxEditorElement extends HTMLElementBase {
 	private _locale: EditorLocale = 'en';
 	private printLayout?: PrintLayoutController;
 	private readonly inserts = new InsertController({
-		view: () => this.view,
+		view: () => this.targetView(),
 		model: () => this.model,
 		contentWidth: () =>
 			this.model.page.width - this.model.page.marginLeft - this.model.page.marginRight,
@@ -93,7 +93,16 @@ export class DocxEditorElement extends HTMLElementBase {
 		edited: () => this.markEditedOutsideBody(),
 		reportError: (cause) => dispatchDocumentError(this, cause),
 	};
-	private readonly parts = new PartsController({ ...this.host, images: () => this.imageMedia });
+	private readonly parts = new PartsController({
+		...this.host,
+		images: () => this.imageMedia,
+		plugins: () => this.inserts.plugins(),
+		keepOpenWithin: () => [
+			this.toolbar,
+			this.inserts.linkDialog.element,
+			this.inserts.pictureDialog.element,
+		],
+	});
 	private readonly pages = new PageController({
 		...this.host,
 		paper: () => this.paper,
@@ -442,9 +451,9 @@ ${chromeStyleText}`;
 		if (this.inserts.handle(action)) return;
 		if (action.type === 'search') this.showSearch();
 		else if (action.type === 'zoom') this.pages.setZoom(action.value);
-		else if (action.type === 'list' && this.view) {
-			runListAction(this.view, action.key, this.model);
-			focusView(this.view);
+		else if (action.type === 'list' && this.targetView()) {
+			runListAction(this.targetView()!, action.key, this.model);
+			focusView(this.targetView());
 		} else if (action.type === 'view') this.pages.setViewMode(action.value);
 		else if (action.type === 'print') this.pages.print();
 		else if (action.type === 'insertNote')
@@ -456,10 +465,17 @@ ${chromeStyleText}`;
 			this.view?.dispatch(this.view.state.tr);
 		} else if (action.type === 'review') this.review?.handleReview(action.key);
 		else if (action.type === 'comments') this.review?.handleComments(action.key);
-		else if (this.view) {
-			runRibbonCommand(this.view, action, this.collaborationIds);
-			if (typeof document.execCommand === 'function') this.view.focus();
+		else {
+			const target = this.targetView();
+			if (!target) return;
+			runRibbonCommand(target, action, this.collaborationIds);
+			focusView(target);
 		}
+	}
+
+	/** The ribbon acts on an open header/footer/note editor, otherwise on the main text. */
+	private targetView(): EditorView | undefined {
+		return this.parts.activeView() ?? this.view;
 	}
 
 	private createChrome(): EditorChrome {

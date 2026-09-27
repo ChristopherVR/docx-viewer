@@ -46,7 +46,8 @@ Still missing:
 - Ctrl+Alt+F / Ctrl+Alt+D (insert footnote/endnote) are bound, but Windows browsers can report
   Ctrl+Alt as AltGr and not deliver them; the Insert ribbon buttons always work.
 - Pictures and links in headers, footers and notes are resolved, shown and saved with each part's own
-  relationships; the Insert Picture and Link commands still target the main body only.
+  relationships; while a header, footer or note is being edited, the ribbon (formatting, Insert
+  Picture, Link) targets it.
 - Table style run formatting and cell margins render; tables' own default cell margins (`tblCellMar`) and row heights are not modeled yet.
 - Underline/strikethrough cancelled by the style hierarchy still render (bold, italic and caps are handled).
 

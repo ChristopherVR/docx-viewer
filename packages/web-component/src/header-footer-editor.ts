@@ -1,4 +1,4 @@
-import { EditorState, type Transaction } from 'prosemirror-state';
+import { EditorState, type Plugin, type Transaction } from 'prosemirror-state';
 import { EditorView, type EditorProps } from 'prosemirror-view';
 import { history } from 'prosemirror-history';
 import { createDocument, type Block, type HeaderFooterContent } from '@christophervr/docx-core';
@@ -13,6 +13,13 @@ export type HeaderFooterSlotName = 'default' | 'first' | 'even';
 export interface InlineEditorOptions {
 	nodeViews?: EditorProps['nodeViews'];
 	decorate?(preview: HTMLElement): void;
+	/** Extra plugins, e.g. the editor's Ctrl+K link shortcut. */
+	plugins?: Plugin[];
+	/** Reports the editor becoming the ribbon's target, and closing. */
+	activate?(view: EditorView): void;
+	deactivate?(view: EditorView): void;
+	/** Focus moving into these (the ribbon, dialogs) keeps the editor open. */
+	keepOpenWithin?(): (Element | undefined)[];
 }
 
 export interface HeaderFooterEditingOptions {
@@ -65,7 +72,7 @@ export function openBlocksEditor(
 	const view: EditorView = new EditorView(host, {
 		state: EditorState.create({
 			doc: modelToDoc(model),
-			plugins: [history(), editorKeymap(() => undefined)],
+			plugins: [history(), ...(options.plugins ?? []), editorKeymap(() => undefined)],
 		}),
 		...(options.nodeViews ? { nodeViews: options.nodeViews } : {}),
 		dispatchTransaction(transaction: Transaction) {
@@ -80,6 +87,7 @@ export function openBlocksEditor(
 	const close = () => {
 		if (!container.classList.contains('dve-header-footer-editing')) return;
 		container.classList.remove('dve-header-footer-editing');
+		options.deactivate?.(view);
 		view.destroy();
 		body.replaceChildren(renderBlocks(model.blocks));
 		options.decorate?.(body);
@@ -88,8 +96,11 @@ export function openBlocksEditor(
 		if (event.key === 'Escape') close();
 	});
 	host.addEventListener('focusout', (event) => {
-		if (!host.contains(event.relatedTarget as Node | null)) close();
+		const next = event.relatedTarget as Node | null;
+		const keepOpen = (options.keepOpenWithin?.() ?? []).some((element) => element?.contains(next));
+		if (!host.contains(next) && !keepOpen) close();
 	});
+	options.activate?.(view);
 	focusView(view);
 }
 

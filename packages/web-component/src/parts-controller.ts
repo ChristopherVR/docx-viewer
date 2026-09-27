@@ -1,4 +1,6 @@
 import type { Block, HeaderFooterContent, Note } from '@christophervr/docx-core';
+import type { Plugin } from 'prosemirror-state';
+import type { EditorView } from 'prosemirror-view';
 import type { EditorHost } from './editor-host';
 import { buildFooterElement, buildHeaderElement } from './header-footer-view';
 import {
@@ -13,6 +15,10 @@ import { insertNote, type NoteKind } from './note-commands';
 
 export interface PartsControllerHost extends EditorHost {
 	images(): ImageMediaCache;
+	/** Plugins shared with in-place editors (e.g. Ctrl+K). */
+	plugins(): Plugin[];
+	/** Where focus may go without closing an in-place editor: the ribbon and dialogs. */
+	keepOpenWithin(): (Element | undefined)[];
 }
 
 /** Headers, footers, footnotes and endnotes around the continuous editing surface. */
@@ -20,8 +26,14 @@ export class PartsController {
 	private headerEl?: HTMLElement;
 	private footerEl?: HTMLElement;
 	private notesEl?: HTMLElement;
+	private active?: EditorView;
 
 	constructor(private readonly host: PartsControllerHost) {}
+
+	/** The in-place header/footer/note editor currently open, which the ribbon then targets. */
+	activeView(): EditorView | undefined {
+		return this.active;
+	}
 
 	/** Sets picture sources in a read-only preview from the package media. */
 	private readonly decorate = (preview: HTMLElement) => {
@@ -34,7 +46,18 @@ export class PartsController {
 	};
 
 	private editorOptions(): InlineEditorOptions {
-		return { nodeViews: { image: imageNodeView(this.host.images()) }, decorate: this.decorate };
+		return {
+			nodeViews: { image: imageNodeView(this.host.images()) },
+			decorate: this.decorate,
+			plugins: this.host.plugins(),
+			keepOpenWithin: () => this.host.keepOpenWithin(),
+			activate: (view) => {
+				this.active = view;
+			},
+			deactivate: (view) => {
+				if (this.active === view) this.active = undefined;
+			},
+		};
 	}
 
 	/** Rebuilds the header/footer/note previews and wires in-place editing. */

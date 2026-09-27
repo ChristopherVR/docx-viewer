@@ -175,3 +175,53 @@ test('inserts footnotes in a new document, numbers them in order and saves them'
 	expect(documentXml).toContain('<w:r><w:t>First claim</w:t></w:r>');
 	expect(errors).toEqual([]);
 });
+
+test('formats text and inserts a picture inside a header from the ribbon', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/');
+	const png = Buffer.from(
+		await page.evaluate(() => {
+			const canvas = document.createElement('canvas');
+			canvas.width = 24;
+			canvas.height = 12;
+			canvas.getContext('2d')!.fillRect(0, 0, 24, 12);
+			return canvas.toDataURL('image/png').split(',')[1];
+		}),
+		'base64',
+	);
+	await (
+		await fileInput(page)
+	).setInputFiles({
+		name: 'header.docx',
+		mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+		buffer: await headerDocx(),
+	});
+	const editor = page.locator('docx-editor');
+	const header = editor.locator('.dve-header .dve-header-footer-slot');
+	await header.dblclick();
+	const headerEditor = header.locator('.dve-header-footer-editor .ProseMirror');
+	await expect(headerEditor).toBeFocused();
+	await page.keyboard.press('Control+a');
+	await editor.getByRole('button', { name: 'Bold', exact: true }).click();
+	await expect(headerEditor.locator('strong')).toHaveText('Company');
+	await page.keyboard.press('End');
+	await editor.getByRole('tab', { name: 'Insert', exact: true }).click();
+	const chooser = page.waitForEvent('filechooser');
+	await editor.getByRole('button', { name: 'Insert picture', exact: true }).click();
+	await (await chooser).setFiles({ name: 'logo.png', mimeType: 'image/png', buffer: png });
+	await expect(headerEditor.locator('img[data-docx-image]')).toHaveAttribute('src', /^blob:/);
+	await headerEditor.press('Escape');
+
+	const pending = page.waitForEvent('download');
+	await saveButton(page).click();
+	const zip = await JSZip.loadAsync(await readFile((await (await pending).path())!));
+	const headerXml = await zip.file('word/header1.xml')!.async('string');
+	expect(headerXml).toContain('<w:b/>');
+	expect(headerXml).toContain('<w:drawing>');
+	const rels = await zip.file('word/_rels/header1.xml.rels')!.async('string');
+	const target = /Target="(media\/dve-picture-[^"]+\.png)"/.exec(rels)?.[1];
+	expect(target).toBeDefined();
+	expect(await zip.file(`word/${target}`)!.async('nodebuffer')).toEqual(png);
+	expect(errors).toEqual([]);
+});
