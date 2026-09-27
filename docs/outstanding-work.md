@@ -61,5 +61,5 @@ Still missing:
 
 ### Engineering follow-ups
 
-- Modules over the 300-line guideline: `web-component/src/component.ts` (~560), `ribbon.ts` (~410), `schema.ts` (~365), `core/src/model.ts` (~355) and the `localization-strings.ts` data table.
+- Modules over the 300-line guideline: `web-component/src/component.ts` (~530, mostly lifecycle and collaboration wiring), `ribbon.ts` (~410), `schema.ts` (~365), `core/src/model.ts` (~355) and the `localization-strings.ts` data table.
 - The Track Changes plugin handles transactions of plain replace steps; multi-step transactions mixing deletions and insertions need position mapping between steps.

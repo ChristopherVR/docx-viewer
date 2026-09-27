@@ -2,11 +2,10 @@ import { refreshEditorControls } from './editor-controls';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { history } from 'prosemirror-history';
-import type { Block, DocumentModel, HeaderFooterContent, Note } from '@christophervr/docx-core';
-import { createDocument, ensureListDefinition, saveDocx } from '@christophervr/docx-core';
+import type { DocumentModel } from '@christophervr/docx-core';
+import { createDocument, saveDocx } from '@christophervr/docx-core';
 import { loadDocument } from '@christophervr/docx-document';
 import { createRibbon, setRibbonLocale, type RibbonAction } from './ribbon';
-import { applyPageStyles } from './ribbon-commands';
 import { assignMissingParagraphIds, docToModel, modelToDoc } from './model-adapter';
 import styleText from './style.css?inline';
 import chromeStyleText from './chrome.css?inline';
@@ -22,25 +21,13 @@ import {
 	repairCollaborativeDocumentIds,
 	createCollaborationIdGenerator,
 } from './collaboration-identity';
-import { findLocalizedControl, normalizeEditorLocale, type EditorLocale } from './localization';
+import { normalizeEditorLocale, type EditorLocale } from './localization';
 import { EditorPresence } from './editor-presence';
 import { paragraphStylesPlugin, resetStylePicker } from './paragraph-styles';
-import { changeListLevel, removeList, selectionIsListKind, toggleList } from './list-commands';
-import { buildHeaderElement, buildFooterElement } from './header-footer-view';
-import { attachHeaderFooterEditing, type HeaderFooterSlotName } from './header-footer-editor';
-import { attachNoteEditing } from './note-editor';
-import {
-	currentSectionIndex,
-	insertSectionBreak,
-	sectionBreaksPlugin,
-	setColumns,
-	setMargins,
-	setOrientation,
-} from './section-commands';
-import { sectionLayoutJson } from './section-layout';
-import { insertNote, noteNumberingPlugin, type NoteKind } from './note-commands';
+import { runListAction } from './list-commands';
+import { sectionBreaksPlugin } from './section-commands';
+import { noteNumberingPlugin } from './note-commands';
 import { keymap } from 'prosemirror-keymap';
-import { buildNotesElement } from './notes-view';
 import { createPrintLayoutController, type PrintLayoutController } from './print-layout-view';
 import { moveCursorToBlock } from './print-layout-cursor';
 import { trackChangesPlugin, REMOTE_TRANSACTION_META } from './track-changes-mode';
@@ -48,6 +35,10 @@ import { reviewDisplayPlugin, type ReviewDisplayMode } from './review-display';
 import { ReviewController } from './review-controller';
 import { ImageMediaCache, imageNodeView } from './image-media';
 import { EditorChrome } from './editor-chrome';
+import { dispatchDocumentError, type EditorHost } from './editor-host';
+import { PartsController } from './parts-controller';
+import { PageController } from './page-controller';
+import { focusView } from './focus-view';
 import { InsertController } from './insert-controller';
 import { runStylesPlugin } from './run-styles';
 import { countWords } from './word-count';
@@ -63,10 +54,6 @@ export class DocxEditorElement extends HTMLElementBase {
 	private toolbar?: HTMLElement;
 	private canvas?: HTMLElement;
 	private paper?: HTMLElement;
-	private headerEl?: HTMLElement;
-	private footerEl?: HTMLElement;
-	private notesEl?: HTMLElement;
-	private zoom = 1;
 	private searchPanel?: SearchPanelHandle;
 	private collaboration?: CollaborationClient;
 	private collaborationIds?: (kind: string) => string;
@@ -90,11 +77,31 @@ export class DocxEditorElement extends HTMLElementBase {
 	private readonly imageMedia = new ImageMediaCache((partName) =>
 		this.inserts.media(partName, this.loaded?.media),
 	);
-	private viewMode: 'draft' | 'print' = 'draft';
 	private reviewDisplayMode: ReviewDisplayMode = 'all';
 	private review?: ReviewController;
 	private _reviewAuthor = 'Author';
 	private chrome?: EditorChrome;
+	private readonly host: EditorHost = {
+		element: this,
+		view: () => this.view,
+		model: () => this.model,
+		setModel: (model) => {
+			this.model = model;
+		},
+		locale: () => this._locale,
+		canEditOutsideBody: () => !this._readOnly && !this.collaboration,
+		edited: () => this.markEditedOutsideBody(),
+		reportError: (cause) => dispatchDocumentError(this, cause),
+	};
+	private readonly parts = new PartsController(this.host);
+	private readonly pages = new PageController({
+		...this.host,
+		paper: () => this.paper,
+		toolbar: () => this.toolbar,
+		statusBar: () => this.chrome?.statusBar,
+		printLayout: () => this.printLayout,
+		refreshControls: () => this.refreshControls(),
+	});
 	private pendingFileName?: string;
 
 	get reviewAuthor(): string {
@@ -120,7 +127,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		this._locale = normalizeEditorLocale(value);
 		if (this.toolbar) setRibbonLocale(this.toolbar, this._locale);
 		this.searchPanel?.setLocale(this._locale);
-		this.renderHeaderFooterNotes();
+		this.parts.render(this.canvas, this.paper);
 		this.review?.setLocale(this._locale);
 		this.chrome?.setLocale(this._locale);
 		this.inserts.setLocale(this._locale);
@@ -295,12 +302,12 @@ ${chromeStyleText}`;
 		paper.setAttribute('aria-label', 'Document page');
 		canvas.append(paper);
 		this.printLayout = createPrintLayoutController(canvas, (blockId, offset) => {
-			this.setViewMode('draft');
+			this.pages.setViewMode('draft');
 			if (this.view) moveCursorToBlock(this.view, blockId, offset);
 		});
 		canvas.append(this.printLayout.element);
 		canvas.addEventListener('scroll', () => {
-			if (this.viewMode === 'print') {
+			if (this.pages.viewMode === 'print') {
 				this.printLayout?.refreshCurrentPage();
 				this.refreshControls();
 			}
@@ -352,7 +359,7 @@ ${chromeStyleText}`;
 		resetStylePicker(this.toolbar);
 		this.view?.destroy();
 		this.paper.replaceChildren();
-		this.refreshPageStyles();
+		this.pages.refreshPageStyles();
 		const state =
 			this.detachedState ??
 			EditorState.create({
@@ -363,8 +370,8 @@ ${chromeStyleText}`;
 					noteNumberingPlugin(),
 					sectionBreaksPlugin(),
 					keymap({
-						'Mod-Alt-f': () => (this.insertNoteAtSelection('footnote'), true),
-						'Mod-Alt-d': () => (this.insertNoteAtSelection('endnote'), true),
+						'Mod-Alt-f': () => (this.parts.insertNote('footnote', this.canvas, this.paper), true),
+						'Mod-Alt-d': () => (this.parts.insertNote('endnote', this.canvas, this.paper), true),
 					}),
 					runStylesPlugin(() => this.model),
 					paragraphStylesPlugin(() => this.model),
@@ -393,156 +400,10 @@ ${chromeStyleText}`;
 		});
 		this.detachedState = undefined;
 		this.inserts.syncPaper();
-		this.renderHeaderFooterNotes();
-		if (this.viewMode === 'print') this.printLayout?.scheduleRelayout(this.model);
+		this.parts.render(this.canvas, this.paper);
+		this.pages.relayout();
 		this.refreshControls();
 		this.scheduleCollaborationSend();
-	}
-
-	/** Read-only header/footer/note previews around the continuous editing surface. */
-	private renderHeaderFooterNotes() {
-		if (!this.canvas || !this.paper) return;
-		this.headerEl?.remove();
-		this.footerEl?.remove();
-		this.notesEl?.remove();
-		this.headerEl = buildHeaderElement(this.model, this._locale) ?? undefined;
-		this.footerEl = buildFooterElement(this.model, this._locale) ?? undefined;
-		this.notesEl = buildNotesElement(this.model, this._locale) ?? undefined;
-		for (const [element, kind] of [
-			[this.headerEl, 'headers'],
-			[this.footerEl, 'footers'],
-		] as const)
-			if (element)
-				attachHeaderFooterEditing(element, {
-					content: (slot) => this.model.sections?.[0]?.[kind]?.[slot],
-					change: (slot, blocks) => this.updateHeaderFooter(kind, slot, blocks),
-					editable: () => !this._readOnly && !this.collaboration,
-				});
-		if (this.notesEl)
-			attachNoteEditing(this.notesEl, {
-				note: (id) =>
-					[...(this.model.footnotes ?? []), ...(this.model.endnotes ?? [])].find(
-						(note) => note.id === id,
-					),
-				change: (id, blocks) => this.updateNote(id, blocks),
-				editable: () => !this._readOnly && !this.collaboration,
-			});
-		if (this.headerEl) this.canvas.insertBefore(this.headerEl, this.paper);
-		if (this.footerEl) this.canvas.insertBefore(this.footerEl, this.paper.nextSibling);
-		if (this.notesEl)
-			this.canvas.insertBefore(this.notesEl, (this.footerEl ?? this.paper).nextSibling);
-	}
-
-	/** Page setup applies to the section holding the selection, as in Word, and is undoable. */
-	private changePageSetup(key: 'margin' | 'orientation' | 'columns', value: string) {
-		if (!this.view?.editable || this.collaboration) return;
-		const index = currentSectionIndex(this.view, this.model);
-		const next =
-			key === 'margin'
-				? setMargins(this.model, index, value)
-				: key === 'orientation'
-					? setOrientation(this.model, index, value === 'landscape' ? 'landscape' : 'portrait')
-					: setColumns(this.model, index, Math.max(1, Number(value) || 1));
-		this.dispatchSections(next);
-	}
-
-	private insertSectionBreakAtSelection(kind: 'nextPage' | 'continuous') {
-		if (!this.view?.editable || this.collaboration) return;
-		try {
-			this.dispatchSections(insertSectionBreak(this.view, this.model, kind));
-		} catch (cause) {
-			this.dispatchEvent(
-				new CustomEvent('document-error', {
-					detail: cause instanceof Error ? cause : new Error(String(cause)),
-					bubbles: true,
-					composed: true,
-				}),
-			);
-		}
-	}
-
-	/** Records page geometry and section layout on the editor document as one undoable step. */
-	private dispatchSections(next: DocumentModel) {
-		if (!this.view) return;
-		const { page } = next;
-		this.view.dispatch(
-			this.view.state.tr
-				.setDocAttribute('pageWidth', page.width)
-				.setDocAttribute('pageHeight', page.height)
-				.setDocAttribute('marginTop', page.marginTop)
-				.setDocAttribute('marginRight', page.marginRight)
-				.setDocAttribute('marginBottom', page.marginBottom)
-				.setDocAttribute('marginLeft', page.marginLeft)
-				.setDocAttribute('sections', next.sections ? sectionLayoutJson(next.sections) : null),
-		);
-	}
-
-	/** Page size and margins from the model; one multi-column section also shows its columns. */
-	private refreshPageStyles() {
-		if (!this.paper) return;
-		applyPageStyles(this.paper, this.model, this.zoom);
-		const sections = this.model.sections ?? [];
-		const columns = sections.length === 1 ? sections[0].columns : undefined;
-		this.paper.style.columnCount = columns && columns.count > 1 ? String(columns.count) : '';
-		this.paper.style.columnGap =
-			columns && columns.count > 1 ? `${((columns.spacingTwips ?? 720) / 15) * this.zoom}px` : '';
-	}
-
-	/** Inserts a footnote or endnote reference at the selection and opens the new note for typing. */
-	private insertNoteAtSelection(kind: NoteKind) {
-		if (!this.view?.editable || this.collaboration) return;
-		const { model, id } = insertNote(this.view, this.model, kind);
-		const key = kind === 'footnote' ? 'footnotes' : 'endnotes';
-		this.model = { ...this.model, [key]: model[key] };
-		this.renderHeaderFooterNotes();
-		const item = this.notesEl?.querySelector<HTMLElement>(
-			`.dve-notes-${kind} li[data-docx-note-id="${id}"]`,
-		);
-		item?.scrollIntoView?.({ block: 'center' });
-		item?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
-		this.markEditedOutsideBody();
-	}
-
-	/** Replaces one footnote's or endnote's blocks. */
-	private updateNote(id: string, blocks: Block[]) {
-		const replace = (notes: Note[] | undefined) =>
-			notes?.map((note) => (note.id === id ? { ...note, blocks: structuredClone(blocks) } : note));
-		this.model = {
-			...this.model,
-			footnotes: replace(this.model.footnotes),
-			endnotes: replace(this.model.endnotes),
-		};
-		this.markEditedOutsideBody();
-	}
-
-	private markEditedOutsideBody() {
-		this.chrome?.setSaveState('dirty');
-		if (this.viewMode === 'print') this.printLayout?.scheduleRelayout(this.model);
-		this.dispatchEvent(
-			new CustomEvent('document-change', { detail: this.model, bubbles: true, composed: true }),
-		);
-	}
-
-	/** Applies header/footer edits to every section slot that shares the edited part. */
-	private updateHeaderFooter(
-		kind: 'headers' | 'footers',
-		slot: HeaderFooterSlotName,
-		blocks: Block[],
-	) {
-		const edited = this.model.sections?.[0]?.[kind]?.[slot];
-		if (!edited) return;
-		const sections = (this.model.sections ?? []).map((section) => {
-			const slots = { ...section[kind] };
-			for (const [name, content] of Object.entries(slots) as [
-				HeaderFooterSlotName,
-				HeaderFooterContent,
-			][])
-				if (content === edited || (edited.partName && content?.partName === edited.partName))
-					slots[name] = { ...content, blocks: structuredClone(blocks) };
-			return { ...section, [kind]: slots };
-		});
-		this.model = { ...this.model, sections };
-		this.markEditedOutsideBody();
 	}
 
 	private applyTransaction(transaction: Transaction, remote = false) {
@@ -561,8 +422,8 @@ ${chromeStyleText}`;
 		this.view.updateState(repaired ? applied.apply(repaired) : applied);
 		if (transaction.docChanged) {
 			this.model = docToModel(this.view.state.doc, this.model);
-			this.refreshPageStyles();
-			if (this.viewMode === 'print') this.printLayout?.scheduleRelayout(this.model);
+			this.pages.refreshPageStyles();
+			this.pages.relayout();
 			this.chrome?.setSaveState('dirty');
 			this.dispatchEvent(
 				new CustomEvent('document-change', { detail: this.model, bubbles: true, composed: true }),
@@ -580,13 +441,16 @@ ${chromeStyleText}`;
 	private handleRibbonAction(action: RibbonAction) {
 		if (this.inserts.handle(action)) return;
 		if (action.type === 'search') this.showSearch();
-		else if (action.type === 'zoom') this.setZoom(action.value);
-		else if (action.type === 'list') this.handleListAction(action.key);
-		else if (action.type === 'view') this.setViewMode(action.value);
-		else if (action.type === 'print') this.printDocument();
-		else if (action.type === 'insertNote') this.insertNoteAtSelection(action.kind);
-		else if (action.type === 'page') this.changePageSetup(action.key, action.value);
-		else if (action.type === 'sectionBreak') this.insertSectionBreakAtSelection(action.kind);
+		else if (action.type === 'zoom') this.pages.setZoom(action.value);
+		else if (action.type === 'list' && this.view) {
+			runListAction(this.view, action.key, this.model);
+			focusView(this.view);
+		} else if (action.type === 'view') this.pages.setViewMode(action.value);
+		else if (action.type === 'print') this.pages.print();
+		else if (action.type === 'insertNote')
+			this.parts.insertNote(action.kind, this.canvas, this.paper);
+		else if (action.type === 'page') this.pages.changePageSetup(action.key, action.value);
+		else if (action.type === 'sectionBreak') this.pages.insertSectionBreak(action.kind);
 		else if (action.type === 'reviewDisplay') {
 			this.reviewDisplayMode = action.value;
 			this.view?.dispatch(this.view.state.tr);
@@ -596,56 +460,6 @@ ${chromeStyleText}`;
 			runRibbonCommand(this.view, action, this.collaborationIds);
 			if (typeof document.execCommand === 'function') this.view.focus();
 		}
-	}
-
-	private handleListAction(
-		key: 'bullet' | 'number' | 'increaseLevel' | 'decreaseLevel' | 'remove',
-	) {
-		if (!this.view) return;
-		if (key === 'remove') removeList(this.view);
-		else if (key === 'increaseLevel') changeListLevel(this.view, 1);
-		else if (key === 'decreaseLevel') changeListLevel(this.view, -1);
-		else {
-			const kind = key === 'bullet' ? 'bullet' : 'decimal';
-			const already = selectionIsListKind(this.view, kind, this.model.numberingCatalog);
-			toggleList(this.view, already, () => {
-				const created = ensureListDefinition(this.model.numberingCatalog, kind);
-				this.model.numberingCatalog = created.catalog;
-				return created.numId;
-			});
-		}
-		if (typeof document.execCommand === 'function') this.view.focus();
-	}
-
-	/** Switches between the continuous editing surface and the read-only paginated Print Layout render. */
-	private setViewMode(mode: 'draft' | 'print') {
-		this.viewMode = mode;
-		this.printLayout?.setActive(mode === 'print');
-		if (this.paper) this.paper.hidden = mode === 'print';
-		if (this.toolbar) {
-			const select = findLocalizedControl<HTMLSelectElement>(this.toolbar, 'Layout view');
-			if (select) select.value = mode;
-		}
-		if (mode === 'print') this.printLayout?.scheduleRelayout(this.model);
-		this.chrome?.statusBar.setViewMode(mode);
-		this.refreshControls();
-	}
-
-	private setZoom(percent: number) {
-		this.zoom = percent / 100;
-		this.refreshPageStyles();
-		const select = this.toolbar && findLocalizedControl<HTMLSelectElement>(this.toolbar, 'Zoom');
-		if (select && [...select.options].some((option) => option.value === String(percent)))
-			select.value = String(percent);
-		this.chrome?.statusBar.setZoom(percent);
-	}
-
-	private printDocument() {
-		this.printLayout?.print(this.model, (message) =>
-			this.dispatchEvent(
-				new CustomEvent('document-warning', { detail: message, bubbles: true, composed: true }),
-			),
-		);
 	}
 
 	private createChrome(): EditorChrome {
@@ -672,25 +486,30 @@ ${chromeStyleText}`;
 			},
 			load: (bytes) => this.load(bytes),
 			save: () => this.save(),
-			print: () => this.printDocument(),
+			print: () => this.pages.print(),
 			history: (key) => {
 				if (!this.view) return;
 				runRibbonCommand(this.view, { type: 'history', key }, this.collaborationIds);
 				if (typeof document.execCommand === 'function') this.view.focus();
 			},
 			toggleComments: () => this.review?.handleComments('toggle'),
-			setViewMode: (mode) => this.setViewMode(mode),
-			setZoom: (percent) => this.setZoom(percent),
-			reportError: (error) =>
-				this.dispatchEvent(
-					new CustomEvent('document-error', { detail: error, bubbles: true, composed: true }),
-				),
+			setViewMode: (mode) => this.pages.setViewMode(mode),
+			setZoom: (percent) => this.pages.setZoom(percent),
+			reportError: (error) => dispatchDocumentError(this, error),
 		});
+	}
+
+	private markEditedOutsideBody() {
+		this.chrome?.setSaveState('dirty');
+		this.pages.relayout();
+		this.dispatchEvent(
+			new CustomEvent('document-change', { detail: this.model, bubbles: true, composed: true }),
+		);
 	}
 
 	private refreshControls() {
 		this.searchPanel?.refresh();
-		if (this.viewMode === 'print') this.printLayout?.refreshCurrentPage();
+		if (this.pages.viewMode === 'print') this.printLayout?.refreshCurrentPage();
 		const status = refreshEditorControls(
 			this.toolbar,
 			this.view,

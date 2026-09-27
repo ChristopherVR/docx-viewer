@@ -1,8 +1,8 @@
 import type { Command } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { closeHistory } from 'prosemirror-history';
-import type { NumberingCatalog } from '@christophervr/docx-core';
-import { resolveNumberingLevel } from '@christophervr/docx-core';
+import type { DocumentModel, NumberingCatalog } from '@christophervr/docx-core';
+import { ensureListDefinition, resolveNumberingLevel } from '@christophervr/docx-core';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 
 export type ListKind = 'bullet' | 'decimal';
@@ -151,3 +151,24 @@ function levelCommand(delta: 1 | -1): Command {
 /** Tab/Shift+Tab inside a list item change its outline level; otherwise the command is a no-op. */
 export const indentListItem: Command = levelCommand(1);
 export const outdentListItem: Command = levelCommand(-1);
+
+export type ListAction = 'bullet' | 'number' | 'increaseLevel' | 'decreaseLevel' | 'remove';
+
+/**
+ * Runs a Home > Paragraph list command. Applying a new list adds a fresh numbering definition to
+ * `model.numberingCatalog` so unrelated lists never share counters.
+ */
+export function runListAction(view: EditorView, key: ListAction, model: DocumentModel): void {
+	if (key === 'remove') removeList(view);
+	else if (key === 'increaseLevel') changeListLevel(view, 1);
+	else if (key === 'decreaseLevel') changeListLevel(view, -1);
+	else {
+		const kind = key === 'bullet' ? 'bullet' : 'decimal';
+		const already = selectionIsListKind(view, kind, model.numberingCatalog);
+		toggleList(view, already, () => {
+			const created = ensureListDefinition(model.numberingCatalog, kind);
+			model.numberingCatalog = created.catalog;
+			return created.numId;
+		});
+	}
+}
