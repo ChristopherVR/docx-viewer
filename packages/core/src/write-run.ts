@@ -208,6 +208,19 @@ export function createRun(
 		node.appendChild(br);
 		return node;
 	}
+	if (run.fieldChar) {
+		const marker = makeW(doc, 'fldChar');
+		setAttribute(marker, 'fldCharType', run.fieldChar);
+		node.appendChild(marker);
+		return node;
+	}
+	if (run.fieldCode !== undefined) {
+		const code = makeW(doc, 'instrText');
+		code.setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:space', 'preserve');
+		code.appendChild(doc.createTextNode(run.fieldCode));
+		node.appendChild(code);
+		return node;
+	}
 	if (run.noteMark) {
 		node.appendChild(makeW(doc, run.noteMark === 'footnote' ? 'footnoteRef' : 'endnoteRef'));
 		return node;

@@ -1,6 +1,6 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 // Tags field result runs with their field code so renderers can recalculate display-only fields
-// such as PAGE and NUMPAGES. Paragraphs containing fields remain protected from edits.
+// such as PAGE and NUMPAGES. The markers and field code are modeled as their own runs.
 import type { TextRun } from './model.js';
 import { getW, isElement, named, textContent, type XmlElement } from './xml.js';
 

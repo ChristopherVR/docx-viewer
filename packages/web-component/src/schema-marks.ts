@@ -154,4 +154,26 @@ export const markSpecs: Record<string, MarkSpec> = {
 		],
 		toDOM: (mark) => ['span', { 'data-docx-style': mark.attrs.id }, 0],
 	},
+	/** Field result text: carries the field code so results can be recalculated and re-wrapped. */
+	field: {
+		attrs: { instr: { default: '' }, simple: { default: false } },
+		inclusive: false,
+		parseDOM: [
+			{
+				tag: 'span[data-field]',
+				getAttrs: (el) => ({
+					instr: (el as HTMLElement).dataset.field || '',
+					simple: (el as HTMLElement).dataset.fieldSimple === '1',
+				}),
+			},
+		],
+		toDOM: (mark) => [
+			'span',
+			{
+				'data-field': mark.attrs.instr,
+				...(mark.attrs.simple ? { 'data-field-simple': '1' } : {}),
+			},
+			0,
+		],
+	},
 };

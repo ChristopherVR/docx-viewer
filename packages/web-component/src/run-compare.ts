@@ -8,7 +8,10 @@ function sameRevisionMeta(left: TextRun, right: TextRun): boolean {
 	return (
 		JSON.stringify(left.revision) === JSON.stringify(right.revision) &&
 		JSON.stringify(left.commentIds) === JSON.stringify(right.commentIds) &&
-		JSON.stringify(extraRunProperties(left)) === JSON.stringify(extraRunProperties(right))
+		JSON.stringify(extraRunProperties(left)) === JSON.stringify(extraRunProperties(right)) &&
+		JSON.stringify(left.field) === JSON.stringify(right.field) &&
+		left.fieldChar === right.fieldChar &&
+		left.fieldCode === right.fieldCode
 	);
 }
 
@@ -45,6 +48,10 @@ export function sameRuns(left: TextRun[], right: TextRun[]) {
 				previous &&
 				!previous.noteReference &&
 				!normalized.noteReference &&
+				!previous.fieldChar &&
+				!normalized.fieldChar &&
+				previous.fieldCode === undefined &&
+				normalized.fieldCode === undefined &&
 				!previous.image &&
 				!normalized.image &&
 				sameJson(previous.link, normalized.link) &&

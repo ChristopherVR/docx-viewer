@@ -584,3 +584,13 @@
 	width: 100%;
 	border-collapse: collapse;
 }
+
+/* Complex field begin/code/separate/end markers: kept in the document, never shown. */
+.dve-field-marker {
+	display: inline;
+	font-size: 0;
+}
+
+[data-field] {
+	background: var(--dve-field-shading, rgba(128, 128, 128, 0.12));
+}

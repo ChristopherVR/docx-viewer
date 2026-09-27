@@ -29,10 +29,13 @@ import {
 	type XmlElement,
 } from './xml.js';
 
-/** One modeled run's source element, with the hyperlink that wrapped it (if any). */
+/**
+ * One modeled run's source element, with the hyperlink or simple field that wrapped it (if any).
+ * A simple field without a cached result has a slot with no element.
+ */
 export interface InlineSlot {
-	element: XmlElement;
-	link?: XmlElement;
+	element?: XmlElement;
+	container?: XmlElement;
 }
 
 /** A run's own content is safe when it is plain text, a modeled break, or a lone picture. */
@@ -49,6 +52,10 @@ function runIsSafe(run: XmlElement): boolean {
 		)
 	)
 		return true;
+	// A complex field's marker (without form-field data) or its instruction text are modeled runs.
+	if (content.length === 1 && named(content[0], 'fldChar') && !content[0].childNodes.length)
+		return ['begin', 'separate', 'end'].includes(getW(content[0], 'fldCharType') ?? '');
+	if (content.length && content.every((element) => named(element, 'instrText'))) return true;
 	const kinds = new Set<string>();
 	for (const element of content) {
 		if (element.localName === 'br' && hasSpecialBreak(element)) return false;
@@ -61,8 +68,12 @@ function runIsSafe(run: XmlElement): boolean {
 	return !((kinds.has('drawing') || kinds.has('pict')) && kinds.size > 1);
 }
 
-function runsOf(container: XmlElement, link: XmlElement | undefined, slots: InlineSlot[]): boolean {
-	for (const child of Array.from(container.childNodes)) {
+function runsOf(
+	parent: XmlElement,
+	container: XmlElement | undefined,
+	slots: InlineSlot[],
+): boolean {
+	for (const child of Array.from(parent.childNodes)) {
 		if (!isElement(child)) {
 			if (child.nodeType === 3 && child.textContent?.trim()) return false;
 			continue;
@@ -70,12 +81,15 @@ function runsOf(container: XmlElement, link: XmlElement | undefined, slots: Inli
 		if (named(child, 'r')) {
 			if (isCommentReferenceRun(child)) continue;
 			if (!runIsSafe(child)) return false;
-			slots.push({ element: child, link });
-		} else if (isRevisionWrapperElement(child) && !link) {
+			slots.push({ element: child, container });
+		} else if (isRevisionWrapperElement(child) && !container) {
 			if (!runsOf(child, undefined, slots)) return false;
-		} else if (named(child, 'hyperlink') && !link) {
+		} else if ((named(child, 'hyperlink') || named(child, 'fldSimple')) && !container) {
+			const before = slots.length;
 			if (!runsOf(child, child, slots)) return false;
-		} else if (isCommentAnchorElement(child) && !link) continue;
+			// The parser shows a placeholder for a simple field without a cached result.
+			if (named(child, 'fldSimple') && slots.length === before) slots.push({ container: child });
+		} else if (isCommentAnchorElement(child) && !container) continue;
 		else return false;
 	}
 	return true;
@@ -104,8 +118,10 @@ export function collectInlineSlots(paragraph: XmlElement): InlineSlot[] | undefi
 			slots.push({ element: child });
 		} else if (isRevisionWrapperElement(child)) {
 			if (!runsOf(child, undefined, slots)) return undefined;
-		} else if (named(child, 'hyperlink')) {
+		} else if (named(child, 'hyperlink') || named(child, 'fldSimple')) {
+			const before = slots.length;
 			if (!runsOf(child, child, slots)) return undefined;
+			if (named(child, 'fldSimple') && slots.length === before) slots.push({ container: child });
 		} else if (!isCommentAnchorElement(child)) return undefined;
 	}
 	return slots;
@@ -118,6 +134,7 @@ export function replaceableInlineChildren(paragraph: XmlElement): XmlElement[] {
 			isElement(child) &&
 			(named(child, 'r') ||
 				named(child, 'hyperlink') ||
+				named(child, 'fldSimple') ||
 				isRevisionWrapperElement(child) ||
 				isCommentAnchorElement(child)),
 	);
@@ -193,29 +210,51 @@ export function buildInlineContent(
 	const output: XmlElement[] = [];
 	let index = 0;
 	while (index < runs.length) {
-		const link = runs[index].link;
-		if (!link) {
+		const group = containerGroup(runs[index]);
+		if (!group) {
 			output.push(...nodesFor(index));
 			index++;
 			continue;
 		}
 		const start = index;
-		while (index < runs.length && sameLink(runs[index].link, link)) index++;
-		const oldContainers = new Set(slots.slice(start, index).map((slot) => slot?.link));
+		while (index < runs.length && sameGroup(containerGroup(runs[index]), group)) index++;
+		const oldContainers = new Set(slots.slice(start, index).map((slot) => slot?.container));
 		const [onlyContainer] = oldContainers;
 		const reusable =
 			oldContainers.size === 1 &&
 			onlyContainer !== undefined &&
-			slots.length >= index &&
-			base?.slice(start, index).every((run) => sameLink(run?.link, link)) === true;
+			onlyContainer.localName === (group.kind === 'link' ? 'hyperlink' : 'fldSimple') &&
+			base?.slice(start, index).every((run) => sameGroup(run && containerGroup(run), group)) ===
+				true;
 		let container: XmlElement;
 		if (reusable) {
 			container = onlyContainer;
 			for (const child of Array.from(container.childNodes)) container.removeChild(child);
-		} else container = newHyperlink(doc, link, allocator);
+		} else if (group.kind === 'link') container = newHyperlink(doc, group.link, allocator);
+		else {
+			container = makeW(doc, 'fldSimple');
+			setW(container, 'instr', ` ${group.instr} `);
+		}
 		for (let item = start; item < index; item++)
 			for (const node of nodesFor(item)) container.appendChild(node);
 		output.push(container);
 	}
 	return output;
+}
+
+type ContainerGroup =
+	| { kind: 'link'; link: HyperlinkInfo }
+	| { kind: 'simpleField'; instr: string };
+
+/** The wrapper a run is written inside: a hyperlink, or a simple field (`w:fldSimple`). */
+function containerGroup(run: TextRun): ContainerGroup | undefined {
+	if (run.link) return { kind: 'link', link: run.link };
+	if (run.field?.simple) return { kind: 'simpleField', instr: run.field.instr };
+	return undefined;
+}
+
+function sameGroup(a: ContainerGroup | undefined, b: ContainerGroup | undefined): boolean {
+	if (!a || !b) return a === b;
+	if (a.kind === 'link' && b.kind === 'link') return sameLink(a.link, b.link);
+	return a.kind === 'simpleField' && b.kind === 'simpleField' && a.instr === b.instr;
 }

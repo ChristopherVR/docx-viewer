@@ -79,6 +79,11 @@ function parseRun(node: XmlElement, revision?: Revision): TextRun {
 	let breakKind: 'page' | 'column' | undefined;
 	let noteReference: TextRun['noteReference'];
 	let noteMark: TextRun['noteMark'];
+	let fieldChar: TextRun['fieldChar'];
+	const fieldCode =
+		content.length > 0 && content.every((child) => named(child, 'instrText'))
+			? content.map((child) => textContent(child)).join('')
+			: undefined;
 	if (content.length === 1) {
 		const only = content[0];
 		if (named(only, 'br')) {
@@ -92,9 +97,13 @@ function parseRun(node: XmlElement, revision?: Revision): TextRun {
 			if (id) noteReference = { kind: 'endnote', id };
 		} else if (named(only, 'footnoteRef')) noteMark = 'footnote';
 		else if (named(only, 'endnoteRef')) noteMark = 'endnote';
+		else if (named(only, 'fldChar')) {
+			const type = getW(only, 'fldCharType');
+			if (type === 'begin' || type === 'separate' || type === 'end') fieldChar = type;
+		}
 	}
 	const text =
-		breakKind || noteReference || noteMark
+		breakKind || noteReference || noteMark || fieldChar || fieldCode !== undefined
 			? ''
 			: content
 					.map((child) => {
@@ -109,6 +118,8 @@ function parseRun(node: XmlElement, revision?: Revision): TextRun {
 	if (breakKind) run.break = breakKind;
 	if (noteReference) run.noteReference = noteReference;
 	if (noteMark) run.noteMark = noteMark;
+	if (fieldChar) run.fieldChar = fieldChar;
+	if (fieldCode !== undefined) run.fieldCode = fieldCode;
 	const runRevision = revision ?? runFormatRevision(props);
 	if (runRevision) run.revision = runRevision;
 	const language = first(props, 'lang');
@@ -138,7 +149,7 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 			const link = parseSimpleHyperlinkField(instr);
 			const results = children(item, 'r').map((run) => parseRun(run));
 			if (link) return results.map((run) => ({ ...run, link }));
-			const field = { instr: instr.trim() };
+			const field = { instr: instr.trim(), simple: true };
 			// Show Word's cached result; fall back to a readable placeholder when none was saved.
 			if (!results.some((run) => run.text)) return [{ text: fieldPlaceholderText(instr), field }];
 			return results.map((run) => ({ ...run, field }));

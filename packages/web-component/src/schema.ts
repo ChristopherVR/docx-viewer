@@ -1,6 +1,6 @@
 import { Schema, type DOMOutputSpec } from 'prosemirror-model';
 import { isWordHighlightToken, type WordHighlightToken } from '@christophervr/docx-core';
-import { noteReferenceNodeSpec, pageBreakNodeSpec } from './break-note-schema';
+import { fieldMarkerNodeSpec, noteReferenceNodeSpec, pageBreakNodeSpec } from './break-note-schema';
 import { tableStyle, tableCellStyle } from './table-render';
 import { imageNodeSpec } from './inline-content-schema';
 import { markSpecs } from './schema-marks';
@@ -161,6 +161,7 @@ export const schema = new Schema({
 		},
 		pageBreak: pageBreakNodeSpec,
 		noteReference: noteReferenceNodeSpec,
+		fieldMarker: fieldMarkerNodeSpec,
 		image: imageNodeSpec,
 		table: {
 			content: 'tableRow+',

@@ -61,3 +61,34 @@ export const noteReferenceNodeSpec: NodeSpec = {
 		String(node.attrs.label ?? node.attrs.number),
 	],
 };
+
+/**
+ * A complex field's structural run: a `w:fldChar` marker (begin/separate/end) or its instruction
+ * text (`code`). Invisible while editing; its run formatting rides in `format` like note references.
+ */
+export const fieldMarkerNodeSpec: NodeSpec = {
+	group: 'inline',
+	inline: true,
+	atom: true,
+	selectable: false,
+	attrs: { kind: { default: 'begin' }, code: { default: null }, format: { default: null } },
+	leafText: () => '',
+	parseDOM: [
+		{
+			tag: 'span[data-field-marker]',
+			getAttrs: (el) => ({
+				kind: (el as HTMLElement).dataset.fieldMarker || 'begin',
+				code: (el as HTMLElement).dataset.fieldCode ?? null,
+			}),
+		},
+	],
+	toDOM: (node) => [
+		'span',
+		{
+			class: 'dve-field-marker',
+			'data-field-marker': node.attrs.kind,
+			...(node.attrs.code != null ? { 'data-field-code': node.attrs.code } : {}),
+			contenteditable: 'false',
+		},
+	],
+};

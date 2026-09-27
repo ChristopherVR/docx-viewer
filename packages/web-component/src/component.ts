@@ -21,6 +21,7 @@ import { normalizeEditorLocale, type EditorLocale } from './localization';
 import { CollaborationSession } from './collaboration-session';
 import { paragraphStylesPlugin, resetStylePicker } from './paragraph-styles';
 import { runListAction } from './list-commands';
+import { fieldGuardPlugin } from './field-guard';
 import { sectionBreaksPlugin } from './section-commands';
 import { noteNumberingPlugin } from './note-commands';
 import { keymap } from 'prosemirror-keymap';
@@ -356,6 +357,7 @@ ${chromeStyleText}`;
 					...this.inserts.plugins(),
 					noteNumberingPlugin(),
 					sectionBreaksPlugin(),
+					fieldGuardPlugin(),
 					keymap({
 						'Mod-Alt-f': () => (this.parts.insertNote('footnote', this.canvas, this.paper), true),
 						'Mod-Alt-d': () => (this.parts.insertNote('endnote', this.canvas, this.paper), true),

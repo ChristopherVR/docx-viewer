@@ -108,7 +108,11 @@ export interface TextRun {
 	 * field's `separate` and `end`). Display metadata only: fields are not recalculated on save and
 	 * paragraphs containing them stay protected from edits.
 	 */
-	field?: { instr: string };
+	field?: { instr: string; simple?: boolean };
+	/** A complex field's `w:fldChar` marker run (begin, separate or end); `text` is empty. */
+	fieldChar?: 'begin' | 'separate' | 'end';
+	/** A complex field's instruction text run (`w:instrText`), e.g. ` TOC \o "1-3" `; `text` is empty. */
+	fieldCode?: string;
 	/** Tracked-change metadata for this run; absent means the run has no pending revision. */
 	revision?: Revision;
 	/** IDs of comments whose range covers this run. */

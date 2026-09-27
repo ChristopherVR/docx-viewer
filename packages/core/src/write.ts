@@ -85,7 +85,7 @@ function writeParagraphImpl(
 	rejectUnsafeRunSegmentation(
 		paragraph,
 		base,
-		slots.map((slot) => slot.element),
+		slots.flatMap((slot) => (slot.element ? [slot.element] : [])),
 	);
 	// Bookmarks are preserved but not repositioned precisely: an edited paragraph's bookmarks move
 	// to its boundaries (starts right after pPr, ends at the close) instead of their exact original

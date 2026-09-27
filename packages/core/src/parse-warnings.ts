@@ -39,7 +39,7 @@ export function warningsFor(document: XmlDocument): string[] {
 		)
 	)
 		warnings.push(
-			'Complex HYPERLINK field codes (w:fldChar/w:instrText) are preserved as raw XML but not parsed as links; editing paragraphs containing them is rejected.',
+			'Complex HYPERLINK field codes (w:fldChar/w:instrText) are preserved but not parsed as links; their result text edits as plain text.',
 		);
 	const specialBreak =
 		Array.from(document.getElementsByTagNameNS(WORD_NS, 'br')).some(

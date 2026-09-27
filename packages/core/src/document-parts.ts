@@ -140,7 +140,7 @@ export async function parseDocumentParts(
 		);
 	if (fieldMarkup.seen)
 		warnings.push(
-			'PAGE, NUMPAGES and SECTIONPAGES fields are recalculated in Print Layout; other fields show the result Word last saved.',
+			'PAGE, NUMPAGES, SECTIONPAGES, DATE and TIME fields are recalculated in Print Layout; other fields show the result Word last saved. Field results are editable and field codes are preserved.',
 		);
 	return {
 		sections,

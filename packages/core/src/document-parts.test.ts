@@ -66,7 +66,7 @@ describe('headers, footers and settings', () => {
 		expect(loaded.model.evenAndOddHeaders).toBe(true);
 		expect(loaded.model.warnings.some((warning) => /cannot be edited/.test(warning))).toBe(false);
 		expect(loaded.model.warnings).toContain(
-			'PAGE, NUMPAGES and SECTIONPAGES fields are recalculated in Print Layout; other fields show the result Word last saved.',
+			'PAGE, NUMPAGES, SECTIONPAGES, DATE and TIME fields are recalculated in Print Layout; other fields show the result Word last saved. Field results are editable and field codes are preserved.',
 		);
 	});
 

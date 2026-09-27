@@ -41,6 +41,10 @@ function marksForRun(run: TextRun): Mark[] {
 				color: run.color || null,
 			}),
 		);
+	if (run.field)
+		marks.push(
+			schema.marks.field.create({ instr: run.field.instr, simple: Boolean(run.field.simple) }),
+		);
 	const revision = run.revision;
 	if (revision?.kind === 'insert' || revision?.kind === 'moveTo')
 		marks.push(
@@ -73,6 +77,16 @@ export type NoteNumberLookup = (
 
 export function runToInlineNodes(run: TextRun, noteNumber?: NoteNumberLookup): ProseMirrorNode[] {
 	if (run.break) return [schema.nodes.pageBreak.create({ kind: run.break })];
+	if (run.fieldChar || run.fieldCode !== undefined) {
+		const { text: _text, fieldChar, fieldCode, ...format } = run;
+		return [
+			schema.nodes.fieldMarker.create({
+				kind: fieldChar ?? 'code',
+				code: fieldCode ?? null,
+				format: Object.keys(format).length ? JSON.stringify(format) : null,
+			}),
+		];
+	}
 	if (run.noteReference) {
 		const { kind, id } = run.noteReference;
 		const { text: _text, noteReference: _reference, ...format } = run;
@@ -176,6 +190,12 @@ function applyMarkFormatting(run: TextRun, child: ProseMirrorNode): void {
 		};
 	const comment = propertyOfMark(child, 'comment');
 	if (comment?.attrs.ids?.length) run.commentIds = [...comment.attrs.ids];
+	const field = propertyOfMark(child, 'field');
+	if (field)
+		run.field = {
+			instr: String(field.attrs.instr),
+			...(field.attrs.simple ? { simple: true } : {}),
+		};
 	const characterStyle = propertyOfMark(child, 'characterStyle');
 	if (characterStyle?.attrs.id) run.style = String(characterStyle.attrs.id);
 	const extra = propertyOfMark(child, 'runProperties');
@@ -185,6 +205,16 @@ function applyMarkFormatting(run: TextRun, child: ProseMirrorNode): void {
 export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void {
 	if (child.type.name === 'pageBreak') {
 		runs.push({ text: '', break: child.attrs.kind === 'column' ? 'column' : 'page' });
+		return;
+	}
+	if (child.type.name === 'fieldMarker') {
+		const marker: TextRun =
+			child.attrs.kind === 'code'
+				? { text: '', fieldCode: String(child.attrs.code ?? '') }
+				: { text: '', fieldChar: child.attrs.kind };
+		if (typeof child.attrs.format === 'string')
+			Object.assign(marker, JSON.parse(child.attrs.format) as Partial<TextRun>);
+		runs.push(marker);
 		return;
 	}
 	if (child.type.name === 'noteReference') {
@@ -254,6 +284,9 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 		previous &&
 		!previous.break &&
 		!previous.noteReference &&
+		!previous.fieldChar &&
+		previous.fieldCode === undefined &&
+		JSON.stringify(previous.field) === JSON.stringify(run.field) &&
 		sameRevision &&
 		sameComments &&
 		sameExtra &&
