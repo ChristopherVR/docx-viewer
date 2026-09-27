@@ -45,7 +45,8 @@ export type RibbonAction =
 	| { type: 'formatPicture' }
 	| { type: 'link' }
 	| { type: 'characterStyle'; value: string }
-	| { type: 'showHidden' };
+	| { type: 'showHidden' }
+	| { type: 'insertNote'; kind: 'footnote' | 'endnote' };
 
 const button = (label: string, text: string, action: RibbonAction, className = '') => {
 	const el = document.createElement('button');
@@ -327,6 +328,11 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 				button('Format picture', 'Format', { type: 'formatPicture' }),
 			),
 			group('Links', button('Insert link', 'Link', { type: 'link' })),
+			group(
+				'Footnotes',
+				button('Insert footnote', 'Footnote', { type: 'insertNote', kind: 'footnote' }),
+				button('Insert endnote', 'Endnote', { type: 'insertNote', kind: 'endnote' }),
+			),
 			group(
 				'Breaks',
 				button('Insert page break', 'Page break', { type: 'insertBreak', kind: 'page' }),

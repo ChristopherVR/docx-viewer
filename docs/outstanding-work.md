@@ -29,7 +29,7 @@ and the model warnings emitted at parse time.
 
 ### Editor commands and UI
 
-Done since the merge: in-place header/footer and footnote/endnote editing, headers/footers with live PAGE/NUMPAGES in Print Layout, table style rendering, picture resize and alt text, Word-style window chrome (title bar with quick access, "Tell me"
+Done since the merge: in-place header/footer and footnote/endnote editing, Insert Footnote/Endnote (creating the notes part when needed), headers/footers with live PAGE/NUMPAGES in Print Layout, table style rendering, picture resize and alt text, Word-style window chrome (title bar with quick access, "Tell me"
 command search, Editing/Viewing mode; File backstage; status bar with zoom and compatibility
 notes), Insert Picture (PNG, JPEG, GIF, BMP), insert/edit/remove hyperlink with Ctrl+K and a
 "Place in this document" bookmark list, Ctrl+Click to follow links, a character style picker,
@@ -39,8 +39,10 @@ Still missing:
 
 - Picture resize handles, alt-text editing, SVG pictures (they need a PNG fallback part), and
   floating picture layout.
-- Inserting new footnotes/endnotes (existing notes and the paragraphs that reference them are
-  editable) and section/page-setup editing; multi-column rendering on the continuous surface.
+- Section/page-setup editing and multi-column rendering on the continuous surface.
+- Ctrl+Alt+F / Ctrl+Alt+D (insert footnote/endnote) are bound, but Windows browsers can report
+  Ctrl+Alt as AltGr and not deliver them; the Insert ribbon buttons always work. Endnote reference
+  numbers show decimals rather than the document's endnote number format.
 - Pictures and new external links inside headers, footers and notes (they need relationships in
   those parts).
 - Table style run formatting (e.g. bold header rows) and cell margins are not yet rendered.

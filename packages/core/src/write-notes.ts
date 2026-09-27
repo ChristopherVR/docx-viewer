@@ -5,11 +5,33 @@ import type JSZip from 'jszip';
 import type { DocumentModel, Note } from './model.js';
 import { buildXml, children, getW, parseXml } from './xml.js';
 import { applyBlocks } from './write.js';
+import { ensureContentTypeOverride, ensureDocumentRelationship } from './zip-parts.js';
 
 const PARTS = {
 	footnote: { part: 'word/footnotes.xml', key: 'footnotes' },
 	endnote: { part: 'word/endnotes.xml', key: 'endnotes' },
 } as const;
+const WORD_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+const RELATIONSHIPS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+
+/** A notes part holding only Word's separator and continuation separator notes. */
+function emptyNotesPart(kind: keyof typeof PARTS): string {
+	const tag = `w:${kind}`;
+	const separator = (type: string, id: string, mark: string) =>
+		`<${tag} w:type="${type}" w:id="${id}"><w:p><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:${mark}/></w:r></w:p></${tag}>`;
+	return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:${kind}s xmlns:w="${WORD_NS}">${separator('separator', '-1', 'separator')}${separator('continuationSeparator', '0', 'continuationSeparator')}</w:${kind}s>`;
+}
+
+/** Creates the notes part, its relationship and content type the first time a note is added. */
+async function createNotesPart(zip: JSZip, kind: keyof typeof PARTS): Promise<string> {
+	await ensureContentTypeOverride(
+		zip,
+		PARTS[kind].part,
+		`application/vnd.openxmlformats-officedocument.wordprocessingml.${kind}s+xml`,
+	);
+	await ensureDocumentRelationship(zip, `${RELATIONSHIPS}/${kind}s`, `${kind}s.xml`);
+	return emptyNotesPart(kind);
+}
 
 export async function applyNoteEdits(
 	zip: JSZip,
@@ -30,19 +52,21 @@ export async function applyNoteEdits(
 		});
 		if (!edited.length) continue;
 		const file = zip.file(part);
-		if (!file) throw new Error(`Cannot edit ${kind}s: ${part} is missing from the package.`);
-		const doc = parseXml(await file.async('string'));
+		const doc = parseXml(file ? await file.async('string') : await createNotesPart(zip, kind));
 		const elements = new Map(
 			children(doc.documentElement, kind).map((element) => [getW(element, 'id'), element]),
 		);
 		for (const note of edited) {
-			const element = elements.get(note.id);
+			let element = elements.get(note.id);
 			const original = baseNotes.get(note.id);
-			if (!element || !original)
-				throw new Error(
-					`Adding new ${kind}s is not supported yet; ${kind} ${note.id} was not saved.`,
-				);
-			applyBlocks(doc, element, note.blocks, original.blocks, undefined, contentWidthTwips);
+			if (original && !element)
+				throw new Error(`${kind} ${note.id} is missing from ${part}; it was not saved.`);
+			if (!element) {
+				element = doc.createElementNS(WORD_NS, `w:${kind}`);
+				element.setAttributeNS(WORD_NS, 'w:id', note.id);
+				doc.documentElement.appendChild(element);
+			}
+			applyBlocks(doc, element, note.blocks, original?.blocks ?? [], undefined, contentWidthTwips);
 		}
 		zip.file(part, buildXml(doc));
 	}

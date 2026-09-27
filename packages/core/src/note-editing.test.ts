@@ -36,12 +36,71 @@ describe('footnote editing', () => {
 		);
 	});
 
-	it('rejects notes without a matching note element', async () => {
+	it('adds a new note to an existing footnotes part', async () => {
 		const loaded = await loadDocx(await fixture());
 		loaded.model.footnotes!.push({
-			id: '9',
-			blocks: [{ type: 'paragraph', id: 'fn9-p0', runs: [{ text: 'New' }] }],
+			id: '3',
+			blocks: [
+				{
+					type: 'paragraph',
+					id: 'fn3-p0',
+					runs: [
+						{ text: '', noteMark: 'footnote', verticalAlign: 'superscript' },
+						{ text: ' New note' },
+					],
+				},
+			],
 		});
-		await expect(loaded.save(loaded.model)).rejects.toThrow(/not supported yet/);
+		(loaded.model.blocks[0] as Paragraph).runs.push({
+			text: '',
+			noteReference: { kind: 'footnote', id: '3' },
+			verticalAlign: 'superscript',
+		});
+		const saved = await loaded.save(loaded.model);
+		const xml = await (await JSZip.loadAsync(saved)).file('word/footnotes.xml')!.async('string');
+		expect(xml).toMatch(/<w:footnote w:id="3"><w:p>.*<w:footnoteRef\/>.*New note/);
+		const reloaded = await loadDocx(saved);
+		expect(reloaded.model.footnotes!.map((note) => note.id)).toEqual(['2', '3']);
+	});
+
+	it('creates the footnotes part, relationship and content type for a first footnote', async () => {
+		const zip = new JSZip();
+		zip.file(
+			'[Content_Types].xml',
+			'<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="xml" ContentType="application/xml"/></Types>',
+		);
+		zip.file(
+			'word/document.xml',
+			`<w:document xmlns:w="${w}"><w:body><w:p><w:r><w:t>Text</w:t></w:r></w:p><w:sectPr/></w:body></w:document>`,
+		);
+		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
+		loaded.model.footnotes = [
+			{
+				id: '1',
+				blocks: [
+					{
+						type: 'paragraph',
+						id: 'fn1-p0',
+						runs: [{ text: '', noteMark: 'footnote' }, { text: ' First' }],
+					},
+				],
+			},
+		];
+		(loaded.model.blocks[0] as Paragraph).runs.push({
+			text: '',
+			noteReference: { kind: 'footnote', id: '1' },
+		});
+		const saved = await JSZip.loadAsync(await loaded.save(loaded.model));
+		const notes = await saved.file('word/footnotes.xml')!.async('string');
+		expect(notes).toContain('w:type="separator" w:id="-1"');
+		expect(notes).toContain(' First');
+		expect(await saved.file('word/_rels/document.xml.rels')!.async('string')).toContain(
+			'Target="footnotes.xml"',
+		);
+		expect(await saved.file('[Content_Types].xml')!.async('string')).toContain(
+			'PartName="/word/footnotes.xml"',
+		);
+		const reloaded = await loadDocx(await saved.generateAsync({ type: 'uint8array' }));
+		expect(reloaded.model.footnotes).toHaveLength(1);
 	});
 });

@@ -71,12 +71,14 @@ export function runToInlineNodes(run: TextRun, noteNumber?: NoteNumberLookup): P
 	if (run.break) return [schema.nodes.pageBreak.create({ kind: run.break })];
 	if (run.noteReference) {
 		const { kind, id } = run.noteReference;
+		const { text: _text, noteReference: _reference, ...format } = run;
 		return [
-			schema.nodes.noteReference.create(
-				{ kind, id, number: noteNumber?.(kind, id) ?? 1 },
-				null,
-				marksForRun(run),
-			),
+			schema.nodes.noteReference.create({
+				kind,
+				id,
+				number: noteNumber?.(kind, id) ?? 1,
+				format: Object.keys(format).length ? JSON.stringify(format) : null,
+			}),
 		];
 	}
 	if (run.image) {
@@ -186,8 +188,8 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 				id: String(child.attrs.id || ''),
 			},
 		};
-		// The reference's own formatting (superscript, FootnoteReference style) rides on its marks.
-		applyMarkFormatting(reference, child);
+		if (typeof child.attrs.format === 'string')
+			Object.assign(reference, JSON.parse(child.attrs.format) as Partial<TextRun>);
 		runs.push(reference);
 		return;
 	}

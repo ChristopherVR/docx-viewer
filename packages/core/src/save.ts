@@ -73,9 +73,9 @@ export async function saveDocx(
 		throw new Error(
 			'Editing sections or page setup is not supported; source section properties are preserved unchanged.',
 		);
-	if (!binding && (model.sections?.length || model.footnotes?.length || model.endnotes?.length))
+	if (!binding && model.sections?.length)
 		throw new Error(
-			'Sections, headers, footers, footnotes and endnotes are not supported by the standalone DOCX writer; they would be silently dropped.',
+			'Sections, headers and footers are not supported by the standalone DOCX writer; they would be silently dropped.',
 		);
 	if (
 		binding &&
@@ -136,10 +136,9 @@ export async function saveDocx(
 		zip.file(RELS_PART, buildRelationshipsXml(relationships));
 		if (contentTypesXml) zip.file(CONTENT_TYPES_PART, contentTypesXml);
 	}
-	if (binding) {
-		await applyHeaderFooterEdits(zip, model, binding.base);
-		await applyNoteEdits(zip, model, binding.base);
-	}
+	if (binding) await applyHeaderFooterEdits(zip, model, binding.base);
+	// A new document starts without notes, so every note is created along with its part.
+	await applyNoteEdits(zip, model, binding?.base ?? { ...model, footnotes: [], endnotes: [] });
 	await applyNumberingCatalog(zip, model, binding);
 	if (model.trackChanges !== binding?.base.trackChanges)
 		await applyTrackChangesSetting(zip, model.trackChanges === true);

@@ -26,6 +26,11 @@ export const commandStrings = {
 		Height: 'Height',
 		'Lock aspect ratio': 'Lock aspect ratio',
 		OK: 'OK',
+		Footnotes: 'Footnotes',
+		'Insert footnote': 'Insert footnote',
+		'Insert endnote': 'Insert endnote',
+		Footnote: 'Footnote',
+		Endnote: 'Endnote',
 	},
 	fr: {
 		'Character style': 'Style de caractère',
@@ -53,5 +58,9 @@ export const commandStrings = {
 		Height: 'Hauteur',
 		'Lock aspect ratio': 'Conserver les proportions',
 		OK: 'OK',
+		'Insert footnote': 'Insérer une note de bas de page',
+		'Insert endnote': 'Insérer une note de fin',
+		Footnote: 'Note de bas de page',
+		Endnote: 'Note de fin',
 	},
 } as const;

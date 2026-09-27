@@ -29,7 +29,14 @@ export const noteReferenceNodeSpec: NodeSpec = {
 	inline: true,
 	atom: true,
 	selectable: false,
-	attrs: { kind: { default: 'footnote' }, id: { default: '' }, number: { default: 1 } },
+	attrs: {
+		kind: { default: 'footnote' },
+		id: { default: '' },
+		number: { default: 1 },
+		/** The reference run's own formatting (e.g. superscript, FootnoteReference style) as JSON.
+		 *  Kept as an attribute, not marks, so text typed beside a reference doesn't inherit it. */
+		format: { default: null },
+	},
 	leafText: (node) => String(node.attrs.number),
 	parseDOM: [
 		{

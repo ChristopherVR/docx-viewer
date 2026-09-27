@@ -29,6 +29,8 @@ import { changeListLevel, removeList, selectionIsListKind, toggleList } from './
 import { buildHeaderElement, buildFooterElement } from './header-footer-view';
 import { attachHeaderFooterEditing, type HeaderFooterSlotName } from './header-footer-editor';
 import { attachNoteEditing } from './note-editor';
+import { insertNote, noteNumberingPlugin, type NoteKind } from './note-commands';
+import { keymap } from 'prosemirror-keymap';
 import { buildNotesElement } from './notes-view';
 import { createPrintLayoutController, type PrintLayoutController } from './print-layout-view';
 import { moveCursorToBlock } from './print-layout-cursor';
@@ -349,6 +351,11 @@ ${chromeStyleText}`;
 				plugins: [
 					history(),
 					...this.inserts.plugins(),
+					noteNumberingPlugin(),
+					keymap({
+						'Mod-Alt-f': () => (this.insertNoteAtSelection('footnote'), true),
+						'Mod-Alt-d': () => (this.insertNoteAtSelection('endnote'), true),
+					}),
 					runStylesPlugin(() => this.model),
 					paragraphStylesPlugin(() => this.model),
 					trackChangesPlugin(
@@ -414,6 +421,21 @@ ${chromeStyleText}`;
 		if (this.footerEl) this.canvas.insertBefore(this.footerEl, this.paper.nextSibling);
 		if (this.notesEl)
 			this.canvas.insertBefore(this.notesEl, (this.footerEl ?? this.paper).nextSibling);
+	}
+
+	/** Inserts a footnote or endnote reference at the selection and opens the new note for typing. */
+	private insertNoteAtSelection(kind: NoteKind) {
+		if (!this.view?.editable || this.collaboration) return;
+		const { model, id } = insertNote(this.view, this.model, kind);
+		const key = kind === 'footnote' ? 'footnotes' : 'endnotes';
+		this.model = { ...this.model, [key]: model[key] };
+		this.renderHeaderFooterNotes();
+		const item = this.notesEl?.querySelector<HTMLElement>(
+			`.dve-notes-${kind} li[data-docx-note-id="${id}"]`,
+		);
+		item?.scrollIntoView?.({ block: 'center' });
+		item?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+		this.markEditedOutsideBody();
 	}
 
 	/** Replaces one footnote's or endnote's blocks. */
@@ -497,6 +519,7 @@ ${chromeStyleText}`;
 		else if (action.type === 'list') this.handleListAction(action.key);
 		else if (action.type === 'view') this.setViewMode(action.value);
 		else if (action.type === 'print') this.printDocument();
+		else if (action.type === 'insertNote') this.insertNoteAtSelection(action.kind);
 		else if (action.type === 'reviewDisplay') {
 			this.reviewDisplayMode = action.value;
 			this.view?.dispatch(this.view.state.tr);

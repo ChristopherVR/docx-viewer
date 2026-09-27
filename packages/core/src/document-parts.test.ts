@@ -137,21 +137,40 @@ describe('footnotes', () => {
 });
 
 describe('saveDocx guards', () => {
-	it('rejects footnotes on a standalone (non-loaded) model instead of silently dropping them', async () => {
-		await expect(
-			saveDocx({
-				blocks: [{ type: 'paragraph', id: 'p1', runs: [{ text: '' }] }],
-				page: {
-					width: 816,
-					height: 1056,
-					marginTop: 96,
-					marginRight: 96,
-					marginBottom: 96,
-					marginLeft: 96,
+	it('writes footnotes from a standalone (non-loaded) model into a new footnotes part', async () => {
+		const saved = await saveDocx({
+			blocks: [
+				{
+					type: 'paragraph',
+					id: 'p1',
+					runs: [{ text: 'Text' }, { text: '', noteReference: { kind: 'footnote', id: '1' } }],
 				},
-				warnings: [],
-				footnotes: [{ id: '1', blocks: [] }],
-			}),
-		).rejects.toThrow('not supported by the standalone DOCX writer');
+			],
+			page: {
+				width: 816,
+				height: 1056,
+				marginTop: 96,
+				marginRight: 96,
+				marginBottom: 96,
+				marginLeft: 96,
+			},
+			warnings: [],
+			footnotes: [
+				{
+					id: '1',
+					blocks: [
+						{
+							type: 'paragraph',
+							id: 'fn1-p0',
+							runs: [{ text: '', noteMark: 'footnote' }, { text: ' Note' }],
+						},
+					],
+				},
+			],
+		});
+		const reloaded = await loadDocx(saved);
+		expect(reloaded.model.footnotes?.[0].blocks[0]).toMatchObject({
+			runs: [{ noteMark: 'footnote' }, { text: ' Note' }],
+		});
 	});
 });

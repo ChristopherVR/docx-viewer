@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
-import { fileInput, fileNameLabel, saveButton } from './helpers';
+import { fileInput, fileNameLabel, newDocument, saveButton } from './helpers';
 
 const w = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const r = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
@@ -127,5 +127,51 @@ test('edits footnote text and the paragraph holding its reference', async ({ pag
 	const documentXml = await zip.file('word/document.xml')!.async('string');
 	expect(documentXml).toContain('Strong Claim');
 	expect(documentXml).toContain('<w:footnoteReference w:id="1"/>');
+	expect(errors).toEqual([]);
+});
+
+test('inserts footnotes in a new document, numbers them in order and saves them', async ({
+	page,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/');
+	await newDocument(page);
+	const editor = page.locator('docx-editor');
+	const surface = editor.locator('.dve-paper');
+	await surface.locator('p').first().click();
+	await page.keyboard.type('Second claim');
+	// Ctrl+Alt+F is also bound, but Windows reports Ctrl+Alt as AltGr, so drive the ribbon.
+	await editor.getByRole('tab', { name: 'Insert', exact: true }).click();
+	await editor.getByRole('button', { name: 'Insert footnote', exact: true }).click();
+	const secondNote = editor.locator('.dve-notes-footnote li').first();
+	await expect(secondNote.locator('.ProseMirror')).toBeFocused();
+	await page.keyboard.type('Later source');
+	await page.keyboard.press('Escape');
+
+	await surface.locator('p').first().click();
+	await page.keyboard.press('Home');
+	await page.keyboard.type('First claim');
+	await editor.getByRole('button', { name: 'Insert footnote', exact: true }).click();
+	await page.keyboard.type('Earlier source');
+	await page.keyboard.press('Escape');
+
+	const references = surface.locator('sup.dve-note-reference');
+	await expect(references).toHaveText(['1', '2']);
+	const notes = editor.locator('.dve-notes-footnote li');
+	await expect(notes).toHaveCount(2);
+	await expect(notes.first()).toContainText('Earlier source');
+
+	const pending = page.waitForEvent('download');
+	await saveButton(page).click();
+	const zip = await JSZip.loadAsync(await readFile((await (await pending).path())!));
+	const footnotes = await zip.file('word/footnotes.xml')!.async('string');
+	expect(footnotes).toContain('Earlier source');
+	expect(footnotes).toContain('Later source');
+	expect(footnotes).toContain('w:type="separator"');
+	const documentXml = await zip.file('word/document.xml')!.async('string');
+	expect(documentXml).toMatch(/First claim.*footnoteReference.*Second claim.*footnoteReference/);
+	// Text typed next to a reference does not inherit its superscript.
+	expect(documentXml).toContain('<w:r><w:t>First claim</w:t></w:r>');
 	expect(errors).toEqual([]);
 });
