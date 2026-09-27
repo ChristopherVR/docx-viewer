@@ -6,7 +6,7 @@ import type {
 	Table,
 	TextRun,
 } from '@christophervr/docx-core';
-import { resolveParagraphFormatting } from '@christophervr/docx-core';
+import { dateFieldResult, fieldName, resolveParagraphFormatting } from '@christophervr/docx-core';
 import type {
 	LayoutBlock,
 	LayoutDocumentInput,
@@ -49,9 +49,16 @@ export function adaptDocumentModel(
 		}
 	};
 
+	const now = new Date();
 	function adaptRun(run: TextRun): LayoutRun {
+		// DATE and TIME update when Word paginates for display or printing.
+		const name = run.field ? fieldName(run.field.instr) : '';
+		const text =
+			run.field && (name === 'DATE' || name === 'TIME')
+				? dateFieldResult(name, run.field.instr, now)
+				: run.text;
 		return {
-			text: run.text,
+			text,
 			bold: run.bold,
 			italic: run.italic,
 			fontFamily: run.fontFamily,

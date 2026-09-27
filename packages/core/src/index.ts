@@ -42,3 +42,4 @@ export {
 } from './revision-commands.js';
 export { DEFAULT_TABLE_BORDERS } from './table-defaults.js';
 export { fieldName } from './field-runs.js';
+export { dateFieldResult, datePicture, formatWordDate } from './field-date.js';

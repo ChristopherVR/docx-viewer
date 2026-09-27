@@ -53,7 +53,9 @@ Still missing:
 
 ### Fidelity
 
-- Field recalculation beyond PAGE/NUMPAGES/SECTIONPAGES in Print Layout (DATE, TOC, cross-references); paragraphs containing fields stay protected from edits.
+- Print Layout recalculates PAGE, NUMPAGES, SECTIONPAGES, DATE and TIME (with `\@` pictures); TOC,
+  cross-references and other fields show Word's saved result, and paragraphs containing complex
+  fields stay protected from edits.
 - Picture crop and effects; floating pictures follow their wrapping approximately (floats), but exact
   positions, vertical offsets and in-front/behind layering are not reproduced.
 - Picture bullets, `numStyleLink`, Word's exact `lvlRestart` cascade.

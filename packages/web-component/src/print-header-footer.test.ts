@@ -121,4 +121,28 @@ describe('Print Layout headers, footers and page fields', () => {
 			{ text: ' end' },
 		]);
 	});
+
+	it('updates DATE fields in headers and footers to the layout time', () => {
+		const model: DocumentModel = {
+			...createDocument(),
+			sections: [
+				section({
+					headers: {
+						default: {
+							blocks: [
+								{
+									type: 'paragraph',
+									id: 'h1',
+									runs: [{ text: '1/1/2020', field: { instr: 'DATE \\@ "yyyy-MM-dd"' } }],
+								},
+							],
+						},
+					},
+				}),
+			],
+		};
+		const sheets = [document.createElement('div')];
+		decoratePages(model, [page(0, 0, 0)], sheets, new Date(2026, 8, 7));
+		expect(sheets[0].querySelector('.dve-print-header')?.textContent).toBe('2026-09-07');
+	});
 });

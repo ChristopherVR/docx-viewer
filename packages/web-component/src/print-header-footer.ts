@@ -1,4 +1,5 @@
 import {
+	dateFieldResult,
 	fieldName,
 	formatNoteNumber,
 	type Block,
@@ -15,6 +16,8 @@ export interface PageFieldValues {
 	page: string;
 	numPages: string;
 	sectionPages: string;
+	/** When the layout was produced; DATE and TIME fields update to it, as Word updates them. */
+	now?: Date;
 }
 
 /** Word page numbers per laid-out page, honoring each section's restart value and number format. */
@@ -63,6 +66,8 @@ export function fieldDisplayText(run: TextRun, values: PageFieldValues): string 
 	if (name === 'PAGE') return values.page;
 	if (name === 'NUMPAGES') return values.numPages;
 	if (name === 'SECTIONPAGES') return values.sectionPages;
+	if (name === 'DATE' || name === 'TIME')
+		return dateFieldResult(name, run.field.instr, values.now ?? new Date());
 	return run.text;
 }
 
@@ -117,7 +122,12 @@ export function renderHeaderFooter(
 }
 
 /** Adds each page's header and footer, positioned at the section's header/footer distances. */
-export function decoratePages(model: DocumentModel, pages: LayoutPageBox[], sheets: HTMLElement[]) {
+export function decoratePages(
+	model: DocumentModel,
+	pages: LayoutPageBox[],
+	sheets: HTMLElement[],
+	now: Date = new Date(),
+) {
 	const numbers = pageNumbers(model, pages);
 	const sectionPageCounts = new Map<number, number>();
 	for (const page of pages)
@@ -129,6 +139,7 @@ export function decoratePages(model: DocumentModel, pages: LayoutPageBox[], shee
 			page: numbers[index],
 			numPages: String(pages.length),
 			sectionPages: String(sectionPageCounts.get(page.sectionIndex) ?? 1),
+			now,
 		};
 		const section = model.sections?.[page.sectionIndex];
 		const pageNumber = Number.parseInt(numbers[index], 10) || index + 1;
