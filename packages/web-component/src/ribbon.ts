@@ -281,27 +281,29 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 	);
 	home.append(
 		group(
-			'Alignment and history',
-			button('Bulleted list', '•', { type: 'list', key: 'bullet' }, 'tool-list-bullet'),
-			button('Numbered list', '1.', { type: 'list', key: 'number' }, 'tool-list-number'),
-			button('Decrease list level', '⇤≡', { type: 'list', key: 'decreaseLevel' }),
-			button('Increase list level', '⇥≡', { type: 'list', key: 'increaseLevel' }),
-			button('Remove list', '✕≡', { type: 'list', key: 'remove' }),
-			...(
-				[
-					['left', 'Align left'],
-					['center', 'Align center'],
-					['right', 'Align right'],
-					['justify', 'Justify'],
-				] as const
-			).map(([value, label]) =>
-				button(label, value === 'center' ? '≣' : value === 'justify' ? '☰' : '≡', {
-					type: 'align',
-					value,
-				}),
+			'Alignment',
+			row(
+				button('Bulleted list', '•', { type: 'list', key: 'bullet' }, 'tool-list-bullet'),
+				button('Numbered list', '1.', { type: 'list', key: 'number' }, 'tool-list-number'),
+				button('Decrease list level', '⇤≡', { type: 'list', key: 'decreaseLevel' }),
+				button('Increase list level', '⇥≡', { type: 'list', key: 'increaseLevel' }),
+				button('Remove list', '✕≡', { type: 'list', key: 'remove' }),
 			),
-			button('Undo', '↶', { type: 'history', key: 'undo' }),
-			button('Redo', '↷', { type: 'history', key: 'redo' }),
+			row(
+				...(
+					[
+						['left', 'Align left'],
+						['center', 'Align center'],
+						['right', 'Align right'],
+						['justify', 'Justify'],
+					] as const
+				).map(([value, label]) =>
+					button(label, value === 'center' ? '≣' : value === 'justify' ? '☰' : '≡', {
+						type: 'align',
+						value,
+					}),
+				),
+			),
 		),
 	);
 	home.append(group('Editing', button('Find and replace', 'Find and replace', { type: 'search' })));

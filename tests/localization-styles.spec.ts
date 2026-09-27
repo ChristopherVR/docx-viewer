@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openSample, fileInput, saveButton, fileNameLabel, setReadOnly } from './helpers';
 import JSZip from 'jszip';
 import { readFile } from 'node:fs/promises';
 
@@ -26,15 +27,17 @@ for (const framework of frameworks) {
 	}) => {
 		const errors: string[] = [];
 		page.on('pageerror', (error) => errors.push(error.message));
-		await page.goto(`/?framework=${framework}`);
+		await openSample(page, framework);
 		const editor = page.locator('docx-editor');
 		await expect(editor.locator('.ProseMirror')).toContainText('Document title');
-		await page.locator('#file').setInputFiles({
+		await (
+			await fileInput(page)
+		).setInputFiles({
 			name: 'styles.docx',
 			mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 			buffer: await styledDocx(),
 		});
-		await expect(page.locator('#filename')).toHaveText('styles.docx');
+		await expect(fileNameLabel(page)).toHaveText('styles.docx');
 		const surface = editor.locator('.ProseMirror');
 		const styledParagraph = surface.locator('p').filter({ hasText: 'Inherited style sample' });
 		await expect(styledParagraph).toHaveCSS('margin-left', '12px');
@@ -57,11 +60,11 @@ for (const framework of frameworks) {
 		await expect(editor.getByRole('status', { name: 'Résultats de recherche' })).toContainText(
 			'Saisissez le texte',
 		);
-		await page.getByLabel('Read only', { exact: true }).check();
+		await setReadOnly(page, true);
 		await expect(
 			editor.getByRole('button', { name: 'Tout remplacer', exact: true }),
 		).toBeDisabled();
-		await page.getByLabel('Read only', { exact: true }).uncheck();
+		await setReadOnly(page, false);
 
 		// Display locale changes labels only; the model, including style catalog and paragraph references, is unchanged.
 		const modelAfterFrench = await editor.evaluate((element) =>
@@ -82,7 +85,7 @@ for (const framework of frameworks) {
 		await page.keyboard.press('End');
 		await page.keyboard.type(' edited');
 		const pending = page.waitForEvent('download');
-		await page.locator('#save').click();
+		await saveButton(page).click();
 		const download = await pending;
 		const zip = await JSZip.loadAsync(await readFile((await download.path())!));
 		const savedStyles = await zip.file('word/styles.xml')!.async('string');
@@ -91,7 +94,9 @@ for (const framework of frameworks) {
 		expect(savedDocument).toContain('<w:pStyle w:val="Derived"');
 		expect(savedDocument).not.toContain('w:ind w:left="180"');
 		expect(savedDocument).not.toContain('w:spacing w:after="360"');
-		await page.locator('#file').setInputFiles({
+		await (
+			await fileInput(page)
+		).setInputFiles({
 			name: 'reopened.docx',
 			mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 			buffer: await readFile((await download.path())!),

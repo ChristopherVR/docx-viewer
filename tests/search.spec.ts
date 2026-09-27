@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openSample, newDocument, saveButton, setReadOnly } from './helpers';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
 
@@ -8,11 +9,11 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 	}) => {
 		const errors: string[] = [];
 		page.on('pageerror', (error) => errors.push(error.message));
-		await page.goto(`/?framework=${framework}`);
+		await openSample(page, framework);
 		const editor = page.locator('docx-editor');
 		const surface = editor.locator('.ProseMirror');
 		await expect(surface).toContainText('Document title');
-		await page.locator('#new').click();
+		await newDocument(page);
 		await surface.click();
 		await page.keyboard.type('alpha ');
 		await page.keyboard.press('Control+b');
@@ -32,7 +33,7 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		await expect(surface).toHaveText('alpha ALPHA café 👩🏽‍💻');
 		await editor.getByRole('button', { name: 'Redo', exact: true }).click();
 		await expect(surface).toHaveText('$& $& café 👩🏽‍💻');
-		await page.getByLabel('Read only', { exact: true }).check();
+		await setReadOnly(page, true);
 		await editor.getByLabel('Find text', { exact: true }).fill('café');
 		await expect(editor.getByRole('button', { name: 'Replace all', exact: true })).toBeDisabled();
 		await editor.getByRole('button', { name: 'Find next', exact: true }).click();
@@ -40,7 +41,7 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		await editor.getByLabel('Find text', { exact: true }).press('Escape');
 		await expect(editor.getByLabel('Find text', { exact: true })).toBeHidden();
 		const pending = page.waitForEvent('download');
-		await page.locator('#save').click();
+		await saveButton(page).click();
 		const result = await pending;
 		const zip = await JSZip.loadAsync(await readFile((await result.path())!));
 		const xml = await zip.file('word/document.xml')!.async('string');

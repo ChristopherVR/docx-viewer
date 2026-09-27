@@ -1,4 +1,12 @@
 import { expect, test } from '@playwright/test';
+import {
+	openSample,
+	newDocument,
+	fileInput,
+	saveButton,
+	fileNameLabel,
+	setReadOnly,
+} from './helpers';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
 
@@ -6,11 +14,11 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 	test(`${framework}: multilingual metadata and RTL survive DOCX save/reload`, async ({ page }) => {
 		const errors: string[] = [];
 		page.on('pageerror', (error) => errors.push(error.message));
-		await page.goto(`/?framework=${framework}`);
+		await openSample(page, framework);
 		const editor = page.locator('docx-editor');
 		const surface = editor.locator('.ProseMirror');
 		await expect(surface).toContainText('Document title');
-		await page.locator('#new').click();
+		await newDocument(page);
 		await surface.click();
 		const text = 'مرحبا بالعالم שלום עולם 日本語 cafe\u0301 👩🏽‍💻';
 		await page.keyboard.insertText(text);
@@ -23,7 +31,7 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		await expect(surface.locator('p')).toHaveAttribute('dir', 'rtl');
 		await expect(surface.locator('[lang="ar-SA"]').first()).toContainText('مرحبا');
 		const pending = page.waitForEvent('download');
-		await page.locator('#save').click();
+		await saveButton(page).click();
 		const result = await pending;
 		const buffer = await readFile((await result.path())!);
 		const zip = await JSZip.loadAsync(buffer);
@@ -32,15 +40,17 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		expect(xml).toContain('<w:rtl');
 		expect(xml).toContain('w:val="ar-SA"');
 		expect(xml).toContain(text);
-		await page.locator('#file').setInputFiles({
+		await (
+			await fileInput(page)
+		).setInputFiles({
 			name: 'multilingual.docx',
 			mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 			buffer,
 		});
-		await expect(page.locator('#filename')).toHaveText('multilingual.docx');
+		await expect(fileNameLabel(page)).toHaveText('multilingual.docx');
 		await expect(surface.locator('p')).toHaveAttribute('dir', 'rtl');
 		await expect(surface).toHaveText(text);
-		await page.getByLabel('Read only', { exact: true }).check();
+		await setReadOnly(page, true);
 		await expect(editor.getByLabel('Paragraph direction', { exact: true })).toBeDisabled();
 		await expect(editor.getByLabel('Text language', { exact: true })).toBeDisabled();
 		expect(errors).toEqual([]);

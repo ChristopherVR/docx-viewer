@@ -9,6 +9,7 @@ import { createRibbon, setRibbonLocale, type RibbonAction } from './ribbon';
 import { applyPageStyles } from './ribbon-commands';
 import { assignMissingParagraphIds, docToModel, modelToDoc } from './model-adapter';
 import styleText from './style.css?inline';
+import chromeStyleText from './chrome.css?inline';
 import { editorKeymap, runRibbonCommand } from './editor-commands';
 import { createSearchPanel, type SearchPanelHandle } from './search-panel';
 import {
@@ -33,6 +34,8 @@ import { trackChangesPlugin, REMOTE_TRANSACTION_META } from './track-changes-mod
 import { reviewDisplayPlugin, type ReviewDisplayMode } from './review-display';
 import { ReviewController } from './review-controller';
 import { ImageMediaCache, imageNodeView } from './image-media';
+import { EditorChrome } from './editor-chrome';
+import { countWords } from './word-count';
 
 const HTMLElementBase: typeof HTMLElement =
 	typeof HTMLElement === 'undefined' ? (class {} as typeof HTMLElement) : HTMLElement;
@@ -62,12 +65,23 @@ export class DocxEditorElement extends HTMLElementBase {
 	private reviewDisplayMode: ReviewDisplayMode = 'all';
 	private review?: ReviewController;
 	private _reviewAuthor = 'Author';
+	private chrome?: EditorChrome;
+	private pendingFileName?: string;
 
 	get reviewAuthor(): string {
 		return this._reviewAuthor;
 	}
 	set reviewAuthor(value: string) {
 		this._reviewAuthor = value || 'Author';
+	}
+
+	/** File name shown in the title bar and used for downloads from the built-in File commands. */
+	get fileName(): string {
+		return this.chrome?.fileName ?? this.pendingFileName ?? 'Document1.docx';
+	}
+	set fileName(value: string) {
+		if (this.chrome) this.chrome.fileName = value;
+		else this.pendingFileName = value;
 	}
 
 	get locale(): string {
@@ -79,6 +93,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		this.searchPanel?.setLocale(this._locale);
 		this.renderHeaderFooterNotes();
 		this.review?.setLocale(this._locale);
+		this.chrome?.setLocale(this._locale);
 		this.refreshControls();
 	}
 
@@ -104,6 +119,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		this.loadGeneration++;
 		this.loaded = undefined;
 		this.model = value || createDocument();
+		this.chrome?.setSaveState('saved');
 		if (this.isConnected) this.renderDocument();
 	}
 
@@ -139,6 +155,7 @@ export class DocxEditorElement extends HTMLElementBase {
 			this.loaded = session;
 			this.model = session.model;
 			this.detachedState = undefined;
+			this.chrome?.setSaveState('saved');
 			if (this.isConnected) this.renderDocument();
 		} catch (cause) {
 			const error = cause instanceof Error ? cause : new Error(String(cause));
@@ -226,17 +243,14 @@ export class DocxEditorElement extends HTMLElementBase {
 		this.classList.add('dve-host');
 		const root = this.attachShadow({ mode: 'open' });
 		const style = document.createElement('style');
-		style.textContent = styleText;
+		style.textContent = `${styleText}
+${chromeStyleText}`;
 		const frame = document.createElement('section');
 		frame.className = 'dve-frame';
 		const toolbar = createRibbon(this._locale);
 		toolbar.addEventListener('ribbon-action', (event) =>
 			this.handleRibbonAction((event as CustomEvent<RibbonAction>).detail),
 		);
-		const status = document.createElement('span');
-		status.className = 'dve-status';
-		status.textContent = 'Page 1';
-		toolbar.append(status);
 		const canvas = document.createElement('main');
 		canvas.className = 'dve-canvas';
 		const paper = document.createElement('div');
@@ -277,7 +291,11 @@ export class DocxEditorElement extends HTMLElementBase {
 		const body = document.createElement('div');
 		body.className = 'dve-body';
 		body.append(canvas, this.review.commentsPanel.element);
-		frame.append(toolbar, this.searchPanel.element, body, status);
+		frame.append(toolbar, this.searchPanel.element, body);
+		this.chrome = this.createChrome();
+		this.chrome.mount(frame, toolbar);
+		if (this.pendingFileName) this.chrome.fileName = this.pendingFileName;
+		this.chrome.setLocale(this._locale);
 		root.append(style, frame);
 		this.toolbar = toolbar;
 		this.canvas = canvas;
@@ -355,6 +373,7 @@ export class DocxEditorElement extends HTMLElementBase {
 			this.model = docToModel(this.view.state.doc, this.model);
 			if (this.paper) applyPageStyles(this.paper, this.model, this.zoom);
 			if (this.viewMode === 'print') this.printLayout?.scheduleRelayout(this.model);
+			this.chrome?.setSaveState('dirty');
 			this.dispatchEvent(
 				new CustomEvent('document-change', { detail: this.model, bubbles: true, composed: true }),
 			);
@@ -370,17 +389,10 @@ export class DocxEditorElement extends HTMLElementBase {
 
 	private handleRibbonAction(action: RibbonAction) {
 		if (action.type === 'search') this.showSearch();
-		else if (action.type === 'zoom') {
-			this.zoom = action.value / 100;
-			if (this.paper) applyPageStyles(this.paper, this.model, this.zoom);
-		} else if (action.type === 'list') this.handleListAction(action.key);
+		else if (action.type === 'zoom') this.setZoom(action.value);
+		else if (action.type === 'list') this.handleListAction(action.key);
 		else if (action.type === 'view') this.setViewMode(action.value);
-		else if (action.type === 'print')
-			this.printLayout?.print(this.model, (message) =>
-				this.dispatchEvent(
-					new CustomEvent('document-warning', { detail: message, bubbles: true, composed: true }),
-				),
-			);
+		else if (action.type === 'print') this.printDocument();
 		else if (action.type === 'reviewDisplay') {
 			this.reviewDisplayMode = action.value;
 			this.view?.dispatch(this.view.state.tr);
@@ -421,13 +433,71 @@ export class DocxEditorElement extends HTMLElementBase {
 			if (select) select.value = mode;
 		}
 		if (mode === 'print') this.printLayout?.scheduleRelayout(this.model);
+		this.chrome?.statusBar.setViewMode(mode);
 		this.refreshControls();
+	}
+
+	private setZoom(percent: number) {
+		this.zoom = percent / 100;
+		if (this.paper) applyPageStyles(this.paper, this.model, this.zoom);
+		const select = this.toolbar && findLocalizedControl<HTMLSelectElement>(this.toolbar, 'Zoom');
+		if (select && [...select.options].some((option) => option.value === String(percent)))
+			select.value = String(percent);
+		this.chrome?.statusBar.setZoom(percent);
+	}
+
+	private printDocument() {
+		this.printLayout?.print(this.model, (message) =>
+			this.dispatchEvent(
+				new CustomEvent('document-warning', { detail: message, bubbles: true, composed: true }),
+			),
+		);
+	}
+
+	private createChrome(): EditorChrome {
+		return new EditorChrome({
+			element: this,
+			model: () => this.model,
+			ribbon: () => this.toolbar,
+			wordCount: () => {
+				const doc = this.view?.state.doc;
+				return doc
+					? countWords(doc.textBetween(0, doc.content.size, ' ').trim(), this.lang || undefined)
+					: 0;
+			},
+			locale: () => this._locale,
+			readOnly: () => this._readOnly,
+			setReadOnly: (readOnly) => {
+				this.readOnly = readOnly;
+				this.dispatchEvent(
+					new CustomEvent('readonly-change', { detail: readOnly, bubbles: true, composed: true }),
+				);
+			},
+			newDocument: () => {
+				this.documentModel = createDocument();
+			},
+			load: (bytes) => this.load(bytes),
+			save: () => this.save(),
+			print: () => this.printDocument(),
+			history: (key) => {
+				if (!this.view) return;
+				runRibbonCommand(this.view, { type: 'history', key }, this.collaborationIds);
+				if (typeof document.execCommand === 'function') this.view.focus();
+			},
+			toggleComments: () => this.review?.handleComments('toggle'),
+			setViewMode: (mode) => this.setViewMode(mode),
+			setZoom: (percent) => this.setZoom(percent),
+			reportError: (error) =>
+				this.dispatchEvent(
+					new CustomEvent('document-error', { detail: error, bubbles: true, composed: true }),
+				),
+		});
 	}
 
 	private refreshControls() {
 		this.searchPanel?.refresh();
 		if (this.viewMode === 'print') this.printLayout?.refreshCurrentPage();
-		refreshEditorControls(
+		const status = refreshEditorControls(
 			this.toolbar,
 			this.view,
 			this.model,
@@ -438,6 +508,8 @@ export class DocxEditorElement extends HTMLElementBase {
 			this.printLayout?.pageStatus(),
 			Boolean(this.review?.commentsOpen),
 		);
+		if (status) this.chrome?.refresh(status.pageText, status.wordText);
+		this.chrome?.titleBar.setCommentsOpen(Boolean(this.review?.commentsOpen));
 	}
 }
 

@@ -1,4 +1,12 @@
 import { expect, test } from '@playwright/test';
+import {
+	openSample,
+	newDocument,
+	fileInput,
+	saveButton,
+	fileNameLabel,
+	setReadOnly,
+} from './helpers';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
 
@@ -8,11 +16,11 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 	}) => {
 		const errors: string[] = [];
 		page.on('pageerror', (error) => errors.push(error.message));
-		await page.goto(`/?framework=${framework}`);
+		await openSample(page, framework);
 		const editor = page.locator('docx-editor');
 		const surface = editor.locator('.ProseMirror');
 		await expect(surface).toContainText('Document title');
-		await page.locator('#new').click();
+		await newDocument(page);
 		await surface.click();
 		await page.keyboard.type('First line');
 		await page.keyboard.press('Shift+Enter');
@@ -32,12 +40,12 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		await expect(spacing).toHaveValue('auto:480');
 		for (const paragraph of await surface.locator('p').all())
 			await expect(paragraph).toHaveAttribute('style', /line-height:\s*2(?:;|$)/);
-		await page.getByLabel('Read only').check();
+		await setReadOnly(page, true);
 		await expect(spacing).toBeDisabled();
-		await page.getByLabel('Read only').uncheck();
+		await setReadOnly(page, false);
 
 		const pending = page.waitForEvent('download');
-		await page.locator('#save').click();
+		await saveButton(page).click();
 		const downloaded = await pending;
 		const buffer = await readFile((await downloaded.path())!);
 		const zip = await JSZip.loadAsync(buffer);
@@ -45,12 +53,14 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		expect(xml.match(/<w:br\s*\/>/g)).toHaveLength(1);
 		expect(xml.match(/w:line="480"/g)).toHaveLength(2);
 		expect(xml.match(/w:lineRule="auto"/g)).toHaveLength(2);
-		await page.locator('#file').setInputFiles({
+		await (
+			await fileInput(page)
+		).setInputFiles({
 			name: 'paragraph-roundtrip.docx',
 			mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 			buffer,
 		});
-		await expect(page.locator('#filename')).toHaveText('paragraph-roundtrip.docx');
+		await expect(fileNameLabel(page)).toHaveText('paragraph-roundtrip.docx');
 		await expect(surface.locator('p')).toHaveCount(2);
 		await expect(surface.locator('p br:not(.ProseMirror-trailingBreak)')).toHaveCount(1);
 		await surface.locator('p').first().click();

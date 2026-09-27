@@ -1,177 +1,98 @@
 import { initTheme } from './theme';
 import './style.css';
-import { createDocument, saveDocx, type DocumentModel } from '@christophervr/docx-core';
-import { detectDocumentFormat } from '@christophervr/docx-document';
+import { createDocument } from '@christophervr/docx-core';
+import type { EditorHandle } from '../../packages/bindings/src/index';
 import { mountFramework } from './framework';
+import { createSampleDocument } from './sample-document';
+
 const get = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 initTheme();
-const sample = createDocument();
-sample.blocks = [
-	{
-		type: 'paragraph',
-		id: 'title',
-		runs: [{ text: 'Document title', fontFamily: 'Calibri', fontSize: 26, bold: true }],
-	},
-	{
-		type: 'paragraph',
-		id: 'subtitle',
-		runs: [{ text: 'Add a subtitle or date here', fontSize: 10, color: '#666666' }],
-	},
-	{
-		type: 'paragraph',
-		id: 'intro',
-		runs: [
-			{
-				text: 'Start with your first paragraph. Use the ribbon to set type, size, alignment, and page options as you work.',
-			},
-		],
-	},
-	{
-		type: 'paragraph',
-		id: 'body',
-		runs: [
-			{ text: 'A document workspace. ', bold: true },
-			{
-				text: 'Use the ribbon to format text, add a simple table, or adjust page settings. Open a DOCX file to continue working, or start a new document.',
-			},
-		],
-	},
-	{
-		type: 'paragraph',
-		id: 'quote',
-		align: 'center',
-		runs: [{ text: 'Clarity is a kindness to the reader.', italic: true, fontSize: 16 }],
-	},
-	{
-		type: 'paragraph',
-		id: 'heading',
-		runs: [{ text: 'A small plan for a good first draft', bold: true }],
-	},
-	{
-		type: 'table',
-		id: 'table',
-		rows: [
-			[
-				{
-					paragraphs: [{ type: 'paragraph', id: 'h1', runs: [{ text: 'START WITH', bold: true }] }],
-				},
-				{
-					paragraphs: [
-						{ type: 'paragraph', id: 'h2', runs: [{ text: 'MAKE IT COUNT', bold: true }] },
-					],
-				},
-			],
-			[
-				{ paragraphs: [{ type: 'paragraph', id: 'c1', runs: [{ text: 'One clear idea' }] }] },
-				{
-					paragraphs: [
-						{ type: 'paragraph', id: 'c2', runs: [{ text: 'Give each paragraph a purpose.' }] },
-					],
-				},
-			],
-			[
-				{ paragraphs: [{ type: 'paragraph', id: 'c3', runs: [{ text: 'A thoughtful edit' }] }] },
-				{
-					paragraphs: [
-						{ type: 'paragraph', id: 'c4', runs: [{ text: 'Read it once more, then share.' }] },
-					],
-				},
-			],
-		],
-	},
-];
-let filename = 'Untitled.docx';
-const status = (text: string) => {
-	get('status').textContent = text;
-};
-const showWarnings = (model: DocumentModel) => {
-	get('warnings').replaceChildren(
-		...model.warnings.map((w) => {
-			const li = document.createElement('li');
-			li.textContent = w;
-			return li;
-		}),
-	);
-};
-const editor = await mountFramework(get('editor'), {
-	documentModel: sample,
-	onDocumentChange(model) {
-		get('state').textContent = 'Unsaved changes';
-		showWarnings(model);
-	},
-	onDocumentError(error) {
-		status(error.message);
-	},
-});
-get<HTMLInputElement>('readonly').addEventListener('change', (event) => {
-	editor.element.readOnly = (event.target as HTMLInputElement).checked;
-});
-get<HTMLInputElement>('file').addEventListener('change', async (event) => {
-	const input = event.target as HTMLInputElement;
-	const file = input.files?.[0];
-	if (!file) return;
-	try {
-		status('Opening document…');
-		const bytes = new Uint8Array(await file.arrayBuffer());
-		const format = detectDocumentFormat(bytes);
-		await editor.load(bytes);
-		filename = `${file.name.replace(/\.[^.]+$/, '')}.${format}`;
-		get('filename').textContent = filename;
-		get('state').textContent = 'Ready to edit';
-		if (editor.element.documentModel) showWarnings(editor.element.documentModel);
-		status(`Opened ${filename}. Review format support before editing complex documents.`);
-	} catch (error) {
-		status(error instanceof Error ? error.message : String(error));
-	} finally {
-		input.value = '';
-	}
-});
-get<HTMLInputElement>('file').disabled = false;
-get('new').addEventListener('click', () => {
-	if (
-		get('state').textContent === 'Unsaved changes' &&
-		!confirm('Discard unsaved changes and start a new document?')
-	)
-		return;
-	editor.element.documentModel = createDocument();
-	filename = 'Untitled.docx';
-	get('filename').textContent = filename;
-	get('state').textContent = 'Ready to edit';
-	get('warnings').replaceChildren();
-	status('New document ready.');
-});
-function download(bytes: Uint8Array, name: string) {
-	const url = URL.createObjectURL(
-		new Blob([new Uint8Array(bytes)], {
-			type: name.endsWith('.doc')
-				? 'application/msword'
-				: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-		}),
-	);
-	const anchor = document.createElement('a');
-	anchor.href = url;
-	anchor.download = name;
-	anchor.click();
-	setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+const framework = new URLSearchParams(location.search).get('framework') || 'vanilla';
+get('build-stamp').textContent = `docx-viewer demo · ${framework}`;
+
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
+function toast(message: string) {
+	const element = get('toast');
+	element.textContent = message;
+	element.hidden = false;
+	clearTimeout(toastTimer);
+	toastTimer = setTimeout(() => (element.hidden = true), 6000);
 }
-get('save').addEventListener('click', async () => {
+
+let editor: EditorHandle | undefined;
+async function showEditor(): Promise<EditorHandle> {
+	get('landing').hidden = true;
+	get('workspace').hidden = false;
+	editor ??= await mountFramework(get('editor'), {
+		documentModel: createDocument(),
+		onDocumentError(error) {
+			toast(error.message);
+		},
+	});
+	return editor;
+}
+
+async function openFile(file: File) {
 	try {
-		download(await editor.save(), filename);
-		get('state').textContent = 'Saved';
-		status(`Saved ${filename}.`);
+		const handle = await showEditor();
+		await handle.load(new Uint8Array(await file.arrayBuffer()));
+		handle.element.fileName = file.name;
 	} catch (error) {
-		status(error instanceof Error ? error.message : String(error));
+		get('workspace').hidden = true;
+		get('landing').hidden = false;
+		const message = get('landing-error');
+		message.textContent = error instanceof Error ? error.message : String(error);
+		message.hidden = false;
+	}
+}
+
+async function openModel(model: ReturnType<typeof createDocument>, fileName: string) {
+	const handle = await showEditor();
+	handle.element.documentModel = model;
+	handle.element.fileName = fileName;
+}
+
+const landingFile = get<HTMLInputElement>('landing-file');
+landingFile.addEventListener('change', () => {
+	const file = landingFile.files?.[0];
+	landingFile.value = '';
+	if (file) void openFile(file);
+});
+get('browse').addEventListener('click', (event) => {
+	event.stopPropagation();
+	landingFile.click();
+});
+get('blank').addEventListener('click', (event) => {
+	event.stopPropagation();
+	void openModel(createDocument(), 'Document1.docx');
+});
+get('sample').addEventListener('click', (event) => {
+	event.stopPropagation();
+	void openModel(createSampleDocument(), 'Sample document.docx');
+});
+const dropzone = get('dropzone');
+dropzone.addEventListener('click', () => landingFile.click());
+dropzone.addEventListener('keydown', (event) => {
+	if (event.target === dropzone && (event.key === 'Enter' || event.key === ' ')) {
+		event.preventDefault();
+		landingFile.click();
 	}
 });
-get('export-docx').addEventListener('click', async () => {
-	try {
-		if (!editor.element.documentModel) return;
-		download(
-			await saveDocx(structuredClone(editor.element.documentModel)),
-			filename.replace(/\.[^.]+$/, '') + '.docx',
-		);
-		status('Exported visible content as a new DOCX document.');
-	} catch (error) {
-		status(error instanceof Error ? error.message : String(error));
-	}
+const carriesFiles = (event: DragEvent) => Boolean(event.dataTransfer?.types.includes('Files'));
+for (const type of ['dragenter', 'dragover'] as const)
+	document.addEventListener(type, (event) => {
+		if (!carriesFiles(event)) return;
+		event.preventDefault();
+		dropzone.classList.add('dragging');
+	});
+document.addEventListener('dragleave', (event) => {
+	if (!event.relatedTarget) dropzone.classList.remove('dragging');
+});
+document.addEventListener('drop', (event) => {
+	if (!carriesFiles(event)) return;
+	event.preventDefault();
+	dropzone.classList.remove('dragging');
+	const file = event.dataTransfer?.files[0];
+	if (file) void openFile(file);
 });

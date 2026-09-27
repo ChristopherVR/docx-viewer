@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openSample } from './helpers';
 
 test('all bindings keep the shared ribbon, canvas, and status within their host', async ({
 	page,
@@ -6,7 +7,7 @@ test('all bindings keep the shared ribbon, canvas, and status within their host'
 	const frameworks = ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'];
 	for (const framework of frameworks) {
 		await page.setViewportSize({ width: 1280, height: 900 });
-		await page.goto(`/?framework=${framework}`);
+		await openSample(page, framework);
 		const editor = page.locator('docx-editor');
 		await expect(editor).toBeVisible();
 		await expect(editor.locator('.dve-status')).toBeVisible();

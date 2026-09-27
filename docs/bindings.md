@@ -81,3 +81,28 @@ The vanilla mount adapter is exported from `@christophervr/docx-viewer/vanilla` 
 Framework packages use their own native lifecycle and ref APIs. No framework template contains a toolbar, page renderer or document command implementation. SSR imports do not register elements; mounting is a client operation. The current browser contract validates the installed versions, not every historical peer version.
 
 Set the optional `locale` prop on any framework editor to localize the ribbon and search controls (for example, `locale="fr"`). This affects interface text only; it does not translate document content.
+
+## Window chrome and file commands
+
+The editor draws Word-style chrome inside its shadow root: a title bar (quick-access Save,
+Undo and Redo, the file name and save state, a "Tell me what you want to do" command search,
+comments and an Editing/Viewing mode switch), a **File** tab with a backstage (Info with
+compatibility notes, New, Open, Save, Save a copy as DOCX, Print), and a status bar (page,
+words, compatibility notes, Web/Print Layout and zoom).
+
+Set `element.fileName` to name the open document. File commands are announced first as a
+cancelable `file-command` event whose `detail.command` is `new`, `open`, `save`, `export` or
+`print`. Call `preventDefault()` to handle it in your application (for example to save to your
+own storage); otherwise the editor uses its browser-only default: a file picker, a download, or
+the print dialog. Choosing **Viewing** raises `readonly-change`.
+
+```ts
+editor.fileName = 'Quarterly report.docx';
+editor.addEventListener('file-command', (event) => {
+	const { command } = (event as CustomEvent<{ command: string }>).detail;
+	if (command === 'save') {
+		event.preventDefault();
+		void editor.save().then(uploadToMyStorage);
+	}
+});
+```

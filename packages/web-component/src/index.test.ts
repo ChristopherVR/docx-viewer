@@ -32,9 +32,9 @@ describe('DocxEditorElement', () => {
 			(model.blocks[0].runs[0].text = 'A considered first draft.');
 		editor.documentModel = model;
 		document.body.append(editor);
-		expect(editor.shadowRoot?.querySelector('[role="toolbar"]')?.getAttribute('aria-label')).toBe(
-			'Document formatting',
-		);
+		expect(
+			editor.shadowRoot?.querySelector('.dve-ribbon[role="toolbar"]')?.getAttribute('aria-label'),
+		).toBe('Document formatting');
 		expect(editor.shadowRoot?.querySelector('.ProseMirror p')?.textContent).toBe(
 			'A considered first draft.',
 		);

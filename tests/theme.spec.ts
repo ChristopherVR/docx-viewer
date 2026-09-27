@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { openSample, saveStateLabel } from './helpers';
 
 test('appearance changes from another window preserve the open document', async ({
 	page,
 	context,
 }) => {
-	await page.goto('/');
+	await openSample(page);
 	const surface = page.locator('docx-editor .ProseMirror');
 	await expect(surface).toContainText('Document title');
 	await surface.locator('p').last().click();
@@ -12,7 +13,6 @@ test('appearance changes from another window preserve the open document', async 
 	await page.keyboard.type(' Theme synchronization keeps this edit.');
 	const controls = await context.newPage();
 	await controls.goto('/');
-	await expect(controls.locator('docx-editor .ProseMirror')).toBeVisible();
 	const themeBefore = await controls.locator('html').getAttribute('data-theme');
 	await controls.locator('#theme-toggle').click();
 	await expect(page.locator('html')).toHaveAttribute(
@@ -20,6 +20,6 @@ test('appearance changes from another window preserve the open document', async 
 		themeBefore === 'dark' ? 'light' : 'dark',
 	);
 	await expect(surface).toContainText('Theme synchronization keeps this edit.');
-	await expect(page.locator('#state')).toHaveText('Unsaved changes');
+	await expect(saveStateLabel(page)).toHaveText('Unsaved changes');
 	await controls.close();
 });

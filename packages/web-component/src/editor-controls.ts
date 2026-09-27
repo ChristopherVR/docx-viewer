@@ -20,7 +20,7 @@ export function refreshEditorControls(
 	language: string,
 	printPageStatus?: { current: number; total: number } | null,
 	commentsOpen = false,
-) {
+): { pageText: string; wordText: string } | undefined {
 	toolbar
 		?.querySelectorAll<HTMLButtonElement | HTMLSelectElement | HTMLInputElement>(
 			'.ribbon-group button, .ribbon-group input, .ribbon-group select',
@@ -29,7 +29,7 @@ export function refreshEditorControls(
 			const label = control.dataset.localearialabel ?? control.getAttribute('aria-label');
 			control.disabled = readOnly && label !== 'Find and replace' && label !== 'Zoom';
 		});
-	if (!view) return;
+	if (!view) return undefined;
 	const { state } = view;
 	if (toolbar) {
 		syncMultilingualControls(toolbar, state);
@@ -64,9 +64,8 @@ export function refreshEditorControls(
 	}
 	const content = state.doc.textBetween(0, state.doc.content.size, ' ').trim();
 	const words = countWords(content, language || undefined);
-	const status = toolbar?.parentElement?.querySelector('.dve-status');
 	const pageText = printPageStatus
 		? formatPageStatus(locale, printPageStatus.current, printPageStatus.total)
-		: 'Page 1';
-	if (status) status.textContent = `${pageText} · ${formatWordCount(locale, words)}`;
+		: formatPageStatus(locale, 1, 1);
+	return { pageText, wordText: formatWordCount(locale, words) };
 }

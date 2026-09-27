@@ -132,7 +132,7 @@
 .ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Paragraph'] {
 	width: 270px;
 }
-.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Alignment and history'] {
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Alignment'] {
 	width: 180px;
 }
 .ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Editing'] {
@@ -370,7 +370,7 @@
 	.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Paragraph'] {
 		width: 270px;
 	}
-	.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Alignment and history'] {
+	.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Alignment'] {
 		width: 180px;
 	}
 	.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Editing'] {

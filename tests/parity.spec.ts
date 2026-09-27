@@ -1,4 +1,12 @@
 import { expect, test } from '@playwright/test';
+import {
+	openSample,
+	newDocument,
+	fileInput,
+	saveButton,
+	fileNameLabel,
+	setReadOnly,
+} from './helpers';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
 
@@ -6,13 +14,13 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 	test(`${framework}: Word run formatting and table editing parity`, async ({ page }) => {
 		const errors: string[] = [];
 		page.on('pageerror', (error) => errors.push(error.message));
-		await page.goto(`/?framework=${framework}`);
+		await openSample(page, framework);
 		const editor = page.locator('docx-editor');
 		const surface = editor.locator('.ProseMirror');
 		await expect(surface).toContainText('Document title');
 
 		// Apply the Word-only run properties to a selected string through the ribbon.
-		await page.locator('#new').click();
+		await newDocument(page);
 		await surface.click();
 		await page.keyboard.type('Parity formatting');
 		await page.keyboard.press('Control+a');
@@ -29,7 +37,7 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		);
 
 		const formattedDownload = page.waitForEvent('download');
-		await page.locator('#save').click();
+		await saveButton(page).click();
 		const formatted = await formattedDownload;
 		const formattedBytes = await readFile((await formatted.path())!);
 		const formattedZip = await JSZip.loadAsync(formattedBytes);
@@ -38,17 +46,19 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		expect(formattedXml).toContain('<w:highlight w:val="cyan"');
 		expect(formattedXml).toContain('<w:vertAlign w:val="subscript"');
 		expect(formattedXml).not.toContain('<w:vertAlign w:val="superscript"');
-		await page.locator('#file').setInputFiles({
+		await (
+			await fileInput(page)
+		).setInputFiles({
 			name: 'format-roundtrip.docx',
 			mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 			buffer: formattedBytes,
 		});
-		await expect(page.locator('#filename')).toHaveText('format-roundtrip.docx');
+		await expect(fileNameLabel(page)).toHaveText('format-roundtrip.docx');
 		await expect(surface.locator('s sub')).toHaveText('Parity formatting');
 		await expect(surface.locator('sup')).toHaveCount(0);
 
 		// Insert and structurally edit a 2x2 table, exercising history and read-only state.
-		await page.locator('#new').click();
+		await newDocument(page);
 		await surface.click();
 		await editor.getByRole('tab', { name: 'Table', exact: true }).click();
 		await expect(
@@ -90,11 +100,11 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		await editor.getByRole('button', { name: 'Delete row', exact: true }).click();
 		await expect(table.locator('tr')).toHaveCount(2);
 
-		await page.getByLabel('Read only').check();
+		await setReadOnly(page, true);
 		await expect(editor.getByRole('button', { name: 'Delete table', exact: true })).toBeDisabled();
-		await page.getByLabel('Read only').uncheck();
+		await setReadOnly(page, false);
 		const tableDownload = page.waitForEvent('download');
-		await page.locator('#save').click();
+		await saveButton(page).click();
 		const tableFile = await tableDownload;
 		const tableBytes = await readFile((await tableFile.path())!);
 		const tableZip = await JSZip.loadAsync(tableBytes);
@@ -102,12 +112,14 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		expect(tableXml).toContain('<w:tbl>');
 		expect(tableXml.match(/<w:tr>/g)).toHaveLength(2);
 		expect(tableXml.match(/<w:tc>/g)).toHaveLength(4);
-		await page.locator('#file').setInputFiles({
+		await (
+			await fileInput(page)
+		).setInputFiles({
 			name: 'table-roundtrip.docx',
 			mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 			buffer: tableBytes,
 		});
-		await expect(page.locator('#filename')).toHaveText('table-roundtrip.docx');
+		await expect(fileNameLabel(page)).toHaveText('table-roundtrip.docx');
 		await expect(surface.locator('table tr')).toHaveCount(2);
 		for (const row of await surface.locator('table tr').all())
 			await expect(row.locator('td')).toHaveCount(2);
