@@ -19,6 +19,7 @@ import { parseTable as parseTableWithFidelity } from './parse-table.js';
 import { parseDrawing, type DrawingContext } from './drawing.js';
 import { resolveHyperlink, parseSimpleHyperlinkField } from './hyperlink.js';
 import { paragraphBookmarkNames } from './bookmarks.js';
+import { createFieldTracker } from './field-runs.js';
 import {
 	collectParagraphRuns,
 	paragraphFormatRevision,
@@ -124,15 +125,20 @@ function parseRun(node: XmlElement, revision?: Revision): TextRun {
 function parseParagraph(node: XmlElement, id: string): Paragraph {
 	const props = first(node, 'pPr');
 	const alignment = getW(first(props, 'jc'), 'val');
+	const trackField = createFieldTracker();
 	const { runs } = collectParagraphRuns(
 		node,
-		parseRun,
+		(element, revision) => trackField(element, parseRun(element, revision)),
 		(item) => {
 			if (!named(item, 'fldSimple')) return undefined;
 			const instr = getW(item, 'instr') ?? '';
 			const link = parseSimpleHyperlinkField(instr);
-			if (!link) return [{ text: fieldPlaceholderText(instr) }];
-			return children(item, 'r').map((run) => ({ ...parseRun(run), link }));
+			const results = children(item, 'r').map((run) => parseRun(run));
+			if (link) return results.map((run) => ({ ...run, link }));
+			const field = { instr: instr.trim() };
+			// Show Word's cached result; fall back to a readable placeholder when none was saved.
+			if (!results.some((run) => run.text)) return [{ text: fieldPlaceholderText(instr), field }];
+			return results.map((run) => ({ ...run, field }));
 		},
 		(hyperlink) => {
 			if (!activeContext) return undefined;

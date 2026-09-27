@@ -9,6 +9,8 @@ function sampleResult(): LayoutResult {
 		pages: [
 			{
 				index: 0,
+				sectionIndex: 0,
+				pageInSection: 0,
 				widthPx: 300,
 				heightPx: 200,
 				marginTopPx: 10,

@@ -30,11 +30,17 @@ class SectionFlow {
 		pages: LayoutPageBox[],
 		measurer: TextMeasurer,
 		note: (m: string) => void,
+		sectionIndex = 0,
 	) {
 		this.blocks = section.blocks;
 		this.measurer = measurer;
 		this.note = note;
-		this.cursor = new PageCursor(pages, section.page, section.columns ?? { count: 1, gapPx: 0 });
+		this.cursor = new PageCursor(
+			pages,
+			section.page,
+			section.columns ?? { count: 1, gapPx: 0 },
+			sectionIndex,
+		);
 		if (section.break === 'continuous') note(CONTINUOUS_BREAK_NOTE);
 	}
 
@@ -116,6 +122,8 @@ export function layoutSections(input: LayoutDocumentInput, measurer: TextMeasure
 	const approximations = new Set<string>();
 	const note = (message: string) => approximations.add(message);
 	const pages: LayoutPageBox[] = [];
-	for (const section of input.sections) new SectionFlow(section, pages, measurer, note).run();
+	input.sections.forEach((section, index) =>
+		new SectionFlow(section, pages, measurer, note, index).run(),
+	);
 	return { pages, approximations: [...approximations] };
 }

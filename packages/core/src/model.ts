@@ -89,6 +89,12 @@ export interface TextRun {
 	 * mark is derived from document order, not stored here.
 	 */
 	noteReference?: { kind: 'footnote' | 'endnote'; id: string };
+	/**
+	 * Present on runs holding a field's displayed result (`w:fldSimple`, or text between a complex
+	 * field's `separate` and `end`). Display metadata only: fields are not recalculated on save and
+	 * paragraphs containing them stay protected from edits.
+	 */
+	field?: { instr: string };
 	/** Tracked-change metadata for this run; absent means the run has no pending revision. */
 	revision?: Revision;
 	/** IDs of comments whose range covers this run. */

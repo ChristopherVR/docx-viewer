@@ -5,6 +5,7 @@ import {
 	type LayoutResult,
 } from '@christophervr/docx-layout';
 import { renderPrintLayout, type PrintLayoutHandle } from './print-layout.js';
+import { decoratePages } from './print-header-footer';
 
 const RELAYOUT_DEBOUNCE_MS = 150;
 
@@ -49,6 +50,9 @@ export function createPrintLayoutController(
 	function relayout(model: DocumentModel) {
 		result = layoutDocumentModel(model, measurer);
 		handle = renderPrintLayout(result);
+		decoratePages(model, result.pages, [
+			...handle.element.querySelectorAll<HTMLElement>('.dve-print-page'),
+		]);
 		element.replaceChildren(handle.element);
 		refreshCurrentPage();
 	}

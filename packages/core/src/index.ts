@@ -41,3 +41,4 @@ export {
 	type RevisionEntry,
 } from './revision-commands.js';
 export { DEFAULT_TABLE_BORDERS } from './table-defaults.js';
+export { fieldName } from './field-runs.js';

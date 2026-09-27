@@ -569,3 +569,19 @@
 		break-after: page;
 	}
 }
+.dve-print-header,
+.dve-print-footer {
+	position: absolute;
+	color: var(--ink);
+	font-size: 11pt;
+	pointer-events: none;
+}
+.dve-print-header p,
+.dve-print-footer p {
+	margin: 0;
+}
+.dve-print-header table,
+.dve-print-footer table {
+	width: 100%;
+	border-collapse: collapse;
+}

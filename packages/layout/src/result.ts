@@ -54,6 +54,10 @@ export interface LayoutColumnBox {
 
 export interface LayoutPageBox {
 	index: number;
+	/** Index into the input sections this page belongs to. */
+	sectionIndex: number;
+	/** Zero-based position of this page within its section (for first-page headers and numbering). */
+	pageInSection: number;
 	widthPx: number;
 	heightPx: number;
 	marginTopPx: number;

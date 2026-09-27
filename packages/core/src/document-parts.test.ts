@@ -61,7 +61,7 @@ describe('headers, footers and settings', () => {
 		});
 		expect(section?.footers?.default?.blocks[0]).toMatchObject({
 			type: 'paragraph',
-			runs: [{ text: '[Page #]' }],
+			runs: [{ text: '1', field: { instr: 'PAGE' } }],
 		});
 		expect(loaded.model.evenAndOddHeaders).toBe(true);
 		expect(loaded.model.warnings).toContain(

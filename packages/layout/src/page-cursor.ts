@@ -15,8 +15,16 @@ export class PageCursor {
 	private columns: LayoutColumns;
 	private columnIndex = 0;
 	private yPx = 0;
+	private readonly sectionIndex: number;
+	private pageInSection = 0;
 
-	constructor(pages: LayoutPageBox[], geometry: LayoutPageGeometry, columns: LayoutColumns) {
+	constructor(
+		pages: LayoutPageBox[],
+		geometry: LayoutPageGeometry,
+		columns: LayoutColumns,
+		sectionIndex = 0,
+	) {
+		this.sectionIndex = sectionIndex;
 		this.pages = pages;
 		this.geometry = geometry;
 		this.columns = columns;
@@ -42,6 +50,8 @@ export class PageCursor {
 			});
 		this.pages.push({
 			index: this.pages.length,
+			sectionIndex: this.sectionIndex,
+			pageInSection: this.pageInSection++,
 			widthPx: this.geometry.widthPx,
 			heightPx: this.geometry.heightPx,
 			marginTopPx: this.geometry.marginTopPx,
