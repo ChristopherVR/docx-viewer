@@ -139,7 +139,7 @@
 	width: 140px;
 }
 .ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Styles'] {
-	width: 120px;
+	width: 150px;
 }
 .ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Styles'] select {
 	width: 100%;
