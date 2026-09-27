@@ -1,15 +1,6 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import type { Block, DocumentModel, Paragraph } from './model.js';
-import {
-	children,
-	elements,
-	first,
-	getW,
-	makeW,
-	type XmlDocument,
-	type XmlElement,
-	WORD_NS,
-} from './xml.js';
+import { children, first, getW, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
 import { writeParagraphProperties } from './write-paragraph-properties.js';
 import { writeNumberingProperties } from './numbering-write.js';
 import { writeTable as writeTableContent } from './write-table.js';
@@ -23,6 +14,7 @@ import {
 	isRevisionWrapperElement,
 	writeParagraphMarkRevision,
 } from './write-revisions.js';
+import { runHasUnknownProperties } from './write-run-validation.js';
 
 const twips = (pixels: number): string => String(Math.round(pixels * 15));
 function setAttribute(element: XmlElement, local: string, value: string): void {
@@ -67,79 +59,6 @@ function hasUnsafeInline(paragraph: XmlElement): boolean {
 			continue;
 		}
 		if (element.localName !== 'r' || runHasUnsafeChildren(element)) return true;
-	}
-	return false;
-}
-
-const modeledRunProperties = new Set([
-	'b',
-	'i',
-	'strike',
-	'u',
-	'highlight',
-	'vertAlign',
-	'sz',
-	'rFonts',
-	'color',
-	'lang',
-	'rtl',
-]);
-function hasUnexpectedAttributes(element: XmlElement, allowed: string[]): boolean {
-	for (const attribute of Array.from(element.attributes)) {
-		if (attribute.namespaceURI === 'http://www.w3.org/2000/xmlns/') continue;
-		if (attribute.namespaceURI !== WORD_NS || !allowed.includes(attribute.localName)) return true;
-	}
-	return false;
-}
-function runHasUnknownProperties(run: XmlElement): boolean {
-	const properties = first(run, 'rPr');
-	if (!properties) return false;
-	if (hasUnexpectedAttributes(properties, [])) return true;
-	for (const node of Array.from(properties.childNodes)) {
-		if (node.nodeType !== 1) {
-			if (node.nodeType === 3 && node.textContent?.trim()) return true;
-			continue;
-		}
-		const property = node as XmlElement;
-		if (property.namespaceURI !== WORD_NS || !modeledRunProperties.has(property.localName))
-			return true;
-		const allowed =
-			property.localName === 'rFonts'
-				? ['ascii', 'hAnsi']
-				: property.localName === 'lang'
-					? ['val', 'eastAsia', 'bidi']
-					: ['b', 'i', 'strike', 'u', 'highlight', 'vertAlign', 'sz', 'color', 'rtl'].includes(
-								property.localName,
-						  )
-						? ['val']
-						: [];
-		if (hasUnexpectedAttributes(property, allowed) || elements(property).length > 0) return true;
-		const value = getW(property, 'val');
-		if (property.localName === 'highlight' && value && !isWordHighlightToken(value)) return true;
-		if (
-			property.localName === 'rtl' &&
-			value &&
-			!['1', 'true', 'on', '0', 'false', 'off', 'no'].includes(value)
-		)
-			return true;
-		if (
-			property.localName === 'lang' &&
-			['val', 'eastAsia', 'bidi'].some((key) => {
-				const language = getW(property, key);
-				return language !== undefined && !isValidLanguageTag(language);
-			})
-		)
-			return true;
-		if (property.localName === 'vertAlign' && value !== 'superscript' && value !== 'subscript')
-			return true;
-		if (
-			property.localName === 'u' &&
-			value &&
-			!['single', 'none', '0', 'false', 'off', '1', 'true', 'on'].includes(value)
-		)
-			return true;
-		if (property.localName === 'sz' && value && !/^\d+$/.test(value)) return true;
-		if (property.localName === 'color' && value && !/^[0-9a-f]{6}$/i.test(value)) return true;
 	}
 	return false;
 }

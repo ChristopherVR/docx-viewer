@@ -67,6 +67,21 @@ export async function saveDocx(model: DocumentModel): Promise<Uint8Array> {
 		throw new Error(
 			'Sections, headers, footers, footnotes and endnotes are not supported by the standalone DOCX writer; they would be silently dropped.',
 		);
+	if (
+		binding &&
+		JSON.stringify(model.characterStyles) !== JSON.stringify(binding.base.characterStyles)
+	)
+		throw new Error(
+			'Editing the character style catalog is not supported; source styles.xml is preserved unchanged.',
+		);
+	if (binding && JSON.stringify(model.tableStyles) !== JSON.stringify(binding.base.tableStyles))
+		throw new Error(
+			'Editing the table style catalog is not supported; source styles.xml is preserved unchanged.',
+		);
+	if (binding && JSON.stringify(model.theme) !== JSON.stringify(binding.base.theme))
+		throw new Error(
+			'Editing the theme catalog is not supported; source theme1.xml/settings.xml are preserved unchanged.',
+		);
 	const zip = binding ? await JSZip.loadAsync(binding.context.original) : new JSZip();
 	const document = binding ? parseXml(binding.context.sourceXml) : newDocument();
 	applyModel(document, model, binding?.base.blocks ?? []);

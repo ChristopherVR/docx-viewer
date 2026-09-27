@@ -18,6 +18,9 @@ import { parseDocumentParts } from './document-parts.js';
 import { parseNumberingCatalog } from './numbering-parse.js';
 import { parseComments } from './comments.js';
 import { parseTrackChangesSetting } from './settings.js';
+import { parseRunStyleCatalog } from './character-styles.js';
+import { parseTableStyleCatalog } from './table-styles.js';
+import { parseTheme, parseColorSchemeMapping } from './theme.js';
 
 const px = (twips: string | undefined, fallback: number): number =>
 	twips === undefined ? fallback : (Number(twips) * 96) / 1440;
@@ -34,10 +37,6 @@ function warningsFor(document: XmlDocument): string[] {
 		[
 			['hyperlink'],
 			'Hyperlink targets are not represented in the document model; edits inside linked paragraphs are rejected to protect the original XML.',
-		],
-		[
-			['rStyle'],
-			'Character style inheritance and theme font/color resolution are not modeled; displayed formatting may differ from Word.',
 		],
 		[
 			['fldSimple', 'instrText', 'fldChar'],
@@ -119,10 +118,25 @@ export async function readPackage(
 	};
 	const stylesFile = zip.file('word/styles.xml');
 	if (stylesFile) {
-		model.paragraphStyles = parseParagraphStyleCatalog(await stylesFile.async('string'));
+		const stylesXml = await stylesFile.async('string');
+		model.paragraphStyles = parseParagraphStyleCatalog(stylesXml);
+		model.characterStyles = parseRunStyleCatalog(stylesXml);
+		model.tableStyles = parseTableStyleCatalog(stylesXml);
 		model.warnings.push(
-			'Paragraph style inheritance is resolved for alignment, direction, spacing and indentation. Run formatting, character styles and theme values remain unresolved; display can differ from Word.',
+			'Paragraph style, character style and docDefaults inheritance resolve for rendering, including toggle-property XOR semantics and basedOn chains. Linked styles beyond a basedOn chain, numbering-derived formatting and font metric substitution are not modeled; display can still differ from Word.',
 			...model.paragraphStyles.warnings,
+			...model.characterStyles.warnings,
+			...model.tableStyles.warnings,
+		);
+	}
+	const themeFile = zip.file('word/theme/theme1.xml');
+	const settingsFile = zip.file('word/settings.xml');
+	if (themeFile) {
+		model.theme = parseTheme(await themeFile.async('string'));
+		if (settingsFile)
+			model.theme.colorMapping = parseColorSchemeMapping(await settingsFile.async('string'));
+		model.warnings.push(
+			'Theme colors and fonts resolve for rendering through a separate layer; direct theme references are preserved and never flattened onto runs.',
 		);
 	}
 	const numberingFile = zip.file('word/numbering.xml');
@@ -139,7 +153,7 @@ export async function readPackage(
 	}
 	if (blocks.some((block) => block.type === 'table'))
 		model.warnings.push(
-			'Table text and cell structure are supported; table widths, borders, shading and cell formatting are not modeled.',
+			'Table grid widths, merges, borders, shading, cell alignment/margins and table style conditional formatting resolve for rendering; row/column fragmentation and full table-style precedence are not modeled.',
 		);
 	const parts = await parseDocumentParts(zip, body, blocks);
 	model.sections = parts.sections;
@@ -164,8 +178,17 @@ export async function readPackage(
 			'Comments are anchored per paragraph; a comment range spanning multiple paragraphs is not modeled.',
 		);
 	}
-	const settingsFile = zip.file('word/settings.xml');
 	if (settingsFile) model.trackChanges = parseTrackChangesSetting(await settingsFile.async('string'));
+	if (
+		blocks.some(
+			(block) =>
+				block.type === 'table' &&
+				block.rows.some((row) => row.some((cell) => cell.nestedTables?.length)),
+		)
+	)
+		model.warnings.push(
+			'Nested tables render as a read-only text preview; edit their content from the original document.',
+		);
 	const context = { original, sourceXml, base: structuredClone(model) };
 	remember(model, context);
 	return { model, context };

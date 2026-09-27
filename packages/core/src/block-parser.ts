@@ -14,6 +14,8 @@ import {
 } from './xml.js';
 import { canEditTableStructure } from './write-table.js';
 import { classifyBreak } from './breaks.js';
+import { parseRunProperties } from './run-properties.js';
+import { parseTable as parseTableWithFidelity } from './parse-table.js';
 import {
 	collectParagraphRuns,
 	paragraphFormatRevision,
@@ -83,7 +85,7 @@ function parseRun(node: XmlElement, revision?: Revision): TextRun {
 						return '';
 					})
 					.join('');
-	const run: TextRun = { text };
+	const run: TextRun = { text, ...parseRunProperties(props) };
 	if (breakKind) run.break = breakKind;
 	if (noteReference) run.noteReference = noteReference;
 	const runRevision = revision ?? runFormatRevision(props);
@@ -97,22 +99,8 @@ function parseRun(node: XmlElement, revision?: Revision): TextRun {
 	if (bidiLanguage !== undefined) run.bidiLanguage = bidiLanguage;
 	const rtl = first(props, 'rtl');
 	if (rtl) run.rtl = on(rtl);
-	if (props && on(first(props, 'b'))) run.bold = true;
-	if (props && on(first(props, 'i'))) run.italic = true;
-	if (props && on(first(props, 'u'))) run.underline = true;
-	if (props && on(first(props, 'strike') ?? first(props, 'dstrike'))) run.strike = true;
-	const highlight = getW(first(props, 'highlight'), 'val');
-	if (highlight) run.highlight = highlight;
-	const verticalAlign = getW(first(props, 'vertAlign'), 'val');
-	if (verticalAlign === 'superscript' || verticalAlign === 'subscript')
-		run.verticalAlign = verticalAlign;
-	const size = points(getW(first(props, 'sz'), 'val'));
-	if (size !== undefined) run.fontSize = size;
-	const fonts = first(props, 'rFonts');
-	const family = getW(fonts, 'ascii') ?? getW(fonts, 'hAnsi');
-	if (family) run.fontFamily = family;
-	const hex = getW(first(props, 'color'), 'val');
-	if (hex && /^[0-9a-f]{6}$/i.test(hex)) run.color = `#${hex}`;
+	const styleRef = getW(first(props, 'rStyle'), 'val');
+	if (styleRef) run.style = styleRef;
 	return run;
 }
 
@@ -176,12 +164,7 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 }
 
 function parseTable(node: XmlElement, id: string): Table {
-	const rows = children(node, 'tr').map((row, ri) =>
-		children(row, 'tc').map((cell, ci): TableCell => ({
-			paragraphs: children(cell, 'p').map((p, pi) => parseParagraph(p, `${id}-r${ri}c${ci}p${pi}`)),
-		})),
-	);
-	return { type: 'table', id, rows, structureEditable: canEditTableStructure(node) };
+	return parseTableWithFidelity(node, id, parseParagraph);
 }
 
 /**

@@ -21,6 +21,36 @@ export interface Comment {
 	/** commentsExtended.xml parent linkage for threaded replies. */
 	parentId?: string;
 }
+export type {
+	ThemeColorSlot,
+	ThemeColorToken,
+	ThemeFontSet,
+	ThemeCatalog,
+	ThemeColorReference,
+	ThemeFontScript,
+	ThemeFontRole,
+	WordUnderlineStyle,
+} from './theme-model.js';
+import type { ThemeColorReference, ThemeFontScript, ThemeFontRole, WordUnderlineStyle } from './theme-model.js';
+export type {
+	RunFormatting,
+	CharacterStyleDefinition,
+	RunStyleCatalog,
+} from './run-style-model.js';
+import type { RunStyleCatalog } from './run-style-model.js';
+export type {
+	TableBorderSide,
+	TableBorders,
+	TableCellMargins,
+	NestedTablePreview,
+	TableLook,
+	TableConditionalRegion,
+	TableStyleConditionalFormatting,
+	TableStyleDefinition,
+	TableStyleCatalog,
+} from './table-model.js';
+import type { TableCell as TableCellShape, TableStyleCatalog } from './table-model.js';
+
 export interface TextRun {
 	text: string;
 	bold?: boolean;
@@ -41,7 +71,7 @@ export interface TextRun {
 	/** Font size in points. */
 	fontSize?: number;
 	fontFamily?: string;
-	/** Direct RGB color, e.g. #28665E. Theme resolution is not yet supported. */
+	/** Direct RGB color, e.g. #28665E. May coexist with `colorTheme` as Word's stored fallback. */
 	color?: string;
 	/**
 	 * A run that is itself a page or column break marker (`w:br` type page/column) instead of
@@ -58,6 +88,27 @@ export interface TextRun {
 	revision?: Revision;
 	/** IDs of comments whose range covers this run. */
 	commentIds?: string[];
+	/** Direct `w:color/@w:themeColor` (+ themeTint/themeShade); resolution happens in a separate layer. */
+	colorTheme?: ThemeColorReference;
+	/** Character style reference (`w:rStyle/@w:val`); preserved and editable, not flattened. */
+	style?: string;
+	caps?: boolean;
+	smallCaps?: boolean;
+	/** `w:dstrike`; kept distinct from the single-line `strike` toggle. */
+	doubleStrike?: boolean;
+	/** Hidden text (`w:vanish`); the editor renders it dimmed rather than removing it. */
+	vanish?: boolean;
+	/** Non-single underline style, e.g. `double`/`wave`; `underline` stays the simple on/off toggle. */
+	underlineStyle?: WordUnderlineStyle;
+	underlineColor?: string;
+	/** `w:spacing/@w:val` character spacing, in twips (positive expands, negative condenses). */
+	characterSpacingTwips?: number;
+	/** Direct `w:shd/@w:fill` run shading. */
+	shadingFill?: string;
+	/** Direct `w:shd` theme fill; kept alongside `shadingFill` without flattening. */
+	shadingThemeFill?: ThemeColorReference;
+	/** Direct `w:rFonts` theme font references, per script; resolved via the document theme. */
+	fontTheme?: Partial<Record<ThemeFontScript, ThemeFontRole>>;
 }
 export interface Paragraph {
 	type: 'paragraph';
@@ -120,15 +171,22 @@ export interface ParagraphStyleCatalog {
 	styles: Record<string, ParagraphStyleDefinition>;
 	warnings: string[];
 }
-export interface TableCell {
-	paragraphs: Paragraph[];
-}
+export type TableCell = TableCellShape;
 export interface Table {
 	type: 'table';
 	id: string;
 	/** Whether row, cell and paragraph structure can be edited without losing unsupported table XML. */
 	structureEditable?: boolean;
 	rows: TableCell[][];
+	/** `w:tblGrid/w:gridCol` widths in twips, one per grid column. */
+	grid?: number[];
+	widthTwips?: number;
+	alignment?: 'left' | 'center' | 'right';
+	indentTwips?: number;
+	borders?: import('./table-model.js').TableBorders;
+	/** `w:tblStyle/@w:val`; conditional formatting resolves through `tableStyles` without flattening. */
+	style?: string;
+	look?: import('./table-model.js').TableLook;
 }
 export type Block = Paragraph | Table;
 /** Read-only header/footer content, parsed with the same paragraph/table parser as the body. */
@@ -227,6 +285,12 @@ export interface DocumentModel {
 	comments?: Comment[];
 	/** settings.xml `w:trackRevisions`; toggling this changes how the editor records new edits. */
 	trackChanges?: boolean;
+	/** Source run-level defaults/character styles; editing the catalog itself is not supported. */
+	characterStyles?: RunStyleCatalog;
+	/** Source table style catalog; editing the catalog itself is not supported. */
+	tableStyles?: TableStyleCatalog;
+	/** Parsed word/theme/theme1.xml and settings.xml color scheme mapping. */
+	theme?: import('./theme-model.js').ThemeCatalog;
 }
 export interface LoadedDocument {
 	model: DocumentModel;

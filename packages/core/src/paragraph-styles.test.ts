@@ -58,7 +58,7 @@ describe('paragraph style catalog', () => {
 		expect(styled).toMatchObject({ style: 'Derived', spacingAfterTwips: 480 });
 		expect(styled.align).toBeUndefined();
 		expect(loaded.model.warnings.join(' ')).toContain(
-			'character styles and theme values remain unresolved',
+			'Paragraph style, character style and docDefaults inheritance resolve for rendering',
 		);
 	});
 

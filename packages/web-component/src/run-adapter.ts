@@ -1,6 +1,7 @@
 import type { TextRun } from '@christophervr/docx-core';
 import type { Node as ProseMirrorNode, Mark } from 'prosemirror-model';
 import { schema } from './schema';
+import { extraRunProperties } from './run-extra-mark';
 
 function marksForRun(run: TextRun): Mark[] {
 	const marks: Mark[] = [];
@@ -50,6 +51,8 @@ function marksForRun(run: TextRun): Mark[] {
 			}),
 		);
 	if (run.commentIds?.length) marks.push(schema.marks.comment.create({ ids: run.commentIds }));
+	const extra = extraRunProperties(run);
+	if (extra) marks.push(schema.marks.runProperties.create({ props: extra }));
 	return marks;
 }
 
@@ -126,6 +129,8 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 		};
 	const comment = propertyOfMark(child, 'comment');
 	if (comment?.attrs.ids?.length) run.commentIds = [...comment.attrs.ids];
+	const extra = propertyOfMark(child, 'runProperties');
+	if (extra?.attrs.props) Object.assign(run, structuredClone(extra.attrs.props));
 	const previous = runs.at(-1);
 	const fields: (keyof TextRun)[] = [
 		'bold',
@@ -144,12 +149,15 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 	];
 	const sameRevision = JSON.stringify(previous?.revision) === JSON.stringify(run.revision);
 	const sameComments = JSON.stringify(previous?.commentIds) === JSON.stringify(run.commentIds);
+	const sameExtra =
+		JSON.stringify(previous && extraRunProperties(previous)) === JSON.stringify(extraRunProperties(run));
 	if (
 		previous &&
 		!previous.break &&
 		!previous.noteReference &&
 		sameRevision &&
 		sameComments &&
+		sameExtra &&
 		fields.every((field) => previous[field] === run[field])
 	)
 		previous.text += run.text;
