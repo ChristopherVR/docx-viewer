@@ -10,6 +10,9 @@ export interface LayoutFragment {
 	fontSizePt?: number;
 	/** An inline picture drawn in this fragment's box, bottom-aligned on the line. */
 	object?: import('./input.js').LayoutObject;
+	color?: string;
+	underline?: boolean;
+	strike?: boolean;
 }
 
 /** One visual line of a paragraph, positioned within its block's box. */

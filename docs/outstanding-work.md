@@ -70,7 +70,12 @@ Still missing:
   floats with CSS floats.
 - Picture bullets, `numStyleLink`, Word's exact `lvlRestart` cascade.
 - Move linkage for `moveFrom`/`moveTo`, prior-formatting snapshots for `rPrChange`/`pPrChange`, table-structure revisions, and comments spanning multiple paragraphs.
-- Pagination against real font metrics, footnote placement, floating objects, and Word-rendered reference comparisons.
+- Print Layout measures and draws text with formatting inherited from document defaults, paragraph
+  and character styles and theme fonts. It uses metric-compatible substitutes (Carlito, Caladea,
+  Arimo, Tinos, Cousine) when Word's fonts are missing, and re-paginates once web fonts load. Single
+  line height comes from the font's ascent and descent. Kerning, per-script fonts (East Asian and
+  complex-script faces), footnote placement, text wrap around floats and comparisons against
+  Word-rendered references are still missing.
 
 ### Engineering follow-ups
 

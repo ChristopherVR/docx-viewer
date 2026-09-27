@@ -1,4 +1,10 @@
-import type { LayoutBlockBox, LayoutLine, LayoutResult } from '@christophervr/docx-layout';
+import {
+	cssFontStack,
+	DEFAULT_FONT_SIZE_PT,
+	type LayoutBlockBox,
+	type LayoutLine,
+	type LayoutResult,
+} from '@christophervr/docx-layout';
 
 /** One clickable line, recorded for best-effort click-to-cursor mapping. */
 interface LineHitBox {
@@ -49,8 +55,14 @@ function styleFragment(el: HTMLSpanElement, fragment: LayoutLine['fragments'][nu
 	el.style.whiteSpace = 'pre';
 	if (fragment.bold) el.style.fontWeight = '700';
 	if (fragment.italic) el.style.fontStyle = 'italic';
-	if (fragment.fontFamily) el.style.fontFamily = fragment.fontFamily;
-	if (fragment.fontSizePt) el.style.fontSize = `${fragment.fontSizePt}pt`;
+	// The same metric-compatible stack the measurer used, so rendered text matches its line breaks.
+	el.style.fontFamily = cssFontStack(fragment.fontFamily);
+	el.style.fontSize = `${fragment.fontSizePt ?? DEFAULT_FONT_SIZE_PT}pt`;
+	if (fragment.color) el.style.color = fragment.color;
+	const lines = [fragment.underline && 'underline', fragment.strike && 'line-through'].filter(
+		Boolean,
+	);
+	if (lines.length) el.style.textDecorationLine = lines.join(' ');
 	el.textContent = fragment.text;
 }
 

@@ -18,6 +18,10 @@ export interface LayoutRun {
 	breakAfter?: 'page' | 'column';
 	/** An inline picture: occupies its size on the line (`text` is empty). */
 	object?: LayoutObject;
+	/** `#rrggbb`, display only. */
+	color?: string;
+	underline?: boolean;
+	strike?: boolean;
 }
 
 /** A picture's package part and size in CSS pixels; the engine never loads its bytes. */

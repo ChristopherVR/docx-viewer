@@ -1,3 +1,4 @@
+import { cssFontStack } from './fonts.js';
 /** A font as the measurer needs it; sizes are already in CSS pixels. */
 export interface LayoutFontSpec {
 	family: string;
@@ -59,7 +60,7 @@ export function createCanvasMeasurer(): TextMeasurer {
 		return context;
 	};
 	const fontString = (font: LayoutFontSpec) =>
-		`${font.italic ? 'italic ' : ''}${font.bold ? 'bold ' : ''}${font.sizePx}px ${font.family || 'sans-serif'}`;
+		`${font.italic ? 'italic ' : ''}${font.bold ? 'bold ' : ''}${font.sizePx}px ${cssFontStack(font.family)}`;
 	return {
 		widthOf(text, font) {
 			const c = ctx();
@@ -78,9 +79,10 @@ export function createCanvasMeasurer(): TextMeasurer {
 			if (!c) return fallback.lineHeightOf(font);
 			c.font = fontString(font);
 			const metrics = c.measureText('Mg');
-			const ascent = metrics.fontBoundingBoxAscent ?? font.sizePx * 0.8;
-			const descent = metrics.fontBoundingBoxDescent ?? font.sizePx * 0.2;
-			return (ascent + descent) * 1.15;
+			// Word's single line is the font's ascent plus descent; paragraph line spacing multiplies it.
+			const ascent = metrics.fontBoundingBoxAscent;
+			const descent = metrics.fontBoundingBoxDescent;
+			return ascent !== undefined && descent !== undefined ? ascent + descent : font.sizePx * 1.22;
 		},
 	};
 }

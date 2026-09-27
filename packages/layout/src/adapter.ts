@@ -6,7 +6,13 @@ import type {
 	Table,
 	TextRun,
 } from '@christophervr/docx-core';
-import { dateFieldResult, fieldName, resolveParagraphFormatting } from '@christophervr/docx-core';
+import {
+	dateFieldResult,
+	fieldName,
+	resolveParagraphFormatting,
+	resolveRunFormatting,
+	resolveThemeColorReference,
+} from '@christophervr/docx-core';
 import type {
 	LayoutBlock,
 	LayoutDocumentInput,
@@ -76,7 +82,25 @@ export function adaptDocumentModel(
 	};
 
 	const now = new Date();
-	function adaptRun(run: TextRun): LayoutRun {
+	const theme = model.theme;
+	/** Effective run formatting: document defaults, paragraph and character styles, theme fonts. */
+	function effective(run: TextRun, paragraphStyleId: string | undefined) {
+		const formatting = resolveRunFormatting(run, {
+			runCatalog: model.characterStyles,
+			paragraphCatalog: catalog,
+			paragraphStyleId,
+		});
+		const role = formatting.fontTheme?.ascii ?? formatting.fontTheme?.hAnsi;
+		const family = formatting.fontFamily ?? (role && theme ? theme.fonts[role]?.latin : undefined);
+		const color =
+			formatting.color ??
+			(formatting.colorTheme && theme
+				? resolveThemeColorReference(formatting.colorTheme, theme)
+				: undefined);
+		return { formatting, family, color };
+	}
+	function adaptRun(run: TextRun, paragraphStyleId: string | undefined): LayoutRun {
+		const { formatting, family, color } = effective(run, paragraphStyleId);
 		// DATE and TIME update when Word paginates for display or printing.
 		const name = run.field ? fieldName(run.field.instr) : '';
 		const text =
@@ -94,12 +118,16 @@ export function adaptDocumentModel(
 					}
 				: undefined;
 		return {
-			text: image ? '' : text,
+			// Hidden text (`w:vanish`) takes no space when printed, as in Word by default.
+			text: image || formatting.vanish ? '' : formatting.caps ? text.toUpperCase() : text,
 			...(object ? { object } : {}),
-			bold: run.bold,
-			italic: run.italic,
-			fontFamily: run.fontFamily,
-			fontSizePt: run.fontSize,
+			bold: formatting.bold,
+			italic: formatting.italic,
+			fontFamily: family,
+			fontSizePt: formatting.fontSize,
+			...(color && /^#[0-9a-f]{6}$/i.test(color) ? { color } : {}),
+			...(formatting.underline ? { underline: true } : {}),
+			...(formatting.strike || formatting.doubleStrike ? { strike: true } : {}),
 			...(run.break ? { breakAfter: run.break } : {}),
 		};
 	}
@@ -109,7 +137,7 @@ export function adaptDocumentModel(
 		return {
 			kind: 'paragraph',
 			id: paragraph.id,
-			runs: paragraph.runs.map(adaptRun),
+			runs: paragraph.runs.map((run) => adaptRun(run, paragraph.style)),
 			...floatsOf(paragraph),
 			align: resolved.align,
 			direction: resolved.direction,

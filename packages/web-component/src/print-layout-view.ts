@@ -38,7 +38,15 @@ export function createPrintLayoutController(
 	onRequestCursor: (blockId: string, offset: number) => void,
 	pictureUrl?: PictureUrl,
 ): PrintLayoutController {
-	const measurer = createCanvasMeasurer();
+	let measurer = createCanvasMeasurer();
+	let lastModel: DocumentModel | null = null;
+	// Widths measured before a web font loads come from a fallback font; measure again once it has.
+	const fonts = typeof document === 'undefined' ? undefined : document.fonts;
+	const onFontsLoaded = () => {
+		measurer = createCanvasMeasurer();
+		if (lastModel && !element.hidden) relayout(lastModel);
+	};
+	fonts?.addEventListener?.('loadingdone', onFontsLoaded);
 	const element = document.createElement('div');
 	element.className = 'dve-print-pages';
 	element.hidden = true;
@@ -49,6 +57,7 @@ export function createPrintLayoutController(
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
 	function relayout(model: DocumentModel) {
+		lastModel = model;
 		result = layoutDocumentModel(model, measurer);
 		handle = renderPrintLayout(result, pictureUrl);
 		decoratePages(model, result.pages, [
@@ -108,6 +117,8 @@ export function createPrintLayoutController(
 		destroy() {
 			if (timer) clearTimeout(timer);
 			element.removeEventListener('click', onClick);
+			fonts?.removeEventListener?.('loadingdone', onFontsLoaded);
+			lastModel = null;
 		},
 	};
 }

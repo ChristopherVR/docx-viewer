@@ -149,6 +149,9 @@ export function layoutParagraph(
 				italic: run?.italic,
 				fontFamily: run?.fontFamily,
 				fontSizePt: run?.fontSizePt,
+				...(run?.color ? { color: run.color } : {}),
+				...(run?.underline ? { underline: true } : {}),
+				...(run?.strike ? { strike: true } : {}),
 				...(token.kind === 'object' && run?.object ? { object: run.object } : {}),
 			});
 			x += widthPx;
