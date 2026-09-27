@@ -8,6 +8,8 @@ export interface InlineImage {
 	/** Package part name holding the image bytes, e.g. `word/media/image1.png`. */
 	partName: string;
 	contentType: string;
+	/** An SVG original (`asvg:svgBlip`) shown instead of the raster `partName`, which is its PNG fallback. */
+	svgPartName?: string;
 	widthPx: number;
 	heightPx: number;
 	/** From `wp:docPr/@descr`. */

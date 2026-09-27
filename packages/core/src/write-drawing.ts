@@ -85,7 +85,27 @@ function appendAll(parent: XmlElement, ...items: XmlElement[]): void {
 	for (const item of items) parent.appendChild(item);
 }
 
-function buildInlineDrawing(doc: XmlDocument, image: InlineImage, relId: string): XmlElement {
+const SVG_EXTENSION_URI = '{96DAC541-7B7A-43D3-8B79-37D633B846F1}';
+const SVG_NS = 'http://schemas.microsoft.com/office/drawing/2016/SVG/main';
+
+/** Word 2016+ SVG pictures: the SVG rides in an a:blip extension beside its PNG fallback. */
+function svgExtension(doc: XmlDocument, svgRelId: string): XmlElement {
+	const extLst = el(doc, A_NS, 'a:extLst');
+	const ext = el(doc, A_NS, 'a:ext');
+	ext.setAttribute('uri', SVG_EXTENSION_URI);
+	const svgBlip = doc.createElementNS(SVG_NS, 'asvg:svgBlip');
+	svgBlip.setAttributeNS(REL_NS, 'r:embed', svgRelId);
+	ext.appendChild(svgBlip);
+	extLst.appendChild(ext);
+	return extLst;
+}
+
+function buildInlineDrawing(
+	doc: XmlDocument,
+	image: InlineImage,
+	relId: string,
+	svgRelId?: string,
+): XmlElement {
 	const drawing = makeW(doc, 'drawing');
 	const inline = el(doc, WP_NS, 'wp:inline');
 	for (const side of ['distT', 'distB', 'distL', 'distR']) inline.setAttribute(side, '0');
@@ -113,6 +133,7 @@ function buildInlineDrawing(doc: XmlDocument, image: InlineImage, relId: string)
 	appendAll(nvPicPr, cNvPr, el(doc, PIC_NS, 'pic:cNvPicPr'));
 	const blip = el(doc, A_NS, 'a:blip');
 	blip.setAttributeNS(REL_NS, 'r:embed', relId);
+	if (svgRelId) blip.appendChild(svgExtension(doc, svgRelId));
 	const stretch = el(doc, A_NS, 'a:stretch');
 	stretch.appendChild(el(doc, A_NS, 'a:fillRect'));
 	const blipFill = el(doc, PIC_NS, 'pic:blipFill');
@@ -182,7 +203,8 @@ export function createImageRun(
 		);
 	if (!allocator) throw new Error('Cannot insert a new picture without a relationship allocator.');
 	const relId = allocator.addImage(image.partName);
-	const drawing = buildInlineDrawing(doc, image, relId);
+	const svgRelId = image.svgPartName ? allocator.addImage(image.svgPartName) : undefined;
+	const drawing = buildInlineDrawing(doc, image, relId, svgRelId);
 	clearNonProperties(node);
 	node.appendChild(drawing);
 	return node;

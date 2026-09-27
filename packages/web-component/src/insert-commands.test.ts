@@ -72,8 +72,8 @@ describe('editor insert and formatting commands', () => {
 
 	it('rejects unsupported picture formats', async () => {
 		await expect(
-			stagePicture(new File(['<svg/>'], 'art.svg', { type: 'image/svg+xml' }), 600),
-		).rejects.toThrow(/PNG, JPEG, GIF or BMP/);
+			stagePicture(new File(['II*'], 'scan.tiff', { type: 'image/tiff' }), 600),
+		).rejects.toThrow(/PNG, JPEG, GIF, BMP or SVG/);
 	});
 
 	it('adds, edits and removes a hyperlink through the link dialog', () => {

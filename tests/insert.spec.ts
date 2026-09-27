@@ -62,3 +62,43 @@ test('inserts a picture and a hyperlink from the ribbon and saves both to DOCX',
 	expect(await zip.file(media[0])!.async('nodebuffer')).toEqual(PNG);
 	expect(errors).toEqual([]);
 });
+
+test('inserts an SVG picture with a PNG fallback', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/');
+	await newDocument(page);
+	const editor = page.locator('docx-editor');
+	const surface = editor.locator('.ProseMirror');
+	await surface.click();
+	await editor.getByRole('tab', { name: 'Insert', exact: true }).click();
+	const chooser = page.waitForEvent('filechooser');
+	await editor.getByRole('button', { name: 'Insert picture', exact: true }).click();
+	const svg =
+		'<svg xmlns="http://www.w3.org/2000/svg" width="40" height="20"><rect width="40" height="20" fill="#185abd"/></svg>';
+	await (
+		await chooser
+	).setFiles({
+		name: 'badge.svg',
+		mimeType: 'image/svg+xml',
+		buffer: Buffer.from(svg),
+	});
+	const picture = surface.locator('img[data-docx-image]');
+	await expect(picture).toHaveAttribute('width', '40');
+	const shown = await picture.evaluate(async (img: HTMLImageElement) =>
+		(await fetch(img.src)).headers.get('content-type'),
+	);
+	expect(shown).toBe('image/svg+xml');
+
+	const pending = page.waitForEvent('download');
+	await saveButton(page).click();
+	const zip = await JSZip.loadAsync(await readFile((await (await pending).path())!));
+	const media = Object.keys(zip.files).filter(
+		(name) => name.startsWith('word/media/') && !zip.files[name].dir,
+	);
+	expect(media.map((name) => name.split('.').pop()).sort()).toEqual(['png', 'svg']);
+	const png = await zip.file(media.find((name) => name.endsWith('.png'))!)!.async('uint8array');
+	expect([...png.slice(0, 4)]).toEqual([137, 80, 78, 71]);
+	expect(await zip.file('word/document.xml')!.async('string')).toContain('asvg:svgBlip');
+	expect(errors).toEqual([]);
+});

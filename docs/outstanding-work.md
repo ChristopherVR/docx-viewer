@@ -31,13 +31,12 @@ and the model warnings emitted at parse time.
 
 Done since the merge: per-section page setup and section breaks (undoable), in-place header/footer and footnote/endnote editing, Insert Footnote/Endnote (creating the notes part when needed), headers/footers with live PAGE/NUMPAGES in Print Layout, table style rendering, picture resize and alt text, Word-style window chrome (title bar with quick access, "Tell me"
 command search, Editing/Viewing mode; File backstage; status bar with zoom and compatibility
-notes), Insert Picture (PNG, JPEG, GIF, BMP), insert/edit/remove hyperlink with Ctrl+K and a
+notes), Insert Picture (PNG, JPEG, GIF, BMP, and SVG with a PNG fallback), insert/edit/remove hyperlink with Ctrl+K and a
 "Place in this document" bookmark list, Ctrl+Click to follow links, a character style picker,
 inherited run formatting and theme fonts/colors rendered in the editor, and a hidden-text toggle.
 
 Still missing:
 
-- SVG pictures (they need a PNG fallback part).
 - Section editing covers size/orientation, margins, columns, vertical alignment, all four
   section-break types, a different first page, page numbering and the document-wide odd/even
   headers setting; line numbering and page borders are still protected (only their presence is

@@ -39,7 +39,7 @@ export class InsertController {
 		this.pictureDialog = createPictureDialog(() => host.view());
 		this.pictureInput = document.createElement('input');
 		this.pictureInput.type = 'file';
-		this.pictureInput.accept = Object.keys(PICTURE_TYPES).join(',');
+		this.pictureInput.accept = [...Object.keys(PICTURE_TYPES), 'image/svg+xml'].join(',');
 		this.pictureInput.hidden = true;
 		this.pictureInput.className = 'dve-picture-input';
 		this.pictureInput.setAttribute('aria-label', 'Insert picture');
@@ -121,6 +121,8 @@ export class InsertController {
 		try {
 			const staged = await stagePicture(file, this.host.contentWidth());
 			this.pendingMedia.set(staged.image.partName, staged.media);
+			if (staged.svg && staged.image.svgPartName)
+				this.pendingMedia.set(staged.image.svgPartName, staged.svg);
 			insertPicture(view, staged.image);
 			focusView(view);
 		} catch (cause) {

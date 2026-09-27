@@ -49,6 +49,8 @@ export const imageNodeSpec: NodeSpec = {
 		anchored: { default: false },
 		/** Floating picture wrapping/position (`PicturePlacement`) as JSON; display only. */
 		placement: { default: null },
+		/** SVG original shown instead of the PNG fallback in `partName`. */
+		svgPartName: { default: null },
 		unsupported: { default: null },
 	},
 	parseDOM: [

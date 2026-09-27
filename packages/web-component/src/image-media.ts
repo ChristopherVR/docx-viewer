@@ -71,7 +71,9 @@ export function imageNodeView(cache: ImageMediaCache, options: ImageNodeViewOpti
 	return (node: ProseMirrorNode, view: EditorView, getPos: () => number | undefined): NodeView => {
 		const content = renderSpec(node);
 		if (content.tagName !== 'IMG') return { dom: content };
-		const src = cache.urlFor(String(node.attrs.partName), String(node.attrs.contentType));
+		const src =
+			(node.attrs.svgPartName && cache.urlFor(String(node.attrs.svgPartName), 'image/svg+xml')) ||
+			cache.urlFor(String(node.attrs.partName), String(node.attrs.contentType));
 		if (src) content.setAttribute('src', src);
 		else content.classList.add('dve-image-missing');
 		const dom = document.createElement('span');
