@@ -93,7 +93,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		edited: () => this.markEditedOutsideBody(),
 		reportError: (cause) => dispatchDocumentError(this, cause),
 	};
-	private readonly parts = new PartsController(this.host);
+	private readonly parts = new PartsController({ ...this.host, images: () => this.imageMedia });
 	private readonly pages = new PageController({
 		...this.host,
 		paper: () => this.paper,

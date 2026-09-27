@@ -125,7 +125,7 @@ export async function readPackage(input: Uint8Array | ArrayBuffer): Promise<{
 		model.warnings.push(
 			'Table grid widths, merges, borders, shading, cell alignment/margins and table style conditional formatting resolve for rendering; row/column fragmentation and full table-style precedence are not modeled.',
 		);
-	const parts = await parseDocumentParts(zip, body, blocks);
+	const parts = await parseDocumentParts(zip, body, blocks, drawings);
 	model.sections = parts.sections;
 	if (parts.footnotes) model.footnotes = parts.footnotes;
 	if (parts.endnotes) model.endnotes = parts.endnotes;
@@ -161,8 +161,18 @@ export async function readPackage(input: Uint8Array | ArrayBuffer): Promise<{
 			'Nested tables render as a read-only text preview; edit their content from the original document.',
 		);
 	model.warnings.push(...imageAndBookmarkWarnings(blocks));
+	// Pictures anywhere in the document: body, headers, footers, footnotes and endnotes.
 	const imagePartNames = new Set<string>();
-	forEachParagraph(blocks, (paragraph) => {
+	const pictureBlocks = [
+		...blocks,
+		...(model.sections ?? []).flatMap((section) =>
+			[section.headers, section.footers].flatMap((slots) =>
+				Object.values(slots ?? {}).flatMap((content) => content?.blocks ?? []),
+			),
+		),
+		...[...(model.footnotes ?? []), ...(model.endnotes ?? [])].flatMap((note) => note.blocks),
+	];
+	forEachParagraph(pictureBlocks, (paragraph) => {
 		for (const run of paragraph.runs)
 			if (run.image?.partName) imagePartNames.add(run.image.partName);
 	});

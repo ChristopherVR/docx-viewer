@@ -76,3 +76,64 @@ describe('hyperlink rendering', () => {
 		expect(runs[1].link?.href).toBe('javascript:alert(1)');
 	});
 });
+
+describe('pictures in headers', () => {
+	afterEach(() => {
+		document.body.replaceChildren();
+		vi.restoreAllMocks();
+	});
+
+	it('shows header pictures from package media in the header preview', () => {
+		URL.createObjectURL = vi.fn(() => 'blob:header-logo');
+		URL.revokeObjectURL = vi.fn();
+		const model = createDocument();
+		model.sections = [
+			{
+				endsAtBlockId: 'p1',
+				type: 'nextPage',
+				pageWidthTwips: 12240,
+				pageHeightTwips: 15840,
+				orientation: 'portrait',
+				marginTopTwips: 1440,
+				marginRightTwips: 1440,
+				marginBottomTwips: 1440,
+				marginLeftTwips: 1440,
+				columns: { count: 1, equalWidth: true },
+				headers: {
+					default: {
+						partName: 'word/header1.xml',
+						blocks: [
+							{
+								type: 'paragraph',
+								id: 'h1',
+								runs: [
+									{
+										text: '',
+										image: {
+											relId: 'rId7',
+											partName: 'word/media/logo.png',
+											contentType: 'image/png',
+											widthPx: 30,
+											heightPx: 30,
+										},
+									},
+								],
+							},
+						],
+					},
+				},
+			},
+		];
+		const editor = document.createElement('docx-editor') as DocxEditorElement;
+		editor.setLoadedDocument({
+			model,
+			media: new Map([['word/media/logo.png', new Uint8Array([137, 80, 78, 71])]]),
+			save: async () => new Uint8Array(),
+		});
+		document.body.append(editor);
+		const image = editor.shadowRoot!.querySelector<HTMLImageElement>(
+			'.dve-header img[data-docx-image]',
+		);
+		expect(image?.getAttribute('src')).toBe('blob:header-logo');
+	});
+});

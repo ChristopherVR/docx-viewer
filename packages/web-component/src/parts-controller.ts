@@ -1,10 +1,19 @@
 import type { Block, HeaderFooterContent, Note } from '@christophervr/docx-core';
 import type { EditorHost } from './editor-host';
 import { buildFooterElement, buildHeaderElement } from './header-footer-view';
-import { attachHeaderFooterEditing, type HeaderFooterSlotName } from './header-footer-editor';
+import {
+	attachHeaderFooterEditing,
+	type HeaderFooterSlotName,
+	type InlineEditorOptions,
+} from './header-footer-editor';
+import { imageNodeView, type ImageMediaCache } from './image-media';
 import { buildNotesElement } from './notes-view';
 import { attachNoteEditing } from './note-editor';
 import { insertNote, type NoteKind } from './note-commands';
+
+export interface PartsControllerHost extends EditorHost {
+	images(): ImageMediaCache;
+}
 
 /** Headers, footers, footnotes and endnotes around the continuous editing surface. */
 export class PartsController {
@@ -12,7 +21,21 @@ export class PartsController {
 	private footerEl?: HTMLElement;
 	private notesEl?: HTMLElement;
 
-	constructor(private readonly host: EditorHost) {}
+	constructor(private readonly host: PartsControllerHost) {}
+
+	/** Sets picture sources in a read-only preview from the package media. */
+	private readonly decorate = (preview: HTMLElement) => {
+		for (const image of preview.querySelectorAll<HTMLImageElement>('img[data-docx-image]')) {
+			const src = this.host
+				.images()
+				.urlFor(image.dataset.partName ?? '', image.dataset.contentType ?? '');
+			if (src) image.src = src;
+		}
+	};
+
+	private editorOptions(): InlineEditorOptions {
+		return { nodeViews: { image: imageNodeView(this.host.images()) }, decorate: this.decorate };
+	}
 
 	/** Rebuilds the header/footer/note previews and wires in-place editing. */
 	render(canvas: HTMLElement | undefined, paper: HTMLElement | undefined): void {
@@ -35,6 +58,7 @@ export class PartsController {
 					content: (slot) => this.host.model().sections?.[0]?.[kind]?.[slot],
 					change: (slot, blocks) => this.updateHeaderFooter(kind, slot, blocks),
 					editable,
+					editor: this.editorOptions(),
 				});
 		if (this.notesEl)
 			attachNoteEditing(this.notesEl, {
@@ -46,7 +70,10 @@ export class PartsController {
 				},
 				change: (id, blocks) => this.updateNote(id, blocks),
 				editable,
+				editor: this.editorOptions(),
 			});
+		for (const element of [this.headerEl, this.footerEl, this.notesEl])
+			if (element) this.decorate(element);
 		if (this.headerEl) canvas.insertBefore(this.headerEl, paper);
 		if (this.footerEl) canvas.insertBefore(this.footerEl, paper.nextSibling);
 		if (this.notesEl) canvas.insertBefore(this.notesEl, (this.footerEl ?? paper).nextSibling);

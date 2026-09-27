@@ -8,6 +8,20 @@ import { parseRelationships, resolvePartPath, type Relationship } from './relati
 import { parseRawSections, type RawHeaderFooterRef } from './sections.js';
 import { parseNotesPart } from './notes.js';
 import { parseBlocksFromContainer } from './block-parser.js';
+import type { DrawingContext } from './drawing.js';
+import { parseRelationships as parsePackageRelationships } from './package-parts.js';
+
+/** A part's own relationships (word/_rels/<part>.rels) for resolving its pictures and links. */
+async function partContext(
+	zip: JSZip,
+	path: string,
+	base: DrawingContext | undefined,
+): Promise<DrawingContext | undefined> {
+	if (!base) return undefined;
+	const slash = path.lastIndexOf('/');
+	const relsPath = `${path.slice(0, slash)}/_rels/${path.slice(slash + 1)}.rels`;
+	return { ...base, rels: parsePackageRelationships(await readPart(zip, relsPath)) };
+}
 
 const FIELD_MARKUP = /<w:(?:fldSimple|instrText|fldChar)\b/;
 
@@ -38,6 +52,7 @@ async function resolveSlots(
 	refs: RawHeaderFooterRef[],
 	cache: Map<string, Block[]>,
 	fieldMarkup: { seen: boolean },
+	drawings?: DrawingContext,
 ): Promise<HeaderFooterSlots | undefined> {
 	if (!refs.length) return undefined;
 	const slots: HeaderFooterSlots = {};
@@ -53,6 +68,7 @@ async function resolveSlots(
 			blocks = parseBlocksFromContainer(
 				parseXml(xml).documentElement,
 				`${path.replace(/[^a-z0-9]+/gi, '')}-`,
+				await partContext(zip, path, drawings),
 			);
 			cache.set(path, blocks);
 		}
@@ -76,6 +92,7 @@ export async function parseDocumentParts(
 	zip: JSZip,
 	body: XmlElement,
 	blocks: Block[],
+	drawings?: DrawingContext,
 ): Promise<DocumentPartsResult> {
 	const raw = parseRawSections(body, blocks);
 	const relationships = parseRelationships(await readPart(zip, 'word/_rels/document.xml.rels'));
@@ -84,35 +101,46 @@ export async function parseDocumentParts(
 	const fieldMarkup = { seen: false };
 	const sections: SectionProperties[] = [];
 	for (const { headerRefs, footerRefs, ...rest } of raw) {
-		const headers = await resolveSlots(zip, relationships, headerRefs, cache, fieldMarkup);
-		const footers = await resolveSlots(zip, relationships, footerRefs, cache, fieldMarkup);
+		const headers = await resolveSlots(
+			zip,
+			relationships,
+			headerRefs,
+			cache,
+			fieldMarkup,
+			drawings,
+		);
+		const footers = await resolveSlots(
+			zip,
+			relationships,
+			footerRefs,
+			cache,
+			fieldMarkup,
+			drawings,
+		);
 		sections.push({ ...rest, ...(headers ? { headers } : {}), ...(footers ? { footers } : {}) });
 	}
 	const footnotesXml = await readPart(zip, 'word/footnotes.xml');
 	const endnotesXml = await readPart(zip, 'word/endnotes.xml');
+	const notesParser = async (path: string) => {
+		const context = await partContext(zip, path, drawings);
+		return (container: XmlElement, prefix: string) =>
+			parseBlocksFromContainer(container, prefix, context);
+	};
 	const footnotes = footnotesXml
-		? parseNotesPart(footnotesXml, 'footnote', parseBlocksFromContainer)
+		? parseNotesPart(footnotesXml, 'footnote', await notesParser('word/footnotes.xml'))
 		: undefined;
 	const endnotes = endnotesXml
-		? parseNotesPart(endnotesXml, 'endnote', parseBlocksFromContainer)
+		? parseNotesPart(endnotesXml, 'endnote', await notesParser('word/endnotes.xml'))
 		: undefined;
 
 	const warnings: string[] = [];
-	if (sections.some((section) => section.headers || section.footers))
-		warnings.push(
-			'Headers and footers are parsed and displayed read-only; they cannot be edited in this editor.',
-		);
 	if (sections.some((section) => section.columns.count > 1))
 		warnings.push(
-			"Section column count, spacing and widths are modeled but rendered as a single continuous column; Word's newspaper-style layout is not reproduced visually.",
-		);
-	if ((footnotes?.length ?? 0) > 0 || (endnotes?.length ?? 0) > 0)
-		warnings.push(
-			'Footnote and endnote text is parsed and displayed at the end of the document; paragraphs containing a footnote or endnote reference mark cannot be edited.',
+			'Columns render in Print Layout and, for single-section documents, on the editing surface; column breaks balance approximately.',
 		);
 	if (fieldMarkup.seen)
 		warnings.push(
-			'Field codes such as PAGE and NUMPAGES inside headers/footers are shown as static placeholders and are not recalculated.',
+			'PAGE, NUMPAGES and SECTIONPAGES fields are recalculated in Print Layout; other fields show the result Word last saved.',
 		);
 	return {
 		sections,

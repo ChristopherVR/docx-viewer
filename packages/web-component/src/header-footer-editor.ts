@@ -1,5 +1,5 @@
 import { EditorState, type Transaction } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { EditorView, type EditorProps } from 'prosemirror-view';
 import { history } from 'prosemirror-history';
 import { createDocument, type Block, type HeaderFooterContent } from '@christophervr/docx-core';
 import { assignMissingParagraphIds, docToModel, modelToDoc } from './model-adapter';
@@ -9,7 +9,14 @@ import { renderBlocks } from './header-footer-view';
 
 export type HeaderFooterSlotName = 'default' | 'first' | 'even';
 
+/** Picture support for in-place editors: node views, and a hook to finish previews after closing. */
+export interface InlineEditorOptions {
+	nodeViews?: EditorProps['nodeViews'];
+	decorate?(preview: HTMLElement): void;
+}
+
 export interface HeaderFooterEditingOptions {
+	editor?: InlineEditorOptions;
 	/** The content currently shown in `slot`, if any. */
 	content(slot: HeaderFooterSlotName): HeaderFooterContent | undefined;
 	/** Called with the slot's new blocks after every edit. */
@@ -48,6 +55,7 @@ export function openBlocksEditor(
 	body: HTMLElement,
 	blocks: Block[],
 	change: (blocks: Block[]) => void,
+	options: InlineEditorOptions = {},
 ): void {
 	let model = { ...createDocument(), blocks: structuredClone(blocks) };
 	const host = document.createElement('div');
@@ -59,6 +67,7 @@ export function openBlocksEditor(
 			doc: modelToDoc(model),
 			plugins: [history(), editorKeymap(() => undefined)],
 		}),
+		...(options.nodeViews ? { nodeViews: options.nodeViews } : {}),
 		dispatchTransaction(transaction: Transaction) {
 			const applied = view.state.apply(transaction);
 			const repaired = assignMissingParagraphIds(applied);
@@ -73,6 +82,7 @@ export function openBlocksEditor(
 		container.classList.remove('dve-header-footer-editing');
 		view.destroy();
 		body.replaceChildren(renderBlocks(model.blocks));
+		options.decorate?.(body);
 	};
 	host.addEventListener('keydown', (event) => {
 		if (event.key === 'Escape') close();
@@ -90,5 +100,11 @@ function openEditor(
 	content: HeaderFooterContent,
 	options: HeaderFooterEditingOptions,
 ): void {
-	openBlocksEditor(slot, body, content.blocks, (blocks) => options.change(name, blocks));
+	openBlocksEditor(
+		slot,
+		body,
+		content.blocks,
+		(blocks) => options.change(name, blocks),
+		options.editor,
+	);
 }

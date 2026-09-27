@@ -45,8 +45,8 @@ Still missing:
   continuous surface shows columns only for single-section documents (Print Layout shows all).
 - Ctrl+Alt+F / Ctrl+Alt+D (insert footnote/endnote) are bound, but Windows browsers can report
   Ctrl+Alt as AltGr and not deliver them; the Insert ribbon buttons always work.
-- Pictures and new external links inside headers, footers and notes (they need relationships in
-  those parts).
+- Pictures and links in headers, footers and notes are resolved, shown and saved with each part's own
+  relationships; the Insert Picture and Link commands still target the main body only.
 - Table style run formatting and cell margins render; tables' own default cell margins (`tblCellMar`) and row heights are not modeled yet.
 - Underline/strikethrough cancelled by the style hierarchy still render (bold, italic and caps are handled).
 
@@ -57,7 +57,6 @@ Still missing:
 - Picture bullets, `numStyleLink`, Word's exact `lvlRestart` cascade.
 - Move linkage for `moveFrom`/`moveTo`, prior-formatting snapshots for `rPrChange`/`pPrChange`, table-structure revisions, and comments spanning multiple paragraphs.
 - Pagination against real font metrics, footnote placement, floating objects, and Word-rendered reference comparisons.
-- Headers, footers and notes do not resolve their own relationship parts, so pictures and external links inside them are not shown.
 
 ### Engineering follow-ups
 

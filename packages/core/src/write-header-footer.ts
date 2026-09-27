@@ -2,7 +2,14 @@
 // Writes edited header and footer content back into its own package part. Only parts whose blocks
 // changed are rewritten; everything else in the package stays byte-identical.
 import type JSZip from 'jszip';
-import type { Block, DocumentModel, HeaderFooterSlots, SectionProperties } from './model.js';
+import type {
+	Block,
+	DocumentModel,
+	HeaderFooterSlots,
+	PendingMediaPart,
+	SectionProperties,
+} from './model.js';
+import { allocatorForPart, writeNewRelationships } from './part-relationships.js';
 import { buildXml, parseXml } from './xml.js';
 import { applyBlocks } from './write.js';
 
@@ -48,6 +55,7 @@ export async function applyHeaderFooterEdits(
 	zip: JSZip,
 	model: DocumentModel,
 	base: DocumentModel,
+	pendingMedia?: ReadonlyMap<string, PendingMediaPart>,
 ): Promise<void> {
 	const next = partContents(model.sections);
 	const previous = partContents(base.sections);
@@ -60,7 +68,9 @@ export async function applyHeaderFooterEdits(
 		const file = zip.file(partName);
 		if (!file) throw new Error(`Header/footer part ${partName} is missing from the package.`);
 		const doc = parseXml(await file.async('string'));
-		applyBlocks(doc, doc.documentElement, blocks, original, undefined, contentWidthTwips);
+		const allocator = await allocatorForPart(zip, partName, doc);
+		applyBlocks(doc, doc.documentElement, blocks, original, allocator, contentWidthTwips);
 		zip.file(partName, buildXml(doc));
+		await writeNewRelationships(zip, partName, allocator.newRelationships, pendingMedia);
 	}
 }

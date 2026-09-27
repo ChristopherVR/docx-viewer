@@ -2,7 +2,8 @@
 // Writes edited footnote/endnote text back into word/footnotes.xml and word/endnotes.xml, one
 // note element at a time. Unedited notes and the separator notes stay byte-identical.
 import type JSZip from 'jszip';
-import type { DocumentModel, Note } from './model.js';
+import type { DocumentModel, Note, PendingMediaPart } from './model.js';
+import { allocatorForPart, writeNewRelationships } from './part-relationships.js';
 import { buildXml, children, getW, parseXml } from './xml.js';
 import { applyBlocks } from './write.js';
 import { ensureContentTypeOverride, ensureDocumentRelationship } from './zip-parts.js';
@@ -37,6 +38,7 @@ export async function applyNoteEdits(
 	zip: JSZip,
 	model: DocumentModel,
 	base: DocumentModel,
+	pendingMedia?: ReadonlyMap<string, PendingMediaPart>,
 ): Promise<void> {
 	const contentWidthTwips = Math.round(
 		(model.page.width - model.page.marginLeft - model.page.marginRight) * 15,
@@ -56,6 +58,7 @@ export async function applyNoteEdits(
 		const elements = new Map(
 			children(doc.documentElement, kind).map((element) => [getW(element, 'id'), element]),
 		);
+		const allocator = await allocatorForPart(zip, part, doc);
 		for (const note of edited) {
 			let element = elements.get(note.id);
 			const original = baseNotes.get(note.id);
@@ -66,8 +69,9 @@ export async function applyNoteEdits(
 				element.setAttributeNS(WORD_NS, 'w:id', note.id);
 				doc.documentElement.appendChild(element);
 			}
-			applyBlocks(doc, element, note.blocks, original?.blocks ?? [], undefined, contentWidthTwips);
+			applyBlocks(doc, element, note.blocks, original?.blocks ?? [], allocator, contentWidthTwips);
 		}
 		zip.file(part, buildXml(doc));
+		await writeNewRelationships(zip, part, allocator.newRelationships, pendingMedia);
 	}
 }

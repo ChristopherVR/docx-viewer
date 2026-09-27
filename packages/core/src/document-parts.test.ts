@@ -64,11 +64,9 @@ describe('headers, footers and settings', () => {
 			runs: [{ text: '1', field: { instr: 'PAGE' } }],
 		});
 		expect(loaded.model.evenAndOddHeaders).toBe(true);
+		expect(loaded.model.warnings.some((warning) => /cannot be edited/.test(warning))).toBe(false);
 		expect(loaded.model.warnings).toContain(
-			'Headers and footers are parsed and displayed read-only; they cannot be edited in this editor.',
-		);
-		expect(loaded.model.warnings).toContain(
-			'Field codes such as PAGE and NUMPAGES inside headers/footers are shown as static placeholders and are not recalculated.',
+			'PAGE, NUMPAGES and SECTIONPAGES fields are recalculated in Print Layout; other fields show the result Word last saved.',
 		);
 	});
 

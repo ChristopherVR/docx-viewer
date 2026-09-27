@@ -7,17 +7,12 @@ import { applyModel } from './write.js';
 import { applyNumberingCatalog } from './numbering-package.js';
 import { applyHeaderFooterEdits } from './write-header-footer.js';
 import { applyNoteEdits } from './write-notes.js';
+import { writeNewRelationships } from './part-relationships.js';
 import { applyTrackChangesSetting } from './settings.js';
 import { applyComments } from './write-comments.js';
-import {
-	buildRelationshipsXml,
-	ensureContentTypeDefault,
-	parseRelationships,
-} from './package-parts.js';
+import { parseRelationships } from './package-parts.js';
 
 const RELS_PART = 'word/_rels/document.xml.rels';
-const CONTENT_TYPES_PART = '[Content_Types].xml';
-const extensionOf = (partName: string): string => partName.split('.').pop()?.toLowerCase() ?? '';
 
 const contexts = new WeakMap<DocumentModel, { context: PackageContext; base: DocumentModel }>();
 
@@ -105,33 +100,15 @@ export async function saveDocx(
 			'<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
 		);
 	}
-	if (newRelationships.length) {
-		const relationships = parseRelationships(await zip.file(RELS_PART)?.async('string'));
-		let contentTypesXml = await zip.file(CONTENT_TYPES_PART)?.async('string');
-		for (const relationship of newRelationships) {
-			relationships.set(relationship.id, {
-				target: relationship.target,
-				mode: relationship.mode,
-				type: relationship.type,
-			});
-			if (relationship.partName) {
-				const pending = pendingMedia?.get(relationship.partName);
-				if (!pending)
-					throw new Error(`Missing bytes for newly inserted media part: ${relationship.partName}`);
-				zip.file(relationship.partName, pending.bytes);
-				contentTypesXml = ensureContentTypeDefault(
-					contentTypesXml,
-					extensionOf(relationship.partName),
-					pending.contentType,
-				);
-			}
-		}
-		zip.file(RELS_PART, buildRelationshipsXml(relationships));
-		if (contentTypesXml) zip.file(CONTENT_TYPES_PART, contentTypesXml);
-	}
-	if (binding) await applyHeaderFooterEdits(zip, model, binding.base);
+	await writeNewRelationships(zip, 'word/document.xml', newRelationships, pendingMedia);
+	if (binding) await applyHeaderFooterEdits(zip, model, binding.base, pendingMedia);
 	// A new document starts without notes, so every note is created along with its part.
-	await applyNoteEdits(zip, model, binding?.base ?? { ...model, footnotes: [], endnotes: [] });
+	await applyNoteEdits(
+		zip,
+		model,
+		binding?.base ?? { ...model, footnotes: [], endnotes: [] },
+		pendingMedia,
+	);
 	await applyNumberingCatalog(zip, model, binding);
 	if (model.trackChanges !== binding?.base.trackChanges)
 		await applyTrackChangesSetting(zip, model.trackChanges === true);

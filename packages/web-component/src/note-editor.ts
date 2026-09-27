@@ -1,7 +1,8 @@
 import type { Block, Note, Paragraph, TextRun } from '@christophervr/docx-core';
-import { openBlocksEditor } from './header-footer-editor';
+import { openBlocksEditor, type InlineEditorOptions } from './header-footer-editor';
 
 export interface NoteEditingOptions {
+	editor?: InlineEditorOptions;
 	note(id: string): Note | undefined;
 	change(id: string, blocks: Block[]): void;
 	editable(): boolean;
@@ -37,8 +38,12 @@ export function attachNoteEditing(root: HTMLElement, options: NoteEditingOptions
 			const note = options.note(id);
 			if (!note) return;
 			const { editable, mark } = withoutMark(note.blocks);
-			openBlocksEditor(item, body, editable, (blocks) =>
-				options.change(id, withMark(blocks, mark)),
+			openBlocksEditor(
+				item,
+				body,
+				editable,
+				(blocks) => options.change(id, withMark(blocks, mark)),
+				options.editor,
 			);
 		});
 	}
