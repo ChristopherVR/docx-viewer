@@ -193,3 +193,36 @@ describe('toggle property display', () => {
 		expect(decorated?.style.fontWeight).toBe('400');
 	});
 });
+
+describe('note reference labels', () => {
+	afterEach(() => document.body.replaceChildren());
+
+	it('labels endnote references in the endnote number format and relabels after inserting one', () => {
+		const model = createDocument();
+		model.blocks[0] = {
+			type: 'paragraph',
+			id: 'p1',
+			runs: [
+				{ text: 'A' },
+				{ text: '', noteReference: { kind: 'endnote', id: '1' } },
+				{ text: ' B' },
+				{ text: '', noteReference: { kind: 'endnote', id: '2' } },
+			],
+		};
+		model.endnotes = [
+			{ id: '1', blocks: [{ type: 'paragraph', id: 'en1-p0', runs: [{ text: 'One' }] }] },
+			{ id: '2', blocks: [{ type: 'paragraph', id: 'en2-p0', runs: [{ text: 'Two' }] }] },
+		];
+		const editor = mount(model);
+		const labels = () =>
+			[...shadow(editor).querySelectorAll('.dve-paper sup.dve-note-reference')].map(
+				(node) => node.textContent,
+			);
+		expect(labels()).toEqual(['i', 'ii']);
+		select(editor, 2, 2);
+		shadow(editor)
+			.querySelector<HTMLButtonElement>('.dve-ribbon [aria-label="Insert endnote"]')!
+			.click();
+		expect(labels()).toEqual(['i', 'ii', 'iii']);
+	});
+});

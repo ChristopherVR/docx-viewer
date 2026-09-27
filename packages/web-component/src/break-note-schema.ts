@@ -33,11 +33,13 @@ export const noteReferenceNodeSpec: NodeSpec = {
 		kind: { default: 'footnote' },
 		id: { default: '' },
 		number: { default: 1 },
+		/** The number as shown, in the document's footnote/endnote number format. */
+		label: { default: null },
 		/** The reference run's own formatting (e.g. superscript, FootnoteReference style) as JSON.
 		 *  Kept as an attribute, not marks, so text typed beside a reference doesn't inherit it. */
 		format: { default: null },
 	},
-	leafText: (node) => String(node.attrs.number),
+	leafText: (node) => String(node.attrs.label ?? node.attrs.number),
 	parseDOM: [
 		{
 			tag: 'sup[data-docx-note-kind]',
@@ -56,6 +58,6 @@ export const noteReferenceNodeSpec: NodeSpec = {
 			'data-docx-note-id': node.attrs.id,
 			contenteditable: 'false',
 		},
-		String(node.attrs.number),
+		String(node.attrs.label ?? node.attrs.number),
 	],
 };

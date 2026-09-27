@@ -1,6 +1,12 @@
 import { Plugin } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
-import type { DocumentModel, Note, Paragraph, TextRun } from '@christophervr/docx-core';
+import {
+	formatNoteNumber,
+	type DocumentModel,
+	type Note,
+	type Paragraph,
+	type TextRun,
+} from '@christophervr/docx-core';
 import { schema } from './schema';
 
 export type NoteKind = 'footnote' | 'endnote';
@@ -68,11 +74,18 @@ export function noteNumberingPlugin(): Plugin {
 		appendTransaction(transactions, _oldState, state) {
 			if (!transactions.some((transaction) => transaction.docChanged)) return null;
 			const counters: Record<string, number> = { footnote: 0, endnote: 0 };
+			const formats: Record<NoteKind, string> = {
+				footnote: state.doc.attrs.footnoteNumFmt ?? 'decimal',
+				endnote: state.doc.attrs.endnoteNumFmt ?? 'lowerRoman',
+			};
 			const tr = state.tr;
 			state.doc.descendants((node, pos) => {
 				if (node.type !== schema.nodes.noteReference) return true;
-				const number = ++counters[node.attrs.kind as NoteKind];
-				if (node.attrs.number !== number) tr.setNodeAttribute(pos, 'number', number);
+				const kind = node.attrs.kind as NoteKind;
+				const number = ++counters[kind];
+				const label = formatNoteNumber(number, formats[kind]);
+				if (node.attrs.number !== number || node.attrs.label !== label)
+					tr.setNodeMarkup(pos, undefined, { ...node.attrs, number, label });
 				return false;
 			});
 			return tr.docChanged ? tr : null;

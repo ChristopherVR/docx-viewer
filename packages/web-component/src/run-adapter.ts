@@ -65,7 +65,11 @@ function marksForRun(run: TextRun): Mark[] {
 	return marks;
 }
 
-export type NoteNumberLookup = (kind: 'footnote' | 'endnote', id: string) => number;
+/** A note reference's number in document order and its label in the document's number format. */
+export type NoteNumberLookup = (
+	kind: 'footnote' | 'endnote',
+	id: string,
+) => { number: number; label: string };
 
 export function runToInlineNodes(run: TextRun, noteNumber?: NoteNumberLookup): ProseMirrorNode[] {
 	if (run.break) return [schema.nodes.pageBreak.create({ kind: run.break })];
@@ -76,7 +80,8 @@ export function runToInlineNodes(run: TextRun, noteNumber?: NoteNumberLookup): P
 			schema.nodes.noteReference.create({
 				kind,
 				id,
-				number: noteNumber?.(kind, id) ?? 1,
+				number: noteNumber?.(kind, id).number ?? 1,
+				label: noteNumber?.(kind, id).label ?? null,
 				format: Object.keys(format).length ? JSON.stringify(format) : null,
 			}),
 		];

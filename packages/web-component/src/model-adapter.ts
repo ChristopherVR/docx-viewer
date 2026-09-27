@@ -1,6 +1,6 @@
 import { EditorState, Transaction } from 'prosemirror-state';
 import type { DocumentModel, Block, Paragraph, Table, TextRun } from '@christophervr/docx-core';
-import { computeListLabels, numberNotesInOrder } from '@christophervr/docx-core';
+import { computeListLabels, formatNoteNumber, numberNotesInOrder } from '@christophervr/docx-core';
 import { schema } from './schema';
 import { extraRunProperties } from './run-extra-mark';
 import { appendInlineNode, runToInlineNodes, type NoteNumberLookup } from './run-adapter';
@@ -48,8 +48,14 @@ export function modelToDoc(model: DocumentModel) {
 	const labels = computeListLabels(model);
 	const footnoteOrder = numberNotesInOrder(model.blocks, 'footnote');
 	const endnoteOrder = numberNotesInOrder(model.blocks, 'endnote');
-	const noteNumber: NoteNumberLookup = (kind, id) =>
-		(kind === 'footnote' ? footnoteOrder : endnoteOrder).get(id) ?? 1;
+	const noteNumber: NoteNumberLookup = (kind, id) => {
+		const number = (kind === 'footnote' ? footnoteOrder : endnoteOrder).get(id) ?? 1;
+		const format =
+			kind === 'footnote'
+				? (model.footnoteNumFmt ?? 'decimal')
+				: (model.endnoteNumFmt ?? 'lowerRoman');
+		return { number, label: formatNoteNumber(number, format) };
+	};
 	const blocks = model.blocks.map((block) => {
 		if (block.type === 'paragraph') return paragraphNode(block, labels, noteNumber);
 		return tableNode(
@@ -68,6 +74,8 @@ export function modelToDoc(model: DocumentModel) {
 			marginBottom: model.page.marginBottom,
 			marginLeft: model.page.marginLeft,
 			sections: model.sections ? sectionLayoutJson(model.sections) : null,
+			footnoteNumFmt: model.footnoteNumFmt ?? null,
+			endnoteNumFmt: model.endnoteNumFmt ?? null,
 		},
 		blocks,
 	);

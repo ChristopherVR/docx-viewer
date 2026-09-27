@@ -44,8 +44,7 @@ Still missing:
   even/odd-page breaks are still protected, and the document-wide even/odd headers setting is read-only. The
   continuous surface shows columns only for single-section documents (Print Layout shows all).
 - Ctrl+Alt+F / Ctrl+Alt+D (insert footnote/endnote) are bound, but Windows browsers can report
-  Ctrl+Alt as AltGr and not deliver them; the Insert ribbon buttons always work. Endnote reference
-  numbers show decimals rather than the document's endnote number format.
+  Ctrl+Alt as AltGr and not deliver them; the Insert ribbon buttons always work.
 - Pictures and new external links inside headers, footers and notes (they need relationships in
   those parts).
 - Table style run formatting and cell margins render; tables' own default cell margins (`tblCellMar`) and row heights are not modeled yet.
