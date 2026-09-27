@@ -4,6 +4,7 @@ import type { DocumentModel } from './model.js';
 import { buildXml, parseXml, type XmlDocument } from './xml.js';
 import type { PackageContext } from './parse.js';
 import { applyModel } from './write.js';
+import { applyNumberingCatalog } from './numbering-package.js';
 
 const contexts = new WeakMap<DocumentModel, { context: PackageContext; base: DocumentModel }>();
 
@@ -48,6 +49,22 @@ export async function saveDocx(model: DocumentModel): Promise<Uint8Array> {
 		throw new Error(
 			'Creating or editing paragraph styles is not supported by the standalone DOCX writer.',
 		);
+	if (binding && JSON.stringify(model.sections) !== JSON.stringify(binding.base.sections))
+		throw new Error(
+			'Editing sections, page setup, headers or footers is not supported; source section and header/footer parts are preserved unchanged.',
+		);
+	if (
+		binding &&
+		(JSON.stringify(model.footnotes) !== JSON.stringify(binding.base.footnotes) ||
+			JSON.stringify(model.endnotes) !== JSON.stringify(binding.base.endnotes))
+	)
+		throw new Error(
+			'Editing footnote or endnote text is not supported; source footnotes.xml/endnotes.xml are preserved unchanged.',
+		);
+	if (!binding && (model.sections?.length || model.footnotes?.length || model.endnotes?.length))
+		throw new Error(
+			'Sections, headers, footers, footnotes and endnotes are not supported by the standalone DOCX writer; they would be silently dropped.',
+		);
 	const zip = binding ? await JSZip.loadAsync(binding.context.original) : new JSZip();
 	const document = binding ? parseXml(binding.context.sourceXml) : newDocument();
 	applyModel(document, model, binding?.base.blocks ?? []);
@@ -62,5 +79,6 @@ export async function saveDocx(model: DocumentModel): Promise<Uint8Array> {
 			'<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
 		);
 	}
+	await applyNumberingCatalog(zip, model, binding);
 	return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
 }

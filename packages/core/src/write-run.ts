@@ -159,6 +159,21 @@ export function createRun(
 	setRunProperties(doc, node, run, base);
 	for (const child of Array.from(node.childNodes))
 		if (child.nodeType !== 1 || (child as XmlElement).localName !== 'rPr') node.removeChild(child);
+	if (run.break) {
+		const br = makeW(doc, 'br');
+		setAttribute(br, 'type', run.break);
+		node.appendChild(br);
+		return node;
+	}
+	if (run.noteReference) {
+		const reference = makeW(
+			doc,
+			run.noteReference.kind === 'footnote' ? 'footnoteReference' : 'endnoteReference',
+		);
+		setAttribute(reference, 'id', run.noteReference.id);
+		node.appendChild(reference);
+		return node;
+	}
 	for (const piece of run.text.split(/(\n|\t)/)) {
 		if (piece === '\n') node.appendChild(makeW(doc, 'br'));
 		else if (piece === '\t') node.appendChild(makeW(doc, 'tab'));

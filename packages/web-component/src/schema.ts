@@ -1,5 +1,6 @@
 import { Schema } from 'prosemirror-model';
 import { isWordHighlightToken, type WordHighlightToken } from '@christophervr/docx-core';
+import { noteReferenceNodeSpec, pageBreakNodeSpec } from './break-note-schema';
 
 function parseFontSize(value: string): number | null {
 	const match = /^\s*(\d+(?:\.\d+)?)\s*(pt|px)?\s*$/i.exec(value);
@@ -46,8 +47,13 @@ export function paragraphStyle(attrs: Record<string, unknown>): string {
 		twipsCss(attrs.indentRightTwips) && `margin-right:${twipsCss(attrs.indentRightTwips)}`,
 		twipsCss(attrs.indentStartTwips) && `margin-inline-start:${twipsCss(attrs.indentStartTwips)}`,
 		twipsCss(attrs.indentEndTwips) && `margin-inline-end:${twipsCss(attrs.indentEndTwips)}`,
-		twipsCss(attrs.firstLineTwips) && `text-indent:${twipsCss(attrs.firstLineTwips)}`,
-		twipsCss(attrs.hangingTwips) && `text-indent:-${twipsCss(attrs.hangingTwips)}`,
+		twipsCss(attrs.firstLineTwips ?? attrs.listFirstLineTwips) &&
+			`text-indent:${twipsCss(attrs.firstLineTwips ?? attrs.listFirstLineTwips)}`,
+		twipsCss(attrs.hangingTwips ?? attrs.listHangingTwips) &&
+			`text-indent:-${twipsCss(attrs.hangingTwips ?? attrs.listHangingTwips)}`,
+		twipsCss(attrs.indentLeftTwips ?? attrs.listIndentLeftTwips) &&
+			attrs.indentLeftTwips == null &&
+			`margin-left:${twipsCss(attrs.listIndentLeftTwips)}`,
 		Number.isSafeInteger(attrs.lineSpacingTwips) &&
 			`line-height:${
 				attrs.lineSpacingRule == null || attrs.lineSpacingRule === 'auto'
@@ -91,6 +97,14 @@ export const schema = new Schema({
 				indentEndTwips: { default: null },
 				firstLineTwips: { default: null },
 				hangingTwips: { default: null },
+				numId: { default: null },
+				ilvl: { default: null },
+				listLabelText: { default: null },
+				listSuffix: { default: null },
+				listIndentLeftTwips: { default: null },
+				listHangingTwips: { default: null },
+				listFirstLineTwips: { default: null },
+				pageBreakBefore: { default: false },
 			},
 			parseDOM: [
 				{
@@ -110,6 +124,18 @@ export const schema = new Schema({
 						indentEndTwips: null,
 						firstLineTwips: null,
 						hangingTwips: null,
+						numId: (el as HTMLElement).dataset.numId
+							? Number((el as HTMLElement).dataset.numId)
+							: null,
+						ilvl: (el as HTMLElement).dataset.ilvl
+							? Number((el as HTMLElement).dataset.ilvl)
+							: null,
+						listLabelText: null,
+						listSuffix: null,
+						listIndentLeftTwips: null,
+						listHangingTwips: null,
+						listFirstLineTwips: null,
+						pageBreakBefore: (el as HTMLElement).dataset.pageBreakBefore === 'true',
 					}),
 				},
 			],
@@ -119,6 +145,14 @@ export const schema = new Schema({
 					style: paragraphStyle(node.attrs),
 					dir: node.attrs.direction || null,
 					'data-id': node.attrs.id,
+					...(node.attrs.numId != null ? { 'data-num-id': String(node.attrs.numId) } : {}),
+					...(node.attrs.ilvl != null ? { 'data-ilvl': String(node.attrs.ilvl) } : {}),
+					...(node.attrs.listLabelText != null
+						? {
+								'data-list-label': `${safeCssValue(String(node.attrs.listLabelText))}${node.attrs.listSuffix === 'space' ? ' ' : node.attrs.listSuffix === 'none' ? '' : '\t'}`,
+							}
+						: {}),
+					...(node.attrs.pageBreakBefore ? { 'data-page-break-before': 'true' } : {}),
 				},
 				0,
 			],
@@ -133,6 +167,8 @@ export const schema = new Schema({
 			parseDOM: [{ tag: 'br' }],
 			toDOM: () => ['br'],
 		},
+		pageBreak: pageBreakNodeSpec,
+		noteReference: noteReferenceNodeSpec,
 		table: {
 			content: 'tableRow+',
 			group: 'block',

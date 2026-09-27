@@ -89,12 +89,24 @@ function updateIndent(
 	if (!indent.attributes.length) props.removeChild(indent);
 }
 
+function updatePageBreakBefore(
+	doc: XmlDocument,
+	props: XmlElement,
+	paragraph: Paragraph,
+	base?: Paragraph,
+): void {
+	if (base && paragraph.pageBreakBefore === base.pageBreakBefore) return;
+	for (const element of children(props, 'pageBreakBefore')) props.removeChild(element);
+	if (paragraph.pageBreakBefore) props.appendChild(makeW(doc, 'pageBreakBefore'));
+}
+
 export function writeParagraphProperties(
 	doc: XmlDocument,
 	props: XmlElement,
 	paragraph: Paragraph,
 	base?: Paragraph,
 ): void {
+	updatePageBreakBefore(doc, props, paragraph, base);
 	updateDirection(doc, props, paragraph, base);
 	const spacingKeys = [
 		'spacingBeforeTwips',

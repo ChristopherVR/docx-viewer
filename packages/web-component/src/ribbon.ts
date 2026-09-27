@@ -12,6 +12,7 @@ export type RibbonAction =
 	| { type: 'align'; value: 'left' | 'center' | 'right' | 'justify' }
 	| { type: 'font'; key: 'family' | 'size' | 'color' | 'highlight'; value: string }
 	| { type: 'clear' | 'table' }
+	| { type: 'insertBreak'; kind: 'page' | 'column' }
 	| { type: 'tableEdit'; key: TableCommand }
 	| { type: 'page'; key: 'margin' | 'orientation'; value: string }
 	| {
@@ -20,6 +21,7 @@ export type RibbonAction =
 			value: string;
 	  }
 	| { type: 'zoom'; value: number }
+	| { type: 'list'; key: 'bullet' | 'number' | 'increaseLevel' | 'decreaseLevel' | 'remove' }
 	| MultilingualAction
 	| { type: 'search' };
 
@@ -263,6 +265,11 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 	home.append(
 		group(
 			'Alignment and history',
+			button('Bulleted list', '•', { type: 'list', key: 'bullet' }, 'tool-list-bullet'),
+			button('Numbered list', '1.', { type: 'list', key: 'number' }, 'tool-list-number'),
+			button('Decrease list level', '⇤≡', { type: 'list', key: 'decreaseLevel' }),
+			button('Increase list level', '⇥≡', { type: 'list', key: 'increaseLevel' }),
+			button('Remove list', '✕≡', { type: 'list', key: 'remove' }),
 			...(
 				[
 					['left', 'Align left'],
@@ -288,7 +295,14 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 	panels.get('Review')!.append(languageControls);
 	panels
 		.get('Insert')!
-		.append(group('Tables', button('Insert table', '▦ Table', { type: 'table' })));
+		.append(
+			group('Tables', button('Insert table', '▦ Table', { type: 'table' })),
+			group(
+				'Breaks',
+				button('Insert page break', 'Page break', { type: 'insertBreak', kind: 'page' }),
+				button('Insert column break', 'Column break', { type: 'insertBreak', kind: 'column' }),
+			),
+		);
 	panels.get('Layout')!.append(
 		group(
 			'Page setup',

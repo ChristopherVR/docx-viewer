@@ -1,0 +1,122 @@
+// Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
+import type {
+	AbstractNumDefinition,
+	NumberingCatalog,
+	NumberingLevelDefinition,
+	NumDefinition,
+	NumLevelOverride,
+} from './numbering-model.js';
+import { children, first, getW, named, parseXml, type XmlElement } from './xml.js';
+
+function integer(value: string | undefined, fallback: number): number {
+	if (value === undefined || !/^-?\d+$/.test(value)) return fallback;
+	const parsed = Number(value);
+	return Number.isSafeInteger(parsed) ? parsed : fallback;
+}
+function flag(element: XmlElement | undefined): boolean {
+	if (!element) return false;
+	const value = getW(element, 'val')?.toLowerCase();
+	return value === undefined || !['0', 'false', 'off', 'no', 'none'].includes(value);
+}
+function byName(root: XmlElement, local: string): XmlElement[] {
+	return Array.from(root.getElementsByTagName('*')).filter(
+		(node): node is XmlElement => node.nodeType === 1 && named(node as XmlElement, local),
+	);
+}
+
+export function parseNumberingLevel(lvl: XmlElement): NumberingLevelDefinition {
+	const level = integer(getW(lvl, 'ilvl'), 0);
+	const start = integer(getW(first(lvl, 'start'), 'val'), 1);
+	const numFmt = getW(first(lvl, 'numFmt'), 'val') ?? 'decimal';
+	const lvlText = getW(first(lvl, 'lvlText'), 'val') ?? '';
+	const jc = getW(first(lvl, 'lvlJc'), 'val');
+	const ind = first(first(lvl, 'pPr'), 'ind');
+	const suffRaw = getW(first(lvl, 'suff'), 'val');
+	const result: NumberingLevelDefinition = { level, start, numFmt, lvlText };
+	if (jc === 'left' || jc === 'center' || jc === 'right') result.lvlJc = jc;
+	const left = getW(ind, 'left') ?? getW(ind, 'start');
+	if (left !== undefined) result.indentLeftTwips = integer(left, 0);
+	const hanging = getW(ind, 'hanging');
+	if (hanging !== undefined) result.hangingTwips = integer(hanging, 0);
+	const firstLine = getW(ind, 'firstLine');
+	if (firstLine !== undefined) result.firstLineTwips = integer(firstLine, 0);
+	if (flag(first(lvl, 'isLgl'))) result.isLgl = true;
+	const restart = getW(first(lvl, 'lvlRestart'), 'val');
+	if (restart !== undefined) result.lvlRestart = integer(restart, 0);
+	result.suffix = suffRaw === 'space' ? 'space' : suffRaw === 'nothing' ? 'none' : 'tab';
+	return result;
+}
+
+function parseAbstractNum(element: XmlElement): AbstractNumDefinition | undefined {
+	const id = getW(element, 'abstractNumId');
+	if (!id) return undefined;
+	const levels: Record<number, NumberingLevelDefinition> = {};
+	for (const lvl of children(element, 'lvl')) {
+		const parsed = parseNumberingLevel(lvl);
+		levels[parsed.level] = parsed;
+	}
+	return { id, levels };
+}
+
+function parseNum(element: XmlElement): NumDefinition | undefined {
+	const id = getW(element, 'numId');
+	if (!id) return undefined;
+	const abstractNumId = getW(first(element, 'abstractNumId'), 'val') ?? '';
+	const levelOverrides: Record<number, NumLevelOverride> = {};
+	for (const override of children(element, 'lvlOverride')) {
+		const level = integer(getW(override, 'ilvl'), 0);
+		const entry: NumLevelOverride = {};
+		const startOverride = getW(first(override, 'startOverride'), 'val');
+		if (startOverride !== undefined) entry.startOverride = integer(startOverride, 1);
+		const lvl = first(override, 'lvl');
+		if (lvl) entry.lvl = parseNumberingLevel(lvl);
+		if (Object.keys(entry).length) levelOverrides[level] = entry;
+	}
+	return {
+		id,
+		abstractNumId,
+		...(Object.keys(levelOverrides).length ? { levelOverrides } : {}),
+	};
+}
+
+/** Parses `word/numbering.xml` into a read-only catalog; editing existing entries is not supported. */
+export function parseNumberingCatalog(xml: string): NumberingCatalog {
+	const document = parseXml(xml);
+	const root = document.documentElement;
+	const abstractNums: Record<string, AbstractNumDefinition> = {};
+	const warnings: string[] = [];
+	for (const element of byName(root, 'abstractNum')) {
+		const parsed = parseAbstractNum(element);
+		if (!parsed) continue;
+		abstractNums[parsed.id] = parsed;
+		const link = getW(first(element, 'numStyleLink'), 'val');
+		if (link)
+			warnings.push(
+				`Numbering definition abstractNum ${parsed.id} links to style "${link}"; style-linked numbering levels are not resolved.`,
+			);
+		if (byName(element, 'lvlPicBulletId').length)
+			warnings.push(
+				`Numbering definition abstractNum ${parsed.id} uses a picture bullet; picture bullets are not rendered.`,
+			);
+	}
+	const nums: Record<string, NumDefinition> = {};
+	for (const element of byName(root, 'num')) {
+		const parsed = parseNum(element);
+		if (parsed) nums[parsed.id] = parsed;
+	}
+	return { abstractNums, nums, warnings: [...new Set(warnings)] };
+}
+
+/** Resolves the effective level definition for a `numId`, applying any `lvlOverride`. */
+export function resolveNumberingLevel(
+	catalog: NumberingCatalog,
+	numId: string,
+	level: number,
+): NumberingLevelDefinition | undefined {
+	const num = catalog.nums[numId];
+	if (!num) return undefined;
+	const override = num.levelOverrides?.[level];
+	const base = override?.lvl ?? catalog.abstractNums[num.abstractNumId]?.levels[level];
+	if (!base) return undefined;
+	return override?.startOverride !== undefined ? { ...base, start: override.startOverride } : base;
+}

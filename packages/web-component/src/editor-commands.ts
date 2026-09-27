@@ -1,7 +1,7 @@
 import type { Command } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { undo, redo } from 'prosemirror-history';
-import { baseKeymap, toggleMark } from 'prosemirror-commands';
+import { baseKeymap, chainCommands, toggleMark } from 'prosemirror-commands';
 import { keymap } from 'prosemirror-keymap';
 import type { RibbonAction } from './ribbon';
 import { schema } from './schema';
@@ -15,7 +15,9 @@ import {
 import { applyHighlight, toggleVerticalAlign } from './inline-commands';
 import { executeTableCommand } from './table-commands';
 import { insertHardBreak } from './hard-break-command';
+import { insertPageBreak, insertBreakCommand } from './page-break-command';
 import { applyMultilingualAction } from './multilingual-ribbon';
+import { exitListOnEmptyEnter, indentListItem, outdentListItem } from './list-commands';
 
 const marks = {
 	bold: toggleMark(schema.marks.bold),
@@ -39,6 +41,10 @@ export function editorKeymap(showSearch: () => void) {
 			'Mod-i': marks.italic,
 			'Mod-u': marks.underline,
 			'Shift-Enter': insertHardBreak,
+			Enter: chainCommands(exitListOnEmptyEnter, baseKeymap.Enter),
+			Tab: indentListItem,
+			'Shift-Tab': outdentListItem,
+			'Mod-Enter': insertPageBreak,
 		}).map(([key, command]) => [key, editable(command)]),
 	);
 	return keymap({
@@ -84,6 +90,8 @@ export function runRibbonCommand(
 	} else if (action.type === 'tableEdit' && !nextId) executeTableCommand(view, action.key);
 	else if (action.type === 'clear') clearFormatting(view);
 	else if (action.type === 'table') insertTable(view, nextId);
+	else if (action.type === 'insertBreak')
+		insertBreakCommand(action.kind)(view.state, view.dispatch, view);
 	else if (action.type === 'page') updatePage(view, action.key, action.value);
 	else if (action.type === 'paragraph') updateParagraphs(view, action.key, action.value);
 }

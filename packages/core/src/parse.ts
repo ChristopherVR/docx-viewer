@@ -1,147 +1,24 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import JSZip from 'jszip';
-import type {
-	Block,
-	DocumentModel,
-	LoadedDocument,
-	Paragraph,
-	Table,
-	TableCell,
-	TextRun,
-} from './model.js';
+import type { Block, DocumentModel, LoadedDocument } from './model.js';
 import {
 	children,
 	first,
 	getW,
-	isElement,
-	named,
 	parseXml,
-	textContent,
 	type XmlDocument,
 	type XmlElement,
 	WORD_NS,
 } from './xml.js';
 import { remember, saveDocx } from './save.js';
-import { canEditTableStructure } from './write-table.js';
-import { hasSpecialBreak } from './breaks.js';
+import { hasSpecialBreak, isModeledBreak } from './breaks.js';
 import { parseParagraphStyleCatalog } from './paragraph-styles.js';
+import { parseBlocksFromContainer } from './block-parser.js';
+import { parseDocumentParts } from './document-parts.js';
+import { parseNumberingCatalog } from './numbering-parse.js';
 
 const px = (twips: string | undefined, fallback: number): number =>
 	twips === undefined ? fallback : (Number(twips) * 96) / 1440;
-const points = (halfPoints: string | undefined): number | undefined =>
-	halfPoints === undefined ? undefined : Number(halfPoints) / 2;
-const twipValue = (value: string | undefined): number | undefined => {
-	if (value === undefined || !/^-?\d+$/.test(value)) return undefined;
-	const parsed = Number(value);
-	return Number.isSafeInteger(parsed) ? parsed : undefined;
-};
-const on = (element: XmlElement | undefined): boolean => {
-	if (!element) return false;
-	const value = getW(element, 'val')?.toLowerCase();
-	return !['0', 'false', 'off', 'no', 'none'].includes(value ?? '');
-};
-
-function parseRun(node: XmlElement): TextRun {
-	const props = first(node, 'rPr');
-	const text = Array.from(node.childNodes)
-		.filter(isElement)
-		.map((child) => {
-			if (named(child, 't')) return textContent(child);
-			if (named(child, 'tab')) return '\t';
-			if (named(child, 'br') || named(child, 'cr')) return '\n';
-			if (named(child, 'noBreakHyphen')) return '\u2011';
-			return '';
-		})
-		.join('');
-	const run: TextRun = { text };
-	const language = first(props, 'lang');
-	const languageValue = getW(language, 'val');
-	const eastAsiaLanguage = getW(language, 'eastAsia');
-	const bidiLanguage = getW(language, 'bidi');
-	if (languageValue !== undefined) run.language = languageValue;
-	if (eastAsiaLanguage !== undefined) run.eastAsiaLanguage = eastAsiaLanguage;
-	if (bidiLanguage !== undefined) run.bidiLanguage = bidiLanguage;
-	const rtl = first(props, 'rtl');
-	if (rtl) run.rtl = on(rtl);
-	if (props && on(first(props, 'b'))) run.bold = true;
-	if (props && on(first(props, 'i'))) run.italic = true;
-	if (props && on(first(props, 'u'))) run.underline = true;
-	if (props && on(first(props, 'strike') ?? first(props, 'dstrike'))) run.strike = true;
-	const highlight = getW(first(props, 'highlight'), 'val');
-	if (highlight) run.highlight = highlight;
-	const verticalAlign = getW(first(props, 'vertAlign'), 'val');
-	if (verticalAlign === 'superscript' || verticalAlign === 'subscript')
-		run.verticalAlign = verticalAlign;
-	const size = points(getW(first(props, 'sz'), 'val'));
-	if (size !== undefined) run.fontSize = size;
-	const fonts = first(props, 'rFonts');
-	const family = getW(fonts, 'ascii') ?? getW(fonts, 'hAnsi');
-	if (family) run.fontFamily = family;
-	const hex = getW(first(props, 'color'), 'val');
-	if (hex && /^[0-9a-f]{6}$/i.test(hex)) run.color = `#${hex}`;
-	return run;
-}
-
-function parseParagraph(node: XmlElement, id: string): Paragraph {
-	const props = first(node, 'pPr');
-	const alignment = getW(first(props, 'jc'), 'val');
-	const runs: TextRun[] = [];
-	for (const item of Array.from(node.childNodes).filter(isElement)) {
-		if (named(item, 'r')) runs.push(parseRun(item));
-		else if (named(item, 'hyperlink'))
-			Array.from(item.getElementsByTagNameNS(WORD_NS, 'r')).forEach((run: XmlElement) =>
-				runs.push(parseRun(run)),
-			);
-	}
-	if (!runs.length) runs.push({ text: '' });
-	const paragraph: Paragraph = { type: 'paragraph', id, runs };
-	const bidi = first(props, 'bidi');
-	if (bidi) paragraph.direction = on(bidi) ? 'rtl' : 'ltr';
-	if (
-		alignment === 'left' ||
-		alignment === 'center' ||
-		alignment === 'right' ||
-		alignment === 'both'
-	)
-		paragraph.align = alignment === 'both' ? 'justify' : alignment;
-	const style = getW(first(props, 'pStyle'), 'val');
-	if (style) paragraph.style = style;
-	const spacing = first(props, 'spacing');
-	const before = twipValue(getW(spacing, 'before'));
-	const after = twipValue(getW(spacing, 'after'));
-	const line = twipValue(getW(spacing, 'line'));
-	if (before !== undefined) paragraph.spacingBeforeTwips = before;
-	if (after !== undefined) paragraph.spacingAfterTwips = after;
-	if (line !== undefined) {
-		paragraph.lineSpacingTwips = line;
-	}
-	const rule = getW(spacing, 'lineRule');
-	if (rule === 'auto' || rule === 'exact' || rule === 'atLeast') paragraph.lineSpacingRule = rule;
-	else if (line !== undefined) paragraph.lineSpacingRule = 'auto';
-	const indent = first(props, 'ind');
-	const indentLeft = twipValue(getW(indent, 'left'));
-	const indentRight = twipValue(getW(indent, 'right'));
-	const indentStart = twipValue(getW(indent, 'start'));
-	const indentEnd = twipValue(getW(indent, 'end'));
-	const firstLine = twipValue(getW(indent, 'firstLine'));
-	const hanging = twipValue(getW(indent, 'hanging'));
-	if (indentLeft !== undefined) paragraph.indentLeftTwips = indentLeft;
-	if (indentRight !== undefined) paragraph.indentRightTwips = indentRight;
-	if (indentStart !== undefined) paragraph.indentStartTwips = indentStart;
-	if (indentEnd !== undefined) paragraph.indentEndTwips = indentEnd;
-	if (firstLine !== undefined) paragraph.firstLineTwips = firstLine;
-	if (hanging !== undefined) paragraph.hangingTwips = hanging;
-	return paragraph;
-}
-
-function parseTable(node: XmlElement, id: string): Table {
-	const rows = children(node, 'tr').map((row, ri) =>
-		children(row, 'tc').map((cell, ci): TableCell => ({
-			paragraphs: children(cell, 'p').map((p, pi) => parseParagraph(p, `${id}-r${ri}c${ci}p${pi}`)),
-		})),
-	);
-	return { type: 'table', id, rows, structureEditable: canEditTableStructure(node) };
-}
 
 function hasAny(document: XmlDocument, names: string[]): boolean {
 	return names.some((name) => document.getElementsByTagNameNS(WORD_NS, name).length > 0);
@@ -151,11 +28,6 @@ function warningsFor(document: XmlDocument): string[] {
 	const warnings: string[] = [];
 	const features: [string[], string][] = [
 		[['drawing', 'pict', 'object'], 'Images and drawing objects are preserved but not editable.'],
-		[['cols'], 'Multi-column layout is not represented in the document model.'],
-		[
-			['footnoteReference', 'endnoteReference'],
-			'Footnotes and endnotes are not represented in the document model.',
-		],
 		[
 			['commentRangeStart', 'trackRevisions'],
 			'Comments and tracked review features are not represented in the document model.',
@@ -166,23 +38,25 @@ function warningsFor(document: XmlDocument): string[] {
 			'Hyperlink targets are not represented in the document model; edits inside linked paragraphs are rejected to protect the original XML.',
 		],
 		[
-			['numPr'],
-			'List numbering is preserved as paragraph XML but is not represented in the document model.',
-		],
-		[
 			['rStyle'],
 			'Character style inheritance and theme font/color resolution are not modeled; displayed formatting may differ from Word.',
+		],
+		[
+			['fldSimple', 'instrText', 'fldChar'],
+			'Field codes such as PAGE and NUMPAGES are shown as static placeholders (or omitted) and are not recalculated.',
 		],
 	];
 	for (const [names, message] of features) if (hasAny(document, names)) warnings.push(message);
 	const specialBreak =
-		Array.from(document.getElementsByTagNameNS(WORD_NS, 'br')).some(hasSpecialBreak) ||
+		Array.from(document.getElementsByTagNameNS(WORD_NS, 'br')).some(
+			(br: XmlElement) => hasSpecialBreak(br) && !isModeledBreak(br),
+		) ||
 		Array.from(document.getElementsByTagNameNS(WORD_NS, 'cr')).some(
 			(cr: XmlElement) => cr.attributes.length > 0,
 		);
 	if (specialBreak)
 		warnings.push(
-			'Page, column, and other non-line breaks are not distinguished from line breaks in the document model; edits to paragraphs containing them are rejected to preserve the original XML.',
+			'Some non-line breaks other than page and column breaks are not distinguished from line breaks in the document model; edits to paragraphs containing them are rejected to preserve the original XML.',
 		);
 	return warnings;
 }
@@ -217,12 +91,7 @@ export async function readPackage(
 	const document: XmlDocument = parseXml(sourceXml);
 	const body = Array.from(document.getElementsByTagNameNS(WORD_NS, 'body'))[0];
 	if (!body) throw new Error('DOCX document.xml has no w:body');
-	const blocks: Block[] = [];
-	let index = 0;
-	for (const node of Array.from(body.childNodes).filter(isElement)) {
-		if (named(node, 'p')) blocks.push(parseParagraph(node, `p${index++}`));
-		else if (named(node, 'tbl')) blocks.push(parseTable(node, `t${index++}`));
-	}
+	const blocks: Block[] = parseBlocksFromContainer(body);
 	const section = children(body, 'sectPr').at(-1);
 	const size = first(section, 'pgSz');
 	const margins = first(section, 'pgMar');
@@ -246,10 +115,30 @@ export async function readPackage(
 			...model.paragraphStyles.warnings,
 		);
 	}
+	const numberingFile = zip.file('word/numbering.xml');
+	if (numberingFile) {
+		model.numberingCatalog = parseNumberingCatalog(await numberingFile.async('string'));
+		model.warnings.push(
+			'Numbering is resolved for decimal, Roman numeral, letter, ordinal, cardinal/ordinal text and bullet formats, including multilevel lvlText and legal numbering. Picture bullets, style-linked numbering and other custom formats fall back to Decimal Number and are not rendered as Word would.',
+			...model.numberingCatalog.warnings,
+		);
+	} else if (hasAny(document, ['numPr'])) {
+		model.warnings.push(
+			'Paragraphs reference list numbering, but the package has no word/numbering.xml part; numbering is preserved as paragraph XML but not rendered.',
+		);
+	}
 	if (blocks.some((block) => block.type === 'table'))
 		model.warnings.push(
 			'Table text and cell structure are supported; table widths, borders, shading and cell formatting are not modeled.',
 		);
+	const parts = await parseDocumentParts(zip, body, blocks);
+	model.sections = parts.sections;
+	if (parts.footnotes) model.footnotes = parts.footnotes;
+	if (parts.endnotes) model.endnotes = parts.endnotes;
+	if (parts.footnoteNumFmt) model.footnoteNumFmt = parts.footnoteNumFmt;
+	if (parts.endnoteNumFmt) model.endnoteNumFmt = parts.endnoteNumFmt;
+	if (parts.evenAndOddHeaders) model.evenAndOddHeaders = true;
+	model.warnings.push(...parts.warnings);
 	if (blocks.some((block) => block.type === 'table' && !block.structureEditable))
 		model.warnings.push(
 			'Merged, nested, or complex tables can be read, but their row and column structure cannot be edited safely.',

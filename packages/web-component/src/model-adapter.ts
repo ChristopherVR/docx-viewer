@@ -1,10 +1,14 @@
 import { EditorState, Transaction } from 'prosemirror-state';
 import type { DocumentModel, Block, Paragraph, Table, TextRun } from '@christophervr/docx-core';
+import { computeListLabels, numberNotesInOrder } from '@christophervr/docx-core';
 import { schema } from './schema';
-import { appendInlineNode, runToInlineNodes } from './run-adapter';
+import { appendInlineNode, runToInlineNodes, type NoteNumberLookup } from './run-adapter';
 
-function paragraphNode(paragraph: Paragraph) {
-	const children = paragraph.runs.flatMap(runToInlineNodes);
+type ListLabels = ReturnType<typeof computeListLabels>;
+
+function paragraphNode(paragraph: Paragraph, labels: ListLabels, noteNumber?: NoteNumberLookup) {
+	const label = labels.get(paragraph.id);
+	const children = paragraph.runs.flatMap((run) => runToInlineNodes(run, noteNumber));
 	return schema.node(
 		'paragraph',
 		{
@@ -22,19 +26,38 @@ function paragraphNode(paragraph: Paragraph) {
 			indentEndTwips: paragraph.indentEndTwips ?? null,
 			firstLineTwips: paragraph.firstLineTwips ?? null,
 			hangingTwips: paragraph.hangingTwips ?? null,
+			numId: paragraph.numbering?.numId ?? null,
+			ilvl: paragraph.numbering ? paragraph.numbering.level : null,
+			listLabelText: label?.text ?? null,
+			listSuffix: label?.suffix ?? null,
+			listIndentLeftTwips: label?.indentLeftTwips ?? null,
+			listHangingTwips: label?.hangingTwips ?? null,
+			listFirstLineTwips: label?.firstLineTwips ?? null,
+			pageBreakBefore: paragraph.pageBreakBefore ?? false,
 		},
 		children,
 	);
 }
 
 export function modelToDoc(model: DocumentModel) {
+	const labels = computeListLabels(model);
+	const footnoteOrder = numberNotesInOrder(model.blocks, 'footnote');
+	const endnoteOrder = numberNotesInOrder(model.blocks, 'endnote');
+	const noteNumber: NoteNumberLookup = (kind, id) =>
+		(kind === 'footnote' ? footnoteOrder : endnoteOrder).get(id) ?? 1;
 	const blocks = model.blocks.map((block) => {
-		if (block.type === 'paragraph') return paragraphNode(block);
+		if (block.type === 'paragraph') return paragraphNode(block, labels, noteNumber);
 		const rows = block.rows.map((row) =>
 			schema.node(
 				'tableRow',
 				null,
-				row.map((cell) => schema.node('tableCell', null, cell.paragraphs.map(paragraphNode))),
+				row.map((cell) =>
+					schema.node(
+						'tableCell',
+						null,
+						cell.paragraphs.map((paragraph) => paragraphNode(paragraph, labels, noteNumber)),
+					),
+				),
 			),
 		);
 		return schema.node(
@@ -86,8 +109,14 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 				'fontFamily',
 				'fontSize',
 				'color',
+				'break',
 			];
-			if (previous && fields.every((field) => previous[field] === normalized[field]))
+			if (
+				previous &&
+				!previous.noteReference &&
+				!normalized.noteReference &&
+				fields.every((field) => previous[field] === normalized[field])
+			)
 				previous.text += normalized.text;
 			else result.push(normalized);
 			return result;
@@ -108,12 +137,17 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 		'fontFamily',
 		'fontSize',
 		'color',
+		'break',
 	];
+	const sameNoteReference = (x?: TextRun['noteReference'], y?: TextRun['noteReference']) =>
+		x?.kind === y?.kind && x?.id === y?.id;
 	return (
 		a.length === b.length &&
 		a.every(
 			(run, index) =>
-				run.text === b[index].text && fields.every((field) => run[field] === b[index][field]),
+				run.text === b[index].text &&
+				fields.every((field) => run[field] === b[index][field]) &&
+				sameNoteReference(run.noteReference, b[index].noteReference),
 		)
 	);
 }
@@ -151,7 +185,10 @@ export function docToModel(
 			previous.indentStartTwips === (node.attrs.indentStartTwips ?? undefined) &&
 			previous.indentEndTwips === (node.attrs.indentEndTwips ?? undefined) &&
 			previous.firstLineTwips === (node.attrs.firstLineTwips ?? undefined) &&
-			previous.hangingTwips === (node.attrs.hangingTwips ?? undefined)
+			previous.hangingTwips === (node.attrs.hangingTwips ?? undefined) &&
+			(previous.numbering?.numId ?? null) === (node.attrs.numId ?? null) &&
+			(previous.numbering ? previous.numbering.level : null) === (node.attrs.ilvl ?? null) &&
+			Boolean(previous.pageBreakBefore) === Boolean(node.attrs.pageBreakBefore)
 		)
 			return previous;
 		return {
@@ -185,6 +222,10 @@ export function docToModel(
 			...(node.attrs.indentEndTwips != null ? { indentEndTwips: node.attrs.indentEndTwips } : {}),
 			...(node.attrs.firstLineTwips != null ? { firstLineTwips: node.attrs.firstLineTwips } : {}),
 			...(node.attrs.hangingTwips != null ? { hangingTwips: node.attrs.hangingTwips } : {}),
+			...(node.attrs.numId != null
+				? { numbering: { numId: node.attrs.numId, level: node.attrs.ilvl ?? 0 } }
+				: {}),
+			...(node.attrs.pageBreakBefore ? { pageBreakBefore: true } : {}),
 		};
 	};
 

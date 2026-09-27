@@ -49,6 +49,16 @@ function parseFormatting(pPr: XmlElement | undefined): ParagraphFormatting {
 	return result;
 }
 
+function parseStyleNumbering(
+	pPr: XmlElement | undefined,
+): { numId: number; level: number } | undefined {
+	const numPr = first(pPr, 'numPr');
+	if (!numPr) return undefined;
+	const numId = integer(getW(first(numPr, 'numId'), 'val'));
+	if (numId === undefined) return undefined;
+	return { numId, level: integer(getW(first(numPr, 'ilvl'), 'val')) ?? 0 };
+}
+
 function styleElements(document: XmlDocument): XmlElement[] {
 	return Array.from(document.getElementsByTagName('*')).filter(
 		(element): element is XmlElement =>
@@ -71,11 +81,13 @@ export function parseParagraphStyleCatalog(xml: string): ParagraphStyleCatalog {
 				? undefined
 				: !['0', 'false', 'off', 'no', 'none'].includes(defaultValue.toLowerCase());
 		const name = getW(first(element, 'name'), 'val');
+		const numbering = parseStyleNumbering(first(element, 'pPr'));
 		styles[id] = {
 			id,
 			...(name ? { name } : {}),
 			...(basedOn ? { basedOn } : {}),
 			...(isDefault === undefined ? {} : { isDefault }),
+			...(numbering ? { numbering } : {}),
 			formatting: parseFormatting(first(element, 'pPr')),
 		};
 	}
@@ -145,4 +157,22 @@ export function resolveParagraphFormatting(
 		if (value !== undefined) Object.assign(direct, { [key]: value });
 	}
 	return Object.assign(result, direct);
+}
+
+/** Resolves numbering inherited through `pStyle` when a paragraph has no direct `w:numPr`. */
+export function resolveStyleNumbering(
+	styleId: string | undefined,
+	catalog: ParagraphStyleCatalog,
+): { numId: number; level: number } | undefined {
+	const chain: ParagraphStyleDefinition[] = [];
+	const visited = new Set<string>();
+	let current = styleId;
+	while (current && !visited.has(current)) {
+		visited.add(current);
+		const style = catalog.styles[current];
+		if (!style) break;
+		chain.push(style);
+		current = style.basedOn;
+	}
+	return chain.find((style) => style.numbering)?.numbering;
 }

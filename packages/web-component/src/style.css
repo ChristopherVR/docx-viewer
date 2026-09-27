@@ -280,6 +280,11 @@
 .dve-paper td p {
 	margin: 0;
 }
+.dve-paper p[data-list-label]::before {
+	content: attr(data-list-label);
+	white-space: pre;
+	user-select: none;
+}
 .multilingual-controls {
 	flex: 1 1 100%;
 	align-items: flex-start;
@@ -371,6 +376,86 @@
 	.dve-status {
 		padding: 5px 8px;
 	}
+}
+.dve-break-marker {
+	display: block;
+	margin: 0.4em 0;
+	padding: 2px 0;
+	border-top: 1px dashed var(--muted);
+	border-bottom: 1px dashed var(--muted);
+	color: var(--muted);
+	font-size: 10px;
+	text-align: center;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	user-select: none;
+}
+.dve-note-reference {
+	color: var(--blue);
+	cursor: default;
+}
+.dve-header,
+.dve-footer {
+	box-sizing: border-box;
+	width: 816px;
+	max-width: 100%;
+	margin: 0 auto;
+	padding: 10px clamp(16px, 5vw, 70px);
+	background: var(--surface);
+	color: var(--muted);
+	font:
+		10pt/1.35 Calibri,
+		Arial,
+		sans-serif;
+}
+.dve-header {
+	border-bottom: 1px dashed var(--line);
+}
+.dve-footer {
+	border-top: 1px dashed var(--line);
+}
+.dve-header-footer-label {
+	margin-bottom: 2px;
+	color: var(--muted);
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+.dve-notes-container {
+	box-sizing: border-box;
+	width: 816px;
+	max-width: 100%;
+	margin: 12px auto 0;
+}
+.dve-notes {
+	box-sizing: border-box;
+	padding: 10px clamp(16px, 5vw, 70px);
+	background: var(--surface);
+	border-top: 1px solid var(--line);
+	font:
+		10pt/1.35 Calibri,
+		Arial,
+		sans-serif;
+}
+.dve-notes-heading {
+	margin: 0 0 6px;
+	color: var(--ink);
+	font-size: 12px;
+}
+.dve-note-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.dve-note-list li {
+	display: flex;
+	gap: 4px;
+	align-items: baseline;
+	margin-bottom: 4px;
+}
+.dve-note-marker {
+	flex: none;
+	color: var(--muted);
 }
 @media (prefers-reduced-motion: reduce) {
 	* {

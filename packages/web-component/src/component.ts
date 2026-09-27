@@ -3,7 +3,7 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { history } from 'prosemirror-history';
 import type { DocumentModel } from '@christophervr/docx-core';
-import { createDocument, saveDocx } from '@christophervr/docx-core';
+import { createDocument, ensureListDefinition, saveDocx } from '@christophervr/docx-core';
 import { loadDocument } from '@christophervr/docx-document';
 import { createRibbon, setRibbonLocale, type RibbonAction } from './ribbon';
 import { applyPageStyles } from './ribbon-commands';
@@ -24,6 +24,9 @@ import {
 import { normalizeEditorLocale, type EditorLocale } from './localization';
 import { EditorPresence } from './editor-presence';
 import { paragraphStylesPlugin, resetStylePicker } from './paragraph-styles';
+import { changeListLevel, removeList, selectionIsListKind, toggleList } from './list-commands';
+import { buildHeaderElement, buildFooterElement } from './header-footer-view';
+import { buildNotesElement } from './notes-view';
 
 const HTMLElementBase: typeof HTMLElement =
 	typeof HTMLElement === 'undefined' ? (class {} as typeof HTMLElement) : HTMLElement;
@@ -34,7 +37,11 @@ export class DocxEditorElement extends HTMLElementBase {
 	private loadGeneration = 0;
 	private _readOnly = false;
 	private toolbar?: HTMLElement;
+	private canvas?: HTMLElement;
 	private paper?: HTMLElement;
+	private headerEl?: HTMLElement;
+	private footerEl?: HTMLElement;
+	private notesEl?: HTMLElement;
 	private zoom = 1;
 	private searchPanel?: SearchPanelHandle;
 	private collaboration?: CollaborationClient;
@@ -51,6 +58,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		this._locale = normalizeEditorLocale(value);
 		if (this.toolbar) setRibbonLocale(this.toolbar, this._locale);
 		this.searchPanel?.setLocale(this._locale);
+		this.renderHeaderFooterNotes();
 		this.refreshControls();
 	}
 
@@ -220,6 +228,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		frame.append(toolbar, this.searchPanel.element, canvas, status);
 		root.append(style, frame);
 		this.toolbar = toolbar;
+		this.canvas = canvas;
 		this.paper = paper;
 		this.setAttribute('role', 'region');
 		this.setAttribute('aria-label', 'Document editor');
@@ -249,8 +258,24 @@ export class DocxEditorElement extends HTMLElementBase {
 			dispatchTransaction: (transaction: Transaction) => this.applyTransaction(transaction),
 		});
 		this.detachedState = undefined;
+		this.renderHeaderFooterNotes();
 		this.refreshControls();
 		this.scheduleCollaborationSend();
+	}
+
+	/** Read-only header/footer/note previews around the continuous editing surface. */
+	private renderHeaderFooterNotes() {
+		if (!this.canvas || !this.paper) return;
+		this.headerEl?.remove();
+		this.footerEl?.remove();
+		this.notesEl?.remove();
+		this.headerEl = buildHeaderElement(this.model, this._locale) ?? undefined;
+		this.footerEl = buildFooterElement(this.model, this._locale) ?? undefined;
+		this.notesEl = buildNotesElement(this.model, this._locale) ?? undefined;
+		if (this.headerEl) this.canvas.insertBefore(this.headerEl, this.paper);
+		if (this.footerEl) this.canvas.insertBefore(this.footerEl, this.paper.nextSibling);
+		if (this.notesEl)
+			this.canvas.insertBefore(this.notesEl, (this.footerEl ?? this.paper).nextSibling);
 	}
 
 	private applyTransaction(transaction: Transaction, remote = false) {
@@ -287,10 +312,30 @@ export class DocxEditorElement extends HTMLElementBase {
 		else if (action.type === 'zoom') {
 			this.zoom = action.value / 100;
 			if (this.paper) applyPageStyles(this.paper, this.model, this.zoom);
-		} else if (this.view) {
+		} else if (action.type === 'list') this.handleListAction(action.key);
+		else if (this.view) {
 			runRibbonCommand(this.view, action, this.collaborationIds);
 			if (typeof document.execCommand === 'function') this.view.focus();
 		}
+	}
+
+	private handleListAction(
+		key: 'bullet' | 'number' | 'increaseLevel' | 'decreaseLevel' | 'remove',
+	) {
+		if (!this.view) return;
+		if (key === 'remove') removeList(this.view);
+		else if (key === 'increaseLevel') changeListLevel(this.view, 1);
+		else if (key === 'decreaseLevel') changeListLevel(this.view, -1);
+		else {
+			const kind = key === 'bullet' ? 'bullet' : 'decimal';
+			const already = selectionIsListKind(this.view, kind, this.model.numberingCatalog);
+			toggleList(this.view, already, () => {
+				const created = ensureListDefinition(this.model.numberingCatalog, kind);
+				this.model.numberingCatalog = created.catalog;
+				return created.numId;
+			});
+		}
+		if (typeof document.execCommand === 'function') this.view.focus();
 	}
 
 	private refreshControls() {

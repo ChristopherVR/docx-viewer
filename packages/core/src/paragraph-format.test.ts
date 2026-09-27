@@ -125,12 +125,7 @@ describe('DOCX paragraph formatting', () => {
 		expect(xml).not.toContain('<w:jc w:val="left"');
 	});
 
-	it.each([
-		'<w:br w:type="page"/>',
-		'<w:br w:type="column"/>',
-		'<w:br w:clear="left"/>',
-		'<w:br w:unknown="keep"/>',
-	])(
+	it.each(['<w:br w:clear="left"/>', '<w:br w:unknown="keep"/>'])(
 		'rejects paragraph edits that would flatten special break %s and preserves no-op bytes',
 		async (breakXml) => {
 			const zip = new JSZip();
@@ -142,8 +137,26 @@ describe('DOCX paragraph formatting', () => {
 			const loaded = await loadDocx(bytes);
 			expect(await loaded.save()).toEqual(bytes);
 			expect(loaded.model.warnings).toContain(
-				'Page, column, and other non-line breaks are not distinguished from line breaks in the document model; edits to paragraphs containing them are rejected to preserve the original XML.',
+				'Some non-line breaks other than page and column breaks are not distinguished from line breaks in the document model; edits to paragraphs containing them are rejected to preserve the original XML.',
 			);
+			const paragraph = loaded.model.blocks[0];
+			if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+			paragraph.spacingBeforeTwips = 120;
+			await expect(loaded.save()).rejects.toThrow('contains inline OOXML');
+		},
+	);
+
+	it.each(['page', 'column'] as const)(
+		'still protects a %s break mixed into a run alongside text, since it cannot be relocated safely',
+		async (kind) => {
+			const zip = new JSZip();
+			zip.file(
+				'word/document.xml',
+				`<w:document xmlns:w="${ns}"><w:body><w:p><w:r><w:t>Before</w:t><w:br w:type="${kind}"/><w:t>After</w:t></w:r></w:p><w:sectPr/></w:body></w:document>`,
+			);
+			const bytes = await zip.generateAsync({ type: 'uint8array' });
+			const loaded = await loadDocx(bytes);
+			expect(await loaded.save()).toEqual(bytes);
 			const paragraph = loaded.model.blocks[0];
 			if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
 			paragraph.spacingBeforeTwips = 120;

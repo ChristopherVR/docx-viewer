@@ -35,7 +35,14 @@ function marksForRun(run: TextRun): Mark[] {
 	return marks;
 }
 
-export function runToInlineNodes(run: TextRun): ProseMirrorNode[] {
+export type NoteNumberLookup = (kind: 'footnote' | 'endnote', id: string) => number;
+
+export function runToInlineNodes(run: TextRun, noteNumber?: NoteNumberLookup): ProseMirrorNode[] {
+	if (run.break) return [schema.nodes.pageBreak.create({ kind: run.break })];
+	if (run.noteReference) {
+		const { kind, id } = run.noteReference;
+		return [schema.nodes.noteReference.create({ kind, id, number: noteNumber?.(kind, id) ?? 1 })];
+	}
 	if (!run.text) return [];
 	const marks = marksForRun(run);
 	return run.text
@@ -54,6 +61,20 @@ function propertyOfMark(child: ProseMirrorNode, name: string): Mark | undefined 
 }
 
 export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void {
+	if (child.type.name === 'pageBreak') {
+		runs.push({ text: '', break: child.attrs.kind === 'column' ? 'column' : 'page' });
+		return;
+	}
+	if (child.type.name === 'noteReference') {
+		runs.push({
+			text: '',
+			noteReference: {
+				kind: child.attrs.kind === 'endnote' ? 'endnote' : 'footnote',
+				id: String(child.attrs.id || ''),
+			},
+		});
+		return;
+	}
 	if (!child.isText && child.type.name !== 'hardBreak') return;
 	const run: TextRun = { text: child.isText ? child.text || '' : '\n' };
 	if (propertyOfMark(child, 'bold')) run.bold = true;
@@ -91,7 +112,12 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 		'fontSize',
 		'color',
 	];
-	if (previous && fields.every((field) => previous[field] === run[field]))
+	if (
+		previous &&
+		!previous.break &&
+		!previous.noteReference &&
+		fields.every((field) => previous[field] === run[field])
+	)
 		previous.text += run.text;
 	else runs.push(run);
 }

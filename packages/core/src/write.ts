@@ -11,10 +11,11 @@ import {
 	WORD_NS,
 } from './xml.js';
 import { writeParagraphProperties } from './write-paragraph-properties.js';
+import { writeNumberingProperties } from './numbering-write.js';
 import { writeTable as writeTableContent } from './write-table.js';
 import { createRun } from './write-run.js';
 import { isWordHighlightToken } from './highlight.js';
-import { hasSpecialBreak } from './breaks.js';
+import { hasSpecialBreak, isModeledBreak } from './breaks.js';
 import { isValidLanguageTag } from './language.js';
 
 const twips = (pixels: number): string => String(Math.round(pixels * 15));
@@ -31,10 +32,15 @@ function hasUnsafeInline(paragraph: XmlElement): boolean {
 		const element = child as XmlElement;
 		if (element.localName === 'pPr') continue;
 		if (element.localName !== 'r') return true;
-		for (const runChild of Array.from(element.childNodes)) {
-			if (runChild.nodeType !== 1) continue;
-			const runElement = runChild as XmlElement;
-			if (runElement.localName === 'rPr') continue;
+		const content = Array.from(element.childNodes).filter(
+			(node) => node.nodeType === 1 && (node as XmlElement).localName !== 'rPr',
+		) as XmlElement[];
+		// A run whose only content is a modeled page/column break matches how the parser
+		// represents it (`TextRun.break`); it is safe to relocate. A break mixed with other
+		// content in the same run is not modeled distinctly and stays protected below.
+		if (content.length === 1 && content[0].localName === 'br' && isModeledBreak(content[0]))
+			continue;
+		for (const runElement of content) {
 			if (runElement.localName === 'br' && hasSpecialBreak(runElement)) return true;
 			if (runElement.localName === 'cr' && runElement.attributes.length > 0) return true;
 			if (!['t', 'tab', 'br', 'cr', 'noBreakHyphen'].includes(runElement.localName)) return true;
@@ -166,6 +172,7 @@ function writeParagraph(
 		}
 	}
 	writeParagraphProperties(doc, pPr, paragraph, base);
+	writeNumberingProperties(doc, pPr, paragraph, base);
 	const oldRuns = children(node, 'r');
 	rejectUnsafeRunSegmentation(paragraph, base, oldRuns);
 	for (const run of oldRuns) node.removeChild(run);

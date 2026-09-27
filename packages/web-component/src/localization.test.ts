@@ -22,6 +22,7 @@ describe('shared editor localization', () => {
 		expect(ribbon.getAttribute('aria-label')).toBe('Mise en forme du document');
 		expect(ribbon.querySelector('[role="tab"]')?.textContent).toBe('Accueil');
 		expect(format.getAttribute('aria-label')).toBe('Gras');
+		expect(ribbon.querySelector<HTMLButtonElement>('[aria-label="Liste à puces"]')).not.toBeNull();
 		expect(ribbon.querySelector<HTMLElement>('[data-label="Font"]')?.dataset.caption).toBe(
 			'Police',
 		);
