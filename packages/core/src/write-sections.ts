@@ -20,6 +20,8 @@ const WRITABLE = new Set([
 	'footerDistanceTwips',
 	'gutterTwips',
 	'columns',
+	'titlePage',
+	'pageNumbering',
 	'headers',
 	'footers',
 ]);
@@ -71,6 +73,15 @@ const AFTER_COLS = [
 	'printerSettings',
 	'sectPrChange',
 ];
+const AFTER_PGNUMTYPE = ['cols', ...AFTER_COLS];
+const AFTER_TITLEPG = [
+	'textDirection',
+	'bidi',
+	'rtlGutter',
+	'docGrid',
+	'printerSettings',
+	'sectPrChange',
+];
 const AFTER_TYPE = ['pgSz', ...AFTER_PGSZ];
 
 function writeSectionProperties(doc: XmlDocument, sectPr: XmlElement, section: SectionProperties) {
@@ -99,6 +110,22 @@ function writeSectionProperties(doc: XmlDocument, sectPr: XmlElement, section: S
 	}
 	if (section.columns.separator) setW(columns, 'sep', '1');
 	else columns.removeAttributeNS(WORD_NS, 'sep');
+	if (section.titlePage) child(doc, sectPr, 'titlePg', AFTER_TITLEPG);
+	else for (const titlePg of children(sectPr, 'titlePg')) sectPr.removeChild(titlePg);
+	const numbering = section.pageNumbering;
+	if (numbering?.format || numbering?.start !== undefined) {
+		const pgNumType = child(doc, sectPr, 'pgNumType', AFTER_PGNUMTYPE);
+		if (numbering.format && numbering.format !== 'decimal')
+			setW(pgNumType, 'fmt', numbering.format);
+		else pgNumType.removeAttributeNS(WORD_NS, 'fmt');
+		if (numbering.start !== undefined) setW(pgNumType, 'start', String(numbering.start));
+		else pgNumType.removeAttributeNS(WORD_NS, 'start');
+	} else
+		for (const pgNumType of children(sectPr, 'pgNumType')) {
+			pgNumType.removeAttributeNS(WORD_NS, 'fmt');
+			pgNumType.removeAttributeNS(WORD_NS, 'start');
+			if (!pgNumType.attributes.length) sectPr.removeChild(pgNumType);
+		}
 }
 
 function assertWritable(section: SectionProperties, base: SectionProperties | undefined) {
@@ -110,7 +137,7 @@ function assertWritable(section: SectionProperties, base: SectionProperties | un
 				JSON.stringify(base[key as keyof SectionProperties])
 		)
 			throw new Error(
-				`Editing the section property "${key}" is not supported; only page size, orientation, margins, columns and break type can change.`,
+				`Editing the section property "${key}" is not supported; only page size, orientation, margins, columns, break type, first-page setting and page numbering can change.`,
 			);
 }
 

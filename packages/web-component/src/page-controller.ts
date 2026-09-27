@@ -6,9 +6,12 @@ import { applyPageStyles } from './ribbon-commands';
 import {
 	currentSectionIndex,
 	insertSectionBreak,
+	sectionsOf,
 	setColumns,
 	setMargins,
 	setOrientation,
+	setPageNumbering,
+	setTitlePage,
 } from './section-commands';
 import { sectionLayoutJson } from './section-layout';
 import type { StatusBar } from './status-bar';
@@ -29,17 +32,51 @@ export class PageController {
 	constructor(private readonly host: PageControllerHost) {}
 
 	/** Page setup applies to the section holding the selection, as in Word, and is undoable. */
-	changePageSetup(key: 'margin' | 'orientation' | 'columns', value: string): void {
+	changePageSetup(
+		key: 'margin' | 'orientation' | 'columns' | 'numberFormat' | 'numberStart' | 'titlePage',
+		value: string,
+	): void {
 		const view = this.host.view();
 		if (!view?.editable || !this.host.canEditOutsideBody()) return;
 		const model = this.host.model();
 		const index = currentSectionIndex(view, model);
-		this.dispatchSections(
+		const section = sectionsOf(model)[index];
+		const next =
 			key === 'margin'
 				? setMargins(model, index, value)
 				: key === 'orientation'
 					? setOrientation(model, index, value === 'landscape' ? 'landscape' : 'portrait')
-					: setColumns(model, index, Math.max(1, Number(value) || 1)),
+					: key === 'columns'
+						? setColumns(model, index, Math.max(1, Number(value) || 1))
+						: key === 'numberFormat'
+							? setPageNumbering(model, index, { format: value })
+							: key === 'numberStart'
+								? setPageNumbering(model, index, { restart: value === 'restart' })
+								: setTitlePage(model, index, !section.titlePage);
+		this.dispatchSections(next);
+	}
+
+	/** Shows the selection's section settings in the Layout tab. */
+	syncControls(): void {
+		const view = this.host.view();
+		const toolbar = this.host.toolbar();
+		if (!view || !toolbar) return;
+		const model = this.host.model();
+		const section = sectionsOf(model)[currentSectionIndex(view, model)];
+		const setSelect = (label: string, value: string) => {
+			const select = findLocalizedControl<HTMLSelectElement>(toolbar, label);
+			if (select) select.value = value;
+		};
+		setSelect('Orientation', section.orientation);
+		setSelect('Columns', String(section.columns.count));
+		setSelect('Page number format', section.pageNumbering?.format ?? 'decimal');
+		setSelect(
+			'Page numbering',
+			section.pageNumbering?.start !== undefined ? 'restart' : 'continue',
+		);
+		findLocalizedControl<HTMLButtonElement>(toolbar, 'Different first page')?.setAttribute(
+			'aria-pressed',
+			String(Boolean(section.titlePage)),
 		);
 	}
 

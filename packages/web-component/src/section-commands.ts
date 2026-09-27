@@ -106,6 +106,32 @@ export function setColumns(model: DocumentModel, index: number, count: number): 
 	}));
 }
 
+/** Header & Footer > Different First Page for one section. */
+export function setTitlePage(
+	model: DocumentModel,
+	index: number,
+	titlePage: boolean,
+): DocumentModel {
+	return withSection(model, index, (section) => ({ ...section, titlePage }));
+}
+
+/** Page number format, and whether numbering continues or restarts at 1 in this section. */
+export function setPageNumbering(
+	model: DocumentModel,
+	index: number,
+	change: { format?: string; restart?: boolean },
+): DocumentModel {
+	return withSection(model, index, (section) => {
+		const numbering = { ...section.pageNumbering };
+		if (change.format !== undefined) numbering.format = change.format;
+		if (change.restart === true) numbering.start = 1;
+		if (change.restart === false) delete numbering.start;
+		if (numbering.format === 'decimal') delete numbering.format;
+		const { pageNumbering: _previous, ...rest } = section;
+		return Object.keys(numbering).length ? { ...rest, pageNumbering: numbering } : rest;
+	});
+}
+
 /**
  * Word's Layout > Breaks > Section Break: the current section ends after the selected paragraph
  * and a new section with the same settings begins; `type` is how the new section starts.

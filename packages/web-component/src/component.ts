@@ -522,6 +522,7 @@ ${chromeStyleText}`;
 			Boolean(this.review?.commentsOpen),
 		);
 		if (status) this.chrome?.refresh(status.pageText, status.wordText);
+		this.pages.syncControls();
 		this.chrome?.titleBar.setCommentsOpen(Boolean(this.review?.commentsOpen));
 	}
 }

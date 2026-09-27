@@ -16,7 +16,11 @@ export type RibbonAction =
 	| { type: 'clear' | 'table' }
 	| { type: 'insertBreak'; kind: 'page' | 'column' }
 	| { type: 'tableEdit'; key: TableCommand }
-	| { type: 'page'; key: 'margin' | 'orientation' | 'columns'; value: string }
+	| {
+			type: 'page';
+			key: 'margin' | 'orientation' | 'columns' | 'numberFormat' | 'numberStart' | 'titlePage';
+			value: string;
+	  }
 	| { type: 'sectionBreak'; kind: 'nextPage' | 'continuous' }
 	| {
 			type: 'paragraph';
@@ -369,6 +373,33 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 				],
 				(value) => ({ type: 'page', key: 'columns', value }),
 			),
+		),
+		group(
+			'Page numbers',
+			select(
+				'Page number format',
+				[
+					['decimal', '1, 2, 3'],
+					['lowerRoman', 'i, ii, iii'],
+					['upperRoman', 'I, II, III'],
+					['lowerLetter', 'a, b, c'],
+					['upperLetter', 'A, B, C'],
+				],
+				(value) => ({ type: 'page', key: 'numberFormat', value }),
+			),
+			select(
+				'Page numbering',
+				[
+					['continue', 'Continue from previous section'],
+					['restart', 'Start at 1'],
+				],
+				(value) => ({ type: 'page', key: 'numberStart', value }),
+			),
+			button('Different first page', 'Different first page', {
+				type: 'page',
+				key: 'titlePage',
+				value: 'toggle',
+			}),
 		),
 		group(
 			'Section breaks',

@@ -78,4 +78,24 @@ describe('section editing in the editor', () => {
 		pm.dispatch(pm.state.tr.delete(0, pm.state.doc.child(0).nodeSize));
 		expect(editor.documentModel!.sections).toHaveLength(1);
 	});
+
+	it('sets a different first page and restarted Roman page numbers for the current section', () => {
+		const editor = mount(twoParagraphs());
+		const toggle = editor.shadowRoot!.querySelector<HTMLButtonElement>(
+			'[aria-label="Different first page"]',
+		)!;
+		toggle.click();
+		expect(editor.documentModel!.sections?.[0].titlePage).toBe(true);
+		expect(toggle.getAttribute('aria-pressed')).toBe('true');
+		choose(editor, 'Page number format', 'lowerRoman');
+		choose(editor, 'Page numbering', 'restart');
+		expect(editor.documentModel!.sections?.[0].pageNumbering).toEqual({
+			format: 'lowerRoman',
+			start: 1,
+		});
+		choose(editor, 'Page number format', 'decimal');
+		expect(editor.documentModel!.sections?.[0].pageNumbering).toEqual({ start: 1 });
+		undo(view(editor).state, view(editor).dispatch);
+		expect(editor.documentModel!.sections?.[0].pageNumbering?.format).toBe('lowerRoman');
+	});
 });

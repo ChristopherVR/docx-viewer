@@ -65,4 +65,30 @@ describe('section editing', () => {
 		model.sections = [{ ...structuredClone(last), endsAtBlockId: model.blocks[0].id }, last];
 		await expect(loaded.save(model)).rejects.toThrow(/must end on a paragraph/);
 	});
+
+	it('writes a different first page and restarted Roman page numbers', async () => {
+		const loaded = await loadDocx(
+			await docx(`<w:p><w:r><w:t>Text</w:t></w:r></w:p>${finalSection}`),
+		);
+		const model = clone(loaded.model);
+		Object.assign(model.sections![0], {
+			titlePage: true,
+			pageNumbering: { start: 1, format: 'lowerRoman' },
+		});
+		const saved = await loaded.save(model);
+		const xml = await documentXml(saved);
+		expect(xml).toContain('<w:pgNumType w:fmt="lowerRoman" w:start="1"/><w:cols');
+		expect(xml).toMatch(/<w:cols[^>]*\/><w:titlePg\/>/);
+		const reloaded = await loadDocx(saved);
+		expect(reloaded.model.sections![0]).toMatchObject({
+			titlePage: true,
+			pageNumbering: { start: 1, format: 'lowerRoman' },
+		});
+		const cleared = clone(reloaded.model);
+		cleared.sections![0].titlePage = false;
+		delete cleared.sections![0].pageNumbering;
+		const again = await documentXml(await reloaded.save(cleared));
+		expect(again).not.toContain('titlePg');
+		expect(again).not.toContain('pgNumType');
+	});
 });
