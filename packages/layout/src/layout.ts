@@ -1,0 +1,22 @@
+import type { DocumentModel } from '@christophervr/docx-core';
+import { adaptDocumentModel } from './adapter.js';
+import { layoutSections } from './page-flow.js';
+import type { LayoutDocumentInput } from './input.js';
+import type { LayoutResult } from './result.js';
+import type { TextMeasurer } from './measure.js';
+
+/** Paginates an engine-native `LayoutDocumentInput` (bypasses the DocumentModel adapter). */
+export function layoutDocument(input: LayoutDocumentInput, measurer: TextMeasurer): LayoutResult {
+	return layoutSections(input, measurer);
+}
+
+/** Paginates a `docx-core` `DocumentModel` directly: `adaptDocumentModel` + `layoutDocument`. */
+export function layoutDocumentModel(model: DocumentModel, measurer: TextMeasurer): LayoutResult {
+	const approximations: string[] = [];
+	const input = adaptDocumentModel(model, (message) => approximations.push(message));
+	const result = layoutSections(input, measurer);
+	return {
+		pages: result.pages,
+		approximations: [...new Set([...approximations, ...result.approximations])],
+	};
+}

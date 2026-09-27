@@ -377,3 +377,83 @@
 		scroll-behavior: auto !important;
 	}
 }
+
+/* Print Layout: a read-only, paginated render kept beside the continuous
+   editing surface (see print-layout.ts / print-layout-view.ts). */
+.dve-print-pages {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 24px;
+	margin: 0 auto;
+	zoom: var(--dve-zoom, 1);
+}
+.dve-print-pages[hidden] {
+	display: none;
+}
+.dve-print-page {
+	position: relative;
+	flex: none;
+	background: #fff;
+	color: #202124;
+	box-shadow:
+		0 1px 3px #20212430,
+		0 4px 12px #20212420;
+	overflow: hidden;
+}
+.dve-print-column {
+	position: absolute;
+}
+.dve-print-block {
+	position: absolute;
+	left: 0;
+	width: 100%;
+}
+.dve-print-line {
+	position: absolute;
+	left: 0;
+	width: 100%;
+	font:
+		11pt/1.2 Calibri,
+		Arial,
+		sans-serif;
+	cursor: text;
+}
+.dve-print-line span {
+	position: absolute;
+	top: 0;
+}
+.dve-print-row {
+	position: absolute;
+	left: 0;
+	width: 100%;
+	display: flex;
+}
+.dve-print-cell {
+	position: relative;
+	flex: 1 1 0;
+	min-width: 0;
+	border: 1px solid #9aa0a6;
+}
+@media print {
+	.dve-ribbon,
+	.dve-status,
+	.multilingual-controls {
+		display: none !important;
+	}
+	.dve-canvas {
+		overflow: visible !important;
+		padding: 0 !important;
+	}
+	.dve-paper {
+		display: none !important;
+	}
+	.dve-print-pages {
+		gap: 0 !important;
+		zoom: 1 !important;
+	}
+	.dve-print-page {
+		box-shadow: none !important;
+		break-after: page;
+	}
+}

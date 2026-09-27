@@ -21,9 +21,11 @@ import {
 	repairCollaborativeDocumentIds,
 	createCollaborationIdGenerator,
 } from './collaboration-identity';
-import { normalizeEditorLocale, type EditorLocale } from './localization';
+import { findLocalizedControl, normalizeEditorLocale, type EditorLocale } from './localization';
 import { EditorPresence } from './editor-presence';
 import { paragraphStylesPlugin, resetStylePicker } from './paragraph-styles';
+import { createPrintLayoutController, type PrintLayoutController } from './print-layout-view';
+import { moveCursorToBlock } from './print-layout-cursor';
 
 const HTMLElementBase: typeof HTMLElement =
 	typeof HTMLElement === 'undefined' ? (class {} as typeof HTMLElement) : HTMLElement;
@@ -43,6 +45,8 @@ export class DocxEditorElement extends HTMLElementBase {
 	private sendScheduled = false;
 	private presence?: EditorPresence;
 	private _locale: EditorLocale = 'en';
+	private printLayout?: PrintLayoutController;
+	private viewMode: 'draft' | 'print' = 'draft';
 
 	get locale(): string {
 		return this._locale;
@@ -212,6 +216,17 @@ export class DocxEditorElement extends HTMLElementBase {
 		paper.className = 'dve-paper';
 		paper.setAttribute('aria-label', 'Document page');
 		canvas.append(paper);
+		this.printLayout = createPrintLayoutController(canvas, (blockId, offset) => {
+			this.setViewMode('draft');
+			if (this.view) moveCursorToBlock(this.view, blockId, offset);
+		});
+		canvas.append(this.printLayout.element);
+		canvas.addEventListener('scroll', () => {
+			if (this.viewMode === 'print') {
+				this.printLayout?.refreshCurrentPage();
+				this.refreshControls();
+			}
+		});
 		this.searchPanel = createSearchPanel({
 			getView: () => this.view,
 			onClose: () => this.view?.focus(),
@@ -249,6 +264,7 @@ export class DocxEditorElement extends HTMLElementBase {
 			dispatchTransaction: (transaction: Transaction) => this.applyTransaction(transaction),
 		});
 		this.detachedState = undefined;
+		if (this.viewMode === 'print') this.printLayout?.scheduleRelayout(this.model);
 		this.refreshControls();
 		this.scheduleCollaborationSend();
 	}
@@ -269,6 +285,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		if (transaction.docChanged) {
 			this.model = docToModel(this.view.state.doc, this.model);
 			if (this.paper) applyPageStyles(this.paper, this.model, this.zoom);
+			if (this.viewMode === 'print') this.printLayout?.scheduleRelayout(this.model);
 			this.dispatchEvent(
 				new CustomEvent('document-change', { detail: this.model, bubbles: true, composed: true }),
 			);
@@ -287,14 +304,35 @@ export class DocxEditorElement extends HTMLElementBase {
 		else if (action.type === 'zoom') {
 			this.zoom = action.value / 100;
 			if (this.paper) applyPageStyles(this.paper, this.model, this.zoom);
-		} else if (this.view) {
+		} else if (action.type === 'view') this.setViewMode(action.value);
+		else if (action.type === 'print')
+			this.printLayout?.print(this.model, (message) =>
+				this.dispatchEvent(
+					new CustomEvent('document-warning', { detail: message, bubbles: true, composed: true }),
+				),
+			);
+		else if (this.view) {
 			runRibbonCommand(this.view, action, this.collaborationIds);
 			if (typeof document.execCommand === 'function') this.view.focus();
 		}
 	}
 
+	/** Switches between the continuous editing surface and the read-only paginated Print Layout render. */
+	private setViewMode(mode: 'draft' | 'print') {
+		this.viewMode = mode;
+		this.printLayout?.setActive(mode === 'print');
+		if (this.paper) this.paper.hidden = mode === 'print';
+		if (this.toolbar) {
+			const select = findLocalizedControl<HTMLSelectElement>(this.toolbar, 'Layout view');
+			if (select) select.value = mode;
+		}
+		if (mode === 'print') this.printLayout?.scheduleRelayout(this.model);
+		this.refreshControls();
+	}
+
 	private refreshControls() {
 		this.searchPanel?.refresh();
+		if (this.viewMode === 'print') this.printLayout?.refreshCurrentPage();
 		refreshEditorControls(
 			this.toolbar,
 			this.view,
@@ -303,6 +341,7 @@ export class DocxEditorElement extends HTMLElementBase {
 			Boolean(this.collaboration),
 			this._locale,
 			this.lang,
+			this.printLayout?.pageStatus(),
 		);
 	}
 }

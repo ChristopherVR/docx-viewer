@@ -1,7 +1,7 @@
 import type { EditorView } from 'prosemirror-view';
 import type { DocumentModel } from '@christophervr/docx-core';
 import type { EditorLocale } from './localization';
-import { formatWordCount } from './localization';
+import { formatPageStatus, formatWordCount } from './localization';
 import { syncFontControls, syncParagraphControls, syncFormatControls } from './ribbon-controls';
 import { syncMultilingualControls } from './multilingual-ribbon';
 import { syncStylePicker } from './paragraph-styles';
@@ -17,6 +17,7 @@ export function refreshEditorControls(
 	collaboration: boolean,
 	locale: EditorLocale,
 	language: string,
+	printPageStatus?: { current: number; total: number } | null,
 ) {
 	toolbar
 		?.querySelectorAll<HTMLButtonElement | HTMLSelectElement | HTMLInputElement>(
@@ -44,5 +45,8 @@ export function refreshEditorControls(
 	const content = state.doc.textBetween(0, state.doc.content.size, ' ').trim();
 	const words = countWords(content, language || undefined);
 	const status = toolbar?.parentElement?.querySelector('.dve-status');
-	if (status) status.textContent = `Page 1 · ${formatWordCount(locale, words)}`;
+	const pageText = printPageStatus
+		? formatPageStatus(locale, printPageStatus.current, printPageStatus.total)
+		: 'Page 1';
+	if (status) status.textContent = `${pageText} · ${formatWordCount(locale, words)}`;
 }

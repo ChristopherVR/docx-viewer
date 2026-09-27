@@ -78,6 +78,13 @@
         "@christophervr/docx-legacy": "0.1.0",
       },
     },
+    "packages/layout": {
+      "name": "@christophervr/docx-layout",
+      "version": "0.1.0",
+      "dependencies": {
+        "@christophervr/docx-core": "0.1.0",
+      },
+    },
     "packages/legacy": {
       "name": "@christophervr/docx-legacy",
       "version": "0.1.0",
@@ -152,6 +159,8 @@
     "@christophervr/docx-core": ["@christophervr/docx-core@workspace:packages/core"],
 
     "@christophervr/docx-document": ["@christophervr/docx-document@workspace:packages/document"],
+
+    "@christophervr/docx-layout": ["@christophervr/docx-layout@workspace:packages/layout"],
 
     "@christophervr/docx-legacy": ["@christophervr/docx-legacy@workspace:packages/legacy"],
 

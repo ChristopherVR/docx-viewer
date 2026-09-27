@@ -116,6 +116,11 @@ const strings = {
 		'styles.label': 'Style',
 		'styles.inherit': 'Style default',
 		'status.words': '{count} words',
+		'Layout view': 'Layout view',
+		Draft: 'Draft',
+		'Print Layout': 'Print Layout',
+		Print: 'Print',
+		'status.page': 'Page {current} of {total}',
 	},
 	fr: {
 		Font: 'Police',
@@ -231,6 +236,11 @@ const strings = {
 		'styles.label': 'Style',
 		'styles.inherit': 'Style par défaut',
 		'status.words': '{count} mots',
+		'Layout view': 'Type d’affichage',
+		Draft: 'Brouillon',
+		'Print Layout': 'Mise en page à l’impression',
+		Print: 'Imprimer',
+		'status.page': 'Page {current} sur {total}',
 	},
 } as const;
 
@@ -265,6 +275,11 @@ export function formatWordCount(locale: EditorLocale, count: number): string {
 		'{count}',
 		new Intl.NumberFormat(locale).format(count),
 	);
+}
+export function formatPageStatus(locale: EditorLocale, current: number, total: number): string {
+	return translate(locale, 'status.page')
+		.replace('{current}', String(current))
+		.replace('{total}', String(total));
 }
 
 /** Translate literal UI labels in-place while retaining action data and current control state. */

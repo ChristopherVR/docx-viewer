@@ -20,6 +20,8 @@ export type RibbonAction =
 			value: string;
 	  }
 	| { type: 'zoom'; value: number }
+	| { type: 'view'; value: 'draft' | 'print' }
+	| { type: 'print' }
 	| MultilingualAction
 	| { type: 'search' };
 
@@ -327,6 +329,18 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 				(value) => ({ type: 'zoom', value: Number(value) }),
 			),
 		),
+		group(
+			'Layout view',
+			select(
+				'Layout view',
+				[
+					['draft', 'Draft'],
+					['print', 'Print Layout'],
+				],
+				(value) => ({ type: 'view', value: value === 'print' ? 'print' : 'draft' }),
+			),
+			button('Print', 'Print', { type: 'print' }),
+		),
 	);
 	for (const panel of panels.values()) root.append(panel);
 	root.querySelector<HTMLSelectElement>('[aria-label="Font family"]')!.value = 'Calibri';
@@ -334,6 +348,7 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 	root.querySelector<HTMLSelectElement>('[aria-label="Font color"]')!.value = '#000000';
 	root.querySelector<HTMLSelectElement>('[aria-label="Text highlight"]')!.value = 'none';
 	root.querySelector<HTMLSelectElement>('[aria-label="Zoom"]')!.value = '100';
+	root.querySelector<HTMLSelectElement>('[aria-label="Layout view"]')!.value = 'draft';
 	root.prepend(tabs);
 	root.addEventListener('click', (event) => {
 		const target = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]');
