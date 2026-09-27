@@ -15,7 +15,7 @@ assert(legacy.includes('@christophervr/ole2/'), 'Legacy adapter must consume pub
 const core = JSON.parse(await readFile(new URL('packages/core/package.json', root), 'utf8'));
 assert(!core.dependencies?.['@christophervr/ole2'], 'Modern DOCX core must not depend on ole2');
 assert(core.exports['./embedded'], 'Embedded DOCX API must be shared with PowerPoint');
-for (const name of ['core', 'legacy', 'document', 'web-component', 'bindings']) {
+for (const name of ['core', 'legacy', 'document', 'layout', 'web-component', 'bindings']) {
 	for (const file of await sources(new URL(`packages/${name}/src/`, root))) {
 		const source = await readFile(file, 'utf8');
 		assert(

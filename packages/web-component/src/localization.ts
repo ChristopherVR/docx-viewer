@@ -136,6 +136,11 @@ const strings = {
 		Footnotes: 'Footnotes',
 		Endnotes: 'Endnotes',
 		'Headers and footers are read-only.': 'Headers and footers are read-only.',
+		'Layout view': 'Layout view',
+		Draft: 'Draft',
+		'Print Layout': 'Print Layout',
+		Print: 'Print',
+		'status.page': 'Page {current} of {total}',
 	},
 	fr: {
 		Font: 'Police',
@@ -271,6 +276,11 @@ const strings = {
 		Footnotes: 'Notes de bas de page',
 		Endnotes: 'Notes de fin',
 		'Headers and footers are read-only.': 'Les en-têtes et pieds de page sont en lecture seule.',
+		'Layout view': 'Type d’affichage',
+		Draft: 'Brouillon',
+		'Print Layout': 'Mise en page à l’impression',
+		Print: 'Imprimer',
+		'status.page': 'Page {current} sur {total}',
 	},
 } as const;
 
@@ -305,6 +315,11 @@ export function formatWordCount(locale: EditorLocale, count: number): string {
 		'{count}',
 		new Intl.NumberFormat(locale).format(count),
 	);
+}
+export function formatPageStatus(locale: EditorLocale, current: number, total: number): string {
+	return translate(locale, 'status.page')
+		.replace('{current}', String(current))
+		.replace('{total}', String(total));
 }
 
 /** Translate literal UI labels in-place while retaining action data and current control state. */

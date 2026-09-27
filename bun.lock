@@ -78,6 +78,13 @@
         "@christophervr/docx-legacy": "0.1.0",
       },
     },
+    "packages/layout": {
+      "name": "@christophervr/docx-layout",
+      "version": "0.1.0",
+      "dependencies": {
+        "@christophervr/docx-core": "0.1.0",
+      },
+    },
     "packages/legacy": {
       "name": "@christophervr/docx-legacy",
       "version": "0.1.0",
@@ -117,6 +124,7 @@
       "dependencies": {
         "@christophervr/docx-core": "0.1.0",
         "@christophervr/docx-document": "0.1.0",
+        "@christophervr/docx-layout": "0.1.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -152,6 +160,8 @@
     "@christophervr/docx-core": ["@christophervr/docx-core@workspace:packages/core"],
 
     "@christophervr/docx-document": ["@christophervr/docx-document@workspace:packages/document"],
+
+    "@christophervr/docx-layout": ["@christophervr/docx-layout@workspace:packages/layout"],
 
     "@christophervr/docx-legacy": ["@christophervr/docx-legacy@workspace:packages/legacy"],
 

@@ -6,7 +6,7 @@ import { build } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const packages = ['core', 'legacy', 'document', 'web-component', 'bindings', 'viewer'];
+const packages = ['core', 'legacy', 'document', 'layout', 'web-component', 'bindings', 'viewer'];
 const run = (command, args, options = {}) => {
 	const result = spawnSync(command, args, { cwd: root, stdio: 'inherit', ...options });
 	if (result.status !== 0)

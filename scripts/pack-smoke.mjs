@@ -43,7 +43,7 @@ try {
 	const tarballs = [];
 	const peers = new Map();
 	await mkdir(scope, { recursive: true });
-	for (const name of ['core', 'legacy', 'document', 'web-component', 'bindings', 'viewer']) {
+	for (const name of ['core', 'legacy', 'document', 'layout', 'web-component', 'bindings', 'viewer']) {
 		const packageDir = path.join(root, 'packages', name);
 		const packed = JSON.parse(
 			run('npm', ['pack', '--json', '--pack-destination', work, packageDir]),

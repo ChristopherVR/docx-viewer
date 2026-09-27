@@ -15,6 +15,7 @@
 		"paths": {
 			"@christophervr/docx-core": ["packages/core/src/index.ts"],
 			"@christophervr/docx-core/embedded": ["packages/core/src/embedded.ts"],
+			"@christophervr/docx-layout": ["packages/layout/src/index.ts"],
 			"@christophervr/docx-legacy": ["packages/legacy/src/index.ts"],
 			"@christophervr/docx-web-component": ["packages/web-component/src/index.ts"],
 			"@christophervr/docx-document": ["packages/document/src/index.ts"],
