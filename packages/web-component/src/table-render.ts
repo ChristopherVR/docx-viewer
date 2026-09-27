@@ -11,6 +11,8 @@ interface Borders {
 	bottom?: BorderSide;
 	left?: BorderSide;
 	right?: BorderSide;
+	insideH?: BorderSide;
+	insideV?: BorderSide;
 }
 
 const NONE_STYLES = new Set(['none', 'nil']);
@@ -52,10 +54,9 @@ export function tableStyle(attrs: Record<string, unknown>): string {
 		twipsPx(attrs.indentTwips) &&
 			attrs.alignment !== 'center' &&
 			`margin-left:${twipsPx(attrs.indentTwips)}`,
-		borders?.top && `border-top:${cssBorderSide(borders.top)}`,
-		borders?.bottom && `border-bottom:${cssBorderSide(borders.bottom)}`,
-		borders?.left && `border-left:${cssBorderSide(borders.left)}`,
-		borders?.right && `border-right:${cssBorderSide(borders.right)}`,
+		// Cells without their own resolved borders (e.g. a table inserted in the editor) draw the
+		// table's inside line; tables with no border information fall back to dashed gridlines.
+		borders && `--dve-cell-border:${cssBorderSide(borders.insideH ?? borders.top) ?? 'none'}`,
 	].filter(Boolean);
 	return declarations.join(';');
 }
@@ -68,10 +69,13 @@ export function tableCellStyle(attrs: Record<string, unknown>): string {
 		`vertical-align:${verticalAlign}`,
 		twipsPx(attrs.widthTwips) && `width:${twipsPx(attrs.widthTwips)}`,
 		typeof attrs.shadingFill === 'string' && `background-color:${attrs.shadingFill}`,
-		cssBorderSide(borders?.top) && `border-top:${cssBorderSide(borders?.top)}`,
-		cssBorderSide(borders?.bottom) && `border-bottom:${cssBorderSide(borders?.bottom)}`,
-		cssBorderSide(borders?.left) && `border-left:${cssBorderSide(borders?.left)}`,
-		cssBorderSide(borders?.right) && `border-right:${cssBorderSide(borders?.right)}`,
+		...(['top', 'bottom', 'left', 'right'] as const).map(
+			(side) =>
+				borders &&
+				(cssBorderSide(borders[side])
+					? `border-${side}:${cssBorderSide(borders[side])}`
+					: `border-${side}-style:none`),
+		),
 	].filter(Boolean);
 	return declarations.join(';');
 }

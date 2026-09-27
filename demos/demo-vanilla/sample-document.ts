@@ -1,4 +1,8 @@
-import { createDocument, type DocumentModel } from '@christophervr/docx-core';
+import {
+	createDocument,
+	DEFAULT_TABLE_BORDERS,
+	type DocumentModel,
+} from '@christophervr/docx-core';
 
 /** The demo's sample document, shown from the landing page. */
 export function createSampleDocument(): DocumentModel {
@@ -47,6 +51,7 @@ export function createSampleDocument(): DocumentModel {
 		{
 			type: 'table',
 			id: 'table',
+			borders: DEFAULT_TABLE_BORDERS,
 			rows: [
 				[
 					{

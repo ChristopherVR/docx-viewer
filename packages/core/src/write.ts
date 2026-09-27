@@ -4,6 +4,7 @@ import { children, first, getW, makeW, type XmlDocument, type XmlElement, WORD_N
 import { writeParagraphProperties } from './write-paragraph-properties.js';
 import { writeNumberingProperties } from './numbering-write.js';
 import { writeTable as writeTableContent } from './write-table.js';
+import { buildNewTableProperties } from './table-defaults.js';
 import { writeParagraphMarkRevision } from './write-revisions.js';
 import { runHasUnknownProperties } from './write-run-validation.js';
 import {
@@ -123,8 +124,12 @@ function createTable(
 	doc: XmlDocument,
 	table: Extract<Block, { type: 'table' }>,
 	allocator: RelationshipAllocator,
+	contentWidthTwips: number,
 ): XmlElement {
 	const node = makeW(doc, 'tbl');
+	const { tblPr, tblGrid } = buildNewTableProperties(doc, table, contentWidthTwips);
+	node.appendChild(tblPr);
+	node.appendChild(tblGrid);
 	for (const row of table.rows) {
 		const tr = makeW(doc, 'tr');
 		for (const cell of row) {
@@ -199,6 +204,9 @@ export function applyModel(
 		if (oldNodes[index]) oldById.set(block.id, oldNodes[index]);
 	});
 	const bases = baseMap(original);
+	const contentWidthTwips = Math.round(
+		(model.page.width - model.page.marginLeft - model.page.marginRight) * 15,
+	);
 	const output: XmlElement[] = [];
 	for (const block of model.blocks) {
 		const old = oldById.get(block.id);
@@ -220,7 +228,7 @@ export function applyModel(
 							boundWriteParagraph,
 							replaceSlots,
 						)
-					: createTable(doc, block, allocator),
+					: createTable(doc, block, allocator, contentWidthTwips),
 			);
 	}
 	const slots = originalNodes(body);

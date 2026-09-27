@@ -5,6 +5,7 @@ import { schema } from './schema';
 import { extraRunProperties } from './run-extra-mark';
 import { appendInlineNode, runToInlineNodes, type NoteNumberLookup } from './run-adapter';
 import { convertMergedTable, convertSimpleTable, tableNode } from './table-model-adapter';
+import { parseBordersJson } from './table-render';
 
 type ListLabels = ReturnType<typeof computeListLabels>;
 
@@ -50,7 +51,11 @@ export function modelToDoc(model: DocumentModel) {
 		(kind === 'footnote' ? footnoteOrder : endnoteOrder).get(id) ?? 1;
 	const blocks = model.blocks.map((block) => {
 		if (block.type === 'paragraph') return paragraphNode(block, labels, noteNumber);
-		return tableNode(block, (paragraph) => paragraphNode(paragraph, labels, noteNumber));
+		return tableNode(
+			block,
+			(paragraph) => paragraphNode(paragraph, labels, noteNumber),
+			model.tableStyles,
+		);
 	});
 	return schema.node(
 		'doc',
@@ -141,6 +146,11 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 				sameRevisionMeta(run, b[index]),
 		)
 	);
+}
+/** A table inserted in the editor keeps the borders it was created with (see insertTable). */
+function tableBordersFromNode(value: unknown): Partial<Table> {
+	const borders = parseBordersJson(value);
+	return borders ? { borders: borders as Table['borders'] } : {};
 }
 const sameJson = (left: unknown, right: unknown): boolean =>
 	JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
@@ -249,10 +259,12 @@ export function docToModel(
 				blocks.push({
 					// Table-level properties (grid, width, borders, style, look) have no editor node;
 					// carry them over from the prior model so editing cell text never drops them.
-					...(prior ? { ...prior, structureEditable: undefined } : {}),
+					...(prior
+						? { ...prior, structureEditable: undefined }
+						: tableBordersFromNode(node.attrs.borders)),
 					type: 'table',
 					id,
-					rows: convertSimpleTable(node, asParagraph),
+					rows: convertSimpleTable(node, asParagraph, prior),
 					...(node.attrs.structureEditable === false ? { structureEditable: false } : {}),
 				} as Table);
 		}

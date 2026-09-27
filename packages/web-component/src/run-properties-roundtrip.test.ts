@@ -58,4 +58,20 @@ describe('run properties survive the editor round trip', () => {
 		expect(table.grid).toEqual([2000]);
 		expect(table.borders).toEqual((loaded.model.blocks[0] as Table).borders);
 	});
+
+	it('saves text edits in a simple table whose cells carry width and shading', async () => {
+		const loaded = await loadDocx(
+			await docx(
+				'<w:tbl><w:tblGrid><w:gridCol w:w="2000"/></w:tblGrid><w:tr><w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/><w:shd w:val="clear" w:fill="FFFF00"/></w:tcPr><w:p><w:r><w:t>Cell</w:t></w:r></w:p></w:tc></w:tr></w:tbl>',
+			),
+		);
+		const edited = throughEditor(loaded.model);
+		const cell = (edited.blocks[0] as Table).rows[0][0];
+		expect(cell).toMatchObject({ widthTwips: 2000, shadingFill: expect.stringMatching(/ffff00/i) });
+		cell.paragraphs[0].runs[0].text = 'Edited cell';
+		const saved = await loaded.save(Object.assign(loaded.model, { blocks: edited.blocks }));
+		const xml = await (await JSZip.loadAsync(saved)).file('word/document.xml')!.async('string');
+		expect(xml).toContain('Edited cell');
+		expect(xml).toContain('w:fill="FFFF00"');
+	});
 });

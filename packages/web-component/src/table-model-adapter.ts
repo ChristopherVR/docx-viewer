@@ -3,8 +3,9 @@
 // id, because vertical-merge continuation cells and nested-table previews have no 1:1 visible
 // ProseMirror node to rebuild from; simple tables keep the existing rebuild-from-doc path.
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
-import type { Paragraph, Table, TableCell } from '@christophervr/docx-core';
+import type { Paragraph, Table, TableCell, TableStyleCatalog } from '@christophervr/docx-core';
 import { schema } from './schema';
+import { resolveCellVisuals } from './table-visuals';
 
 function cellKey(cell: TableCell): string {
 	return cell.paragraphs[0]?.id ?? '';
@@ -13,10 +14,18 @@ function cellKey(cell: TableCell): string {
 export function tableNode(
 	block: Table,
 	paragraphNode: (paragraph: Paragraph) => ProseMirrorNode,
+	tableStyles?: TableStyleCatalog,
 ): ProseMirrorNode {
+	const columnCount = Math.max(
+		1,
+		...block.rows.map((row) => row.reduce((sum, cell) => sum + (cell.gridSpan ?? 1), 0)),
+	);
 	const rows = block.rows.map((row, rowIndex) => {
 		const cells: ProseMirrorNode[] = [];
+		let gridColumn = 0;
 		row.forEach((cell, columnIndex) => {
+			const column = gridColumn;
+			gridColumn += cell.gridSpan ?? 1;
 			if (cell.verticalMerge === 'continue') return;
 			let rowspan = 1;
 			if (cell.verticalMerge === 'restart') {
@@ -26,6 +35,19 @@ export function tableNode(
 					next++;
 				}
 			}
+			const visuals = resolveCellVisuals(
+				block,
+				cell,
+				{
+					row: rowIndex,
+					lastRow: rowIndex + rowspan - 1,
+					column,
+					lastColumn: column + (cell.gridSpan ?? 1) - 1,
+					rowCount: block.rows.length,
+					columnCount,
+				},
+				tableStyles,
+			);
 			const children = cell.paragraphs.map(paragraphNode);
 			for (const preview of cell.nestedTables ?? [])
 				children.push(
@@ -40,8 +62,8 @@ export function tableNode(
 						rowspan,
 						widthTwips: cell.widthTwips ?? null,
 						verticalAlign: cell.verticalAlign ?? null,
-						shadingFill: cell.shadingFill ?? null,
-						borders: cell.borders ? JSON.stringify(cell.borders) : null,
+						shadingFill: visuals.shadingFill ?? null,
+						borders: visuals.borders ? JSON.stringify(visuals.borders) : null,
 					},
 					children,
 				),
@@ -67,7 +89,12 @@ export function tableNode(
 export function convertSimpleTable(
 	node: ProseMirrorNode,
 	convertParagraph: (paragraph: ProseMirrorNode) => Paragraph,
+	prior?: Table,
 ): Table['rows'] {
+	// Cell width, shading, borders and margins have no editor controls; keep each existing cell's
+	// values (matched by its source cell key) so editing text never reads as a formatting change.
+	const priorCells = new Map<string, TableCell>();
+	for (const row of prior?.rows ?? []) for (const cell of row) priorCells.set(cellKey(cell), cell);
 	const rows: Table['rows'] = [];
 	node.forEach((row) => {
 		const cells: Table['rows'][number] = [];
@@ -76,7 +103,9 @@ export function convertSimpleTable(
 			cell.forEach((paragraph) => {
 				if (paragraph.type.name === 'paragraph') paragraphs.push(convertParagraph(paragraph));
 			});
-			cells.push({ paragraphs });
+			const source = priorCells.get(String(cell.attrs.sourceCellKey || ''));
+			const { paragraphs: _previous, ...properties } = source ?? { paragraphs: [] };
+			cells.push({ ...structuredClone(properties), paragraphs });
 		});
 		rows.push(cells);
 	});

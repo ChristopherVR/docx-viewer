@@ -301,7 +301,7 @@
 .dve-paper td {
 	min-width: 44px;
 	padding: 7px 9px;
-	border: 1px solid #9aa0a6;
+	border: var(--dve-cell-border, 1px dashed #c8c6c4);
 	vertical-align: top;
 }
 .dve-paper td p {

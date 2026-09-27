@@ -1,6 +1,7 @@
 import type { DocumentModel } from '@christophervr/docx-core';
 import type { EditorView } from 'prosemirror-view';
 import { closeHistory } from 'prosemirror-history';
+import { DEFAULT_TABLE_BORDERS } from '@christophervr/docx-core';
 import { schema } from './schema';
 import { parseLineSpacingValue } from './line-spacing';
 
@@ -51,7 +52,7 @@ export function insertTable(view: EditorView, idGenerator?: (kind: string) => st
 	};
 	const paragraph = () => schema.nodes.paragraph.create({ id: nextId('cell') });
 	const table = schema.nodes.table.create(
-		{ id: nextId('table') },
+		{ id: nextId('table'), borders: JSON.stringify(DEFAULT_TABLE_BORDERS) },
 		[0, 1].map(() =>
 			schema.nodes.tableRow.create(
 				null,

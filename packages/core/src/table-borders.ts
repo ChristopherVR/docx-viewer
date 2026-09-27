@@ -33,8 +33,13 @@ export function parseTableBorders(
 ): TableBorders | undefined {
 	if (!bordersElement) return undefined;
 	const result: TableBorders = {};
+	// Word 2010+ writes `w:start`/`w:end` for the left/right edges of left-to-right tables.
+	const alias: Partial<Record<(typeof SIDES)[number], string>> = { left: 'start', right: 'end' };
 	for (const side of SIDES) {
-		const value = borderSide(first(bordersElement, side));
+		const aliasName = alias[side];
+		const value = borderSide(
+			first(bordersElement, side) ?? (aliasName ? first(bordersElement, aliasName) : undefined),
+		);
 		if (value) result[side] = value;
 	}
 	return Object.keys(result).length ? result : undefined;
