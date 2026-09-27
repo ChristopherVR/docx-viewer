@@ -39,10 +39,11 @@ Still missing:
 
 - Picture resize handles, alt-text editing, SVG pictures (they need a PNG fallback part), and
   floating picture layout.
-- Section editing covers size/orientation, margins, columns, next-page/continuous breaks, a
-  different first page and page numbering; vertical alignment, line numbering, page borders and
-  even/odd-page breaks are still protected, and the document-wide even/odd headers setting is read-only. The
-  continuous surface shows columns only for single-section documents (Print Layout shows all).
+- Section editing covers size/orientation, margins, columns, vertical alignment, all four
+  section-break types, a different first page, page numbering and the document-wide odd/even
+  headers setting; line numbering and page borders are still protected (only their presence is
+  modeled). The continuous surface shows columns only for single-section documents (Print Layout
+  shows all); vertically justified sections lay out top-aligned.
 - Ctrl+Alt+F / Ctrl+Alt+D (insert footnote/endnote) are bound, but Windows browsers can report
   Ctrl+Alt as AltGr and not deliver them; the Insert ribbon buttons always work.
 - Pictures and links in headers, footers and notes are resolved, shown and saved with each part's own
