@@ -1,7 +1,7 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 // Rebuilds a paragraph's inline content (runs, pictures, hyperlinks, tracked-change wrappers and
-// comment anchors) from the model's flat run list. Combines the hyperlink grouping from
-// write-hyperlink.ts with the revision/comment wrapping from write-revisions.ts.
+// comment anchors) from the model's flat run list: hyperlink grouping plus the revision and
+// comment-anchor wrapping helpers from write-revisions.ts and write-comments.ts.
 import type { HyperlinkInfo, TextRun } from './model.js';
 import type { RelationshipAllocator } from './relationship-allocator.js';
 import { createRun } from './write-run.js';
