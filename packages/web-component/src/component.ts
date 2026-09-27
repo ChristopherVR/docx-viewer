@@ -2,7 +2,7 @@ import { refreshEditorControls } from './editor-controls';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { history } from 'prosemirror-history';
-import type { Block, DocumentModel, HeaderFooterContent } from '@christophervr/docx-core';
+import type { Block, DocumentModel, HeaderFooterContent, Note } from '@christophervr/docx-core';
 import { createDocument, ensureListDefinition, saveDocx } from '@christophervr/docx-core';
 import { loadDocument } from '@christophervr/docx-document';
 import { createRibbon, setRibbonLocale, type RibbonAction } from './ribbon';
@@ -28,6 +28,7 @@ import { paragraphStylesPlugin, resetStylePicker } from './paragraph-styles';
 import { changeListLevel, removeList, selectionIsListKind, toggleList } from './list-commands';
 import { buildHeaderElement, buildFooterElement } from './header-footer-view';
 import { attachHeaderFooterEditing, type HeaderFooterSlotName } from './header-footer-editor';
+import { attachNoteEditing } from './note-editor';
 import { buildNotesElement } from './notes-view';
 import { createPrintLayoutController, type PrintLayoutController } from './print-layout-view';
 import { moveCursorToBlock } from './print-layout-cursor';
@@ -400,10 +401,39 @@ ${chromeStyleText}`;
 					change: (slot, blocks) => this.updateHeaderFooter(kind, slot, blocks),
 					editable: () => !this._readOnly && !this.collaboration,
 				});
+		if (this.notesEl)
+			attachNoteEditing(this.notesEl, {
+				note: (id) =>
+					[...(this.model.footnotes ?? []), ...(this.model.endnotes ?? [])].find(
+						(note) => note.id === id,
+					),
+				change: (id, blocks) => this.updateNote(id, blocks),
+				editable: () => !this._readOnly && !this.collaboration,
+			});
 		if (this.headerEl) this.canvas.insertBefore(this.headerEl, this.paper);
 		if (this.footerEl) this.canvas.insertBefore(this.footerEl, this.paper.nextSibling);
 		if (this.notesEl)
 			this.canvas.insertBefore(this.notesEl, (this.footerEl ?? this.paper).nextSibling);
+	}
+
+	/** Replaces one footnote's or endnote's blocks. */
+	private updateNote(id: string, blocks: Block[]) {
+		const replace = (notes: Note[] | undefined) =>
+			notes?.map((note) => (note.id === id ? { ...note, blocks: structuredClone(blocks) } : note));
+		this.model = {
+			...this.model,
+			footnotes: replace(this.model.footnotes),
+			endnotes: replace(this.model.endnotes),
+		};
+		this.markEditedOutsideBody();
+	}
+
+	private markEditedOutsideBody() {
+		this.chrome?.setSaveState('dirty');
+		if (this.viewMode === 'print') this.printLayout?.scheduleRelayout(this.model);
+		this.dispatchEvent(
+			new CustomEvent('document-change', { detail: this.model, bubbles: true, composed: true }),
+		);
 	}
 
 	/** Applies header/footer edits to every section slot that shares the edited part. */
@@ -425,11 +455,7 @@ ${chromeStyleText}`;
 			return { ...section, [kind]: slots };
 		});
 		this.model = { ...this.model, sections };
-		this.chrome?.setSaveState('dirty');
-		if (this.viewMode === 'print') this.printLayout?.scheduleRelayout(this.model);
-		this.dispatchEvent(
-			new CustomEvent('document-change', { detail: this.model, bubbles: true, composed: true }),
-		);
+		this.markEditedOutsideBody();
 	}
 
 	private applyTransaction(transaction: Transaction, remote = false) {

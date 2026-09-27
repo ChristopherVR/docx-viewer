@@ -78,6 +78,7 @@ function parseRun(node: XmlElement, revision?: Revision): TextRun {
 	}
 	let breakKind: 'page' | 'column' | undefined;
 	let noteReference: TextRun['noteReference'];
+	let noteMark: TextRun['noteMark'];
 	if (content.length === 1) {
 		const only = content[0];
 		if (named(only, 'br')) {
@@ -89,10 +90,11 @@ function parseRun(node: XmlElement, revision?: Revision): TextRun {
 		} else if (named(only, 'endnoteReference')) {
 			const id = getW(only, 'id');
 			if (id) noteReference = { kind: 'endnote', id };
-		}
+		} else if (named(only, 'footnoteRef')) noteMark = 'footnote';
+		else if (named(only, 'endnoteRef')) noteMark = 'endnote';
 	}
 	const text =
-		breakKind || noteReference
+		breakKind || noteReference || noteMark
 			? ''
 			: content
 					.map((child) => {
@@ -106,6 +108,7 @@ function parseRun(node: XmlElement, revision?: Revision): TextRun {
 	const run: TextRun = { text, ...parseRunProperties(props) };
 	if (breakKind) run.break = breakKind;
 	if (noteReference) run.noteReference = noteReference;
+	if (noteMark) run.noteMark = noteMark;
 	const runRevision = revision ?? runFormatRevision(props);
 	if (runRevision) run.revision = runRevision;
 	const language = first(props, 'lang');

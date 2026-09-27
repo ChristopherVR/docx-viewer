@@ -208,6 +208,10 @@ export function createRun(
 		node.appendChild(br);
 		return node;
 	}
+	if (run.noteMark) {
+		node.appendChild(makeW(doc, run.noteMark === 'footnote' ? 'footnoteRef' : 'endnoteRef'));
+		return node;
+	}
 	if (run.noteReference) {
 		const reference = makeW(
 			doc,

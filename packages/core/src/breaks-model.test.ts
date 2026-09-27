@@ -71,7 +71,7 @@ describe('page and column breaks', () => {
 });
 
 describe('footnote and endnote reference marks', () => {
-	it('models a footnote reference run and protects its paragraph from edits', async () => {
+	it('models a footnote reference run and keeps it when its paragraph is edited', async () => {
 		const { bytes } = await fixture(
 			'<w:p><w:r><w:t>See</w:t></w:r><w:r><w:rPr><w:vertAlign w:val="superscript"/></w:rPr><w:footnoteReference w:id="3"/></w:r></w:p>',
 		);
@@ -84,7 +84,13 @@ describe('footnote and endnote reference marks', () => {
 		]);
 		expect(await loaded.save()).toEqual(bytes);
 		paragraph.align = 'center';
-		await expect(loaded.save()).rejects.toThrow('contains inline OOXML');
+		paragraph.runs[0].text = 'See also';
+		const saved = await loaded.save();
+		const xml = await (await JSZip.loadAsync(saved)).file('word/document.xml')!.async('string');
+		expect(xml).toContain('See also');
+		expect(xml).toMatch(
+			/<w:r><w:rPr><w:vertAlign w:val="superscript"\/><\/w:rPr><w:footnoteReference w:id="3"\/><\/w:r>/,
+		);
 	});
 
 	it('models an endnote reference run', async () => {

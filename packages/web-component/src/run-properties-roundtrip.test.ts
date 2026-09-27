@@ -74,4 +74,18 @@ describe('run properties survive the editor round trip', () => {
 		expect(xml).toContain('Edited cell');
 		expect(xml).toContain('w:fill="FFFF00"');
 	});
+
+	it('keeps a footnote reference run formatting through the editor', async () => {
+		const loaded = await loadDocx(
+			await docx(
+				'<w:p><w:r><w:t>See</w:t></w:r><w:r><w:rPr><w:rStyle w:val="FootnoteReference"/><w:vertAlign w:val="superscript"/></w:rPr><w:footnoteReference w:id="2"/></w:r></w:p>',
+			),
+		);
+		const edited = throughEditor(loaded.model);
+		expect((edited.blocks[0] as Paragraph).runs[1]).toMatchObject({
+			noteReference: { kind: 'footnote', id: '2' },
+			style: 'FootnoteReference',
+			verticalAlign: 'superscript',
+		});
+	});
 });

@@ -6,6 +6,7 @@ import type { PackageContext } from './parse.js';
 import { applyModel } from './write.js';
 import { applyNumberingCatalog } from './numbering-package.js';
 import { applyHeaderFooterEdits, sectionLayout } from './write-header-footer.js';
+import { applyNoteEdits } from './write-notes.js';
 import { applyTrackChangesSetting } from './settings.js';
 import { applyComments } from './write-comments.js';
 import {
@@ -72,14 +73,6 @@ export async function saveDocx(
 		throw new Error(
 			'Editing sections or page setup is not supported; source section properties are preserved unchanged.',
 		);
-	if (
-		binding &&
-		(JSON.stringify(model.footnotes) !== JSON.stringify(binding.base.footnotes) ||
-			JSON.stringify(model.endnotes) !== JSON.stringify(binding.base.endnotes))
-	)
-		throw new Error(
-			'Editing footnote or endnote text is not supported; source footnotes.xml/endnotes.xml are preserved unchanged.',
-		);
 	if (!binding && (model.sections?.length || model.footnotes?.length || model.endnotes?.length))
 		throw new Error(
 			'Sections, headers, footers, footnotes and endnotes are not supported by the standalone DOCX writer; they would be silently dropped.',
@@ -143,7 +136,10 @@ export async function saveDocx(
 		zip.file(RELS_PART, buildRelationshipsXml(relationships));
 		if (contentTypesXml) zip.file(CONTENT_TYPES_PART, contentTypesXml);
 	}
-	if (binding) await applyHeaderFooterEdits(zip, model, binding.base);
+	if (binding) {
+		await applyHeaderFooterEdits(zip, model, binding.base);
+		await applyNoteEdits(zip, model, binding.base);
+	}
 	await applyNumberingCatalog(zip, model, binding);
 	if (model.trackChanges !== binding?.base.trackChanges)
 		await applyTrackChangesSetting(zip, model.trackChanges === true);

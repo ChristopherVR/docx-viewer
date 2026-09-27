@@ -39,18 +39,21 @@ export function attachHeaderFooterEditing(
 	}
 }
 
-function openEditor(
-	slot: HTMLElement,
+/**
+ * Replaces `body` with an in-place editor for `blocks` (same schema, history and formatting keys as
+ * the main editor). Escape or moving focus elsewhere closes it and re-renders a read-only preview.
+ */
+export function openBlocksEditor(
+	container: HTMLElement,
 	body: HTMLElement,
-	name: HeaderFooterSlotName,
-	content: HeaderFooterContent,
-	options: HeaderFooterEditingOptions,
+	blocks: Block[],
+	change: (blocks: Block[]) => void,
 ): void {
-	let model = { ...createDocument(), blocks: structuredClone(content.blocks) };
+	let model = { ...createDocument(), blocks: structuredClone(blocks) };
 	const host = document.createElement('div');
 	host.className = 'dve-header-footer-editor';
 	body.replaceChildren(host);
-	slot.classList.add('dve-header-footer-editing');
+	container.classList.add('dve-header-footer-editing');
 	const view: EditorView = new EditorView(host, {
 		state: EditorState.create({
 			doc: modelToDoc(model),
@@ -62,12 +65,12 @@ function openEditor(
 			view.updateState(repaired ? applied.apply(repaired) : applied);
 			if (!transaction.docChanged) return;
 			model = docToModel(view.state.doc, model);
-			options.change(name, structuredClone(model.blocks));
+			change(structuredClone(model.blocks));
 		},
 	});
 	const close = () => {
-		if (!slot.classList.contains('dve-header-footer-editing')) return;
-		slot.classList.remove('dve-header-footer-editing');
+		if (!container.classList.contains('dve-header-footer-editing')) return;
+		container.classList.remove('dve-header-footer-editing');
 		view.destroy();
 		body.replaceChildren(renderBlocks(model.blocks));
 	};
@@ -78,4 +81,14 @@ function openEditor(
 		if (!host.contains(event.relatedTarget as Node | null)) close();
 	});
 	focusView(view);
+}
+
+function openEditor(
+	slot: HTMLElement,
+	body: HTMLElement,
+	name: HeaderFooterSlotName,
+	content: HeaderFooterContent,
+	options: HeaderFooterEditingOptions,
+): void {
+	openBlocksEditor(slot, body, content.blocks, (blocks) => options.change(name, blocks));
 }

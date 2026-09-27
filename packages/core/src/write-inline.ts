@@ -41,6 +41,14 @@ function runIsSafe(run: XmlElement): boolean {
 		(child): child is XmlElement => isElement(child) && !named(child, 'rPr'),
 	);
 	if (content.length === 1 && named(content[0], 'br') && isModeledBreak(content[0])) return true;
+	// Note references and a note's own number mark are modeled runs (see block-parser.ts).
+	if (
+		content.length === 1 &&
+		['footnoteReference', 'endnoteReference', 'footnoteRef', 'endnoteRef'].some((name) =>
+			named(content[0], name),
+		)
+	)
+		return true;
 	const kinds = new Set<string>();
 	for (const element of content) {
 		if (element.localName === 'br' && hasSpecialBreak(element)) return false;

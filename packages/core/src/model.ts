@@ -89,6 +89,8 @@ export interface TextRun {
 	 * mark is derived from document order, not stored here.
 	 */
 	noteReference?: { kind: 'footnote' | 'endnote'; id: string };
+	/** The automatic number mark (`w:footnoteRef`/`w:endnoteRef`) that starts a note's own text. */
+	noteMark?: 'footnote' | 'endnote';
 	/**
 	 * Present on runs holding a field's displayed result (`w:fldSimple`, or text between a complex
 	 * field's `separate` and `end`). Display metadata only: fields are not recalculated on save and

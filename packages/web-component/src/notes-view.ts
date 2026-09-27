@@ -22,7 +22,10 @@ function noteList(
 		const marker = document.createElement('span');
 		marker.className = 'dve-note-marker';
 		marker.textContent = `${formatNoteNumber(number, numFmt)}. `;
-		item.append(marker, renderBlocks(note.blocks));
+		const body = document.createElement('div');
+		body.className = 'dve-note-body';
+		body.append(renderBlocks(note.blocks));
+		item.append(marker, body);
 		list.append(item);
 	}
 	return list;
@@ -40,7 +43,6 @@ function section(
 	const root = document.createElement('section');
 	root.className = `dve-notes dve-notes-${kind}`;
 	root.setAttribute('contenteditable', 'false');
-	root.setAttribute('aria-readonly', 'true');
 	root.dataset.editorLocale = locale;
 	root.dataset.localeAriaLabel = label;
 	root.setAttribute('aria-label', translateUiText(root, label));

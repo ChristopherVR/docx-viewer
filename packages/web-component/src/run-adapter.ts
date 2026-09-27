@@ -71,7 +71,13 @@ export function runToInlineNodes(run: TextRun, noteNumber?: NoteNumberLookup): P
 	if (run.break) return [schema.nodes.pageBreak.create({ kind: run.break })];
 	if (run.noteReference) {
 		const { kind, id } = run.noteReference;
-		return [schema.nodes.noteReference.create({ kind, id, number: noteNumber?.(kind, id) ?? 1 })];
+		return [
+			schema.nodes.noteReference.create(
+				{ kind, id, number: noteNumber?.(kind, id) ?? 1 },
+				null,
+				marksForRun(run),
+			),
+		];
 	}
 	if (run.image) {
 		const marks = run.link
@@ -128,43 +134,8 @@ function linkFromMarks(child: ProseMirrorNode): TextRun['link'] {
 	return info.href || info.anchor ? info : undefined;
 }
 
-export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void {
-	if (child.type.name === 'pageBreak') {
-		runs.push({ text: '', break: child.attrs.kind === 'column' ? 'column' : 'page' });
-		return;
-	}
-	if (child.type.name === 'noteReference') {
-		runs.push({
-			text: '',
-			noteReference: {
-				kind: child.attrs.kind === 'endnote' ? 'endnote' : 'footnote',
-				id: String(child.attrs.id || ''),
-			},
-		});
-		return;
-	}
-	if (child.type.name === 'image') {
-		runs.push({
-			text: '',
-			image: {
-				relId: child.attrs.relId,
-				partName: child.attrs.partName,
-				contentType: child.attrs.contentType,
-				widthPx: child.attrs.widthPx,
-				heightPx: child.attrs.heightPx,
-				...(child.attrs.altText ? { altText: child.attrs.altText } : {}),
-				...(child.attrs.title ? { title: child.attrs.title } : {}),
-				...(child.attrs.anchored ? { anchored: true } : {}),
-				...(child.attrs.unsupported ? { unsupported: child.attrs.unsupported } : {}),
-			},
-			...(linkFromMarks(child) ? { link: linkFromMarks(child) } : {}),
-		});
-		return;
-	}
-	if (!child.isText && child.type.name !== 'hardBreak') return;
-	const run: TextRun = { text: child.isText ? child.text || '' : '\n' };
-	const link = linkFromMarks(child);
-	if (link) run.link = link;
+/** Copies run formatting carried by a node's marks onto `run` (text runs and note references). */
+function applyMarkFormatting(run: TextRun, child: ProseMirrorNode): void {
 	if (propertyOfMark(child, 'bold')) run.bold = true;
 	if (propertyOfMark(child, 'italic')) run.italic = true;
 	if (propertyOfMark(child, 'underline')) run.underline = true;
@@ -200,6 +171,49 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 	if (characterStyle?.attrs.id) run.style = String(characterStyle.attrs.id);
 	const extra = propertyOfMark(child, 'runProperties');
 	if (extra?.attrs.props) Object.assign(run, structuredClone(extra.attrs.props));
+}
+
+export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void {
+	if (child.type.name === 'pageBreak') {
+		runs.push({ text: '', break: child.attrs.kind === 'column' ? 'column' : 'page' });
+		return;
+	}
+	if (child.type.name === 'noteReference') {
+		const reference: TextRun = {
+			text: '',
+			noteReference: {
+				kind: child.attrs.kind === 'endnote' ? 'endnote' : 'footnote',
+				id: String(child.attrs.id || ''),
+			},
+		};
+		// The reference's own formatting (superscript, FootnoteReference style) rides on its marks.
+		applyMarkFormatting(reference, child);
+		runs.push(reference);
+		return;
+	}
+	if (child.type.name === 'image') {
+		runs.push({
+			text: '',
+			image: {
+				relId: child.attrs.relId,
+				partName: child.attrs.partName,
+				contentType: child.attrs.contentType,
+				widthPx: child.attrs.widthPx,
+				heightPx: child.attrs.heightPx,
+				...(child.attrs.altText ? { altText: child.attrs.altText } : {}),
+				...(child.attrs.title ? { title: child.attrs.title } : {}),
+				...(child.attrs.anchored ? { anchored: true } : {}),
+				...(child.attrs.unsupported ? { unsupported: child.attrs.unsupported } : {}),
+			},
+			...(linkFromMarks(child) ? { link: linkFromMarks(child) } : {}),
+		});
+		return;
+	}
+	if (!child.isText && child.type.name !== 'hardBreak') return;
+	const run: TextRun = { text: child.isText ? child.text || '' : '\n' };
+	const link = linkFromMarks(child);
+	if (link) run.link = link;
+	applyMarkFormatting(run, child);
 	const previous = runs.at(-1);
 	const fields: (keyof TextRun)[] = [
 		'bold',

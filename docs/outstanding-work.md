@@ -29,7 +29,7 @@ and the model warnings emitted at parse time.
 
 ### Editor commands and UI
 
-Done since the merge: Word-style window chrome (title bar with quick access, "Tell me"
+Done since the merge: in-place header/footer and footnote/endnote editing, headers/footers with live PAGE/NUMPAGES in Print Layout, table style rendering, picture resize and alt text, Word-style window chrome (title bar with quick access, "Tell me"
 command search, Editing/Viewing mode; File backstage; status bar with zoom and compatibility
 notes), Insert Picture (PNG, JPEG, GIF, BMP), insert/edit/remove hyperlink with Ctrl+K and a
 "Place in this document" bookmark list, Ctrl+Click to follow links, a character style picker,
@@ -39,15 +39,16 @@ Still missing:
 
 - Picture resize handles, alt-text editing, SVG pictures (they need a PNG fallback part), and
   floating picture layout.
-- Header/footer, footnote/endnote and section editing; multi-column rendering on the continuous surface.
-- Table rendering in the editor for colspan/rowspan, borders, shading and cell alignment
-  (`table-render.ts` exists; verify against Word-authored fixtures), and read-only nested tables.
-- Toggle-property XOR between inherited and direct formatting is approximated in the editor
-  display (the core resolver implements it; direct marks still render on top).
+- Inserting new footnotes/endnotes (existing notes and the paragraphs that reference them are
+  editable) and section/page-setup editing; multi-column rendering on the continuous surface.
+- Pictures and new external links inside headers, footers and notes (they need relationships in
+  those parts).
+- Table style run formatting (e.g. bold header rows) and cell margins are not yet rendered.
+- Underline/strikethrough cancelled by the style hierarchy still render (bold, italic and caps are handled).
 
 ### Fidelity
 
-- Field recalculation (`PAGE`, `NUMPAGES`, `DATE`, …); complex `fldChar`/`instrText` hyperlinks remain protected.
+- Field recalculation beyond PAGE/NUMPAGES/SECTIONPAGES in Print Layout (DATE, TOC, cross-references); paragraphs containing fields stay protected from edits.
 - Picture crop and effects; floating object position and text wrapping.
 - Picture bullets, `numStyleLink`, Word's exact `lvlRestart` cascade.
 - Move linkage for `moveFrom`/`moveTo`, prior-formatting snapshots for `rPrChange`/`pPrChange`, table-structure revisions, and comments spanning multiple paragraphs.
@@ -57,5 +58,4 @@ Still missing:
 ### Engineering follow-ups
 
 - Modules over the 300-line guideline: `web-component/src/component.ts` (~560), `ribbon.ts` (~410), `schema.ts` (~365), `core/src/model.ts` (~355) and the `localization-strings.ts` data table.
-- Superseded helpers from the parallel branches remain (`write-hyperlink.ts`, `write-safety.ts`, and `buildInlineNodes`/`gatherOldRuns` in `write-revisions.ts`) now that `write-inline.ts` is the single inline writer; remove them once no tests depend on them.
 - The Track Changes plugin handles transactions of plain replace steps; multi-step transactions mixing deletions and insertions need position mapping between steps.
