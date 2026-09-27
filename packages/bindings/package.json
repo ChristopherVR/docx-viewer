@@ -1,7 +1,7 @@
 {
 	"name": "@christophervr/docx-bindings",
 	"version": "0.1.0",
-	"description": "React, Vue, Angular and Svelte bindings for the DOCX editor",
+	"description": "React, Vue, Angular, Svelte and Solid bindings for the DOCX editor",
 	"license": "Apache-2.0",
 	"author": "ChristopherVR",
 	"repository": {
@@ -37,6 +37,10 @@
 			"types": "./dist/angular.d.ts",
 			"import": "./dist/angular.js"
 		},
+		"./solid": {
+			"types": "./dist/solid.d.ts",
+			"import": "./dist/solid.js"
+		},
 		"./svelte": {
 			"types": "./dist/svelte.d.ts",
 			"svelte": "./src/WordEditor.svelte",
@@ -50,6 +54,7 @@
 	"peerDependencies": {
 		"@angular/core": ">=19",
 		"react": ">=18",
+		"solid-js": "^1.9.0",
 		"svelte": "^5",
 		"vue": "^3"
 	},
@@ -64,6 +69,9 @@
 			"optional": true
 		},
 		"svelte": {
+			"optional": true
+		},
+		"solid-js": {
 			"optional": true
 		}
 	}

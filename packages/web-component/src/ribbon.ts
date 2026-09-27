@@ -40,6 +40,14 @@ const select = (
 ) => {
 	const el = document.createElement('select');
 	el.setAttribute('aria-label', label);
+	const stableControlClass: Record<string, string> = {
+		'Font family': 'font-family-select',
+		'Font size': 'font-size-select',
+		'Spacing after': 'spacing-select',
+		'Spacing before': 'spacing-select',
+		'Line spacing': 'line-spacing-select',
+	};
+	if (stableControlClass[label]) el.classList.add(stableControlClass[label]);
 	for (const [value, text] of values) {
 		const option = document.createElement('option');
 		option.value = value;
@@ -54,9 +62,19 @@ const select = (
 	);
 	return el;
 };
-const group = (...children: HTMLElement[]) => {
+const group = (label: string, ...children: HTMLElement[]) => {
 	const el = document.createElement('div');
 	el.className = 'ribbon-group';
+	el.dataset.label = label;
+	el.dataset.caption = label;
+	el.setAttribute('role', 'group');
+	el.setAttribute('aria-label', `${label} controls`);
+	el.append(...children);
+	return el;
+};
+const row = (...children: HTMLElement[]) => {
+	const el = document.createElement('div');
+	el.className = 'ribbon-row';
 	el.append(...children);
 	return el;
 };
@@ -122,73 +140,79 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 	const home = panels.get('Home')!;
 	home.append(
 		group(
-			select(
-				'Font family',
-				[
-					['Arial', 'Arial'],
-					['Calibri', 'Calibri'],
-					['Georgia', 'Georgia'],
-					['Times New Roman', 'Times New Roman'],
-					['Verdana', 'Verdana'],
-				],
-				(value) => ({ type: 'font', key: 'family', value }),
-			),
-			select(
-				'Font size',
-				['8', '9', '10', '11', '12', '14', '16', '18', '20', '24', '28', '36', '48', '72'].map(
-					(v) => [v, v],
+			'Font',
+			row(
+				select(
+					'Font family',
+					[
+						['Arial', 'Arial'],
+						['Calibri', 'Calibri'],
+						['Georgia', 'Georgia'],
+						['Times New Roman', 'Times New Roman'],
+						['Verdana', 'Verdana'],
+					],
+					(value) => ({ type: 'font', key: 'family', value }),
 				),
-				(value) => ({ type: 'font', key: 'size', value }),
+				select(
+					'Font size',
+					['8', '9', '10', '11', '12', '14', '16', '18', '20', '24', '28', '36', '48', '72'].map(
+						(v) => [v, v],
+					),
+					(value) => ({ type: 'font', key: 'size', value }),
+				),
+				button('Bold', 'B', { type: 'format', key: 'bold' }, 'tool-bold'),
+				button('Italic', 'I', { type: 'format', key: 'italic' }, 'tool-italic'),
+				button('Underline', 'U', { type: 'format', key: 'underline' }, 'tool-underline'),
+				button('Strikethrough', 'S̶', { type: 'format', key: 'strike' }, 'tool-strike'),
 			),
-			button('Bold', 'B', { type: 'format', key: 'bold' }, 'tool-bold'),
-			button('Italic', 'I', { type: 'format', key: 'italic' }, 'tool-italic'),
-			button('Underline', 'U', { type: 'format', key: 'underline' }, 'tool-underline'),
-			button('Strikethrough', 'S̶', { type: 'format', key: 'strike' }, 'tool-strike'),
-			button('Superscript', 'x²', { type: 'format', key: 'superscript' }),
-			button('Subscript', 'x₂', { type: 'format', key: 'subscript' }),
-			select(
-				'Font color',
-				[
-					['#000000', 'Black'],
-					['#c00000', 'Red'],
-					['#e36c09', 'Orange'],
-					['#ffc000', 'Gold'],
-					['#70ad47', 'Green'],
-					['#0070c0', 'Blue'],
-					['#7030a0', 'Purple'],
-				],
-				(value) => ({ type: 'font', key: 'color', value }),
+			row(
+				button('Superscript', 'x²', { type: 'format', key: 'superscript' }),
+				button('Subscript', 'x₂', { type: 'format', key: 'subscript' }),
+				select(
+					'Font color',
+					[
+						['#000000', 'Black'],
+						['#c00000', 'Red'],
+						['#e36c09', 'Orange'],
+						['#ffc000', 'Gold'],
+						['#70ad47', 'Green'],
+						['#0070c0', 'Blue'],
+						['#7030a0', 'Purple'],
+					],
+					(value) => ({ type: 'font', key: 'color', value }),
+				),
+				select(
+					'Text highlight',
+					[
+						['none', 'No highlight'],
+						['yellow', 'Yellow'],
+						['green', 'Green'],
+						['cyan', 'Cyan'],
+						['magenta', 'Magenta'],
+						['blue', 'Blue'],
+						['red', 'Red'],
+						['darkBlue', 'Dark blue'],
+						['darkCyan', 'Dark cyan'],
+						['darkGreen', 'Dark green'],
+						['darkMagenta', 'Dark magenta'],
+						['darkRed', 'Dark red'],
+						['darkYellow', 'Dark yellow'],
+						['darkGray', 'Dark gray'],
+						['lightGray', 'Light gray'],
+						['black', 'Black'],
+						['white', 'White'],
+					],
+					(value) => ({ type: 'font', key: 'highlight', value }),
+				),
+				button('Clear formatting', 'Clear', { type: 'clear' }),
 			),
-			select(
-				'Text highlight',
-				[
-					['none', 'No highlight'],
-					['yellow', 'Yellow'],
-					['green', 'Green'],
-					['cyan', 'Cyan'],
-					['magenta', 'Magenta'],
-					['blue', 'Blue'],
-					['red', 'Red'],
-					['darkBlue', 'Dark blue'],
-					['darkCyan', 'Dark cyan'],
-					['darkGreen', 'Dark green'],
-					['darkMagenta', 'Dark magenta'],
-					['darkRed', 'Dark red'],
-					['darkYellow', 'Dark yellow'],
-					['darkGray', 'Dark gray'],
-					['lightGray', 'Light gray'],
-					['black', 'Black'],
-					['white', 'White'],
-				],
-				(value) => ({ type: 'font', key: 'highlight', value }),
-			),
-			button('Clear formatting', 'Clear', { type: 'clear' }),
 		),
 	);
 	panels
 		.get('Table')!
 		.append(
 			group(
+				'Table',
 				button('Insert row above', '↑ Row', { type: 'tableEdit', key: 'rowBefore' }),
 				button('Insert row below', '↓ Row', { type: 'tableEdit', key: 'rowAfter' }),
 				button('Delete row', '− Row', { type: 'tableEdit', key: 'deleteRow' }),
@@ -200,39 +224,45 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 		);
 	home.append(
 		group(
-			button('Decrease indent', '⇤', { type: 'paragraph', key: 'indent', value: 'decrease' }),
-			button('Increase indent', '⇥', { type: 'paragraph', key: 'indent', value: 'increase' }),
-			select(
-				'Spacing after',
-				[
-					['inherit', 'After: style default'],
-					['0', 'After: no paragraph space'],
-					['120', 'After: 6 pt'],
-					['240', 'After: 12 pt'],
-					['360', 'After: 18 pt'],
-				],
-				(value) => ({ type: 'paragraph', key: 'spacingAfter', value }),
+			'Paragraph',
+			row(
+				button('Decrease indent', '⇤', { type: 'paragraph', key: 'indent', value: 'decrease' }),
+				button('Increase indent', '⇥', { type: 'paragraph', key: 'indent', value: 'increase' }),
+				select(
+					'Spacing after',
+					[
+						['inherit', 'After: style default'],
+						['0', 'After: no paragraph space'],
+						['120', 'After: 6 pt'],
+						['240', 'After: 12 pt'],
+						['360', 'After: 18 pt'],
+					],
+					(value) => ({ type: 'paragraph', key: 'spacingAfter', value }),
+				),
 			),
-			select(
-				'Spacing before',
-				[
-					['inherit', 'Before: style default'],
-					['0', 'Before: no paragraph space'],
-					['120', 'Before: 6 pt'],
-					['240', 'Before: 12 pt'],
-					['360', 'Before: 18 pt'],
-				],
-				(value) => ({ type: 'paragraph', key: 'spacingBefore', value }),
+			row(
+				select(
+					'Spacing before',
+					[
+						['inherit', 'Before: style default'],
+						['0', 'Before: no paragraph space'],
+						['120', 'Before: 6 pt'],
+						['240', 'Before: 12 pt'],
+						['360', 'Before: 18 pt'],
+					],
+					(value) => ({ type: 'paragraph', key: 'spacingBefore', value }),
+				),
+				select('Line spacing', lineSpacingOptions, (value) => ({
+					type: 'paragraph',
+					key: 'lineSpacing',
+					value,
+				})),
 			),
-			select('Line spacing', lineSpacingOptions, (value) => ({
-				type: 'paragraph',
-				key: 'lineSpacing',
-				value,
-			})),
 		),
 	);
 	home.append(
 		group(
+			'Alignment and history',
 			...(
 				[
 					['left', 'Align left'],
@@ -250,11 +280,18 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 			button('Redo', '↷', { type: 'history', key: 'redo' }),
 		),
 	);
-	home.append(group(button('Find and replace', 'Find and replace', { type: 'search' })));
-	panels.get('Review')!.append(createMultilingualControls());
-	panels.get('Insert')!.append(group(button('Insert table', '▦ Table', { type: 'table' })));
+	home.append(group('Editing', button('Find and replace', 'Find and replace', { type: 'search' })));
+	const languageControls = createMultilingualControls();
+	languageControls.setAttribute('role', 'group');
+	languageControls.setAttribute('aria-label', 'Language');
+	languageControls.dataset.label = 'Language';
+	panels.get('Review')!.append(languageControls);
+	panels
+		.get('Insert')!
+		.append(group('Tables', button('Insert table', '▦ Table', { type: 'table' })));
 	panels.get('Layout')!.append(
 		group(
+			'Page setup',
 			select(
 				'Margins',
 				[
@@ -276,6 +313,7 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 	);
 	panels.get('View')!.append(
 		group(
+			'Zoom',
 			select(
 				'Zoom',
 				[

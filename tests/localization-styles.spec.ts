@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import JSZip from 'jszip';
 import { readFile } from 'node:fs/promises';
 
-const frameworks = ['vanilla', 'react', 'vue', 'angular', 'svelte'];
+const frameworks = ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'];
 const wordNs = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const stylesXml = `<?xml version="1.0"?><w:styles xmlns:w="${wordNs}">
 <w:docDefaults><w:pPrDefault><w:pPr><w:spacing w:after="120"/></w:pPr></w:pPrDefault></w:docDefaults>

@@ -53,6 +53,13 @@ export function syncStylePicker(
 		select.dataset.paragraphStyles = '';
 		const group = document.createElement('div');
 		group.className = 'ribbon-group';
+		group.dataset.label = 'Styles';
+		group.dataset.caption = translate(locale, 'Styles');
+		group.setAttribute('role', 'group');
+		group.setAttribute(
+			'aria-label',
+			locale === 'fr' ? `Commandes : ${group.dataset.caption}` : `${group.dataset.caption} controls`,
+		);
 		group.append(select);
 		toolbar.querySelector('#dve-panel-home')?.prepend(group);
 		select.addEventListener('change', () => {

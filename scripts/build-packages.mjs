@@ -45,6 +45,7 @@ for (const name of packages) {
 					react: 'src/react.tsx',
 					vue: 'src/vue.ts',
 					angular: 'src/angular.ts',
+					solid: 'src/solid.ts',
 				}
 			: name === 'viewer'
 				? Object.fromEntries(
@@ -59,6 +60,7 @@ for (const name of packages) {
 							'vue',
 							'angular',
 							'svelte',
+							'solid',
 						].map((entry) => [entry, `src/${entry}.ts`]),
 					)
 				: { index: 'src/index.ts', ...(name === 'core' ? { embedded: 'src/embedded.ts' } : {}) };

@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
 
-for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte']) {
+for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid']) {
 	test(`${framework}: multilingual metadata and RTL survive DOCX save/reload`, async ({ page }) => {
 		const errors: string[] = [];
 		page.on('pageerror', (error) => errors.push(error.message));

@@ -22,6 +22,13 @@ export async function mountFramework(
 			import('../../packages/bindings/src/react'),
 		]);
 		createRoot(host).render(createElement(WordEditor, options));
+	} else if (framework === 'solid') {
+		const [{ render }, { createComponent }, { WordEditor }] = await Promise.all([
+			import('solid-js/web'),
+			import('solid-js'),
+			import('../../packages/bindings/src/solid'),
+		]);
+		render(() => createComponent(WordEditor, options), host);
 	} else if (framework === 'vue') {
 		const [{ createApp, h }, { WordEditor }] = await Promise.all([
 			import('vue'),
@@ -32,6 +39,7 @@ export async function mountFramework(
 				h(WordEditor, {
 					documentModel: options.documentModel,
 					readOnly: options.readOnly,
+					locale: options.locale,
 					'onDocument-change': options.onDocumentChange,
 					'onDocument-error': options.onDocumentError,
 				}),
@@ -46,6 +54,7 @@ export async function mountFramework(
 			props: {
 				documentModel: options.documentModel,
 				readOnly: options.readOnly,
+				locale: options.locale,
 				ondocumentchange: options.onDocumentChange,
 				ondocumenterror: options.onDocumentError,
 			},
@@ -68,6 +77,7 @@ export async function mountFramework(
 		});
 		component.setInput('documentModel', options.documentModel);
 		component.setInput('readOnly', options.readOnly ?? false);
+		component.setInput('locale', options.locale ?? 'en');
 		component.instance.documentChange.subscribe(options.onDocumentChange);
 		component.instance.documentError.subscribe(options.onDocumentError);
 		app.attachView(component.hostView);

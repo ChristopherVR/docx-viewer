@@ -49,6 +49,23 @@ Svelte 5:
 <WordEditor documentModel={model} ondocumentchange={next => model = next} />
 ```
 
+SolidJS:
+
+```tsx
+import { createSignal } from 'solid-js';
+import { WordEditor } from '@christophervr/docx-viewer/solid';
+
+function DocumentEditor() {
+	const [model, setModel] = createSignal(initialDocument);
+	return <WordEditor documentModel={model()} onDocumentChange={setModel} />;
+}
+```
+
+Solid uses the same `documentModel`, `readOnly`, `locale`, `onDocumentChange`, and
+`onDocumentError` options as the shared adapter. Use `editorRef` to obtain the
+mounted editor's `element`, `load`, and `save` methods. The Solid owner cleans up
+the editor and its listeners when the component unmounts.
+
 Custom element:
 
 ```ts

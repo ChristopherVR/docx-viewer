@@ -3,6 +3,13 @@ export type EditorLocale = 'en' | 'fr';
 
 const strings = {
 	en: {
+		Font: 'Font',
+		Paragraph: 'Paragraph',
+		'Alignment and history': 'Alignment and history',
+		Editing: 'Editing',
+		Tables: 'Tables',
+		'Page setup': 'Page setup',
+		Styles: 'Styles',
 		'Document formatting': 'Document formatting',
 		'Ribbon tabs': 'Ribbon tabs',
 		Home: 'Home',
@@ -111,6 +118,13 @@ const strings = {
 		'status.words': '{count} words',
 	},
 	fr: {
+		Font: 'Police',
+		Paragraph: 'Paragraphe',
+		'Alignment and history': 'Alignement et historique',
+		Editing: 'Édition',
+		Tables: 'Tableaux',
+		'Page setup': 'Mise en page',
+		Styles: 'Styles',
 		'Document formatting': 'Mise en forme du document',
 		'Ribbon tabs': 'Onglets du ruban',
 		Home: 'Accueil',
@@ -256,6 +270,15 @@ export function formatWordCount(locale: EditorLocale, count: number): string {
 /** Translate literal UI labels in-place while retaining action data and current control state. */
 export function localizeElement(root: HTMLElement, locale: EditorLocale): void {
 	for (const element of [root, ...root.querySelectorAll<HTMLElement>('*')]) {
+		if (element.classList.contains('ribbon-group') && element.dataset.label) {
+			const label = element.dataset.label;
+			const translated = translate(locale, label as LocalizationKey);
+			element.dataset.caption = translated;
+			element.setAttribute(
+				'aria-label',
+				locale === 'fr' ? `Commandes : ${translated}` : `${translated} controls`,
+			);
+		}
 		for (const attribute of ['aria-label', 'title', 'placeholder']) {
 			const property = `locale${attribute.replace(/[^a-z]/gi, '')}`;
 			const value = element.dataset[property] ?? element.getAttribute(attribute);

@@ -15,6 +15,7 @@ const demos = [
 	{ framework: 'angular', route: 'demo-angular' },
 	{ framework: 'vanilla', route: 'demo-vanilla' },
 	{ framework: 'svelte', route: 'demo-svelte' },
+	{ framework: 'solid', route: 'demo-solid' },
 ];
 
 function run(script, args, env = process.env) {
@@ -61,4 +62,4 @@ for (const { framework, route } of demos) {
 	}
 }
 
-console.log('Built VitePress documentation and all five framework demos.');
+console.log('Built VitePress documentation and all six framework demos.');

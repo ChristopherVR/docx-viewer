@@ -1,5 +1,6 @@
 :host {
 	display: block;
+	box-sizing: border-box;
 	width: 100%;
 	height: 100%;
 	min-height: 0;
@@ -18,8 +19,11 @@
 }
 .dve-frame {
 	display: flex;
+	box-sizing: border-box;
+	width: 100%;
 	height: 100%;
 	min-height: 0;
+	min-width: 0;
 	flex-direction: column;
 	overflow: hidden;
 	border: 1px solid var(--line);
@@ -27,21 +31,32 @@
 	box-shadow: 0 2px 8px #20212420;
 }
 .dve-ribbon {
+	display: flex;
+	flex: none;
+	min-width: 0;
+	flex-direction: column;
 	background: var(--surface);
 	border-bottom: 1px solid var(--line);
 }
 .ribbon-tabs {
 	display: flex;
+	flex: none;
+	min-width: 0;
 	gap: 4px;
-	height: 39px;
+	min-height: 39px;
 	padding: 0 14px;
 	border-bottom: 1px solid var(--line);
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	scrollbar-width: thin;
 }
 .ribbon-tabs [role='tab'] {
 	position: relative;
 	border: 0;
 	background: none;
 	padding: 0 13px;
+	flex: none;
+	white-space: nowrap;
 	color: var(--muted);
 	font:
 		500 13px 'Segoe UI',
@@ -63,38 +78,79 @@
 	content: '';
 }
 .ribbon-panel {
-	min-height: 85px;
+	flex: none;
+	min-width: 0;
+	min-height: 100px;
 	display: flex;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 	align-items: stretch;
 	gap: 10px;
 	padding: 8px 14px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	overscroll-behavior-x: contain;
+	scrollbar-width: thin;
 }
 .ribbon-panel[hidden] {
 	display: none;
 }
 .ribbon-group {
 	display: flex;
+	flex: 0 0 auto;
 	flex-wrap: wrap;
-	align-content: center;
+	align-content: flex-start;
 	align-items: center;
 	min-width: 0;
-	max-width: 100%;
-	gap: 3px;
-	padding-right: 12px;
+	max-width: 330px;
+	gap: 2px;
+	padding: 2px 10px 0 2px;
 	border-right: 1px solid var(--line);
+}
+.ribbon-row {
+	display: flex;
+	flex: 0 0 100%;
+	flex-wrap: nowrap;
+	align-items: center;
+	gap: 2px;
 }
 .ribbon-group:last-child {
 	border: 0;
 }
-.ribbon-panel[data-panel='Home'] .ribbon-group:first-child {
-	flex: 0 1 430px;
+.ribbon-group::after {
+	order: 1;
+	flex: 0 0 100%;
+	margin-top: 3px;
+	color: var(--muted);
+	font-size: 10px;
+	line-height: 1.1;
+	text-align: center;
+	content: attr(data-caption);
 }
-.ribbon-panel[data-panel='Home'] .ribbon-group:nth-child(2) {
-	flex: 0 1 320px;
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Font'] {
+	width: 310px;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Paragraph'] {
+	width: 270px;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Alignment and history'] {
+	width: 180px;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Editing'] {
+	width: 140px;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Styles'] {
+	width: 120px;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Styles'] select {
+	width: 100%;
+	max-width: 100%;
+}
+.ribbon-group[aria-label='Language'] {
+	flex: 0 0 100%;
 }
 .ribbon-group button {
 	min-width: 32px;
+	flex: none;
 	height: 31px;
 	border: 1px solid transparent;
 	border-radius: 4px;
@@ -105,6 +161,7 @@
 		Arial,
 		sans-serif;
 	cursor: pointer;
+	padding: 0 4px;
 }
 .ribbon-group button:hover:not(:disabled) {
 	background: var(--accent-soft);
@@ -124,6 +181,8 @@
 	text-decoration: underline;
 }
 .ribbon-group select {
+	flex: none;
+	max-width: 150px;
 	height: 30px;
 	border: 1px solid var(--line);
 	border-radius: 3px;
@@ -139,15 +198,28 @@
 	background: var(--surface);
 	color: var(--ink);
 }
-.ribbon-group select[aria-label='Font family'] {
+.ribbon-group select.font-family-select {
+	width: 120px;
+}
+.ribbon-group select.font-size-select {
+	width: 52px;
+}
+.ribbon-group[data-label='Font'] .ribbon-row button {
+	min-width: 28px;
+	padding-inline: 0;
+}
+.ribbon-group select.spacing-select {
 	width: 150px;
 }
-.ribbon-group select[aria-label='Font size'] {
-	width: 60px;
+.ribbon-group select.line-spacing-select {
+	width: 112px;
 }
 .dve-status {
 	display: block;
+	flex: none;
+	min-width: 0;
 	padding: 6px 14px;
+	border-bottom: 1px solid var(--line);
 	border-top: 1px solid var(--line);
 	background: var(--surface);
 	color: var(--muted);
@@ -156,14 +228,17 @@
 .dve-canvas {
 	flex: 1;
 	min-height: 0;
+	min-width: 0;
 	max-height: none;
 	overflow: auto;
 	padding: 30px clamp(16px, 5vw, 70px) 60px;
 	background: var(--canvas);
+	overscroll-behavior: contain;
 }
 .dve-paper {
 	box-sizing: border-box;
 	position: relative;
+	flex: none;
 	margin: 0 auto;
 	background: #fff;
 	color: #202124;
@@ -241,14 +316,60 @@
 	font-size: 11px;
 }
 @media (max-width: 650px) {
+	.ribbon-tabs {
+		gap: 0;
+		padding-inline: 6px;
+	}
+	.ribbon-tabs [role='tab'] {
+		min-height: 40px;
+		padding-inline: 11px;
+	}
 	.ribbon-panel {
-		overflow-x: auto;
+		min-height: 96px;
+		padding: 6px;
+		gap: 4px;
+	}
+	.ribbon-group {
+		padding-right: 7px;
+	}
+	.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Font'] {
+		width: 310px;
+	}
+	.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Paragraph'] {
+		width: 270px;
+	}
+	.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Alignment and history'] {
+		width: 180px;
+	}
+	.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Editing'] {
+		width: 142px;
+	}
+	.ribbon-group button {
+		min-width: 34px;
+		min-height: 34px;
+	}
+	.ribbon-group select {
+		max-width: min(150px, 42vw);
 	}
 	.dve-canvas {
 		padding: 18px 8px 38px;
+		align-items: flex-start;
 	}
-	.ribbon-group select[aria-label='Font family'] {
-		width: 115px;
+	.ribbon-group select.font-family-select {
+		width: 120px;
+		max-width: 38vw;
+	}
+	.ribbon-group select.font-size-select {
+		width: 56px;
+	}
+	.ribbon-group select.spacing-select {
+		width: min(128px, 36vw);
+	}
+	.ribbon-group select.line-spacing-select {
+		width: min(112px, 32vw);
+	}
+	.dve-status {
+		padding: 5px 8px;
 	}
 }
 @media (prefers-reduced-motion: reduce) {

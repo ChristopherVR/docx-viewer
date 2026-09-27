@@ -217,7 +217,7 @@ export class DocxEditorElement extends HTMLElementBase {
 			onClose: () => this.view?.focus(),
 		});
 		this.searchPanel.setLocale(this._locale);
-		frame.append(toolbar, this.searchPanel.element, canvas);
+		frame.append(toolbar, this.searchPanel.element, canvas, status);
 		root.append(style, frame);
 		this.toolbar = toolbar;
 		this.paper = paper;

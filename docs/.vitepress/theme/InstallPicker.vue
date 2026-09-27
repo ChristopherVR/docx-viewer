@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-const entries = ['react', 'vue', 'angular', 'vanilla', 'svelte'];
+const entries = ['react', 'vue', 'angular', 'vanilla', 'svelte', 'solid'];
 const active = ref('react');
 const feedback = ref('Copy');
 const command = 'npm install @christophervr/docx-viewer';
@@ -26,7 +26,13 @@ async function copy() {
 					feedback = 'Copy';
 				"
 			>
-				{{ entry === 'vanilla' ? 'Vanilla JS' : entry.charAt(0).toUpperCase() + entry.slice(1) }}
+				{{
+					entry === 'vanilla'
+						? 'Vanilla JS'
+						: entry === 'solid'
+							? 'SolidJS'
+							: entry.charAt(0).toUpperCase() + entry.slice(1)
+				}}
 			</button>
 		</div>
 		<div class="dv-install-command">

@@ -39,6 +39,7 @@ export default defineConfig({
 				'vue',
 				'angular',
 				'svelte',
+				'solid',
 			].map((name) => ({
 				find: new RegExp(`^@christophervr/docx-viewer/${name}$`),
 				replacement: fileURLToPath(new URL(`./packages/viewer/src/${name}.ts`, import.meta.url)),

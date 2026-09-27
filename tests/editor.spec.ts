@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
-for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte']) {
+for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid']) {
 	test(`${framework}: shared editor edits, formats, saves, reloads, and respects read-only`, async ({
 		page,
 	}) => {

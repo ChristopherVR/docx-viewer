@@ -12,7 +12,7 @@ Install the umbrella package for the editor and framework entry points:
 npm install @christophervr/docx-viewer
 ```
 
-It installs the internal Word packages together. Import `@christophervr/docx-viewer` for the framework-neutral editor API or select a dedicated `@christophervr/docx-viewer/react`, `/vue`, `/angular`, `/svelte`, or `/vanilla` entry. The existing `@christophervr/docx-*` packages remain available for consumers who prefer explicit dependencies. Frameworks remain optional peers; install the framework used by your app.
+It installs the internal Word packages together. Import `@christophervr/docx-viewer` for the framework-neutral editor API or select a dedicated `@christophervr/docx-viewer/react`, `/vue`, `/angular`, `/svelte`, `/solid`, or `/vanilla` entry. The existing `@christophervr/docx-*` packages remain available for consumers who prefer explicit dependencies. Frameworks remain optional peers; install the framework used by your app.
 
 - `@christophervr/docx-core`: modern DOCX model, import and preserving serialization. Its `/embedded` entry point is the planned PowerPoint integration once this package is published and the consumer migration is ready. PowerPoint's existing embedded-DOCX adapter remains in use for now.
 - `@christophervr/docx-legacy`: legacy Word DOC adapter using `@christophervr/ole2`.
@@ -29,7 +29,7 @@ bun install
 bun run demo
 ```
 
-The default demo uses vanilla. Append `?framework=react`, `vue`, `angular` or `svelte` to exercise another real adapter. It opens DOCX and DOC, saves in the imported format, and can export supported visible content as a new DOCX.
+The default demo uses vanilla. Append `?framework=react`, `vue`, `angular`, `svelte` or `solid` to exercise another real adapter. It opens DOCX and DOC, saves in the imported format, and can export supported visible content as a new DOCX.
 
 ```sh
 bun run typecheck
@@ -43,7 +43,7 @@ bun install --cwd docs
 bun run --cwd docs docs:build
 ```
 
-The Pages workflow builds VitePress documentation and all five demos using the PowerPoint site's route structure. Deployment is enabled for public repositories. For a private repository, a GitHub plan supporting private-repository Pages and the `ENABLE_PRIVATE_PAGES=true` repository variable are required. Publishing instructions are in [the release guide](docs/releasing.md).
+The Pages workflow builds VitePress documentation and all six demos using the PowerPoint site's route structure. Deployment is enabled for public repositories. For a private repository, a GitHub plan supporting private-repository Pages and the `ENABLE_PRIVATE_PAGES=true` repository variable are required. Publishing instructions are in [the release guide](docs/releasing.md).
 
 ## Support today
 
@@ -78,4 +78,4 @@ editor.update({ readOnly: true });
 editor.destroy();
 ```
 
-Framework entry points `/react` and `/vue` export `WordEditor`; `/angular` exports `WordEditorComponent`; `/svelte` exports a default Svelte component. See [bindings](docs/bindings.md), [architecture](docs/architecture.md), [reuse audit](docs/reuse-audit.md) and [parity milestones](docs/parity-roadmap.md).
+Framework entry points `/react`, `/vue` and `/solid` export `WordEditor`; `/angular` exports `WordEditorComponent`; `/svelte` exports a default Svelte component. See [bindings](docs/bindings.md), [architecture](docs/architecture.md), [reuse audit](docs/reuse-audit.md) and [parity milestones](docs/parity-roadmap.md).

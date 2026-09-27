@@ -22,6 +22,7 @@
 			"@christophervr/docx-bindings/react": ["packages/bindings/src/react.tsx"],
 			"@christophervr/docx-bindings/vue": ["packages/bindings/src/vue.ts"],
 			"@christophervr/docx-bindings/angular": ["packages/bindings/src/angular.ts"],
+			"@christophervr/docx-bindings/solid": ["packages/bindings/src/solid.ts"],
 			"@christophervr/docx-viewer": ["packages/viewer/src/index.ts"],
 			"@christophervr/docx-viewer/core": ["packages/viewer/src/core.ts"],
 			"@christophervr/docx-viewer/document": ["packages/viewer/src/document.ts"],
@@ -31,7 +32,8 @@
 			"@christophervr/docx-viewer/react": ["packages/viewer/src/react.ts"],
 			"@christophervr/docx-viewer/vue": ["packages/viewer/src/vue.ts"],
 			"@christophervr/docx-viewer/angular": ["packages/viewer/src/angular.ts"],
-			"@christophervr/docx-viewer/svelte": ["packages/viewer/src/svelte.ts"]
+			"@christophervr/docx-viewer/svelte": ["packages/viewer/src/svelte.ts"],
+			"@christophervr/docx-viewer/solid": ["packages/viewer/src/solid.ts"]
 		},
 		"types": ["node", "vitest/globals", "vite/client"]
 	},

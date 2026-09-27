@@ -22,11 +22,15 @@ describe('shared editor localization', () => {
 		expect(ribbon.getAttribute('aria-label')).toBe('Mise en forme du document');
 		expect(ribbon.querySelector('[role="tab"]')?.textContent).toBe('Accueil');
 		expect(format.getAttribute('aria-label')).toBe('Gras');
+		expect(ribbon.querySelector<HTMLElement>('[data-label="Font"]')?.dataset.caption).toBe(
+			'Police',
+		);
 		expect(JSON.parse(format.dataset.action!).key).toBe('bold');
 		expect(highlight.value).toBe('cyan');
 		expect(highlight.options[0].textContent).toBe('Sans surlignage');
 		setRibbonLocale(ribbon, 'en');
 		expect(format.getAttribute('aria-label')).toBe('Bold');
+		expect(ribbon.querySelector<HTMLElement>('[data-label="Font"]')?.dataset.caption).toBe('Font');
 		expect(highlight.value).toBe('cyan');
 	});
 

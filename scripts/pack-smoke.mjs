@@ -98,6 +98,7 @@ try {
 		'docx-viewer/react',
 		'docx-viewer/vue',
 		'docx-viewer/angular',
+		'docx-viewer/solid',
 		'docx-core',
 		'docx-core/embedded',
 		'docx-legacy',
@@ -107,6 +108,7 @@ try {
 		'docx-bindings/react',
 		'docx-bindings/vue',
 		'docx-bindings/angular',
+		'docx-bindings/solid',
 	];
 	const imports = packageNames.map((name) => `await import('@christophervr/${name}');`).join('\n');
 	const consumer = path.join(work, 'consumer.mjs');
@@ -158,11 +160,12 @@ import { createDocument, mountEditor, type EditorOptions } from '@christophervr/
 import { WordEditor as ReactEditor } from '@christophervr/docx-viewer/react';
 import { WordEditor as VueEditor } from '@christophervr/docx-viewer/vue';
 import { WordEditorComponent } from '@christophervr/docx-viewer/angular';
+import { WordEditor as SolidEditor } from '@christophervr/docx-viewer/solid';
 import SvelteEditor from '@christophervr/docx-viewer/svelte';
 import { PresenceClient } from '@christophervr/docx-viewer/web-component';
 import { resolveParagraphFormatting } from '@christophervr/docx-viewer/core';
 const options: EditorOptions = { documentModel: createDocument(), locale: 'fr' };
-void [mountEditor, options, ReactEditor, VueEditor, WordEditorComponent, SvelteEditor, PresenceClient, resolveParagraphFormatting];
+void [mountEditor, options, ReactEditor, VueEditor, WordEditorComponent, SolidEditor, SvelteEditor, PresenceClient, resolveParagraphFormatting];
 `,
 	);
 	run(
@@ -187,7 +190,7 @@ void [mountEditor, options, ReactEditor, VueEditor, WordEditorComponent, SvelteE
 	await mkdir(hidden);
 	const moved = [];
 	try {
-		for (const peer of ['react', 'vue', 'svelte', '@angular']) {
+		for (const peer of ['react', 'vue', 'svelte', 'solid-js', '@angular']) {
 			const source = path.join(modules, peer);
 			const destination = path.join(hidden, peer.replace('@', ''));
 			await rename(source, destination);

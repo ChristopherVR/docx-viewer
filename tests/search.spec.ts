@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
 
-for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte']) {
+for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid']) {
 	test(`${framework}: shared find/replace respects formatting, history and readonly`, async ({
 		page,
 	}) => {

@@ -4,6 +4,18 @@ export default defineConfig({
 	resolve: {
 		alias: [
 			{
+				find: /^solid-js\/web$/,
+				replacement: fileURLToPath(
+					new URL('./node_modules/solid-js/web/dist/web.js', import.meta.url),
+				),
+			},
+			{
+				find: /^solid-js$/,
+				replacement: fileURLToPath(
+					new URL('./node_modules/solid-js/dist/solid.js', import.meta.url),
+				),
+			},
+			{
 				find: /^@christophervr\/docx-core\/embedded$/,
 				replacement: fileURLToPath(new URL('./packages/core/src/embedded.ts', import.meta.url)),
 			},

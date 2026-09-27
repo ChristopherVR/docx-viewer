@@ -1,7 +1,7 @@
 {
 	"name": "@christophervr/docx-viewer",
 	"version": "0.1.0",
-	"description": "Framework-neutral Word document engine and editor entry points for React, Vue, Angular, Svelte and vanilla JavaScript",
+	"description": "Framework-neutral Word document engine and editor entry points for React, Vue, Angular, Svelte, Solid and vanilla JavaScript",
 	"license": "Apache-2.0",
 	"author": "ChristopherVR",
 	"repository": {
@@ -55,6 +55,10 @@
 			"types": "./dist/angular.d.ts",
 			"import": "./dist/angular.js"
 		},
+		"./solid": {
+			"types": "./dist/solid.d.ts",
+			"import": "./dist/solid.js"
+		},
 		"./svelte": {
 			"types": "./dist/svelte.d.ts",
 			"svelte": "./dist/WordEditor.svelte",
@@ -74,6 +78,7 @@
 	"peerDependencies": {
 		"@angular/core": ">=19",
 		"react": ">=18",
+		"solid-js": "^1.9.0",
 		"svelte": "^5",
 		"vue": "^3"
 	},
@@ -85,6 +90,9 @@
 			"optional": true
 		},
 		"svelte": {
+			"optional": true
+		},
+		"solid-js": {
 			"optional": true
 		},
 		"vue": {

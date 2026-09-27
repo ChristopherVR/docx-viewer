@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress';
 export default defineConfig({
 	title: 'docx-viewer',
 	description:
-		'A browser-based Word document editing foundation with one document model, one web-component editor, and adapters for React, Vue, Angular, Svelte, and vanilla JavaScript.',
+		'A browser-based Word document editing foundation with one document model, one web-component editor, and adapters for React, Vue, Angular, Svelte, Solid, and vanilla JavaScript.',
 	base: '/docx-viewer/',
 	cleanUrls: true,
 	lastUpdated: true,
@@ -46,6 +46,7 @@ export default defineConfig({
 					{ text: 'Angular', link: '/frameworks/angular' },
 					{ text: 'Vanilla JavaScript', link: '/frameworks/vanilla' },
 					{ text: 'Svelte', link: '/frameworks/svelte' },
+					{ text: 'Solid', link: '/frameworks/solid' },
 				],
 			},
 			{ text: 'Releases', link: '/releasing' },
@@ -81,6 +82,7 @@ export default defineConfig({
 					{ text: 'Angular', link: '/frameworks/angular' },
 					{ text: 'Vanilla JS', link: '/frameworks/vanilla' },
 					{ text: 'Svelte', link: '/frameworks/svelte' },
+					{ text: 'Solid', link: '/frameworks/solid' },
 				],
 			},
 		],

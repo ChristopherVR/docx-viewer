@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import type { DocxEditorElement } from '../packages/web-component/src';
 import JSZip from 'jszip';
 
-for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte']) {
+for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid']) {
 	test(`${framework}: coauthors converge after paused concurrent edits`, async ({ page }) => {
 		const errors: string[] = [];
 		page.on('pageerror', (error) => errors.push(error.message));
