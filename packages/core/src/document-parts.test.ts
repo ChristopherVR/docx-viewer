@@ -94,7 +94,7 @@ describe('headers, footers and settings', () => {
 		const bytes = await zip.generateAsync({ type: 'uint8array' });
 		const loaded = await loadDocx(bytes);
 		loaded.model.sections = [];
-		await expect(loaded.save()).rejects.toThrow('Editing sections');
+		await expect(loaded.save()).rejects.toThrow('at least one section');
 	});
 });
 

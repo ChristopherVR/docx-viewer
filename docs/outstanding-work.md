@@ -29,7 +29,7 @@ and the model warnings emitted at parse time.
 
 ### Editor commands and UI
 
-Done since the merge: in-place header/footer and footnote/endnote editing, Insert Footnote/Endnote (creating the notes part when needed), headers/footers with live PAGE/NUMPAGES in Print Layout, table style rendering, picture resize and alt text, Word-style window chrome (title bar with quick access, "Tell me"
+Done since the merge: per-section page setup and section breaks (undoable), in-place header/footer and footnote/endnote editing, Insert Footnote/Endnote (creating the notes part when needed), headers/footers with live PAGE/NUMPAGES in Print Layout, table style rendering, picture resize and alt text, Word-style window chrome (title bar with quick access, "Tell me"
 command search, Editing/Viewing mode; File backstage; status bar with zoom and compatibility
 notes), Insert Picture (PNG, JPEG, GIF, BMP), insert/edit/remove hyperlink with Ctrl+K and a
 "Place in this document" bookmark list, Ctrl+Click to follow links, a character style picker,
@@ -39,7 +39,9 @@ Still missing:
 
 - Picture resize handles, alt-text editing, SVG pictures (they need a PNG fallback part), and
   floating picture layout.
-- Section/page-setup editing and multi-column rendering on the continuous surface.
+- Section editing covers size/orientation, margins, columns and next-page/continuous breaks; title
+  page, page numbering, vertical alignment and even/odd-page breaks are still protected. The
+  continuous surface shows columns only for single-section documents (Print Layout shows all).
 - Ctrl+Alt+F / Ctrl+Alt+D (insert footnote/endnote) are bound, but Windows browsers can report
   Ctrl+Alt as AltGr and not deliver them; the Insert ribbon buttons always work. Endnote reference
   numbers show decimals rather than the document's endnote number format.

@@ -29,6 +29,15 @@ import { changeListLevel, removeList, selectionIsListKind, toggleList } from './
 import { buildHeaderElement, buildFooterElement } from './header-footer-view';
 import { attachHeaderFooterEditing, type HeaderFooterSlotName } from './header-footer-editor';
 import { attachNoteEditing } from './note-editor';
+import {
+	currentSectionIndex,
+	insertSectionBreak,
+	sectionBreaksPlugin,
+	setColumns,
+	setMargins,
+	setOrientation,
+} from './section-commands';
+import { sectionLayoutJson } from './section-layout';
 import { insertNote, noteNumberingPlugin, type NoteKind } from './note-commands';
 import { keymap } from 'prosemirror-keymap';
 import { buildNotesElement } from './notes-view';
@@ -343,7 +352,7 @@ ${chromeStyleText}`;
 		resetStylePicker(this.toolbar);
 		this.view?.destroy();
 		this.paper.replaceChildren();
-		applyPageStyles(this.paper, this.model, this.zoom);
+		this.refreshPageStyles();
 		const state =
 			this.detachedState ??
 			EditorState.create({
@@ -352,6 +361,7 @@ ${chromeStyleText}`;
 					history(),
 					...this.inserts.plugins(),
 					noteNumberingPlugin(),
+					sectionBreaksPlugin(),
 					keymap({
 						'Mod-Alt-f': () => (this.insertNoteAtSelection('footnote'), true),
 						'Mod-Alt-d': () => (this.insertNoteAtSelection('endnote'), true),
@@ -421,6 +431,61 @@ ${chromeStyleText}`;
 		if (this.footerEl) this.canvas.insertBefore(this.footerEl, this.paper.nextSibling);
 		if (this.notesEl)
 			this.canvas.insertBefore(this.notesEl, (this.footerEl ?? this.paper).nextSibling);
+	}
+
+	/** Page setup applies to the section holding the selection, as in Word, and is undoable. */
+	private changePageSetup(key: 'margin' | 'orientation' | 'columns', value: string) {
+		if (!this.view?.editable || this.collaboration) return;
+		const index = currentSectionIndex(this.view, this.model);
+		const next =
+			key === 'margin'
+				? setMargins(this.model, index, value)
+				: key === 'orientation'
+					? setOrientation(this.model, index, value === 'landscape' ? 'landscape' : 'portrait')
+					: setColumns(this.model, index, Math.max(1, Number(value) || 1));
+		this.dispatchSections(next);
+	}
+
+	private insertSectionBreakAtSelection(kind: 'nextPage' | 'continuous') {
+		if (!this.view?.editable || this.collaboration) return;
+		try {
+			this.dispatchSections(insertSectionBreak(this.view, this.model, kind));
+		} catch (cause) {
+			this.dispatchEvent(
+				new CustomEvent('document-error', {
+					detail: cause instanceof Error ? cause : new Error(String(cause)),
+					bubbles: true,
+					composed: true,
+				}),
+			);
+		}
+	}
+
+	/** Records page geometry and section layout on the editor document as one undoable step. */
+	private dispatchSections(next: DocumentModel) {
+		if (!this.view) return;
+		const { page } = next;
+		this.view.dispatch(
+			this.view.state.tr
+				.setDocAttribute('pageWidth', page.width)
+				.setDocAttribute('pageHeight', page.height)
+				.setDocAttribute('marginTop', page.marginTop)
+				.setDocAttribute('marginRight', page.marginRight)
+				.setDocAttribute('marginBottom', page.marginBottom)
+				.setDocAttribute('marginLeft', page.marginLeft)
+				.setDocAttribute('sections', next.sections ? sectionLayoutJson(next.sections) : null),
+		);
+	}
+
+	/** Page size and margins from the model; one multi-column section also shows its columns. */
+	private refreshPageStyles() {
+		if (!this.paper) return;
+		applyPageStyles(this.paper, this.model, this.zoom);
+		const sections = this.model.sections ?? [];
+		const columns = sections.length === 1 ? sections[0].columns : undefined;
+		this.paper.style.columnCount = columns && columns.count > 1 ? String(columns.count) : '';
+		this.paper.style.columnGap =
+			columns && columns.count > 1 ? `${((columns.spacingTwips ?? 720) / 15) * this.zoom}px` : '';
 	}
 
 	/** Inserts a footnote or endnote reference at the selection and opens the new note for typing. */
@@ -496,7 +561,7 @@ ${chromeStyleText}`;
 		this.view.updateState(repaired ? applied.apply(repaired) : applied);
 		if (transaction.docChanged) {
 			this.model = docToModel(this.view.state.doc, this.model);
-			if (this.paper) applyPageStyles(this.paper, this.model, this.zoom);
+			this.refreshPageStyles();
 			if (this.viewMode === 'print') this.printLayout?.scheduleRelayout(this.model);
 			this.chrome?.setSaveState('dirty');
 			this.dispatchEvent(
@@ -520,6 +585,8 @@ ${chromeStyleText}`;
 		else if (action.type === 'view') this.setViewMode(action.value);
 		else if (action.type === 'print') this.printDocument();
 		else if (action.type === 'insertNote') this.insertNoteAtSelection(action.kind);
+		else if (action.type === 'page') this.changePageSetup(action.key, action.value);
+		else if (action.type === 'sectionBreak') this.insertSectionBreakAtSelection(action.kind);
 		else if (action.type === 'reviewDisplay') {
 			this.reviewDisplayMode = action.value;
 			this.view?.dispatch(this.view.state.tr);
@@ -566,7 +633,7 @@ ${chromeStyleText}`;
 
 	private setZoom(percent: number) {
 		this.zoom = percent / 100;
-		if (this.paper) applyPageStyles(this.paper, this.model, this.zoom);
+		this.refreshPageStyles();
 		const select = this.toolbar && findLocalizedControl<HTMLSelectElement>(this.toolbar, 'Zoom');
 		if (select && [...select.options].some((option) => option.value === String(percent)))
 			select.value = String(percent);

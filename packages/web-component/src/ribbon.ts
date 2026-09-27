@@ -16,7 +16,8 @@ export type RibbonAction =
 	| { type: 'clear' | 'table' }
 	| { type: 'insertBreak'; kind: 'page' | 'column' }
 	| { type: 'tableEdit'; key: TableCommand }
-	| { type: 'page'; key: 'margin' | 'orientation'; value: string }
+	| { type: 'page'; key: 'margin' | 'orientation' | 'columns'; value: string }
+	| { type: 'sectionBreak'; kind: 'nextPage' | 'continuous' }
 	| {
 			type: 'paragraph';
 			key: 'indent' | 'spacingBefore' | 'spacingAfter' | 'lineSpacing';
@@ -359,6 +360,23 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 				],
 				(value) => ({ type: 'page', key: 'orientation', value }),
 			),
+			select(
+				'Columns',
+				[
+					['1', 'One column'],
+					['2', 'Two columns'],
+					['3', 'Three columns'],
+				],
+				(value) => ({ type: 'page', key: 'columns', value }),
+			),
+		),
+		group(
+			'Section breaks',
+			button('Next page section break', 'Next page', { type: 'sectionBreak', kind: 'nextPage' }),
+			button('Continuous section break', 'Continuous', {
+				type: 'sectionBreak',
+				kind: 'continuous',
+			}),
 		),
 	);
 	panels.get('View')!.append(

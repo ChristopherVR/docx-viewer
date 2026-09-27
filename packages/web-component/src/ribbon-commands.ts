@@ -63,29 +63,6 @@ export function insertTable(view: EditorView, idGenerator?: (kind: string) => st
 	view.dispatch(closeHistory(view.state.tr.replaceSelectionWith(table)).scrollIntoView());
 }
 
-export function updatePage(view: EditorView, key: 'margin' | 'orientation', value: string) {
-	const page = view.state.doc.attrs;
-	if (key === 'margin') {
-		const margin = value === 'narrow' ? 48 : value === 'wide' ? 144 : 96;
-		view.dispatch(
-			view.state.tr
-				.setDocAttribute('marginTop', margin)
-				.setDocAttribute('marginRight', margin)
-				.setDocAttribute('marginBottom', margin)
-				.setDocAttribute('marginLeft', margin),
-		);
-		return;
-	}
-	const landscape = value === 'landscape';
-	const long = Math.max(page.pageWidth, page.pageHeight);
-	const short = Math.min(page.pageWidth, page.pageHeight);
-	view.dispatch(
-		view.state.tr
-			.setDocAttribute('pageWidth', landscape ? long : short)
-			.setDocAttribute('pageHeight', landscape ? short : long),
-	);
-}
-
 export function updateParagraphs(
 	view: EditorView,
 	key: 'indent' | 'spacingBefore' | 'spacingAfter' | 'lineSpacing',

@@ -1,10 +1,11 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
-import type { Block, DocumentModel, Paragraph } from './model.js';
+import type { Block, DocumentModel, Paragraph, SectionProperties } from './model.js';
 import { children, first, getW, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
 import { writeParagraphProperties } from './write-paragraph-properties.js';
 import { writeNumberingProperties } from './numbering-write.js';
 import { writeTable as writeTableContent } from './write-table.js';
 import { buildNewTableProperties } from './table-defaults.js';
+import { applySectionEdits } from './write-sections.js';
 import { writeParagraphMarkRevision } from './write-revisions.js';
 import { runHasUnknownProperties } from './write-run-validation.js';
 import {
@@ -239,6 +240,8 @@ export function applyModel(
 	original: Block[],
 	/** Relationship ids already declared in word/_rels/document.xml.rels (styles, numbering, ...). */
 	reservedRelationshipIds: Iterable<string> = [],
+	/** The loaded document's sections, so unchanged sections stay byte-identical. */
+	baseSections: SectionProperties[] = [],
 ): ApplyModelResult {
 	const body = Array.from(doc.getElementsByTagNameNS(WORD_NS, 'body'))[0];
 	if (!body) throw new Error('DOCX document.xml has no w:body');
@@ -277,5 +280,6 @@ export function applyModel(
 	}
 	for (const side of ['Top', 'Right', 'Bottom', 'Left'] as const)
 		setAttribute(margins, side.toLowerCase(), twips(model.page[`margin${side}`]));
+	if (model.sections) applySectionEdits(doc, body, model.blocks, model.sections, baseSections);
 	return { newRelationships: allocator.newRelationships };
 }

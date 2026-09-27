@@ -5,7 +5,7 @@ import { buildXml, parseXml, type XmlDocument } from './xml.js';
 import type { PackageContext } from './parse.js';
 import { applyModel } from './write.js';
 import { applyNumberingCatalog } from './numbering-package.js';
-import { applyHeaderFooterEdits, sectionLayout } from './write-header-footer.js';
+import { applyHeaderFooterEdits } from './write-header-footer.js';
 import { applyNoteEdits } from './write-notes.js';
 import { applyTrackChangesSetting } from './settings.js';
 import { applyComments } from './write-comments.js';
@@ -65,17 +65,9 @@ export async function saveDocx(
 		throw new Error(
 			'Creating or editing paragraph styles is not supported by the standalone DOCX writer.',
 		);
-	if (
-		binding &&
-		JSON.stringify(sectionLayout(model.sections)) !==
-			JSON.stringify(sectionLayout(binding.base.sections))
-	)
+	if (!binding && model.sections?.some((section) => section.headers || section.footers))
 		throw new Error(
-			'Editing sections or page setup is not supported; source section properties are preserved unchanged.',
-		);
-	if (!binding && model.sections?.length)
-		throw new Error(
-			'Sections, headers and footers are not supported by the standalone DOCX writer; they would be silently dropped.',
+			'Headers and footers are not supported by the standalone DOCX writer; they would be silently dropped.',
 		);
 	if (
 		binding &&
@@ -100,6 +92,7 @@ export async function saveDocx(
 		model,
 		binding?.base.blocks ?? [],
 		existingRelationships.keys(),
+		binding?.base.sections ?? [],
 	);
 	zip.file('word/document.xml', buildXml(document));
 	if (!binding) {

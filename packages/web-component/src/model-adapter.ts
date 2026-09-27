@@ -6,6 +6,7 @@ import { extraRunProperties } from './run-extra-mark';
 import { appendInlineNode, runToInlineNodes, type NoteNumberLookup } from './run-adapter';
 import { convertMergedTable, convertSimpleTable, tableNode } from './table-model-adapter';
 import { parseBordersJson } from './table-render';
+import { sectionLayoutJson, sectionsFromLayout } from './section-layout';
 
 type ListLabels = ReturnType<typeof computeListLabels>;
 
@@ -66,6 +67,7 @@ export function modelToDoc(model: DocumentModel) {
 			marginRight: model.page.marginRight,
 			marginBottom: model.page.marginBottom,
 			marginLeft: model.page.marginLeft,
+			sections: model.sections ? sectionLayoutJson(model.sections) : null,
 		},
 		blocks,
 	);
@@ -269,9 +271,14 @@ export function docToModel(
 				} as Table);
 		}
 	});
+	// The editor document is the source of truth for section layout (so undo covers page setup).
+	const { sections: priorSections, ...rest } = prior;
 	return {
-		...prior,
+		...rest,
 		blocks,
+		...(typeof doc.attrs.sections === 'string'
+			? { sections: sectionsFromLayout(doc.attrs.sections, priorSections, blocks) }
+			: {}),
 		page: {
 			width: doc.attrs.pageWidth,
 			height: doc.attrs.pageHeight,

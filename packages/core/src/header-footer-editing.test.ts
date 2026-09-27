@@ -73,9 +73,28 @@ describe('header and footer editing', () => {
 		await expect(loaded.save(loaded.model)).rejects.toThrow(/relationship allocator/i);
 	});
 
-	it('still protects section layout edits', async () => {
+	it('writes page size and orientation for one section and protects other properties', async () => {
 		const loaded = await loadDocx(await fixture());
-		loaded.model.sections![0].pageWidthTwips = 15840;
-		await expect(loaded.save(loaded.model)).rejects.toThrow(/sections or page setup/);
+		const model = JSON.parse(JSON.stringify(loaded.model)) as DocumentModel;
+		Object.assign(model.sections![0], {
+			pageWidthTwips: 15840,
+			pageHeightTwips: 12240,
+			orientation: 'landscape',
+			columns: { count: 2, spacingTwips: 360, equalWidth: true },
+		});
+		const saved = await loaded.save(model);
+		const xml = await (await JSZip.loadAsync(saved)).file('word/document.xml')!.async('string');
+		expect(xml).toMatch(
+			/<w:pPr><w:sectPr>.*w:w="15840" w:h="12240" w:orient="landscape".*<w:cols w:num="2" w:space="360"\/>.*<\/w:sectPr><\/w:pPr>/,
+		);
+		const reloaded = await loadDocx(saved);
+		expect(reloaded.model.sections![0]).toMatchObject({
+			orientation: 'landscape',
+			columns: { count: 2 },
+		});
+		expect(reloaded.model.sections![1]).toMatchObject({ pageWidthTwips: 12240 });
+		const titled = JSON.parse(JSON.stringify(loaded.model)) as DocumentModel;
+		titled.sections![0].titlePage = true;
+		await expect(loaded.save(titled)).rejects.toThrow(/titlePage/);
 	});
 });

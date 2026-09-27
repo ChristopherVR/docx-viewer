@@ -545,3 +545,17 @@
 .dve-header-footer-editor .ProseMirror p {
 	margin: 0;
 }
+
+/* Section break marks after the paragraph that ends a section */
+.dve-paper .dve-section-end::after {
+	display: block;
+	margin: 6px 0;
+	border-top: 1px dotted var(--muted);
+	border-bottom: 1px dotted var(--muted);
+	color: var(--muted);
+	content: attr(data-section-break);
+	font-size: 10px;
+	line-height: 14px;
+	text-align: center;
+	user-select: none;
+}

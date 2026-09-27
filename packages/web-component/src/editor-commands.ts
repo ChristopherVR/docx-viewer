@@ -5,13 +5,7 @@ import { baseKeymap, chainCommands, toggleMark } from 'prosemirror-commands';
 import { keymap } from 'prosemirror-keymap';
 import type { RibbonAction } from './ribbon';
 import { schema } from './schema';
-import {
-	applyFont,
-	clearFormatting,
-	insertTable,
-	updateParagraphs,
-	updatePage,
-} from './ribbon-commands';
+import { applyFont, clearFormatting, insertTable, updateParagraphs } from './ribbon-commands';
 import { applyHighlight, toggleVerticalAlign } from './inline-commands';
 import { executeTableCommand } from './table-commands';
 import { insertHardBreak } from './hard-break-command';
@@ -92,6 +86,5 @@ export function runRibbonCommand(
 	else if (action.type === 'table') insertTable(view, nextId);
 	else if (action.type === 'insertBreak')
 		insertBreakCommand(action.kind)(view.state, view.dispatch, view);
-	else if (action.type === 'page') updatePage(view, action.key, action.value);
 	else if (action.type === 'paragraph') updateParagraphs(view, action.key, action.value);
 }
