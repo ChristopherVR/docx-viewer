@@ -2,7 +2,7 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import type { DocumentModel, Block, Paragraph, Table, TextRun } from '@christophervr/docx-core';
 import { computeListLabels, formatNoteNumber, numberNotesInOrder } from '@christophervr/docx-core';
 import { schema } from './schema';
-import { extraRunProperties } from './run-extra-mark';
+import { sameJson, sameRuns } from './run-compare';
 import { appendInlineNode, runToInlineNodes, type NoteNumberLookup } from './run-adapter';
 import { convertMergedTable, convertSimpleTable, tableNode } from './table-model-adapter';
 import { parseBordersJson } from './table-render';
@@ -82,98 +82,11 @@ export function modelToDoc(model: DocumentModel) {
 	);
 }
 
-function sameRuns(left: TextRun[], right: TextRun[]) {
-	const compact = (runs: TextRun[]) =>
-		runs.reduce<TextRun[]>((result, run) => {
-			const normalized = {
-				...run,
-				bold: run.bold || undefined,
-				italic: run.italic || undefined,
-				underline: run.underline || undefined,
-				strike: run.strike || undefined,
-			};
-			const previous = result.at(-1);
-			const fields: (keyof TextRun)[] = [
-				'bold',
-				'italic',
-				'underline',
-				'strike',
-				'highlight',
-				'verticalAlign',
-				'language',
-				'eastAsiaLanguage',
-				'bidiLanguage',
-				'rtl',
-				'fontFamily',
-				'fontSize',
-				'color',
-				'style',
-				'break',
-			];
-			if (
-				previous &&
-				!previous.noteReference &&
-				!normalized.noteReference &&
-				!previous.image &&
-				!normalized.image &&
-				sameJson(previous.link, normalized.link) &&
-				fields.every((field) => previous[field] === normalized[field]) &&
-				sameRevisionMeta(previous, normalized)
-			)
-				previous.text += normalized.text;
-			else result.push(normalized);
-			return result;
-		}, []);
-	const a = compact(left);
-	const b = compact(right);
-	const fields: (keyof TextRun)[] = [
-		'bold',
-		'italic',
-		'underline',
-		'strike',
-		'highlight',
-		'verticalAlign',
-		'language',
-		'eastAsiaLanguage',
-		'bidiLanguage',
-		'rtl',
-		'fontFamily',
-		'fontSize',
-		'color',
-		'style',
-		'break',
-	];
-	const sameNoteReference = (x?: TextRun['noteReference'], y?: TextRun['noteReference']) =>
-		x?.kind === y?.kind && x?.id === y?.id;
-	return (
-		a.length === b.length &&
-		a.every(
-			(run, index) =>
-				run.text === b[index].text &&
-				fields.every((field) => run[field] === b[index][field]) &&
-				sameNoteReference(run.noteReference, b[index].noteReference) &&
-				sameJson(run.link, b[index].link) &&
-				sameJson(run.image, b[index].image) &&
-				sameRevisionMeta(run, b[index]),
-		)
-	);
-}
 /** A table inserted in the editor keeps the borders it was created with (see insertTable). */
 function tableBordersFromNode(value: unknown): Partial<Table> {
 	const borders = parseBordersJson(value);
 	return borders ? { borders: borders as Table['borders'] } : {};
 }
-const sameJson = (left: unknown, right: unknown): boolean =>
-	JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
-/** `revision`/`commentIds` are objects/arrays; compare by value rather than by reference. */
-function sameRevisionMeta(left: TextRun, right: TextRun): boolean {
-	return (
-		JSON.stringify(left.revision) === JSON.stringify(right.revision) &&
-		JSON.stringify(left.commentIds) === JSON.stringify(right.commentIds) &&
-		JSON.stringify(extraRunProperties(left)) === JSON.stringify(extraRunProperties(right))
-	);
-}
-
 export function docToModel(
 	doc: ReturnType<typeof modelToDoc>,
 	prior: DocumentModel,

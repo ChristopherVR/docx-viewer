@@ -1,5 +1,17 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import type { NumberingCatalog } from './numbering-model.js';
+import type { HyperlinkInfo, InlineImage } from './inline-model.js';
+export type { HyperlinkInfo, InlineImage, PicturePlacement } from './inline-model.js';
+import type { HeaderFooterContent, Note, SectionProperties } from './section-model.js';
+export type {
+	HeaderFooterContent,
+	HeaderFooterSlots,
+	Note,
+	SectionColumn,
+	SectionColumns,
+	SectionPageNumbering,
+	SectionProperties,
+} from './section-model.js';
 /** A tracked-change revision recorded on a run or paragraph mark. */
 export interface Revision {
 	/** `moveFrom`/`moveTo` are tracked as delete/insert pairs; Word's move linkage is not modeled. */
@@ -127,43 +139,6 @@ export interface TextRun {
 	/** Hyperlink target for this run, from `w:hyperlink` (or a simple `HYPERLINK` field). */
 	link?: HyperlinkInfo;
 }
-/** An inline drawing (`w:drawing` or legacy `w:pict`) modeled at run granularity. */
-export interface InlineImage {
-	/** Relationship id in `word/_rels/document.xml.rels` pointing at the media part. */
-	relId: string;
-	/** Package part name holding the image bytes, e.g. `word/media/image1.png`. */
-	partName: string;
-	contentType: string;
-	widthPx: number;
-	heightPx: number;
-	/** From `wp:docPr/@descr`. */
-	altText?: string;
-	/** From `wp:docPr/@title` or `@name`. */
-	title?: string;
-	/** `wp:anchor` (floating) drawings render as sized inline placeholders; wrapping/position is lost. */
-	anchored?: boolean;
-	/** Floating (`wp:anchor`) wrapping and horizontal position, read-only; the anchor XML is preserved. */
-	placement?: PicturePlacement;
-	/** Set for non-picture drawings (chart, SmartArt, shape, unresolved legacy VML): rendered as a labeled placeholder with no editable bytes. */
-	unsupported?: string;
-}
-/** How a floating picture sits relative to text. */
-export interface PicturePlacement {
-	wrap: 'square' | 'tight' | 'through' | 'topAndBottom' | 'none';
-	/** `behindDoc`: with `wrap: 'none'`, the picture is behind rather than in front of text. */
-	behindText?: boolean;
-	/** `wp:positionH/wp:align`, when the picture is aligned rather than offset. */
-	align?: 'left' | 'center' | 'right' | 'inside' | 'outside';
-	/** `wp:positionH/wp:posOffset` in CSS pixels, relative to `relativeFrom`. */
-	offsetXPx?: number;
-	relativeFrom?: string;
-}
-/** A `w:hyperlink` target, resolved from its relationship (external) or `w:anchor` (internal). */
-export interface HyperlinkInfo {
-	href?: string;
-	anchor?: string;
-	tooltip?: string;
-}
 export interface Paragraph {
 	type: 'paragraph';
 	/** Stable identity across edits, unique throughout the document. */
@@ -245,71 +220,6 @@ export interface Table {
 	look?: import('./table-model.js').TableLook;
 }
 export type Block = Paragraph | Table;
-/** Read-only header/footer content, parsed with the same paragraph/table parser as the body. */
-export interface HeaderFooterContent {
-	blocks: Block[];
-	/** The header or footer package part, e.g. `word/header1.xml`; several sections may share one. */
-	partName?: string;
-}
-/** One `w:headerReference`/`w:footerReference` slot resolved into read-only content, if present. */
-export interface HeaderFooterSlots {
-	default?: HeaderFooterContent;
-	even?: HeaderFooterContent;
-	first?: HeaderFooterContent;
-}
-export interface SectionColumn {
-	widthTwips: number;
-	spacingTwips?: number;
-}
-/** `w:cols`: newspaper-style column layout for the section. */
-export interface SectionColumns {
-	count: number;
-	spacingTwips?: number;
-	equalWidth: boolean;
-	separator?: boolean;
-	/** Present only when `equalWidth` is false and individual `w:col` widths were given. */
-	widths?: SectionColumn[];
-}
-export interface SectionPageNumbering {
-	start?: number;
-	/** Raw `w:pgNumType/@w:fmt` token, e.g. `decimal`, `upperRoman`. */
-	format?: string;
-}
-/**
- * One `w:sectPr` (paragraph-level section break or the final body section), in native Word
- * units. The pagination engine is the primary consumer; this package does not lay out pages.
- */
-export interface SectionProperties {
-	/** Id of the last block (paragraph or table) this section covers. */
-	endsAtBlockId: string;
-	type: 'nextPage' | 'continuous' | 'evenPage' | 'oddPage' | 'nextColumn';
-	pageWidthTwips: number;
-	pageHeightTwips: number;
-	orientation: 'portrait' | 'landscape';
-	marginTopTwips: number;
-	marginRightTwips: number;
-	marginBottomTwips: number;
-	marginLeftTwips: number;
-	headerDistanceTwips?: number;
-	footerDistanceTwips?: number;
-	gutterTwips?: number;
-	columns: SectionColumns;
-	/** `w:titlePg`: the section's first page uses distinct first-page headers/footers. */
-	titlePage?: boolean;
-	verticalAlign?: 'top' | 'center' | 'both' | 'bottom';
-	pageNumbering?: SectionPageNumbering;
-	/** `w:lnNumType` presence; line numbering values themselves are not modeled. */
-	lineNumbering?: boolean;
-	/** `w:pgBorders` presence; border styling itself is not modeled. */
-	pageBorders?: boolean;
-	headers?: HeaderFooterSlots;
-	footers?: HeaderFooterSlots;
-}
-/** One footnote or endnote body, parsed with the same paragraph/table parser as the body. */
-export interface Note {
-	id: string;
-	blocks: Block[];
-}
 export interface DocumentModel {
 	blocks: Block[];
 	/** CSS pixels at 96 DPI. Page height is currently a surface minimum, not pagination. */

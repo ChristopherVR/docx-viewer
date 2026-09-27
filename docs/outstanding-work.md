@@ -37,8 +37,7 @@ inherited run formatting and theme fonts/colors rendered in the editor, and a hi
 
 Still missing:
 
-- Picture resize handles, alt-text editing, SVG pictures (they need a PNG fallback part), and
-  floating picture layout.
+- SVG pictures (they need a PNG fallback part).
 - Section editing covers size/orientation, margins, columns, vertical alignment, all four
   section-break types, a different first page, page numbering and the document-wide odd/even
   headers setting; line numbering and page borders are still protected (only their presence is
@@ -63,5 +62,5 @@ Still missing:
 
 ### Engineering follow-ups
 
-- Modules over the 300-line guideline: `web-component/src/component.ts` (~530, mostly lifecycle and collaboration wiring), `ribbon.ts` (~410), `schema.ts` (~365), `core/src/model.ts` (~355) and the `localization-strings.ts` data table.
+- Modules over the 300-line guideline: `web-component/src/component.ts` (~530: the element's public API, lifecycle and ribbon dispatch) and the `localization-strings.ts` data table.
 - The Track Changes plugin handles transactions of plain replace steps; multi-step transactions mixing deletions and insertions need position mapping between steps.

@@ -12,17 +12,13 @@ import chromeStyleText from './chrome.css?inline';
 import { editorKeymap, runRibbonCommand } from './editor-commands';
 import { createSearchPanel, type SearchPanelHandle } from './search-panel';
 import {
-	CollaborationClient,
 	type CollaborationConfig,
 	type ClientReceiveResult,
 	type StepBatch,
 } from './collaboration';
-import {
-	repairCollaborativeDocumentIds,
-	createCollaborationIdGenerator,
-} from './collaboration-identity';
+import { repairCollaborativeDocumentIds } from './collaboration-identity';
 import { normalizeEditorLocale, type EditorLocale } from './localization';
-import { EditorPresence } from './editor-presence';
+import { CollaborationSession } from './collaboration-session';
 import { paragraphStylesPlugin, resetStylePicker } from './paragraph-styles';
 import { runListAction } from './list-commands';
 import { sectionBreaksPlugin } from './section-commands';
@@ -55,11 +51,8 @@ export class DocxEditorElement extends HTMLElementBase {
 	private canvas?: HTMLElement;
 	private paper?: HTMLElement;
 	private searchPanel?: SearchPanelHandle;
-	private collaboration?: CollaborationClient;
-	private collaborationIds?: (kind: string) => string;
+	private readonly collab = new CollaborationSession(this, () => this.view);
 	private detachedState?: EditorState;
-	private sendScheduled = false;
-	private presence?: EditorPresence;
 	private _locale: EditorLocale = 'en';
 	private printLayout?: PrintLayoutController;
 	private readonly inserts = new InsertController({
@@ -89,7 +82,7 @@ export class DocxEditorElement extends HTMLElementBase {
 			this.model = model;
 		},
 		locale: () => this._locale,
-		canEditOutsideBody: () => !this._readOnly && !this.collaboration,
+		canEditOutsideBody: () => !this._readOnly && !this.collab.client,
 		edited: () => this.markEditedOutsideBody(),
 		reportError: (cause) => dispatchDocumentError(this, cause),
 	};
@@ -144,16 +137,16 @@ export class DocxEditorElement extends HTMLElementBase {
 	}
 
 	publishPresence(profile: { name: string; color: string }) {
-		if (!this.presence) throw new Error('Start collaboration before publishing presence.');
+		if (!this.collab.presence) throw new Error('Start collaboration before publishing presence.');
 		this._reviewAuthor = profile.name || this._reviewAuthor;
-		return this.presence.publish(profile);
+		return this.collab.presence.publish(profile);
 	}
 	receivePresence(message: unknown) {
-		if (!this.presence) throw new Error('Start collaboration before receiving presence.');
-		return this.presence.receive(message);
+		if (!this.collab.presence) throw new Error('Start collaboration before receiving presence.');
+		return this.collab.presence.receive(message);
 	}
 	leavePresence() {
-		return this.presence?.leave() ?? null;
+		return this.collab.presence?.leave() ?? null;
 	}
 
 	get documentModel() {
@@ -185,7 +178,7 @@ export class DocxEditorElement extends HTMLElementBase {
 	}
 
 	disconnectedCallback() {
-		this.presence?.leave();
+		this.collab.presence?.leave();
 		this.detachedState = this.view?.state;
 		this.view?.destroy();
 		this.view = undefined;
@@ -236,11 +229,9 @@ export class DocxEditorElement extends HTMLElementBase {
 
 	/** Join only after loading the authority's matching document snapshot and version. */
 	startCollaboration(config: CollaborationConfig): void {
-		if (this.collaboration) throw new Error('Stop the current collaboration session first.');
+		if (this.collab.active) throw new Error('Stop the current collaboration session first.');
 		if (!this.view) throw new Error('Mount and load the document before starting collaboration.');
-		this.collaboration = new CollaborationClient(config);
-		this.presence = new EditorPresence(config, this, () => this.view);
-		this.collaborationIds = createCollaborationIdGenerator(config.clientId);
+		this.collab.start(config);
 		this.loadGeneration++;
 		this.detachedState = undefined;
 		this.renderDocument();
@@ -248,12 +239,12 @@ export class DocxEditorElement extends HTMLElementBase {
 
 	getPendingCollaboration(): StepBatch | null {
 		const state = this.view?.state ?? this.detachedState;
-		return state && this.collaboration ? this.collaboration.createPendingBatch(state) : null;
+		return state && this.collab.client ? this.collab.client.createPendingBatch(state) : null;
 	}
 
 	receiveCollaboration(batch: unknown): ClientReceiveResult['status'] {
-		if (!this.collaboration || !this.view) throw new Error('No mounted collaboration session.');
-		const result = this.collaboration.receive(this.view.state, batch);
+		if (!this.collab.client || !this.view) throw new Error('No mounted collaboration session.');
+		const result = this.collab.client.receive(this.view.state, batch);
 		if (result.status === 'applied') this.applyTransaction(result.transaction, true);
 		return result.status;
 	}
@@ -261,34 +252,21 @@ export class DocxEditorElement extends HTMLElementBase {
 	/** Stopping with pending edits requires an explicit discard of the transport queue. */
 	stopCollaboration(discardPending = false): void {
 		const state = this.view?.state ?? this.detachedState;
-		if (!discardPending && state && this.collaboration?.pendingStepCount(state))
+		if (!discardPending && state && this.collab.client?.pendingStepCount(state))
 			throw new Error(
 				'Acknowledge pending collaboration edits before stopping, or explicitly discard the queue.',
 			);
-		this.collaboration = undefined;
-		this.presence?.leave();
-		this.presence = undefined;
-		this.collaborationIds = undefined;
+		this.collab.stop();
 		this.detachedState = undefined;
 		if (this.isConnected) this.renderDocument();
 	}
 
 	private assertDocumentReplaceable() {
-		if (this.collaboration) throw new Error('Stop collaboration before replacing the document.');
+		if (this.collab.client) throw new Error('Stop collaboration before replacing the document.');
 	}
 
 	private scheduleCollaborationSend() {
-		if (!this.collaboration || this.sendScheduled) return;
-		this.sendScheduled = true;
-		queueMicrotask(() => {
-			this.sendScheduled = false;
-			if (!this.isConnected) return;
-			const batch = this.getPendingCollaboration();
-			if (batch)
-				this.dispatchEvent(
-					new CustomEvent('collaboration-send', { detail: batch, bubbles: true, composed: true }),
-				);
-		});
+		this.collab.scheduleSend(() => this.getPendingCollaboration());
 	}
 
 	private buildShell() {
@@ -333,7 +311,7 @@ ${chromeStyleText}`;
 			},
 			getView: () => this.view,
 			getReviewAuthor: () => this._reviewAuthor,
-			getCollaborationIds: () => this.collaborationIds,
+			getCollaborationIds: () => this.collab.ids,
 			notifyChange: () =>
 				this.dispatchEvent(
 					new CustomEvent('document-change', { detail: this.model, bubbles: true, composed: true }),
@@ -390,8 +368,8 @@ ${chromeStyleText}`;
 					),
 					reviewDisplayPlugin(() => this.reviewDisplayMode),
 					editorKeymap(() => this.showSearch()),
-					...(this.collaboration ? [this.collaboration.plugin] : []),
-					...(this.presence ? [this.presence.client.plugin] : []),
+					...(this.collab.client ? [this.collab.client.plugin] : []),
+					...(this.collab.presence ? [this.collab.presence.client.plugin] : []),
 				],
 			});
 		this.view = new EditorView(this.paper, {
@@ -421,12 +399,8 @@ ${chromeStyleText}`;
 		const applied = this.view.state.applyTransaction(transaction).state;
 		const repaired = remote
 			? null
-			: this.collaboration
-				? repairCollaborativeDocumentIds(
-						applied,
-						this.collaboration.clientId,
-						this.collaborationIds,
-					)
+			: this.collab.client
+				? repairCollaborativeDocumentIds(applied, this.collab.client.clientId, this.collab.ids)
 				: assignMissingParagraphIds(applied);
 		this.view.updateState(repaired ? applied.apply(repaired) : applied);
 		if (transaction.docChanged) {
@@ -440,7 +414,8 @@ ${chromeStyleText}`;
 		}
 		this.refreshControls();
 		if (transaction.docChanged || remote) this.scheduleCollaborationSend();
-		if (transaction.docChanged || transaction.selectionSet || remote) this.presence?.schedule();
+		if (transaction.docChanged || transaction.selectionSet || remote)
+			this.collab.presence?.schedule();
 	}
 
 	private showSearch() {
@@ -469,7 +444,7 @@ ${chromeStyleText}`;
 		else {
 			const target = this.targetView();
 			if (!target) return;
-			runRibbonCommand(target, action, this.collaborationIds);
+			runRibbonCommand(target, action, this.collab.ids);
 			focusView(target);
 		}
 	}
@@ -506,7 +481,7 @@ ${chromeStyleText}`;
 			print: () => this.pages.print(),
 			history: (key) => {
 				if (!this.view) return;
-				runRibbonCommand(this.view, { type: 'history', key }, this.collaborationIds);
+				runRibbonCommand(this.view, { type: 'history', key }, this.collab.ids);
 				if (typeof document.execCommand === 'function') this.view.focus();
 			},
 			toggleComments: () => this.review?.handleComments('toggle'),
@@ -532,7 +507,7 @@ ${chromeStyleText}`;
 			this.view,
 			this.model,
 			this._readOnly,
-			Boolean(this.collaboration),
+			Boolean(this.collab.client),
 			this._locale,
 			this.lang,
 			this.printLayout?.pageStatus(),
