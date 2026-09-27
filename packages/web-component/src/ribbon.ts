@@ -18,10 +18,18 @@ export type RibbonAction =
 	| { type: 'tableEdit'; key: TableCommand }
 	| {
 			type: 'page';
-			key: 'margin' | 'orientation' | 'columns' | 'numberFormat' | 'numberStart' | 'titlePage';
+			key:
+				| 'margin'
+				| 'orientation'
+				| 'columns'
+				| 'numberFormat'
+				| 'numberStart'
+				| 'titlePage'
+				| 'verticalAlign';
 			value: string;
 	  }
-	| { type: 'sectionBreak'; kind: 'nextPage' | 'continuous' }
+	| { type: 'sectionBreak'; kind: 'nextPage' | 'continuous' | 'evenPage' | 'oddPage' }
+	| { type: 'evenOddHeaders' }
 	| {
 			type: 'paragraph';
 			key: 'indent' | 'spacingBefore' | 'spacingAfter' | 'lineSpacing';
@@ -365,6 +373,16 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 				(value) => ({ type: 'page', key: 'orientation', value }),
 			),
 			select(
+				'Vertical alignment',
+				[
+					['top', 'Top'],
+					['center', 'Center'],
+					['both', 'Justified'],
+					['bottom', 'Bottom'],
+				],
+				(value) => ({ type: 'page', key: 'verticalAlign', value }),
+			),
+			select(
 				'Columns',
 				[
 					['1', 'One column'],
@@ -400,6 +418,9 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 				key: 'titlePage',
 				value: 'toggle',
 			}),
+			button('Different odd and even pages', 'Different odd & even pages', {
+				type: 'evenOddHeaders',
+			}),
 		),
 		group(
 			'Section breaks',
@@ -408,6 +429,8 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 				type: 'sectionBreak',
 				kind: 'continuous',
 			}),
+			button('Even page section break', 'Even page', { type: 'sectionBreak', kind: 'evenPage' }),
+			button('Odd page section break', 'Odd page', { type: 'sectionBreak', kind: 'oddPage' }),
 		),
 	);
 	panels.get('View')!.append(

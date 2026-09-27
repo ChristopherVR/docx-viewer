@@ -74,6 +74,7 @@ export function modelToDoc(model: DocumentModel) {
 			marginBottom: model.page.marginBottom,
 			marginLeft: model.page.marginLeft,
 			sections: model.sections ? sectionLayoutJson(model.sections) : null,
+			evenAndOddHeaders: Boolean(model.evenAndOddHeaders),
 			footnoteNumFmt: model.footnoteNumFmt ?? null,
 			endnoteNumFmt: model.endnoteNumFmt ?? null,
 		},
@@ -280,10 +281,11 @@ export function docToModel(
 		}
 	});
 	// The editor document is the source of truth for section layout (so undo covers page setup).
-	const { sections: priorSections, ...rest } = prior;
+	const { sections: priorSections, evenAndOddHeaders: _evenOdd, ...rest } = prior;
 	return {
 		...rest,
 		blocks,
+		...(doc.attrs.evenAndOddHeaders ? { evenAndOddHeaders: true } : {}),
 		...(typeof doc.attrs.sections === 'string'
 			? { sections: sectionsFromLayout(doc.attrs.sections, priorSections, blocks) }
 			: {}),

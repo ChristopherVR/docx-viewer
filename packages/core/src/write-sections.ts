@@ -21,6 +21,7 @@ const WRITABLE = new Set([
 	'gutterTwips',
 	'columns',
 	'titlePage',
+	'verticalAlign',
 	'pageNumbering',
 	'headers',
 	'footers',
@@ -110,6 +111,13 @@ function writeSectionProperties(doc: XmlDocument, sectPr: XmlElement, section: S
 	}
 	if (section.columns.separator) setW(columns, 'sep', '1');
 	else columns.removeAttributeNS(WORD_NS, 'sep');
+	if (section.verticalAlign && section.verticalAlign !== 'top')
+		setW(
+			child(doc, sectPr, 'vAlign', ['noEndnote', 'titlePg', ...AFTER_TITLEPG]),
+			'val',
+			section.verticalAlign,
+		);
+	else for (const vAlign of children(sectPr, 'vAlign')) sectPr.removeChild(vAlign);
 	if (section.titlePage) child(doc, sectPr, 'titlePg', AFTER_TITLEPG);
 	else for (const titlePg of children(sectPr, 'titlePg')) sectPr.removeChild(titlePg);
 	const numbering = section.pageNumbering;
@@ -137,7 +145,7 @@ function assertWritable(section: SectionProperties, base: SectionProperties | un
 				JSON.stringify(base[key as keyof SectionProperties])
 		)
 			throw new Error(
-				`Editing the section property "${key}" is not supported; only page size, orientation, margins, columns, break type, first-page setting and page numbering can change.`,
+				`Editing the section property "${key}" is not supported; only page size, orientation, margins, columns, break type, vertical alignment, first-page setting and page numbering can change.`,
 			);
 }
 

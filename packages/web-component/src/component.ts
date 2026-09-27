@@ -460,6 +460,7 @@ ${chromeStyleText}`;
 			this.parts.insertNote(action.kind, this.canvas, this.paper);
 		else if (action.type === 'page') this.pages.changePageSetup(action.key, action.value);
 		else if (action.type === 'sectionBreak') this.pages.insertSectionBreak(action.kind);
+		else if (action.type === 'evenOddHeaders') this.pages.toggleEvenOddHeaders();
 		else if (action.type === 'reviewDisplay') {
 			this.reviewDisplayMode = action.value;
 			this.view?.dispatch(this.view.state.tr);

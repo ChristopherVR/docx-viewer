@@ -31,7 +31,8 @@ describe('track changes setting', () => {
 		expect(loaded.model.trackChanges).toBeUndefined();
 		const saved = await JSZip.loadAsync(await loaded.save({ ...loaded.model, trackChanges: true }));
 		const settingsXml = await saved.file('word/settings.xml')?.async('string');
-		expect(settingsXml).toContain('w:trackChanges');
+		expect(settingsXml).toContain('<w:trackRevisions/>');
+		expect(settingsXml).not.toContain('trackChanges');
 		const rels = await saved.file('word/_rels/document.xml.rels')?.async('string');
 		expect(rels).toContain('relationships/settings');
 		const contentTypes = await saved.file('[Content_Types].xml')?.async('string');
@@ -43,7 +44,7 @@ describe('track changes setting', () => {
 			await reopened.save({ ...reopened.model, trackChanges: false }),
 		);
 		const disabledSettings = await disabled.file('word/settings.xml')?.async('string');
-		expect(disabledSettings).not.toContain('trackChanges');
+		expect(disabledSettings).not.toContain('trackRevisions');
 	});
 
 	it('returns original bytes for a no-op save even once settings.xml exists', async () => {
@@ -56,5 +57,24 @@ describe('track changes setting', () => {
 		const bytes = await zip.generateAsync({ type: 'uint8array' });
 		const loaded = await loadDocx(bytes);
 		expect(await loaded.save()).toEqual(bytes);
+	});
+
+	it('reads the Word w:trackRevisions flag and inserts flags in schema order', async () => {
+		const zip = new JSZip();
+		zip.file(
+			'word/document.xml',
+			`<w:document ${NS}><w:body><w:p><w:r><w:t>x</w:t></w:r></w:p><w:sectPr/></w:body></w:document>`,
+		);
+		zip.file(
+			'word/settings.xml',
+			`<w:settings ${NS}><w:zoom w:percent="100"/><w:trackRevisions/><w:defaultTabStop w:val="720"/><w:compat/></w:settings>`,
+		);
+		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
+		expect(loaded.model.trackChanges).toBe(true);
+		const saved = await JSZip.loadAsync(
+			await loaded.save({ ...loaded.model, evenAndOddHeaders: true }),
+		);
+		const xml = await saved.file('word/settings.xml')!.async('string');
+		expect(xml).toMatch(/<w:defaultTabStop[^>]*\/><w:evenAndOddHeaders\/><w:compat\/>/);
 	});
 });

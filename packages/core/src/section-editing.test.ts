@@ -91,4 +91,28 @@ describe('section editing', () => {
 		expect(again).not.toContain('titlePg');
 		expect(again).not.toContain('pgNumType');
 	});
+
+	it('writes vertical alignment and an odd-page section break', async () => {
+		const loaded = await loadDocx(
+			await docx(
+				`<w:p><w:r><w:t>Title</w:t></w:r></w:p><w:p><w:r><w:t>Body</w:t></w:r></w:p>${finalSection}`,
+			),
+		);
+		const model = clone(loaded.model);
+		const [last] = model.sections!;
+		model.sections = [
+			{ ...structuredClone(last), endsAtBlockId: model.blocks[0].id, verticalAlign: 'center' },
+			{ ...last, type: 'oddPage' },
+		];
+		const xml = await documentXml(await loaded.save(model));
+		expect(xml).toMatch(/<w:pPr><w:sectPr>.*<w:vAlign w:val="center"\/>.*<\/w:sectPr><\/w:pPr>/);
+		expect(xml).toContain('<w:type w:val="oddPage"/>');
+		const reloaded = await loadDocx(await loaded.save(model));
+		expect(
+			reloaded.model.sections!.map((section) => [section.type, section.verticalAlign]),
+		).toEqual([
+			['nextPage', 'center'],
+			['oddPage', undefined],
+		]);
+	});
 });

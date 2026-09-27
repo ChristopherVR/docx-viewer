@@ -82,6 +82,7 @@ export const schema = new Schema({
 				marginBottom: { default: 96 },
 				marginLeft: { default: 96 },
 				/** Footnote/endnote number formats (`w:numFmt`), for reference labels. */
+				evenAndOddHeaders: { default: false },
 				footnoteNumFmt: { default: null },
 				endnoteNumFmt: { default: null },
 				/** Section layout (no header/footer content) as JSON, so page setup is undoable. */

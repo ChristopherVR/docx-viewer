@@ -12,7 +12,9 @@ import {
 	setOrientation,
 	setPageNumbering,
 	setTitlePage,
+	setVerticalAlign,
 } from './section-commands';
+import type { RibbonAction } from './ribbon';
 import { sectionLayoutJson } from './section-layout';
 import type { StatusBar } from './status-bar';
 
@@ -32,10 +34,7 @@ export class PageController {
 	constructor(private readonly host: PageControllerHost) {}
 
 	/** Page setup applies to the section holding the selection, as in Word, and is undoable. */
-	changePageSetup(
-		key: 'margin' | 'orientation' | 'columns' | 'numberFormat' | 'numberStart' | 'titlePage',
-		value: string,
-	): void {
+	changePageSetup(key: Extract<RibbonAction, { type: 'page' }>['key'], value: string): void {
 		const view = this.host.view();
 		if (!view?.editable || !this.host.canEditOutsideBody()) return;
 		const model = this.host.model();
@@ -52,7 +51,15 @@ export class PageController {
 							? setPageNumbering(model, index, { format: value })
 							: key === 'numberStart'
 								? setPageNumbering(model, index, { restart: value === 'restart' })
-								: setTitlePage(model, index, !section.titlePage);
+								: key === 'verticalAlign'
+									? setVerticalAlign(
+											model,
+											index,
+											(['top', 'center', 'both', 'bottom'] as const).find(
+												(item) => item === value,
+											) ?? 'top',
+										)
+									: setTitlePage(model, index, !section.titlePage);
 		this.dispatchSections(next);
 	}
 
@@ -68,6 +75,11 @@ export class PageController {
 			if (select) select.value = value;
 		};
 		setSelect('Orientation', section.orientation);
+		setSelect('Vertical alignment', section.verticalAlign ?? 'top');
+		findLocalizedControl<HTMLButtonElement>(toolbar, 'Different odd and even pages')?.setAttribute(
+			'aria-pressed',
+			String(Boolean(model.evenAndOddHeaders)),
+		);
 		setSelect('Columns', String(section.columns.count));
 		setSelect('Page number format', section.pageNumbering?.format ?? 'decimal');
 		setSelect(
@@ -80,7 +92,16 @@ export class PageController {
 		);
 	}
 
-	insertSectionBreak(kind: 'nextPage' | 'continuous'): void {
+	/** Header & Footer > Different Odd & Even Pages (document-wide, undoable). */
+	toggleEvenOddHeaders(): void {
+		const view = this.host.view();
+		if (!view?.editable || !this.host.canEditOutsideBody()) return;
+		view.dispatch(
+			view.state.tr.setDocAttribute('evenAndOddHeaders', !view.state.doc.attrs.evenAndOddHeaders),
+		);
+	}
+
+	insertSectionBreak(kind: 'nextPage' | 'continuous' | 'evenPage' | 'oddPage'): void {
 		const view = this.host.view();
 		if (!view?.editable || !this.host.canEditOutsideBody()) return;
 		try {

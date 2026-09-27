@@ -92,6 +92,8 @@ export interface LayoutSection {
 	blocks: LayoutBlock[];
 	/** How this section begins relative to the previous one; the first section is always a fresh page. */
 	break?: 'nextPage' | 'continuous' | 'evenPage' | 'oddPage';
+	/** `w:vAlign`: where content sits vertically on each page of the section. */
+	verticalAlign?: 'top' | 'center' | 'both' | 'bottom';
 }
 
 export interface LayoutDocumentInput {

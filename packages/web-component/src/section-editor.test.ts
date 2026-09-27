@@ -98,4 +98,25 @@ describe('section editing in the editor', () => {
 		undo(view(editor).state, view(editor).dispatch);
 		expect(editor.documentModel!.sections?.[0].pageNumbering?.format).toBe('lowerRoman');
 	});
+
+	it('sets vertical alignment and the document-wide odd and even pages setting', async () => {
+		const editor = mount(twoParagraphs());
+		choose(editor, 'Vertical alignment', 'center');
+		expect(editor.documentModel!.sections?.[0].verticalAlign).toBe('center');
+		const toggle = editor.shadowRoot!.querySelector<HTMLButtonElement>(
+			'[aria-label="Different odd and even pages"]',
+		)!;
+		toggle.click();
+		expect(editor.documentModel!.evenAndOddHeaders).toBe(true);
+		expect(toggle.getAttribute('aria-pressed')).toBe('true');
+		const zip = await JSZip.loadAsync(await editor.save());
+		expect(await zip.file('word/settings.xml')!.async('string')).toContain(
+			'<w:evenAndOddHeaders/>',
+		);
+		expect(await zip.file('word/document.xml')!.async('string')).toContain(
+			'<w:vAlign w:val="center"/>',
+		);
+		undo(view(editor).state, view(editor).dispatch);
+		expect(editor.documentModel!.evenAndOddHeaders).toBeUndefined();
+	});
 });

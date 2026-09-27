@@ -106,6 +106,18 @@ export function setColumns(model: DocumentModel, index: number, count: number): 
 	}));
 }
 
+/** Layout > Page Setup > Vertical alignment for one section. */
+export function setVerticalAlign(
+	model: DocumentModel,
+	index: number,
+	verticalAlign: NonNullable<SectionProperties['verticalAlign']>,
+): DocumentModel {
+	return withSection(model, index, (section) => {
+		const { verticalAlign: _previous, ...rest } = section;
+		return verticalAlign === 'top' ? rest : { ...rest, verticalAlign };
+	});
+}
+
 /** Header & Footer > Different First Page for one section. */
 export function setTitlePage(
 	model: DocumentModel,
@@ -139,7 +151,7 @@ export function setPageNumbering(
 export function insertSectionBreak(
 	view: EditorView,
 	model: DocumentModel,
-	type: 'nextPage' | 'continuous',
+	type: 'nextPage' | 'continuous' | 'evenPage' | 'oddPage',
 ): DocumentModel {
 	const block = model.blocks[selectedBlockIndex(view)];
 	if (!block || block.type !== 'paragraph')

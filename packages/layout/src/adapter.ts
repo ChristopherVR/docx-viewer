@@ -141,6 +141,7 @@ export function adaptDocumentModel(
 					}
 				: {}),
 			...(index === 0 ? {} : { break: sectionBreak(section.type, reportOnce) }),
+			...(section.verticalAlign ? { verticalAlign: section.verticalAlign } : {}),
 			blocks: slice,
 		};
 	});

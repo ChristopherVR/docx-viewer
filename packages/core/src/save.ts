@@ -8,7 +8,7 @@ import { applyNumberingCatalog } from './numbering-package.js';
 import { applyHeaderFooterEdits } from './write-header-footer.js';
 import { applyNoteEdits } from './write-notes.js';
 import { writeNewRelationships } from './part-relationships.js';
-import { applyTrackChangesSetting } from './settings.js';
+import { applySettingsFlag, applyTrackChangesSetting } from './settings.js';
 import { applyComments } from './write-comments.js';
 import { parseRelationships } from './package-parts.js';
 
@@ -110,6 +110,8 @@ export async function saveDocx(
 		pendingMedia,
 	);
 	await applyNumberingCatalog(zip, model, binding);
+	if (Boolean(model.evenAndOddHeaders) !== Boolean(binding?.base.evenAndOddHeaders))
+		await applySettingsFlag(zip, 'evenAndOddHeaders', Boolean(model.evenAndOddHeaders));
 	if (model.trackChanges !== binding?.base.trackChanges)
 		await applyTrackChangesSetting(zip, model.trackChanges === true);
 	if (JSON.stringify(model.comments ?? []) !== JSON.stringify(binding?.base.comments ?? []))

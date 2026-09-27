@@ -117,13 +117,58 @@ class SectionFlow {
 	}
 }
 
+/**
+ * Word starts an even-page (odd-page) section on the next even (odd) page, leaving a blank page
+ * when needed. The blank page belongs to the previous section.
+ */
+function insertParityBlank(pages: LayoutPageBox[], section: LayoutSection): void {
+	const previous = pages.at(-1);
+	if (!previous || (section.break !== 'evenPage' && section.break !== 'oddPage')) return;
+	const nextNumber = pages.length + 1;
+	const wanted = section.break === 'evenPage' ? 0 : 1;
+	if (nextNumber % 2 === wanted) return;
+	pages.push({
+		...previous,
+		index: pages.length,
+		pageInSection: previous.pageInSection + 1,
+		columns: previous.columns.map((column) => ({ ...column, blocks: [] })),
+	});
+}
+
+/** Shifts each page's content down for centered or bottom-aligned sections (`w:vAlign`). */
+function alignVertically(
+	pages: LayoutPageBox[],
+	section: LayoutSection,
+	note: (m: string) => void,
+) {
+	const align = section.verticalAlign;
+	if (!align || align === 'top') return;
+	if (align === 'both') {
+		note('Vertically justified sections are laid out top-aligned.');
+		return;
+	}
+	for (const page of pages) {
+		const available = page.heightPx - page.marginTopPx - page.marginBottomPx;
+		const used = Math.max(
+			0,
+			...page.columns.flatMap((column) => column.blocks.map((block) => block.yPx + block.heightPx)),
+		);
+		const shift = (available - used) / (align === 'center' ? 2 : 1);
+		if (shift <= 0) continue;
+		for (const column of page.columns) for (const block of column.blocks) block.yPx += shift;
+	}
+}
+
 /** Paginates an already-adapted engine input. See `layout.ts` for the DocumentModel-facing entry point. */
 export function layoutSections(input: LayoutDocumentInput, measurer: TextMeasurer): LayoutResult {
 	const approximations = new Set<string>();
 	const note = (message: string) => approximations.add(message);
 	const pages: LayoutPageBox[] = [];
-	input.sections.forEach((section, index) =>
-		new SectionFlow(section, pages, measurer, note, index).run(),
-	);
+	input.sections.forEach((section, index) => {
+		insertParityBlank(pages, section);
+		const first = pages.length;
+		new SectionFlow(section, pages, measurer, note, index).run();
+		alignVertically(pages.slice(first), section, note);
+	});
 	return { pages, approximations: [...approximations] };
 }

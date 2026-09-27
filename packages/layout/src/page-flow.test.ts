@@ -179,3 +179,43 @@ describe('layoutSections: table row fragmentation', () => {
 		}
 	});
 });
+
+describe('layoutSections: odd/even section breaks and vertical alignment', () => {
+	it('leaves a blank page so an odd-page section starts on an odd page', () => {
+		const result = layoutSections(
+			{
+				sections: [
+					{ page: geometry(200, 100), blocks: [para('p1', 1)] },
+					{ page: geometry(200, 100), blocks: [para('p2', 1)], break: 'oddPage' },
+				],
+			},
+			measurer,
+		);
+		expect(result.pages).toHaveLength(3);
+		expect(result.pages[1].columns[0].blocks).toHaveLength(0);
+		expect(result.pages[2]).toMatchObject({ index: 2, sectionIndex: 1, pageInSection: 0 });
+	});
+
+	it('does not add a blank page when the even-page section already lands on an even page', () => {
+		const result = layoutSections(
+			{
+				sections: [
+					{ page: geometry(200, 100), blocks: [para('p1', 1)] },
+					{ page: geometry(200, 100), blocks: [para('p2', 1)], break: 'evenPage' },
+				],
+			},
+			measurer,
+		);
+		expect(result.pages).toHaveLength(2);
+	});
+
+	it('centers and bottom-aligns content on the page', () => {
+		const layout = (verticalAlign: 'center' | 'bottom') =>
+			layoutSections(
+				{ sections: [{ page: geometry(200, 100), blocks: [para('p1', 1)], verticalAlign }] },
+				measurer,
+			).pages[0].columns[0].blocks[0].yPx;
+		expect(layout('center')).toBe(40);
+		expect(layout('bottom')).toBe(80);
+	});
+});
