@@ -233,6 +233,8 @@ export type Block = Paragraph | Table;
 /** Read-only header/footer content, parsed with the same paragraph/table parser as the body. */
 export interface HeaderFooterContent {
 	blocks: Block[];
+	/** The header or footer package part, e.g. `word/header1.xml`; several sections may share one. */
+	partName?: string;
 }
 /** One `w:headerReference`/`w:footerReference` slot resolved into read-only content, if present. */
 export interface HeaderFooterSlots {

@@ -45,15 +45,20 @@ function slot(
 	root: HTMLElement,
 	labelText: string,
 	content: HeaderFooterContent | undefined,
+	name: 'default' | 'first' | 'even',
 ): void {
 	if (!content || !content.blocks.length) return;
 	const wrap = document.createElement('div');
 	wrap.className = 'dve-header-footer-slot';
+	wrap.dataset.slot = name;
 	const label = document.createElement('div');
 	label.className = 'dve-header-footer-label';
 	label.textContent = labelText;
 	label.dataset.localeAriaLabel = labelText;
-	wrap.append(label, renderBlocks(content.blocks));
+	const body = document.createElement('div');
+	body.className = 'dve-header-footer-body';
+	body.append(renderBlocks(content.blocks));
+	wrap.append(label, body);
 	root.append(wrap);
 }
 
@@ -66,20 +71,26 @@ function buildSlotsElement(
 	const root = document.createElement('section');
 	root.className = `dve-${kind}`;
 	root.setAttribute('contenteditable', 'false');
-	root.setAttribute('aria-readonly', 'true');
 	root.dataset.localeAriaLabel = kind === 'header' ? 'Header' : 'Footer';
 	root.setAttribute('aria-label', translateUiText(root, kind === 'header' ? 'Header' : 'Footer'));
 	slot(
 		root,
 		translateUiText(root, kind === 'header' ? 'First page header' : 'First page footer'),
 		slots.first,
+		'first',
 	);
 	slot(
 		root,
 		translateUiText(root, kind === 'header' ? 'Even page header' : 'Even page footer'),
 		slots.even,
+		'even',
 	);
-	slot(root, translateUiText(root, kind === 'header' ? 'Header' : 'Footer'), slots.default);
+	slot(
+		root,
+		translateUiText(root, kind === 'header' ? 'Header' : 'Footer'),
+		slots.default,
+		'default',
+	);
 	root.dataset.editorLocale = locale;
 	return root;
 }

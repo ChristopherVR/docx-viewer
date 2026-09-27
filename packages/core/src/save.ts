@@ -5,6 +5,7 @@ import { buildXml, parseXml, type XmlDocument } from './xml.js';
 import type { PackageContext } from './parse.js';
 import { applyModel } from './write.js';
 import { applyNumberingCatalog } from './numbering-package.js';
+import { applyHeaderFooterEdits, sectionLayout } from './write-header-footer.js';
 import { applyTrackChangesSetting } from './settings.js';
 import { applyComments } from './write-comments.js';
 import {
@@ -63,9 +64,13 @@ export async function saveDocx(
 		throw new Error(
 			'Creating or editing paragraph styles is not supported by the standalone DOCX writer.',
 		);
-	if (binding && JSON.stringify(model.sections) !== JSON.stringify(binding.base.sections))
+	if (
+		binding &&
+		JSON.stringify(sectionLayout(model.sections)) !==
+			JSON.stringify(sectionLayout(binding.base.sections))
+	)
 		throw new Error(
-			'Editing sections, page setup, headers or footers is not supported; source section and header/footer parts are preserved unchanged.',
+			'Editing sections or page setup is not supported; source section properties are preserved unchanged.',
 		);
 	if (
 		binding &&
@@ -138,6 +143,7 @@ export async function saveDocx(
 		zip.file(RELS_PART, buildRelationshipsXml(relationships));
 		if (contentTypesXml) zip.file(CONTENT_TYPES_PART, contentTypesXml);
 	}
+	if (binding) await applyHeaderFooterEdits(zip, model, binding.base);
 	await applyNumberingCatalog(zip, model, binding);
 	if (model.trackChanges !== binding?.base.trackChanges)
 		await applyTrackChangesSetting(zip, model.trackChanges === true);

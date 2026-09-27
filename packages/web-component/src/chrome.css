@@ -529,3 +529,19 @@
 	gap: 6px;
 	color: var(--ink);
 }
+
+/* Header/footer editing (double-click a header or footer) */
+.dve-header-footer-slot[data-slot] {
+	cursor: text;
+}
+.dve-header-footer-editing {
+	outline: 1px dashed var(--word);
+	outline-offset: 4px;
+}
+.dve-header-footer-editor .ProseMirror {
+	outline: none;
+	white-space: pre-wrap;
+}
+.dve-header-footer-editor .ProseMirror p {
+	margin: 0;
+}

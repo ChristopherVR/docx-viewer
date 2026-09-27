@@ -48,7 +48,7 @@ function writeParagraphImpl(
 	paragraph: Paragraph,
 	node: XmlElement,
 	base: Paragraph | undefined,
-	allocator: RelationshipAllocator,
+	allocator: RelationshipAllocator | undefined,
 ): XmlElement {
 	if (base && JSON.stringify(paragraph) === JSON.stringify(base)) return node;
 	const slots = collectInlineSlots(node);
@@ -114,7 +114,7 @@ function writeParagraphImpl(
 function createParagraph(
 	doc: XmlDocument,
 	paragraph: Paragraph,
-	allocator: RelationshipAllocator,
+	allocator: RelationshipAllocator | undefined,
 ): XmlElement {
 	const node = makeW(doc, 'p');
 	return writeParagraphImpl(doc, paragraph, node, undefined, allocator);
@@ -123,7 +123,7 @@ function createParagraph(
 function createTable(
 	doc: XmlDocument,
 	table: Extract<Block, { type: 'table' }>,
-	allocator: RelationshipAllocator,
+	allocator: RelationshipAllocator | undefined,
 	contentWidthTwips: number,
 ): XmlElement {
 	const node = makeW(doc, 'tbl');
@@ -174,41 +174,35 @@ function originalNodes(body: XmlElement): XmlElement[] {
 	) as XmlElement[];
 }
 
-export interface ApplyModelResult {
-	/** New hyperlink/image relationships save.ts must add to word/_rels/document.xml.rels. */
-	newRelationships: readonly NewRelationship[];
-}
-
-export function applyModel(
+/**
+ * Applies `blocks` to the paragraphs and tables directly inside `container` (the document body, or
+ * a header, footer or note root), rewriting only blocks that changed relative to `original`.
+ * Without an allocator, new pictures and external links are rejected (their relationships would
+ * belong to a different package part).
+ */
+export function applyBlocks(
 	doc: XmlDocument,
-	model: DocumentModel,
+	container: XmlElement,
+	blocks: Block[],
 	original: Block[],
-	/** Relationship ids already declared in word/_rels/document.xml.rels (styles, numbering, ...). */
-	reservedRelationshipIds: Iterable<string> = [],
-): ApplyModelResult {
-	const body = Array.from(doc.getElementsByTagNameNS(WORD_NS, 'body'))[0];
-	if (!body) throw new Error('DOCX document.xml has no w:body');
-	const allocator = new RelationshipAllocator([
-		...scanUsedRelationshipIds(doc),
-		...reservedRelationshipIds,
-	]);
+	allocator: RelationshipAllocator | undefined,
+	contentWidthTwips: number,
+	anchor: XmlElement | null = null,
+): void {
 	const boundWriteParagraph = (
 		writeDoc: XmlDocument,
 		paragraph: Paragraph,
 		node: XmlElement,
 		base?: Paragraph,
 	) => writeParagraphImpl(writeDoc, paragraph, node, base, allocator);
-	const oldNodes = originalNodes(body);
+	const oldNodes = originalNodes(container);
 	const oldById = new Map<string, XmlElement>();
 	original.forEach((block, index) => {
 		if (oldNodes[index]) oldById.set(block.id, oldNodes[index]);
 	});
 	const bases = baseMap(original);
-	const contentWidthTwips = Math.round(
-		(model.page.width - model.page.marginLeft - model.page.marginRight) * 15,
-	);
 	const output: XmlElement[] = [];
-	for (const block of model.blocks) {
+	for (const block of blocks) {
 		const old = oldById.get(block.id);
 		const base = bases.get(block.id);
 		if (block.type === 'paragraph')
@@ -231,9 +225,39 @@ export function applyModel(
 					: createTable(doc, block, allocator, contentWidthTwips),
 			);
 	}
-	const slots = originalNodes(body);
-	const sectionAnchor = children(body, 'sectPr').at(-1) ?? null;
-	replaceSlots(doc, body, slots, output, sectionAnchor);
+	replaceSlots(doc, container, originalNodes(container), output, anchor);
+}
+
+export interface ApplyModelResult {
+	/** New hyperlink/image relationships save.ts must add to word/_rels/document.xml.rels. */
+	newRelationships: readonly NewRelationship[];
+}
+
+export function applyModel(
+	doc: XmlDocument,
+	model: DocumentModel,
+	original: Block[],
+	/** Relationship ids already declared in word/_rels/document.xml.rels (styles, numbering, ...). */
+	reservedRelationshipIds: Iterable<string> = [],
+): ApplyModelResult {
+	const body = Array.from(doc.getElementsByTagNameNS(WORD_NS, 'body'))[0];
+	if (!body) throw new Error('DOCX document.xml has no w:body');
+	const allocator = new RelationshipAllocator([
+		...scanUsedRelationshipIds(doc),
+		...reservedRelationshipIds,
+	]);
+	const contentWidthTwips = Math.round(
+		(model.page.width - model.page.marginLeft - model.page.marginRight) * 15,
+	);
+	applyBlocks(
+		doc,
+		body,
+		model.blocks,
+		original,
+		allocator,
+		contentWidthTwips,
+		children(body, 'sectPr').at(-1) ?? null,
+	);
 	let section = children(body, 'sectPr').at(-1);
 	if (!section) {
 		section = makeW(doc, 'sectPr');

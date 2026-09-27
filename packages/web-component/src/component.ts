@@ -2,7 +2,7 @@ import { refreshEditorControls } from './editor-controls';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { history } from 'prosemirror-history';
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { Block, DocumentModel, HeaderFooterContent } from '@christophervr/docx-core';
 import { createDocument, ensureListDefinition, saveDocx } from '@christophervr/docx-core';
 import { loadDocument } from '@christophervr/docx-document';
 import { createRibbon, setRibbonLocale, type RibbonAction } from './ribbon';
@@ -27,6 +27,7 @@ import { EditorPresence } from './editor-presence';
 import { paragraphStylesPlugin, resetStylePicker } from './paragraph-styles';
 import { changeListLevel, removeList, selectionIsListKind, toggleList } from './list-commands';
 import { buildHeaderElement, buildFooterElement } from './header-footer-view';
+import { attachHeaderFooterEditing, type HeaderFooterSlotName } from './header-footer-editor';
 import { buildNotesElement } from './notes-view';
 import { createPrintLayoutController, type PrintLayoutController } from './print-layout-view';
 import { moveCursorToBlock } from './print-layout-cursor';
@@ -389,10 +390,46 @@ ${chromeStyleText}`;
 		this.headerEl = buildHeaderElement(this.model, this._locale) ?? undefined;
 		this.footerEl = buildFooterElement(this.model, this._locale) ?? undefined;
 		this.notesEl = buildNotesElement(this.model, this._locale) ?? undefined;
+		for (const [element, kind] of [
+			[this.headerEl, 'headers'],
+			[this.footerEl, 'footers'],
+		] as const)
+			if (element)
+				attachHeaderFooterEditing(element, {
+					content: (slot) => this.model.sections?.[0]?.[kind]?.[slot],
+					change: (slot, blocks) => this.updateHeaderFooter(kind, slot, blocks),
+					editable: () => !this._readOnly && !this.collaboration,
+				});
 		if (this.headerEl) this.canvas.insertBefore(this.headerEl, this.paper);
 		if (this.footerEl) this.canvas.insertBefore(this.footerEl, this.paper.nextSibling);
 		if (this.notesEl)
 			this.canvas.insertBefore(this.notesEl, (this.footerEl ?? this.paper).nextSibling);
+	}
+
+	/** Applies header/footer edits to every section slot that shares the edited part. */
+	private updateHeaderFooter(
+		kind: 'headers' | 'footers',
+		slot: HeaderFooterSlotName,
+		blocks: Block[],
+	) {
+		const edited = this.model.sections?.[0]?.[kind]?.[slot];
+		if (!edited) return;
+		const sections = (this.model.sections ?? []).map((section) => {
+			const slots = { ...section[kind] };
+			for (const [name, content] of Object.entries(slots) as [
+				HeaderFooterSlotName,
+				HeaderFooterContent,
+			][])
+				if (content === edited || (edited.partName && content?.partName === edited.partName))
+					slots[name] = { ...content, blocks: structuredClone(blocks) };
+			return { ...section, [kind]: slots };
+		});
+		this.model = { ...this.model, sections };
+		this.chrome?.setSaveState('dirty');
+		if (this.viewMode === 'print') this.printLayout?.scheduleRelayout(this.model);
+		this.dispatchEvent(
+			new CustomEvent('document-change', { detail: this.model, bubbles: true, composed: true }),
+		);
 	}
 
 	private applyTransaction(transaction: Transaction, remote = false) {

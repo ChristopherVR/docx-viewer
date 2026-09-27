@@ -56,7 +56,7 @@ async function resolveSlots(
 			);
 			cache.set(path, blocks);
 		}
-		slots[ref.slot] = { blocks };
+		slots[ref.slot] = { blocks, partName: path };
 	}
 	return Object.keys(slots).length ? slots : undefined;
 }
