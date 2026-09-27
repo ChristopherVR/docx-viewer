@@ -3,6 +3,8 @@ import type { TextRun } from './model.js';
 import { children, first, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
 import { isWordHighlightToken } from './highlight.js';
 import { isValidLanguageTag } from './language.js';
+import { setExtendedRunProperties } from './write-run-extra.js';
+import { fractionToThemeByte } from './theme-color.js';
 
 function setAttribute(element: XmlElement, local: string, value: string): void {
 	element.setAttributeNS(WORD_NS, `w:${local}`, value);
@@ -78,7 +80,18 @@ function setRunProperties(
 			run.rtl !== undefined ||
 			run.fontSize ||
 			run.fontFamily ||
-			run.color)
+			run.color ||
+			run.colorTheme ||
+			run.style ||
+			run.caps ||
+			run.smallCaps ||
+			run.doubleStrike ||
+			run.vanish ||
+			run.underlineStyle ||
+			run.characterSpacingTwips !== undefined ||
+			run.shadingFill ||
+			run.shadingThemeFill ||
+			run.fontTheme)
 	) {
 		props = makeW(doc, 'rPr');
 		runNode.insertBefore(props, runNode.firstChild);
@@ -90,11 +103,12 @@ function setRunProperties(
 		setToggle(doc, props, 'strike', run.strike === true);
 		removeChildren(props, 'dstrike');
 	}
-	if (changed('underline')) {
+	if (changed('underline') || changed('underlineStyle') || changed('underlineColor')) {
 		removeChildren(props, 'u');
 		if (run.underline) {
 			const underline = makeW(doc, 'u');
-			setAttribute(underline, 'val', 'single');
+			setAttribute(underline, 'val', run.underlineStyle ?? 'single');
+			if (run.underlineColor) setAttribute(underline, 'color', run.underlineColor.replace(/^#/, ''));
 			props.appendChild(underline);
 		}
 	}
@@ -129,23 +143,44 @@ function setRunProperties(
 			props.appendChild(size);
 		}
 	}
-	if (changed('fontFamily')) {
+	if (changed('fontFamily') || changed('fontTheme')) {
 		removeChildren(props, 'rFonts');
-		if (run.fontFamily) {
+		if (run.fontFamily || run.fontTheme) {
 			const fonts = makeW(doc, 'rFonts');
-			setAttribute(fonts, 'ascii', run.fontFamily);
-			setAttribute(fonts, 'hAnsi', run.fontFamily);
+			if (run.fontFamily) {
+				setAttribute(fonts, 'ascii', run.fontFamily);
+				setAttribute(fonts, 'hAnsi', run.fontFamily);
+			}
+			const themeAttribute: Record<'ascii' | 'hAnsi' | 'eastAsia' | 'cs', [string, string]> = {
+				ascii: ['asciiTheme', 'Ascii'],
+				hAnsi: ['hAnsiTheme', 'HAnsi'],
+				eastAsia: ['eastAsiaTheme', 'EastAsia'],
+				cs: ['cstheme', 'Bidi'],
+			};
+			for (const script of ['ascii', 'hAnsi', 'eastAsia', 'cs'] as const) {
+				const role = run.fontTheme?.[script];
+				const [attribute, suffix] = themeAttribute[script];
+				if (role) setAttribute(fonts, attribute, `${role}${suffix}`);
+			}
 			props.appendChild(fonts);
 		}
 	}
-	if (changed('color')) {
+	if (changed('color') || changed('colorTheme')) {
 		removeChildren(props, 'color');
-		if (run.color) {
+		if (run.color || run.colorTheme) {
 			const color = makeW(doc, 'color');
-			setAttribute(color, 'val', run.color.replace(/^#/, ''));
+			setAttribute(color, 'val', run.color ? run.color.replace(/^#/, '') : 'auto');
+			if (run.colorTheme) {
+				setAttribute(color, 'themeColor', run.colorTheme.token);
+				if (run.colorTheme.tint !== undefined)
+					setAttribute(color, 'themeTint', fractionToThemeByte(run.colorTheme.tint));
+				if (run.colorTheme.shade !== undefined)
+					setAttribute(color, 'themeShade', fractionToThemeByte(run.colorTheme.shade));
+			}
 			props.appendChild(color);
 		}
 	}
+	setExtendedRunProperties(doc, props, run, base);
 	if (!props.childNodes.length) runNode.removeChild(props);
 }
 

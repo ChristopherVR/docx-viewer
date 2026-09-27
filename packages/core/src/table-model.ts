@@ -1,0 +1,84 @@
+// Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
+import type { Paragraph } from './model.js';
+import type { RunFormatting } from './run-style-model.js';
+import type { ThemeColorReference, ThemeColorToken } from './theme-model.js';
+
+export interface TableBorderSide {
+	style?: string;
+	sizeEighthPoints?: number;
+	color?: string;
+	themeColor?: ThemeColorToken;
+}
+export interface TableBorders {
+	top?: TableBorderSide;
+	bottom?: TableBorderSide;
+	left?: TableBorderSide;
+	right?: TableBorderSide;
+	insideH?: TableBorderSide;
+	insideV?: TableBorderSide;
+}
+export interface TableCellMargins {
+	top?: number;
+	bottom?: number;
+	left?: number;
+	right?: number;
+}
+/** A read-only preview of a nested table's text, rendered but not independently editable. */
+export interface NestedTablePreview {
+	rows: { text: string }[][];
+}
+export interface TableCell {
+	paragraphs: Paragraph[];
+	/** `w:gridSpan`; number of grid columns this cell occupies (horizontal merge). */
+	gridSpan?: number;
+	/** `w:vMerge`; `restart` begins a vertical merge, `continue` extends the cell above. */
+	verticalMerge?: 'restart' | 'continue';
+	widthTwips?: number;
+	verticalAlign?: 'top' | 'center' | 'bottom';
+	shadingFill?: string;
+	shadingThemeFill?: ThemeColorReference;
+	borders?: TableBorders;
+	margins?: TableCellMargins;
+	/** Tables nested directly in this cell's XML, preserved but read-only in the editor. */
+	nestedTables?: NestedTablePreview[];
+}
+/** Which `tblStyle` conditional formatting regions apply, from `w:tblLook`. */
+export interface TableLook {
+	firstRow?: boolean;
+	lastRow?: boolean;
+	firstColumn?: boolean;
+	lastColumn?: boolean;
+	noHBand?: boolean;
+	noVBand?: boolean;
+}
+export type TableConditionalRegion =
+	| 'wholeTable'
+	| 'firstRow'
+	| 'lastRow'
+	| 'firstCol'
+	| 'lastCol'
+	| 'band1Horz'
+	| 'band2Horz'
+	| 'band1Vert'
+	| 'band2Vert';
+/** A conditional-formatting region (`w:tblStylePr`) within a table style. */
+export interface TableStyleConditionalFormatting {
+	borders?: TableBorders;
+	shadingFill?: string;
+	shadingThemeFill?: ThemeColorReference;
+	run?: RunFormatting;
+}
+export interface TableStyleDefinition {
+	id: string;
+	name?: string;
+	basedOn?: string;
+	isDefault?: boolean;
+	borders?: TableBorders;
+	shadingFill?: string;
+	conditional: Partial<Record<TableConditionalRegion, TableStyleConditionalFormatting>>;
+}
+/** Parsed `styles.xml` table styles; conditional formatting resolves for rendering only. */
+export interface TableStyleCatalog {
+	styles: Record<string, TableStyleDefinition>;
+	warnings: string[];
+}

@@ -2,6 +2,7 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import type { DocumentModel, Block, Paragraph, Table, TextRun } from '@christophervr/docx-core';
 import { schema } from './schema';
 import { appendInlineNode, runToInlineNodes } from './run-adapter';
+import { tableNode, convertSimpleTable, convertMergedTable } from './table-model-adapter';
 
 function paragraphNode(paragraph: Paragraph) {
 	const children = paragraph.runs.flatMap(runToInlineNodes);
@@ -30,22 +31,7 @@ function paragraphNode(paragraph: Paragraph) {
 export function modelToDoc(model: DocumentModel) {
 	const blocks = model.blocks.map((block) => {
 		if (block.type === 'paragraph') return paragraphNode(block);
-		const rows = block.rows.map((row) =>
-			schema.node(
-				'tableRow',
-				null,
-				row.map((cell) => schema.node('tableCell', null, cell.paragraphs.map(paragraphNode))),
-			),
-		);
-		return schema.node(
-			'table',
-			{
-				id: block.id,
-				structureEditable:
-					(block as Table & { structureEditable?: boolean }).structureEditable !== false,
-			},
-			rows,
-		);
+		return tableNode(block, paragraphNode);
 	});
 	return schema.node(
 		'doc',
@@ -124,10 +110,14 @@ export function docToModel(
 ): DocumentModel {
 	let nextId = 0;
 	const previousParagraphs = new Map<string, Paragraph>();
+	const priorTables = new Map<string, Table>();
 	const remember = (paragraph: Paragraph) => previousParagraphs.set(paragraph.id, paragraph);
 	for (const block of prior.blocks) {
 		if (block.type === 'paragraph') remember(block);
-		else for (const row of block.rows) for (const cell of row) cell.paragraphs.forEach(remember);
+		else {
+			priorTables.set(block.id, block);
+			for (const row of block.rows) for (const cell of row) cell.paragraphs.forEach(remember);
+		}
 	}
 
 	const convertParagraph = (node: typeof doc): Paragraph => {
@@ -192,22 +182,17 @@ export function docToModel(
 	doc.forEach((node) => {
 		if (node.type.name === 'paragraph') blocks.push(convertParagraph(node as typeof doc));
 		if (node.type.name === 'table') {
-			const rows: Table['rows'] = [];
-			node.forEach((row) => {
-				const cells: Table['rows'][number] = [];
-				row.forEach((cell) => {
-					const paragraphs: Paragraph[] = [];
-					cell.forEach((paragraph) => paragraphs.push(convertParagraph(paragraph as typeof doc)));
-					cells.push({ paragraphs });
-				});
-				rows.push(cells);
-			});
-			blocks.push({
-				type: 'table',
-				id: String(node.attrs.id || `t-edit-${++nextId}`),
-				rows,
-				...(node.attrs.structureEditable === false ? { structureEditable: false } : {}),
-			} as Table);
+			const id = String(node.attrs.id || `t-edit-${++nextId}`);
+			const prior = priorTables.get(id);
+			const asParagraph = (n: unknown) => convertParagraph(n as typeof doc);
+			if (prior && prior.structureEditable === false) blocks.push(convertMergedTable(node, prior, asParagraph));
+			else
+				blocks.push({
+					type: 'table',
+					id,
+					rows: convertSimpleTable(node, asParagraph),
+					...(node.attrs.structureEditable === false ? { structureEditable: false } : {}),
+				} as Table);
 		}
 	});
 	return {

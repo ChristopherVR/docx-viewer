@@ -1,0 +1,110 @@
+// Table <-> ProseMirror conversion. Merged/nested/complex tables (structureEditable === false)
+// preserve their full source row/cell/descriptor structure and only patch paragraph content by
+// id, because vertical-merge continuation cells and nested-table previews have no 1:1 visible
+// ProseMirror node to rebuild from; simple tables keep the existing rebuild-from-doc path.
+import type { Node as ProseMirrorNode } from 'prosemirror-model';
+import type { Paragraph, Table, TableCell } from '@christophervr/docx-core';
+import { schema } from './schema';
+
+function cellKey(cell: TableCell): string {
+	return cell.paragraphs[0]?.id ?? '';
+}
+
+export function tableNode(
+	block: Table,
+	paragraphNode: (paragraph: Paragraph) => ProseMirrorNode,
+): ProseMirrorNode {
+	const rows = block.rows.map((row, rowIndex) => {
+		const cells: ProseMirrorNode[] = [];
+		row.forEach((cell, columnIndex) => {
+			if (cell.verticalMerge === 'continue') return;
+			let rowspan = 1;
+			if (cell.verticalMerge === 'restart') {
+				let next = rowIndex + 1;
+				while (block.rows[next]?.[columnIndex]?.verticalMerge === 'continue') {
+					rowspan++;
+					next++;
+				}
+			}
+			const children = cell.paragraphs.map(paragraphNode);
+			for (const preview of cell.nestedTables ?? [])
+				children.push(
+					schema.nodes.nestedTablePreview.create({ rowsJson: JSON.stringify(preview.rows) }),
+				);
+			cells.push(
+				schema.node(
+					'tableCell',
+					{
+						sourceCellKey: cellKey(cell),
+						colspan: cell.gridSpan ?? 1,
+						rowspan,
+						widthTwips: cell.widthTwips ?? null,
+						verticalAlign: cell.verticalAlign ?? null,
+						shadingFill: cell.shadingFill ?? null,
+						borders: cell.borders ? JSON.stringify(cell.borders) : null,
+					},
+					children,
+				),
+			);
+		});
+		return schema.node('tableRow', null, cells);
+	});
+	return schema.node(
+		'table',
+		{
+			id: block.id,
+			structureEditable: block.structureEditable !== false,
+			widthTwips: block.widthTwips ?? null,
+			alignment: block.alignment ?? null,
+			indentTwips: block.indentTwips ?? null,
+			borders: block.borders ? JSON.stringify(block.borders) : null,
+		},
+		rows,
+	);
+}
+
+/** Rebuilds a simple (structurally editable) table directly from its visible ProseMirror rows. */
+export function convertSimpleTable(
+	node: ProseMirrorNode,
+	convertParagraph: (paragraph: ProseMirrorNode) => Paragraph,
+): Table['rows'] {
+	const rows: Table['rows'] = [];
+	node.forEach((row) => {
+		const cells: Table['rows'][number] = [];
+		row.forEach((cell) => {
+			const paragraphs: Paragraph[] = [];
+			cell.forEach((paragraph) => {
+				if (paragraph.type.name === 'paragraph') paragraphs.push(convertParagraph(paragraph));
+			});
+			cells.push({ paragraphs });
+		});
+		rows.push(cells);
+	});
+	return rows;
+}
+
+/**
+ * Patches paragraph content back into a merged/nested/complex table's prior structure by cell
+ * identity, leaving row/cell layout, merges and descriptive properties exactly as they were.
+ */
+export function convertMergedTable(
+	node: ProseMirrorNode,
+	prior: Table,
+	convertParagraph: (paragraph: ProseMirrorNode) => Paragraph,
+): Table {
+	const updated = structuredClone(prior);
+	const cellByKey = new Map<string, TableCell>();
+	for (const row of updated.rows) for (const cell of row) cellByKey.set(cellKey(cell), cell);
+	node.forEach((row) =>
+		row.forEach((cellNode) => {
+			const target = cellByKey.get(String(cellNode.attrs.sourceCellKey || ''));
+			if (!target) return;
+			const paragraphs: Paragraph[] = [];
+			cellNode.forEach((child) => {
+				if (child.type.name === 'paragraph') paragraphs.push(convertParagraph(child));
+			});
+			if (paragraphs.length) target.paragraphs = paragraphs;
+		}),
+	);
+	return updated;
+}

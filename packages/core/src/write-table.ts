@@ -1,4 +1,4 @@
-import type { Paragraph, Table } from './model.js';
+import type { Paragraph, Table, TableCell } from './model.js';
 import {
 	children,
 	first,
@@ -59,6 +59,66 @@ export function canEditTableStructure(table: XmlElement): boolean {
 const layout = (table: Table) =>
 	table.rows.map((row) => row.map((cell) => cell.paragraphs.map((p) => p.id)));
 
+/** Table/cell descriptive fields this writer does not yet serialize back to XML. */
+const TABLE_DESCRIPTOR_KEYS = [
+	'grid',
+	'widthTwips',
+	'alignment',
+	'indentTwips',
+	'borders',
+	'style',
+	'look',
+] as const;
+const CELL_DESCRIPTOR_KEYS = [
+	'gridSpan',
+	'verticalMerge',
+	'widthTwips',
+	'verticalAlign',
+	'shadingFill',
+	'shadingThemeFill',
+	'borders',
+	'margins',
+] as const;
+function pick(source: object, keys: readonly string[]): Record<string, unknown> {
+	const record = source as Record<string, unknown>;
+	const result: Record<string, unknown> = {};
+	for (const key of keys) if (record[key] !== undefined) result[key] = record[key];
+	return result;
+}
+/**
+ * Table grid/width/border/style and per-cell width/merge/shading/border/margin values render
+ * (see resolve-table.ts) but are not yet serialized on save; reject rather than silently drop edits.
+ */
+function assertNoDescriptorEdits(table: Table, base: Table | undefined): void {
+	if (!base) return;
+	if (
+		JSON.stringify(pick(table, TABLE_DESCRIPTOR_KEYS)) !==
+		JSON.stringify(pick(base, TABLE_DESCRIPTOR_KEYS))
+	)
+		throw new Error(
+			'Cannot edit table grid widths, width, alignment, indent, borders, or style; only cell text and row/column structure changes are supported. The original DOCX package remains unchanged.',
+		);
+	const baseCellById = new Map<string, TableCell>();
+	for (const row of base.rows)
+		for (const cell of row) {
+			const id = cell.paragraphs[0]?.id;
+			if (id) baseCellById.set(id, cell);
+		}
+	for (const row of table.rows)
+		for (const cell of row) {
+			const id = cell.paragraphs[0]?.id;
+			const source = id ? baseCellById.get(id) : undefined;
+			if (!source) continue;
+			if (
+				JSON.stringify(pick(cell, CELL_DESCRIPTOR_KEYS)) !==
+				JSON.stringify(pick(source, CELL_DESCRIPTOR_KEYS))
+			)
+				throw new Error(
+					'Cannot edit table cell width, merge, vertical alignment, shading, borders, or margins on an existing cell; only cell text is supported. The original DOCX package remains unchanged.',
+				);
+		}
+}
+
 export function writeTable(
 	doc: XmlDocument,
 	table: Table,
@@ -68,6 +128,7 @@ export function writeTable(
 	replaceSlots: SlotsWriter,
 ): XmlElement {
 	if (base && JSON.stringify(table) === JSON.stringify(base)) return node;
+	assertNoDescriptorEdits(table, base);
 	const structural = base && JSON.stringify(layout(table)) !== JSON.stringify(layout(base));
 	if (structural && !canEditTableStructure(node))
 		throw new Error(

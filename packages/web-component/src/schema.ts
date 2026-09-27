@@ -1,5 +1,6 @@
-import { Schema } from 'prosemirror-model';
+import { Schema, type DOMOutputSpec } from 'prosemirror-model';
 import { isWordHighlightToken, type WordHighlightToken } from '@christophervr/docx-core';
+import { tableStyle, tableCellStyle } from './table-render';
 
 function parseFontSize(value: string): number | null {
 	const match = /^\s*(\d+(?:\.\d+)?)\s*(pt|px)?\s*$/i.exec(value);
@@ -136,15 +137,59 @@ export const schema = new Schema({
 		table: {
 			content: 'tableRow+',
 			group: 'block',
-			attrs: { id: { default: '' }, structureEditable: { default: true } },
+			attrs: {
+				id: { default: '' },
+				structureEditable: { default: true },
+				widthTwips: { default: null },
+				alignment: { default: null },
+				indentTwips: { default: null },
+				borders: { default: null },
+			},
 			parseDOM: [{ tag: 'table' }],
-			toDOM: () => ['table', ['tbody', 0]],
+			toDOM: (node) => ['table', { style: tableStyle(node.attrs) }, ['tbody', 0]],
 		},
 		tableRow: { content: 'tableCell+', parseDOM: [{ tag: 'tr' }], toDOM: () => ['tr', 0] },
 		tableCell: {
-			content: 'paragraph+',
+			content: '(paragraph | nestedTablePreview)+',
+			attrs: {
+				/** First paragraph id in the source cell; reconciles edits back without relying on colspan/rowspan. */
+				sourceCellKey: { default: '' },
+				colspan: { default: 1 },
+				rowspan: { default: 1 },
+				widthTwips: { default: null },
+				verticalAlign: { default: null },
+				shadingFill: { default: null },
+				borders: { default: null },
+			},
 			parseDOM: [{ tag: 'td' }, { tag: 'th' }],
-			toDOM: () => ['td', 0],
+			toDOM: (node) => [
+				'td',
+				{
+					colspan: String(node.attrs.colspan || 1),
+					rowspan: String(node.attrs.rowspan || 1),
+					style: tableCellStyle(node.attrs),
+				},
+				0,
+			],
+		},
+		/** A nested table's read-only text preview; edit the source document for nested table content. */
+		nestedTablePreview: {
+			atom: true,
+			selectable: false,
+			attrs: { rowsJson: { default: '[]' } },
+			toDOM: (node): DOMOutputSpec => {
+				let rows: { text: string }[][] = [];
+				try {
+					rows = JSON.parse(String(node.attrs.rowsJson));
+				} catch {
+					rows = [];
+				}
+				const body: DOMOutputSpec = [
+					'tbody',
+					...rows.map((row): DOMOutputSpec => ['tr', ...row.map((cell): DOMOutputSpec => ['td', cell.text])]),
+				];
+				return ['table', { class: 'dve-nested-preview', contenteditable: 'false' }, body];
+			},
 		},
 	},
 	marks: {
@@ -252,6 +297,17 @@ export const schema = new Schema({
 				},
 				0,
 			],
+		},
+		/** Direct `w:rStyle` character style reference; the toolbar picker edits it, decorations render it. */
+		characterStyle: {
+			attrs: { id: { default: null } },
+			parseDOM: [
+				{
+					tag: 'span[data-docx-style]',
+					getAttrs: (el) => ({ id: (el as HTMLElement).dataset.docxStyle || null }),
+				},
+			],
+			toDOM: (mark) => ['span', { 'data-docx-style': mark.attrs.id }, 0],
 		},
 	},
 });

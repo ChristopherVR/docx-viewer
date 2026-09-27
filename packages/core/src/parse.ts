@@ -1,14 +1,6 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import JSZip from 'jszip';
-import type {
-	Block,
-	DocumentModel,
-	LoadedDocument,
-	Paragraph,
-	Table,
-	TableCell,
-	TextRun,
-} from './model.js';
+import type { Block, DocumentModel, LoadedDocument, Paragraph, TextRun } from './model.js';
 import {
 	children,
 	first,
@@ -22,9 +14,13 @@ import {
 	WORD_NS,
 } from './xml.js';
 import { remember, saveDocx } from './save.js';
-import { canEditTableStructure } from './write-table.js';
 import { hasSpecialBreak } from './breaks.js';
 import { parseParagraphStyleCatalog } from './paragraph-styles.js';
+import { parseRunProperties } from './run-properties.js';
+import { parseRunStyleCatalog } from './character-styles.js';
+import { parseTableStyleCatalog } from './table-styles.js';
+import { parseTable } from './parse-table.js';
+import { parseTheme, parseColorSchemeMapping } from './theme.js';
 
 const px = (twips: string | undefined, fallback: number): number =>
 	twips === undefined ? fallback : (Number(twips) * 96) / 1440;
@@ -53,7 +49,7 @@ function parseRun(node: XmlElement): TextRun {
 			return '';
 		})
 		.join('');
-	const run: TextRun = { text };
+	const run: TextRun = { text, ...parseRunProperties(props) };
 	const language = first(props, 'lang');
 	const languageValue = getW(language, 'val');
 	const eastAsiaLanguage = getW(language, 'eastAsia');
@@ -63,22 +59,8 @@ function parseRun(node: XmlElement): TextRun {
 	if (bidiLanguage !== undefined) run.bidiLanguage = bidiLanguage;
 	const rtl = first(props, 'rtl');
 	if (rtl) run.rtl = on(rtl);
-	if (props && on(first(props, 'b'))) run.bold = true;
-	if (props && on(first(props, 'i'))) run.italic = true;
-	if (props && on(first(props, 'u'))) run.underline = true;
-	if (props && on(first(props, 'strike') ?? first(props, 'dstrike'))) run.strike = true;
-	const highlight = getW(first(props, 'highlight'), 'val');
-	if (highlight) run.highlight = highlight;
-	const verticalAlign = getW(first(props, 'vertAlign'), 'val');
-	if (verticalAlign === 'superscript' || verticalAlign === 'subscript')
-		run.verticalAlign = verticalAlign;
-	const size = points(getW(first(props, 'sz'), 'val'));
-	if (size !== undefined) run.fontSize = size;
-	const fonts = first(props, 'rFonts');
-	const family = getW(fonts, 'ascii') ?? getW(fonts, 'hAnsi');
-	if (family) run.fontFamily = family;
-	const hex = getW(first(props, 'color'), 'val');
-	if (hex && /^[0-9a-f]{6}$/i.test(hex)) run.color = `#${hex}`;
+	const styleRef = getW(first(props, 'rStyle'), 'val');
+	if (styleRef) run.style = styleRef;
 	return run;
 }
 
@@ -134,15 +116,6 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 	return paragraph;
 }
 
-function parseTable(node: XmlElement, id: string): Table {
-	const rows = children(node, 'tr').map((row, ri) =>
-		children(row, 'tc').map((cell, ci): TableCell => ({
-			paragraphs: children(cell, 'p').map((p, pi) => parseParagraph(p, `${id}-r${ri}c${ci}p${pi}`)),
-		})),
-	);
-	return { type: 'table', id, rows, structureEditable: canEditTableStructure(node) };
-}
-
 function hasAny(document: XmlDocument, names: string[]): boolean {
 	return names.some((name) => document.getElementsByTagNameNS(WORD_NS, name).length > 0);
 }
@@ -168,10 +141,6 @@ function warningsFor(document: XmlDocument): string[] {
 		[
 			['numPr'],
 			'List numbering is preserved as paragraph XML but is not represented in the document model.',
-		],
-		[
-			['rStyle'],
-			'Character style inheritance and theme font/color resolution are not modeled; displayed formatting may differ from Word.',
 		],
 	];
 	for (const [names, message] of features) if (hasAny(document, names)) warnings.push(message);
@@ -221,7 +190,7 @@ export async function readPackage(
 	let index = 0;
 	for (const node of Array.from(body.childNodes).filter(isElement)) {
 		if (named(node, 'p')) blocks.push(parseParagraph(node, `p${index++}`));
-		else if (named(node, 'tbl')) blocks.push(parseTable(node, `t${index++}`));
+		else if (named(node, 'tbl')) blocks.push(parseTable(node, `t${index++}`, parseParagraph));
 	}
 	const section = children(body, 'sectPr').at(-1);
 	const size = first(section, 'pgSz');
@@ -240,19 +209,44 @@ export async function readPackage(
 	};
 	const stylesFile = zip.file('word/styles.xml');
 	if (stylesFile) {
-		model.paragraphStyles = parseParagraphStyleCatalog(await stylesFile.async('string'));
+		const stylesXml = await stylesFile.async('string');
+		model.paragraphStyles = parseParagraphStyleCatalog(stylesXml);
+		model.characterStyles = parseRunStyleCatalog(stylesXml);
+		model.tableStyles = parseTableStyleCatalog(stylesXml);
 		model.warnings.push(
-			'Paragraph style inheritance is resolved for alignment, direction, spacing and indentation. Run formatting, character styles and theme values remain unresolved; display can differ from Word.',
+			'Paragraph style, character style and docDefaults inheritance resolve for rendering, including toggle-property XOR semantics and basedOn chains. Linked styles beyond a basedOn chain, numbering-derived formatting and font metric substitution are not modeled; display can still differ from Word.',
 			...model.paragraphStyles.warnings,
+			...model.characterStyles.warnings,
+			...model.tableStyles.warnings,
+		);
+	}
+	const themeFile = zip.file('word/theme/theme1.xml');
+	const settingsFile = zip.file('word/settings.xml');
+	if (themeFile) {
+		model.theme = parseTheme(await themeFile.async('string'));
+		if (settingsFile)
+			model.theme.colorMapping = parseColorSchemeMapping(await settingsFile.async('string'));
+		model.warnings.push(
+			'Theme colors and fonts resolve for rendering through a separate layer; direct theme references are preserved and never flattened onto runs.',
 		);
 	}
 	if (blocks.some((block) => block.type === 'table'))
 		model.warnings.push(
-			'Table text and cell structure are supported; table widths, borders, shading and cell formatting are not modeled.',
+			'Table grid widths, merges, borders, shading, cell alignment/margins and table style conditional formatting resolve for rendering; row/column fragmentation and full table-style precedence are not modeled.',
 		);
 	if (blocks.some((block) => block.type === 'table' && !block.structureEditable))
 		model.warnings.push(
 			'Merged, nested, or complex tables can be read, but their row and column structure cannot be edited safely.',
+		);
+	if (
+		blocks.some(
+			(block) =>
+				block.type === 'table' &&
+				block.rows.some((row) => row.some((cell) => cell.nestedTables?.length)),
+		)
+	)
+		model.warnings.push(
+			'Nested tables render as a read-only text preview; edit their content from the original document.',
 		);
 	const context = { original, sourceXml, base: structuredClone(model) };
 	remember(model, context);
