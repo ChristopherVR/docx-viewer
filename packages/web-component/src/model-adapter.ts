@@ -238,7 +238,8 @@ export function docToModel(
 			const id = String(node.attrs.id || `t-edit-${++nextId}`);
 			const prior = priorTables.get(id);
 			const asParagraph = (n: unknown) => convertParagraph(n as typeof doc);
-			if (prior && prior.structureEditable === false) blocks.push(convertMergedTable(node, prior, asParagraph));
+			if (prior && prior.structureEditable === false)
+				blocks.push(convertMergedTable(node, prior, asParagraph));
 			else
 				blocks.push({
 					// Table-level properties (grid, width, borders, style, look) have no editor node;

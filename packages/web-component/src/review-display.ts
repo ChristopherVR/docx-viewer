@@ -27,7 +27,9 @@ export function reviewDisplayPlugin(getMode: () => ReviewDisplayMode): Plugin {
 				state.doc.descendants((node, pos) => {
 					if (!node.isText && node.type.name !== 'hardBreak') return;
 					if (node.marks.some((mark) => mark.type.name === hidden))
-						decorations.push(Decoration.inline(pos, pos + node.nodeSize, { class: 'dve-revision-hidden' }));
+						decorations.push(
+							Decoration.inline(pos, pos + node.nodeSize, { class: 'dve-revision-hidden' }),
+						);
 				});
 				return DecorationSet.create(state.doc, decorations);
 			},

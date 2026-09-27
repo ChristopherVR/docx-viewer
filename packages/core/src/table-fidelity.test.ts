@@ -31,7 +31,11 @@ describe('table grid, merge, border, shading and style fidelity', () => {
 		expect(table.alignment).toBe('center');
 		expect(table.indentTwips).toBe(100);
 		expect(table.style).toBe('Grid');
-		expect(table.borders?.top).toMatchObject({ style: 'single', sizeEighthPoints: 8, color: '#FF0000' });
+		expect(table.borders?.top).toMatchObject({
+			style: 'single',
+			sizeEighthPoints: 8,
+			color: '#FF0000',
+		});
 		expect(table.look).toMatchObject({ firstRow: true, noHBand: false });
 	});
 
@@ -55,7 +59,9 @@ describe('table grid, merge, border, shading and style fidelity', () => {
 		const nested = table.rows[1][1].nestedTables;
 		expect(nested).toHaveLength(1);
 		expect(nested?.[0].rows).toEqual([[{ text: 'Nested' }]]);
-		expect(loaded.model.warnings.join(' ')).toContain('Nested tables render as a read-only text preview');
+		expect(loaded.model.warnings.join(' ')).toContain(
+			'Nested tables render as a read-only text preview',
+		);
 	});
 
 	it('marks the table with a nested tbl as not structurally editable, and a no-op save keeps original bytes', async () => {
@@ -105,6 +111,8 @@ describe('table grid, merge, border, shading and style fidelity', () => {
 			`<w:styles xmlns:w="${ns}"><w:style w:type="table" w:styleId="Grid"><w:tblPr/></w:style></w:styles>`,
 		);
 		expect(loaded.model.tableStyles?.styles.Grid).toBeDefined();
-		expect(loaded.model.warnings.join(' ')).toContain('table style conditional formatting resolve for rendering');
+		expect(loaded.model.warnings.join(' ')).toContain(
+			'table style conditional formatting resolve for rendering',
+		);
 	});
 });

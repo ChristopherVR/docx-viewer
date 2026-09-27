@@ -1,5 +1,10 @@
 import type { Comment, DocumentModel } from '@christophervr/docx-core';
-import { localizeElement, normalizeEditorLocale, translate, type EditorLocale } from './localization';
+import {
+	localizeElement,
+	normalizeEditorLocale,
+	translate,
+	type EditorLocale,
+} from './localization';
 
 export interface CommentsPanelOptions {
 	getModel: () => DocumentModel;
@@ -35,7 +40,12 @@ const styleText = `
 	.dve-comment-empty{color:var(--muted,#666)}
 `;
 
-function row(comment: Comment, indent: boolean, locale: EditorLocale, options: CommentsPanelOptions): HTMLElement {
+function row(
+	comment: Comment,
+	indent: boolean,
+	locale: EditorLocale,
+	options: CommentsPanelOptions,
+): HTMLElement {
 	const thread = document.createElement('div');
 	thread.className = 'dve-comment-thread';
 	if (indent) thread.style.marginLeft = '14px';

@@ -5,7 +5,15 @@ import type {
 	TableStyleConditionalFormatting,
 	TableStyleDefinition,
 } from './table-model.js';
-import { children, first, getW, named, parseXml, type XmlDocument, type XmlElement } from './xml.js';
+import {
+	children,
+	first,
+	getW,
+	named,
+	parseXml,
+	type XmlDocument,
+	type XmlElement,
+} from './xml.js';
 import { parseRunProperties } from './run-properties.js';
 import { parseShadingFill, parseShadingThemeFill, parseTableBorders } from './table-borders.js';
 
@@ -23,7 +31,8 @@ const REGIONS: TableConditionalRegion[] = [
 
 function tableStyleElements(document: XmlDocument): XmlElement[] {
 	return Array.from(document.getElementsByTagName('*')).filter(
-		(element): element is XmlElement => named(element, 'style') && getW(element, 'type') === 'table',
+		(element): element is XmlElement =>
+			named(element, 'style') && getW(element, 'type') === 'table',
 	);
 }
 
@@ -59,7 +68,8 @@ export function parseTableStyleCatalog(xml: string): TableStyleCatalog {
 		const tblPr = first(element, 'tblPr');
 		const borders = parseTableBorders(first(tblPr, 'tblBorders'));
 		const shadingFill = parseShadingFill(first(tblPr, 'shd'));
-		const conditional: Partial<Record<TableConditionalRegion, TableStyleConditionalFormatting>> = {};
+		const conditional: Partial<Record<TableConditionalRegion, TableStyleConditionalFormatting>> =
+			{};
 		for (const block of children(element, 'tblStylePr')) {
 			const type = getW(block, 'type');
 			if (type && (REGIONS as string[]).includes(type))

@@ -15,7 +15,10 @@ async function docx(body: string): Promise<Uint8Array> {
 		'_rels/.rels',
 		'<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
 	);
-	zip.file('word/document.xml', `<w:document xmlns:w="${ns}"><w:body>${body}<w:sectPr/></w:body></w:document>`);
+	zip.file(
+		'word/document.xml',
+		`<w:document xmlns:w="${ns}"><w:body>${body}<w:sectPr/></w:body></w:document>`,
+	);
 	return zip.generateAsync({ type: 'uint8array' });
 }
 

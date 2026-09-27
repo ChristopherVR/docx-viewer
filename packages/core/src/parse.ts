@@ -148,7 +148,8 @@ export async function readPackage(input: Uint8Array | ArrayBuffer): Promise<{
 			'Comments are anchored per paragraph; a comment range spanning multiple paragraphs is not modeled.',
 		);
 	}
-	if (settingsFile) model.trackChanges = parseTrackChangesSetting(await settingsFile.async('string'));
+	if (settingsFile)
+		model.trackChanges = parseTrackChangesSetting(await settingsFile.async('string'));
 	if (
 		blocks.some(
 			(block) =>

@@ -5,7 +5,9 @@ import { schema } from './schema';
 
 let commentSerial = 0;
 function nextCommentId(idGenerator?: (kind: string) => string): string {
-	return idGenerator ? idGenerator('comment') : `dve-comment-${Date.now().toString(36)}-${++commentSerial}`;
+	return idGenerator
+		? idGenerator('comment')
+		: `dve-comment-${Date.now().toString(36)}-${++commentSerial}`;
 }
 
 /** Wraps the current selection with a `comment` mark carrying a new comment id; returns the new entry. */
@@ -42,7 +44,8 @@ export function removeCommentAnchor(view: EditorView, id: string): void {
 		if (!mark || !(mark.attrs.ids as string[]).includes(id)) return;
 		const remaining = (mark.attrs.ids as string[]).filter((existing) => existing !== id);
 		tr = tr.removeMark(pos, pos + node.nodeSize, schema.marks.comment);
-		if (remaining.length) tr = tr.addMark(pos, pos + node.nodeSize, schema.marks.comment.create({ ids: remaining }));
+		if (remaining.length)
+			tr = tr.addMark(pos, pos + node.nodeSize, schema.marks.comment.create({ ids: remaining }));
 	});
 	if (tr.docChanged) view.dispatch(closeHistory(tr));
 }

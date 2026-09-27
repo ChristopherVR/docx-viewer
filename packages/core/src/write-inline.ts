@@ -13,7 +13,11 @@ import {
 	isRevisionWrapperElement,
 	revisionWrapper,
 } from './write-revisions.js';
-import { commentAnchorEdges, commentRangeEndNodes, commentRangeStartNode } from './write-comments.js';
+import {
+	commentAnchorEdges,
+	commentRangeEndNodes,
+	commentRangeStartNode,
+} from './write-comments.js';
 import {
 	getW,
 	isElement,
@@ -77,7 +81,10 @@ function runsOf(container: XmlElement, link: XmlElement | undefined, slots: Inli
 export function collectInlineSlots(paragraph: XmlElement): InlineSlot[] | undefined {
 	const slots: InlineSlot[] = [];
 	for (const child of Array.from(paragraph.childNodes)) {
-		if (isElement(child) && (named(child, 'pPr') || named(child, 'bookmarkStart') || named(child, 'bookmarkEnd')))
+		if (
+			isElement(child) &&
+			(named(child, 'pPr') || named(child, 'bookmarkStart') || named(child, 'bookmarkEnd'))
+		)
 			continue;
 		if (!isElement(child)) {
 			if (child.nodeType === 3 && child.textContent?.trim()) return undefined;
@@ -118,10 +125,15 @@ function setW(element: XmlElement, local: string, value: string): void {
 	element.setAttributeNS(WORD_NS, `w:${local}`, value);
 }
 
-function newHyperlink(doc: XmlDocument, link: HyperlinkInfo, allocator?: RelationshipAllocator): XmlElement {
+function newHyperlink(
+	doc: XmlDocument,
+	link: HyperlinkInfo,
+	allocator?: RelationshipAllocator,
+): XmlElement {
 	const container = makeW(doc, 'hyperlink');
 	if (link.href) {
-		if (!allocator) throw new Error('A relationship allocator is required to write new hyperlinks.');
+		if (!allocator)
+			throw new Error('A relationship allocator is required to write new hyperlinks.');
 		container.setAttributeNS(REL_NS, 'r:id', allocator.addExternalHyperlink(link.href));
 	}
 	if (link.anchor) setW(container, 'anchor', link.anchor);

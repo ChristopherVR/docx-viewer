@@ -113,7 +113,8 @@ function setRunProperties(
 		if (run.underline) {
 			const underline = makeW(doc, 'u');
 			setAttribute(underline, 'val', run.underlineStyle ?? 'single');
-			if (run.underlineColor) setAttribute(underline, 'color', run.underlineColor.replace(/^#/, ''));
+			if (run.underlineColor)
+				setAttribute(underline, 'color', run.underlineColor.replace(/^#/, ''));
 			props.appendChild(underline);
 		}
 	}

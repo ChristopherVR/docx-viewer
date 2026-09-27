@@ -148,11 +148,13 @@ function applyAll(
 			warned = true;
 		}
 	}
-	if (warned && !current.warnings.includes(fallbackWarning!)) current.warnings.push(fallbackWarning!);
+	if (warned && !current.warnings.includes(fallbackWarning!))
+		current.warnings.push(fallbackWarning!);
 	return current;
 }
 
-export const acceptAllRevisions = (model: DocumentModel): DocumentModel => applyAll(model, acceptRevision);
+export const acceptAllRevisions = (model: DocumentModel): DocumentModel =>
+	applyAll(model, acceptRevision);
 export const rejectAllRevisions = (model: DocumentModel): DocumentModel =>
 	applyAll(
 		model,

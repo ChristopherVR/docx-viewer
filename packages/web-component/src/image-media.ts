@@ -30,7 +30,11 @@ export class ImageMediaCache {
 /** Renders the schema's image DOM and fills in `src` from the package media, when available. */
 export function imageNodeView(cache: ImageMediaCache) {
 	return (node: ProseMirrorNode): NodeView => {
-		const spec = schema.nodes.image.spec.toDOM!(node) as [string, Record<string, string>, ...unknown[]];
+		const spec = schema.nodes.image.spec.toDOM!(node) as [
+			string,
+			Record<string, string>,
+			...unknown[],
+		];
 		const [tag, attrs, ...content] = spec;
 		const dom = document.createElement(tag);
 		for (const [name, value] of Object.entries(attrs)) dom.setAttribute(name, value);

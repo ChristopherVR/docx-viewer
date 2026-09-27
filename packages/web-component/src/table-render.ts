@@ -23,7 +23,9 @@ function cssBorderStyle(style: string | undefined): string {
 }
 function cssBorderSide(side: BorderSide | undefined): string | null {
 	if (!side || NONE_STYLES.has(side.style ?? '')) return null;
-	const widthPx = side.sizeEighthPoints ? Math.max(1, Math.round((side.sizeEighthPoints / 8) * (4 / 3))) : 1;
+	const widthPx = side.sizeEighthPoints
+		? Math.max(1, Math.round((side.sizeEighthPoints / 8) * (4 / 3)))
+		: 1;
 	const color = side.color ?? '#000000';
 	return `${widthPx}px ${cssBorderStyle(side.style)} ${color}`;
 }
@@ -47,7 +49,9 @@ export function tableStyle(attrs: Record<string, unknown>): string {
 		twipsPx(attrs.widthTwips) && `width:${twipsPx(attrs.widthTwips)}`,
 		attrs.alignment === 'center' && 'margin-left:auto;margin-right:auto',
 		attrs.alignment === 'right' && 'margin-left:auto',
-		twipsPx(attrs.indentTwips) && attrs.alignment !== 'center' && `margin-left:${twipsPx(attrs.indentTwips)}`,
+		twipsPx(attrs.indentTwips) &&
+			attrs.alignment !== 'center' &&
+			`margin-left:${twipsPx(attrs.indentTwips)}`,
 		borders?.top && `border-top:${cssBorderSide(borders.top)}`,
 		borders?.bottom && `border-bottom:${cssBorderSide(borders.bottom)}`,
 		borders?.left && `border-left:${cssBorderSide(borders.left)}`,

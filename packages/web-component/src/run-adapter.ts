@@ -217,7 +217,8 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 	const sameComments = JSON.stringify(previous?.commentIds) === JSON.stringify(run.commentIds);
 	const sameLink = JSON.stringify(previous?.link ?? null) === JSON.stringify(run.link ?? null);
 	const sameExtra =
-		JSON.stringify(previous && extraRunProperties(previous)) === JSON.stringify(extraRunProperties(run));
+		JSON.stringify(previous && extraRunProperties(previous)) ===
+		JSON.stringify(extraRunProperties(run));
 	if (
 		previous &&
 		!previous.break &&

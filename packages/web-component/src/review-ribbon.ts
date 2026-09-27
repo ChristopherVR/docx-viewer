@@ -2,9 +2,16 @@ import type { ReviewDisplayMode } from './review-display';
 import type { RibbonAction } from './ribbon';
 
 function emit(control: HTMLElement, detail: RibbonAction): void {
-	control.dispatchEvent(new CustomEvent('ribbon-action', { bubbles: true, composed: true, detail }));
+	control.dispatchEvent(
+		new CustomEvent('ribbon-action', { bubbles: true, composed: true, detail }),
+	);
 }
-function reviewButton(label: string, text: string, action: RibbonAction, className = ''): HTMLButtonElement {
+function reviewButton(
+	label: string,
+	text: string,
+	action: RibbonAction,
+	className = '',
+): HTMLButtonElement {
 	const el = document.createElement('button');
 	el.type = 'button';
 	el.textContent = text;
@@ -42,12 +49,20 @@ export function createReviewControls(): HTMLElement[] {
 	}
 	displayModeSelect.value = 'all';
 	displayModeSelect.addEventListener('change', () =>
-		emit(displayModeSelect, { type: 'reviewDisplay', value: displayModeSelect.value as ReviewDisplayMode }),
+		emit(displayModeSelect, {
+			type: 'reviewDisplay',
+			value: displayModeSelect.value as ReviewDisplayMode,
+		}),
 	);
 
 	const tracking = group(
 		'Tracking',
-		reviewButton('Track changes', 'Track changes', { type: 'review', key: 'trackChanges' }, 'tool-track'),
+		reviewButton(
+			'Track changes',
+			'Track changes',
+			{ type: 'review', key: 'trackChanges' },
+			'tool-track',
+		),
 		displayModeSelect,
 	);
 	const changes = group(

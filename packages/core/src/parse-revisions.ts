@@ -76,16 +76,14 @@ export function collectParagraphRuns(
 	for (const item of Array.from(node.childNodes).filter(isElement)) {
 		if (named(item, 'r')) {
 			if (!isCommentReferenceRun(item)) push(parseRun(item));
-		}
-		else if (named(item, 'hyperlink')) {
+		} else if (named(item, 'hyperlink')) {
 			const link = resolveLink?.(item);
 			for (const run of children(item, 'r')) {
 				const parsed = parseRun(run);
 				if (link) parsed.link = link;
 				push(parsed);
 			}
-		}
-		else if (
+		} else if (
 			(!item.namespaceURI || item.namespaceURI === WORD_NS) &&
 			Object.hasOwn(REVISION_WRAPPERS, item.localName)
 		) {

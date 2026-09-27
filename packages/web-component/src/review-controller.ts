@@ -1,6 +1,12 @@
 import type { EditorView } from 'prosemirror-view';
 import type { Comment, DocumentModel } from '@christophervr/docx-core';
-import { addComment, deleteComment, removeCommentAnchor, replyToComment, resolveComment } from './comment-commands';
+import {
+	addComment,
+	deleteComment,
+	removeCommentAnchor,
+	replyToComment,
+	resolveComment,
+} from './comment-commands';
 import { createCommentsPanel, type CommentsPanelHandle } from './comments-panel';
 import {
 	acceptAllChanges,
@@ -36,7 +42,13 @@ export class ReviewController {
 			onAdd: (text) => this.addComment(text),
 			onReply: (parentId, text) =>
 				this.updateComments(
-					replyToComment(host.getModel().comments ?? [], parentId, host.getReviewAuthor(), text, host.getCollaborationIds()),
+					replyToComment(
+						host.getModel().comments ?? [],
+						parentId,
+						host.getReviewAuthor(),
+						text,
+						host.getCollaborationIds(),
+					),
 				),
 			onResolve: (id, resolved) =>
 				this.updateComments(resolveComment(host.getModel().comments ?? [], id, resolved)),
@@ -63,13 +75,21 @@ export class ReviewController {
 	private addComment(text: string) {
 		const view = this.host.getView();
 		if (!view) return;
-		const comment = addComment(view, this.host.getReviewAuthor(), text, this.host.getCollaborationIds());
+		const comment = addComment(
+			view,
+			this.host.getReviewAuthor(),
+			text,
+			this.host.getCollaborationIds(),
+		);
 		if (comment) this.updateComments([...(this.host.getModel().comments ?? []), comment]);
 	}
 
 	handleReview(key: Extract<RibbonAction, { type: 'review' }>['key']): void {
 		if (key === 'trackChanges') {
-			this.host.setModel({ ...this.host.getModel(), trackChanges: !this.host.getModel().trackChanges });
+			this.host.setModel({
+				...this.host.getModel(),
+				trackChanges: !this.host.getModel().trackChanges,
+			});
 			this.host.notifyChange();
 			this.host.refresh();
 			return;

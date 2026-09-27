@@ -1,5 +1,9 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
-import type { TableLook, TableStyleCatalog, TableStyleConditionalFormatting } from './table-model.js';
+import type {
+	TableLook,
+	TableStyleCatalog,
+	TableStyleConditionalFormatting,
+} from './table-model.js';
 
 function styleChain(styleId: string | undefined, catalog: TableStyleCatalog | undefined) {
 	if (!styleId || !catalog) return [];

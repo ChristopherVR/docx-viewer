@@ -234,7 +234,10 @@ export const schema = new Schema({
 				}
 				const body: DOMOutputSpec = [
 					'tbody',
-					...rows.map((row): DOMOutputSpec => ['tr', ...row.map((cell): DOMOutputSpec => ['td', cell.text])]),
+					...rows.map((row): DOMOutputSpec => [
+						'tr',
+						...row.map((cell): DOMOutputSpec => ['td', cell.text]),
+					]),
 				];
 				return ['table', { class: 'dve-nested-preview', contenteditable: 'false' }, body];
 			},

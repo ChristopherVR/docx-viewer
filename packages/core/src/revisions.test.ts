@@ -1,13 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx } from './parse.js';
-import { acceptRevision, listRevisions, rejectRevision, acceptAllRevisions } from './revision-commands.js';
+import {
+	acceptRevision,
+	listRevisions,
+	rejectRevision,
+	acceptAllRevisions,
+} from './revision-commands.js';
 
 const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
 
 function docx(bodyXml: string): Promise<Uint8Array> {
 	const zip = new JSZip();
-	zip.file('word/document.xml', `<w:document ${NS}><w:body>${bodyXml}<w:sectPr/></w:body></w:document>`);
+	zip.file(
+		'word/document.xml',
+		`<w:document ${NS}><w:body>${bodyXml}<w:sectPr/></w:body></w:document>`,
+	);
 	return zip.generateAsync({ type: 'uint8array' });
 }
 
@@ -40,12 +48,15 @@ describe('tracked-change revisions', () => {
 			),
 		);
 		const [first, second] = loaded.model.blocks;
-		if (first.type !== 'paragraph' || second.type !== 'paragraph') throw new Error('expected paragraphs');
+		if (first.type !== 'paragraph' || second.type !== 'paragraph')
+			throw new Error('expected paragraphs');
 		expect(first.markRevision).toMatchObject({ kind: 'insert', author: 'Ada', id: '9' });
 		expect(second.formatRevision).toMatchObject({ kind: 'paragraphChange', id: '10' });
 		expect(second.runs[0].revision).toMatchObject({ kind: 'formatChange', id: '11' });
 		expect(loaded.model.warnings.some((w) => w.includes('Formatting-change revisions'))).toBe(true);
-		expect(loaded.model.warnings.some((w) => w.includes('Comments and tracked review'))).toBe(false);
+		expect(loaded.model.warnings.some((w) => w.includes('Comments and tracked review'))).toBe(
+			false,
+		);
 	});
 
 	it('parses moveFrom/moveTo as a delete/insert pair and warns about the missing move linkage', async () => {
@@ -97,7 +108,9 @@ describe('tracked-change revisions', () => {
 		const accepted = acceptRevision(loaded.model, revision.id);
 		expect((accepted.blocks[0] as any).runs.map((r: any) => r.text).join('')).toBe('Hello world');
 		const rejected = rejectRevision(loaded.model, revision.id);
-		expect((rejected.blocks[0] as any).runs.map((r: any) => r.text).join('')).toBe('Hello old world');
+		expect((rejected.blocks[0] as any).runs.map((r: any) => r.text).join('')).toBe(
+			'Hello old world',
+		);
 		const savedRejected = await JSZip.loadAsync(await loaded.save(rejected));
 		const xml = (await savedRejected.file('word/document.xml')?.async('string')) ?? '';
 		expect(xml).not.toContain('<w:del');

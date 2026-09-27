@@ -1,14 +1,29 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import type { Paragraph, Revision, TextRun } from './model.js';
-import { children, first, isElement, makeW, named, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
+import {
+	children,
+	first,
+	isElement,
+	makeW,
+	named,
+	type XmlDocument,
+	type XmlElement,
+	WORD_NS,
+} from './xml.js';
 import { createRun } from './write-run.js';
-import { commentAnchorEdges, commentRangeEndNodes, commentRangeStartNode } from './write-comments.js';
+import {
+	commentAnchorEdges,
+	commentRangeEndNodes,
+	commentRangeStartNode,
+} from './write-comments.js';
 
 const REVISION_WRAPPER_NAMES = ['ins', 'del', 'moveFrom', 'moveTo'];
 const COMMENT_ANCHOR_NAMES = ['commentRangeStart', 'commentRangeEnd', 'commentReference'];
 
 function isWordElement(element: XmlElement, names: string[]): boolean {
-	return (!element.namespaceURI || element.namespaceURI === WORD_NS) && names.includes(element.localName);
+	return (
+		(!element.namespaceURI || element.namespaceURI === WORD_NS) && names.includes(element.localName)
+	);
 }
 export const isRevisionWrapperElement = (element: XmlElement): boolean =>
 	isWordElement(element, REVISION_WRAPPER_NAMES);
@@ -34,9 +49,19 @@ function removeChildren(element: XmlElement, local: string): void {
 	for (const child of children(element, local)) element.removeChild(child);
 }
 function revisionTag(kind: Revision['kind']): string {
-	return kind === 'delete' ? 'del' : kind === 'moveFrom' ? 'moveFrom' : kind === 'moveTo' ? 'moveTo' : 'ins';
+	return kind === 'delete'
+		? 'del'
+		: kind === 'moveFrom'
+			? 'moveFrom'
+			: kind === 'moveTo'
+				? 'moveTo'
+				: 'ins';
 }
-export function revisionWrapper(doc: XmlDocument, revision: Revision, content: XmlElement): XmlElement {
+export function revisionWrapper(
+	doc: XmlDocument,
+	revision: Revision,
+	content: XmlElement,
+): XmlElement {
 	const wrapper = makeW(doc, revisionTag(revision.kind));
 	setAttribute(wrapper, 'id', revision.id);
 	setAttribute(wrapper, 'author', revision.author);
@@ -71,8 +96,15 @@ export function buildInlineNodes(
 		for (const id of opens.get(index) ?? []) output.push(commentRangeStartNode(doc, id));
 		const runNode = createRun(doc, run, baseRuns?.[index], oldRuns[index]);
 		const revision = run.revision;
-		if (revision && (revision.kind === 'insert' || revision.kind === 'delete' || revision.kind === 'moveFrom' || revision.kind === 'moveTo')) {
-			if (revision.kind === 'delete' || revision.kind === 'moveFrom') convertToDeleteText(doc, runNode);
+		if (
+			revision &&
+			(revision.kind === 'insert' ||
+				revision.kind === 'delete' ||
+				revision.kind === 'moveFrom' ||
+				revision.kind === 'moveTo')
+		) {
+			if (revision.kind === 'delete' || revision.kind === 'moveFrom')
+				convertToDeleteText(doc, runNode);
 			output.push(revisionWrapper(doc, revision, runNode));
 		} else output.push(runNode);
 		for (const id of closes.get(index) ?? []) output.push(...commentRangeEndNodes(doc, id));

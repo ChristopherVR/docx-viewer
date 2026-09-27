@@ -55,7 +55,12 @@ export function parseRunProperties(props: XmlElement | undefined): RunFormatting
 		['cstheme', 'cs'],
 	] as const) {
 		const value = getW(fonts, xmlKey);
-		if (value === 'majorHAnsi' || value === 'majorEastAsia' || value === 'majorBidi' || value === 'majorAscii')
+		if (
+			value === 'majorHAnsi' ||
+			value === 'majorEastAsia' ||
+			value === 'majorBidi' ||
+			value === 'majorAscii'
+		)
 			fontTheme[script] = 'major';
 		else if (
 			value === 'minorHAnsi' ||

@@ -20,8 +20,7 @@ const KEEP_TOGETHER_NOTE =
 	'Paragraph keepNext/keepLines/widowControl overrides and contextualSpacing are not yet represented in the document model; Word’s defaults (widow/orphan control on, no forced keep-together) are used for every paragraph.';
 const TABLE_ROW_NOTE =
 	'Table row "keep together" (cantSplit) and repeating header rows (tblHeader) are not yet represented in the document model; every row may split across a page.';
-const NEXT_COLUMN_NOTE =
-	'A "next column" section break is laid out as a continuous section break.';
+const NEXT_COLUMN_NOTE = 'A "next column" section break is laid out as a continuous section break.';
 
 const twipsToPx = (twips: number): number => twips / 15;
 

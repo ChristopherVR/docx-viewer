@@ -29,7 +29,9 @@ export function parseComments(commentsXml: string, extendedXml?: string): Commen
 		if (initials) comment.initials = initials;
 		const date = getW(element, 'date');
 		if (date) comment.date = date;
-		const firstParagraph = element.getElementsByTagNameNS(WORD_NS, 'p')[0] as XmlElement | undefined;
+		const firstParagraph = element.getElementsByTagNameNS(WORD_NS, 'p')[0] as
+			| XmlElement
+			| undefined;
 		const paraId = firstParagraph?.getAttributeNS(W14_NS, 'paraId') || undefined;
 		if (paraId) paraIdToCommentId.set(paraId, id);
 		return comment;

@@ -32,9 +32,7 @@ describe('comments', () => {
 		const paragraph = loaded.model.blocks[0];
 		if (paragraph.type !== 'paragraph') throw new Error('expected paragraph');
 		expect(paragraph.runs[0]).toMatchObject({ text: 'Reviewed text', commentIds: ['0'] });
-		expect(
-			loaded.model.warnings.some((w) => w.includes('anchored per paragraph')),
-		).toBe(true);
+		expect(loaded.model.warnings.some((w) => w.includes('anchored per paragraph'))).toBe(true);
 	});
 
 	it('leaves an untouched comment list byte-identical on save', async () => {

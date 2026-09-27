@@ -35,7 +35,9 @@ async function partsOf(bytes: Uint8Array) {
 
 describe('inline content across features', () => {
 	it('never reuses a relationship id that only the .rels part declares', async () => {
-		const loaded = await loadDocx(await fixture('<w:p><w:r><w:t>Visit</w:t></w:r></w:p>', stylesRel));
+		const loaded = await loadDocx(
+			await fixture('<w:p><w:r><w:t>Visit</w:t></w:r></w:p>', stylesRel),
+		);
 		const paragraph = loaded.model.blocks[0] as Paragraph;
 		paragraph.runs = [{ text: 'Visit', link: { href: 'https://example.com/' } }];
 		const { document, rels } = await partsOf(await loaded.save(loaded.model));
@@ -56,10 +58,15 @@ describe('inline content across features', () => {
 		);
 		const paragraph = loaded.model.blocks[0] as Paragraph;
 		expect(paragraph.runs[0]).toMatchObject({ text: 'Link', link: { href: 'https://a.example/' } });
-		expect(paragraph.runs[1]).toMatchObject({ text: ' added', revision: { kind: 'insert', author: 'Ann' } });
+		expect(paragraph.runs[1]).toMatchObject({
+			text: ' added',
+			revision: { kind: 'insert', author: 'Ann' },
+		});
 		paragraph.runs[2].text = ' changed tail';
 		const { document } = await partsOf(await loaded.save(loaded.model));
-		expect(document).toMatch(/<w:hyperlink r:id="rId2"[^>]*><w:r><w:t[^>]*>Link<\/w:t><\/w:r><\/w:hyperlink>/);
+		expect(document).toMatch(
+			/<w:hyperlink r:id="rId2"[^>]*><w:r><w:t[^>]*>Link<\/w:t><\/w:r><\/w:hyperlink>/,
+		);
 		expect(document).toContain('w:author="Ann"');
 		expect(document).toContain('changed tail');
 	});

@@ -15,7 +15,8 @@ function nextRevisionId(): string {
 function withMark(fragment: Fragment, mark: Mark): Fragment {
 	const children: ProseMirrorNode[] = [];
 	fragment.forEach((node) => {
-		if (node.isText || node.type.name === 'hardBreak') children.push(node.mark(mark.addToSet(node.marks)));
+		if (node.isText || node.type.name === 'hardBreak')
+			children.push(node.mark(mark.addToSet(node.marks)));
 		else children.push(node.copy(withMark(node.content, mark)));
 	});
 	return Fragment.fromArray(children);
@@ -58,11 +59,20 @@ function applyTrackedReplace(transform: Transform, step: ReplaceStep, author: st
 	for (let i = segments.length - 1; i >= 0; i--) {
 		const segment = segments[i];
 		if (segment.ownInsertion) transform.delete(segment.from, segment.to);
-		else transform.addMark(segment.from, segment.to, schema.marks.deletion.create({ author, id: nextRevisionId() }));
+		else
+			transform.addMark(
+				segment.from,
+				segment.to,
+				schema.marks.deletion.create({ author, id: nextRevisionId() }),
+			);
 	}
 	if (slice.size) {
 		const mark = schema.marks.insertion.create({ author, id: nextRevisionId() });
-		transform.replace(insertAt, insertAt, new Slice(withMark(slice.content, mark), slice.openStart, slice.openEnd));
+		transform.replace(
+			insertAt,
+			insertAt,
+			new Slice(withMark(slice.content, mark), slice.openStart, slice.openEnd),
+		);
 	}
 }
 
@@ -78,7 +88,11 @@ export function trackChangesPlugin(getAuthor: () => string, isEnabled: () => boo
 		key: trackChangesPluginKey,
 		appendTransaction(transactions, oldState, newState) {
 			if (!isEnabled()) return null;
-			if (transactions.some((tr) => tr.getMeta(trackChangesPluginKey) || tr.getMeta(REMOTE_TRANSACTION_META)))
+			if (
+				transactions.some(
+					(tr) => tr.getMeta(trackChangesPluginKey) || tr.getMeta(REMOTE_TRANSACTION_META),
+				)
+			)
 				return null;
 			const relevant = transactions.filter((tr) => tr.docChanged);
 			if (!relevant.length) return null;
@@ -91,7 +105,9 @@ export function trackChangesPlugin(getAuthor: () => string, isEnabled: () => boo
 			// newState already contains the untracked edit: undo it first so the tracked steps,
 			// computed against oldState.doc, apply to the document they were derived from.
 			const result = newState.tr;
-			const applied = relevant.flatMap((tr) => tr.steps.map((step, index) => ({ step, doc: tr.docs[index] })));
+			const applied = relevant.flatMap((tr) =>
+				tr.steps.map((step, index) => ({ step, doc: tr.docs[index] })),
+			);
 			for (let index = applied.length - 1; index >= 0; index--)
 				result.step(applied[index].step.invert(applied[index].doc));
 			for (const step of transform.steps) result.step(step);

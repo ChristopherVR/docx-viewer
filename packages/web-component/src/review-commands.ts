@@ -23,9 +23,16 @@ export function collectRevisionRanges(doc: import('prosemirror-model').Node): Re
 		const kind = mark.type.name === 'insertion' ? 'insert' : 'delete';
 		const id = String(mark.attrs.id);
 		const last = ranges.at(-1);
-		if (last && last.id === id && last.kind === kind && last.to === pos) last.to = pos + node.nodeSize;
+		if (last && last.id === id && last.kind === kind && last.to === pos)
+			last.to = pos + node.nodeSize;
 		else
-			ranges.push({ id, kind, from: pos, to: pos + node.nodeSize, author: String(mark.attrs.author) });
+			ranges.push({
+				id,
+				kind,
+				from: pos,
+				to: pos + node.nodeSize,
+				author: String(mark.attrs.author),
+			});
 	});
 	return ranges;
 }
@@ -33,7 +40,9 @@ export function collectRevisionRanges(doc: import('prosemirror-model').Node): Re
 function revisionNear(view: EditorView): RevisionRange | undefined {
 	const ranges = collectRevisionRanges(view.state.doc);
 	const { from, to } = view.state.selection;
-	return ranges.find((range) => range.from < to && range.to > from) ?? ranges.find((r) => r.from >= to);
+	return (
+		ranges.find((range) => range.from < to && range.to > from) ?? ranges.find((r) => r.from >= to)
+	);
 }
 
 export function hasAnyChange(view: EditorView | undefined): boolean {
@@ -57,14 +66,18 @@ function resolveRange(view: EditorView, range: RevisionRange): { from: number; t
 export function acceptRevisionRange(view: EditorView, range: RevisionRange): void {
 	const { from, to } = resolveRange(view, range);
 	const tr =
-		range.kind === 'insert' ? view.state.tr.removeMark(from, to, markType('insert')) : view.state.tr.delete(from, to);
+		range.kind === 'insert'
+			? view.state.tr.removeMark(from, to, markType('insert'))
+			: view.state.tr.delete(from, to);
 	view.dispatch(closeHistory(tr).scrollIntoView());
 }
 /** Rejecting an insertion removes the text; rejecting a deletion restores it. */
 export function rejectRevisionRange(view: EditorView, range: RevisionRange): void {
 	const { from, to } = resolveRange(view, range);
 	const tr =
-		range.kind === 'insert' ? view.state.tr.delete(from, to) : view.state.tr.removeMark(from, to, markType('delete'));
+		range.kind === 'insert'
+			? view.state.tr.delete(from, to)
+			: view.state.tr.removeMark(from, to, markType('delete'));
 	view.dispatch(closeHistory(tr).scrollIntoView());
 }
 
@@ -107,7 +120,9 @@ function navigate(view: EditorView, direction: 'next' | 'previous'): boolean {
 			? (ranges.find((range) => range.from > to) ?? ranges[0])
 			: ([...ranges].reverse().find((range) => range.to < from) ?? ranges.at(-1)!);
 	view.dispatch(
-		view.state.tr.setSelection(TextSelection.create(view.state.doc, target.from, target.to)).scrollIntoView(),
+		view.state.tr
+			.setSelection(TextSelection.create(view.state.doc, target.from, target.to))
+			.scrollIntoView(),
 	);
 	view.focus();
 	return true;

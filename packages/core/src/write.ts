@@ -6,7 +6,11 @@ import { writeNumberingProperties } from './numbering-write.js';
 import { writeTable as writeTableContent } from './write-table.js';
 import { writeParagraphMarkRevision } from './write-revisions.js';
 import { runHasUnknownProperties } from './write-run-validation.js';
-import { buildInlineContent, collectInlineSlots, replaceableInlineChildren } from './write-inline.js';
+import {
+	buildInlineContent,
+	collectInlineSlots,
+	replaceableInlineChildren,
+} from './write-inline.js';
 import {
 	RelationshipAllocator,
 	scanUsedRelationshipIds,

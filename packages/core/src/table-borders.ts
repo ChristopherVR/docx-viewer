@@ -3,7 +3,14 @@ import type { TableBorderSide, TableBorders } from './table-model.js';
 import type { ThemeColorToken } from './theme-model.js';
 import { first, getW, type XmlElement } from './xml.js';
 
-const SIDES = ['top', 'bottom', 'left', 'right', 'insideH', 'insideV'] as const satisfies readonly (keyof TableBorders)[];
+const SIDES = [
+	'top',
+	'bottom',
+	'left',
+	'right',
+	'insideH',
+	'insideV',
+] as const satisfies readonly (keyof TableBorders)[];
 
 function borderSide(element: XmlElement | undefined): TableBorderSide | undefined {
 	if (!element) return undefined;
@@ -21,7 +28,9 @@ function borderSide(element: XmlElement | undefined): TableBorderSide | undefine
 }
 
 /** Parses a `w:tblBorders` or `w:tcBorders` element into the shared `TableBorders` shape. */
-export function parseTableBorders(bordersElement: XmlElement | undefined): TableBorders | undefined {
+export function parseTableBorders(
+	bordersElement: XmlElement | undefined,
+): TableBorders | undefined {
 	if (!bordersElement) return undefined;
 	const result: TableBorders = {};
 	for (const side of SIDES) {

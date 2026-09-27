@@ -77,7 +77,9 @@ describe('review editing end to end', () => {
 		const pm = view(editor);
 		pm.dispatch(pm.state.tr.setSelection(TextSelection.create(pm.state.doc, 1, 7)));
 		click(editor, 'Add comment');
-		const input = editor.shadowRoot!.querySelector<HTMLTextAreaElement>('[aria-label="New comment"]')!;
+		const input = editor.shadowRoot!.querySelector<HTMLTextAreaElement>(
+			'[aria-label="New comment"]',
+		)!;
 		expect(input).toBeTruthy();
 		input.value = 'Please check';
 		input.dispatchEvent(new Event('input'));
@@ -88,7 +90,9 @@ describe('review editing end to end', () => {
 		const comments = editor.documentModel!.comments ?? [];
 		expect(comments).toHaveLength(1);
 		expect(comments[0].text).toBe('Please check');
-		const anchored = firstParagraph(editor).runs.find((run) => run.commentIds?.includes(comments[0].id));
+		const anchored = firstParagraph(editor).runs.find((run) =>
+			run.commentIds?.includes(comments[0].id),
+		);
 		expect(anchored?.text).toBe('Review');
 	});
 });

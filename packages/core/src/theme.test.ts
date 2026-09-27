@@ -99,7 +99,9 @@ describe('theme parsing and color resolution', () => {
 		expect(paragraph.runs[0].colorTheme).toMatchObject({ token: 'accent1' });
 		expect(paragraph.runs[0].colorTheme?.tint).toBeCloseTo(0x66 / 255, 5);
 		expect(paragraph.runs[0].color).toBe('#000000');
-		expect(loaded.model.warnings.join(' ')).toContain('Theme colors and fonts resolve for rendering');
+		expect(loaded.model.warnings.join(' ')).toContain(
+			'Theme colors and fonts resolve for rendering',
+		);
 		// No-op save preserves the original bytes; the theme reference is never flattened onto the run.
 		const original = await zip.generateAsync({ type: 'uint8array' });
 		expect(await loaded.save()).toEqual(original);

@@ -31,7 +31,12 @@ export type {
 	ThemeFontRole,
 	WordUnderlineStyle,
 } from './theme-model.js';
-import type { ThemeColorReference, ThemeFontScript, ThemeFontRole, WordUnderlineStyle } from './theme-model.js';
+import type {
+	ThemeColorReference,
+	ThemeFontScript,
+	ThemeFontRole,
+	WordUnderlineStyle,
+} from './theme-model.js';
 export type {
 	RunFormatting,
 	CharacterStyleDefinition,

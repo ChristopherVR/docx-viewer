@@ -136,7 +136,7 @@ export class DocxEditorElement extends HTMLElementBase {
 			const session = await loadDocument(input);
 			if (generation !== this.loadGeneration) return;
 			this.imageMedia.release();
-		this.loaded = session;
+			this.loaded = session;
 			this.model = session.model;
 			this.detachedState = undefined;
 			if (this.isConnected) this.renderDocument();

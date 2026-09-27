@@ -22,9 +22,15 @@ function nestedPreview(node: XmlElement): NestedTablePreview {
 	};
 }
 
-function parseCell(cell: XmlElement, parseParagraph: (p: XmlElement, id: string) => Paragraph, id: string): TableCell {
+function parseCell(
+	cell: XmlElement,
+	parseParagraph: (p: XmlElement, id: string) => Paragraph,
+	id: string,
+): TableCell {
 	const props = first(cell, 'tcPr');
-	const result: TableCell = { paragraphs: children(cell, 'p').map((p, pi) => parseParagraph(p, `${id}p${pi}`)) };
+	const result: TableCell = {
+		paragraphs: children(cell, 'p').map((p, pi) => parseParagraph(p, `${id}p${pi}`)),
+	};
 	const gridSpan = getW(first(props, 'gridSpan'), 'val');
 	if (gridSpan && /^\d+$/.test(gridSpan)) result.gridSpan = Number(gridSpan);
 	const vMerge = first(props, 'vMerge');
@@ -103,7 +109,8 @@ export function parseTable(
 	const width = dxa(getW(first(tblPr, 'tblW'), 'w'));
 	if (width !== undefined) table.widthTwips = width;
 	const alignment = getW(first(tblPr, 'jc'), 'val');
-	if (alignment === 'left' || alignment === 'center' || alignment === 'right') table.alignment = alignment;
+	if (alignment === 'left' || alignment === 'center' || alignment === 'right')
+		table.alignment = alignment;
 	const indent = dxa(getW(first(tblPr, 'tblInd'), 'w'));
 	if (indent !== undefined) table.indentTwips = indent;
 	const borders = parseTableBorders(first(tblPr, 'tblBorders'));

@@ -86,7 +86,11 @@ export function resolveRunFormatting(
 ): RunFormatting {
 	const levels: RunFormatting[] = [
 		context.runCatalog?.docDefaults ?? {},
-		...paragraphStyleRunChain(context.paragraphStyleId, context.paragraphCatalog, context.runCatalog),
+		...paragraphStyleRunChain(
+			context.paragraphStyleId,
+			context.paragraphCatalog,
+			context.runCatalog,
+		),
 		...(context.tableStyleRun ? [context.tableStyleRun] : []),
 		...characterStyleChain(run.style, context.runCatalog),
 		run,

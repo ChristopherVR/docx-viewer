@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
-import { loadDocx, parseParagraphStyleCatalog, parseRunStyleCatalog, resolveRunFormatting } from './index.js';
+import {
+	loadDocx,
+	parseParagraphStyleCatalog,
+	parseRunStyleCatalog,
+	resolveRunFormatting,
+} from './index.js';
 
 const ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const stylesXml = `<w:styles xmlns:w="${ns}">
@@ -19,7 +24,10 @@ describe('character style catalog and run formatting resolution', () => {
 	it('parses rPrDefault and character/paragraph style run properties', () => {
 		const cat = catalog();
 		expect(cat.docDefaults).toMatchObject({ fontSize: 11, fontFamily: 'Calibri' });
-		expect(cat.styles.Emph).toMatchObject({ type: 'character', formatting: { bold: true, italic: true } });
+		expect(cat.styles.Emph).toMatchObject({
+			type: 'character',
+			formatting: { bold: true, italic: true },
+		});
 		expect(cat.styles.EmphDerived).toMatchObject({
 			type: 'character',
 			basedOn: 'Emph',
@@ -56,7 +64,9 @@ describe('character style catalog and run formatting resolution', () => {
 </w:styles>`,
 		);
 		// Two ancestor levels both turn bold on: the double toggle cancels back to off.
-		expect(resolveRunFormatting({ text: 'x', style: 'B' }, { runCatalog: cat }).bold).toBeUndefined();
+		expect(
+			resolveRunFormatting({ text: 'x', style: 'B' }, { runCatalog: cat }).bold,
+		).toBeUndefined();
 		// Direct run-level bold flips it back on a third time.
 		expect(
 			resolveRunFormatting({ text: 'x', style: 'B', bold: true }, { runCatalog: cat }).bold,
@@ -106,7 +116,9 @@ describe('character style catalog and run formatting resolution', () => {
 		zip.file('word/styles.xml', stylesXml);
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
 		const warnings = loaded.model.warnings.join(' ');
-		expect(warnings).not.toContain('Character style inheritance and theme font/color resolution are not modeled');
+		expect(warnings).not.toContain(
+			'Character style inheritance and theme font/color resolution are not modeled',
+		);
 		expect(warnings).toContain('basedOn chains');
 		// Editing the paragraph containing rStyle stays supported, and the style reference survives.
 		const paragraph = loaded.model.blocks[0];

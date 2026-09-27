@@ -30,7 +30,14 @@ export type RibbonAction =
 	| { type: 'search' }
 	| {
 			type: 'review';
-			key: 'trackChanges' | 'acceptOne' | 'rejectOne' | 'acceptAll' | 'rejectAll' | 'previous' | 'next';
+			key:
+				| 'trackChanges'
+				| 'acceptOne'
+				| 'rejectOne'
+				| 'acceptAll'
+				| 'rejectAll'
+				| 'previous'
+				| 'next';
 	  }
 	| { type: 'reviewDisplay'; value: ReviewDisplayMode }
 	| { type: 'comments'; key: 'toggle' | 'add' };

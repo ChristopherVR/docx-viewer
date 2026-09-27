@@ -1,5 +1,10 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
-import type { ThemeCatalog, ThemeColorReference, ThemeColorSlot, ThemeColorToken } from './theme-model.js';
+import type {
+	ThemeCatalog,
+	ThemeColorReference,
+	ThemeColorSlot,
+	ThemeColorToken,
+} from './theme-model.js';
 
 export const THEME_COLOR_TOKENS = [
 	'dark1',
@@ -75,7 +80,10 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
 	};
 }
 function toHex(value: number): string {
-	return Math.min(255, Math.max(0, Math.round(value))).toString(16).padStart(2, '0').toUpperCase();
+	return Math.min(255, Math.max(0, Math.round(value)))
+		.toString(16)
+		.padStart(2, '0')
+		.toUpperCase();
 }
 /*
  * Linear-light shade/tint mixing, adapted from
