@@ -6,3 +6,4 @@ test-results/
 artifacts/
 .release-types/
 .claude/worktrees/
+.playwright-mcp/
