@@ -36,7 +36,7 @@ function removeChildren(element: XmlElement, local: string): void {
 function revisionTag(kind: Revision['kind']): string {
 	return kind === 'delete' ? 'del' : kind === 'moveFrom' ? 'moveFrom' : kind === 'moveTo' ? 'moveTo' : 'ins';
 }
-function revisionWrapper(doc: XmlDocument, revision: Revision, content: XmlElement): XmlElement {
+export function revisionWrapper(doc: XmlDocument, revision: Revision, content: XmlElement): XmlElement {
 	const wrapper = makeW(doc, revisionTag(revision.kind));
 	setAttribute(wrapper, 'id', revision.id);
 	setAttribute(wrapper, 'author', revision.author);
@@ -45,7 +45,7 @@ function revisionWrapper(doc: XmlDocument, revision: Revision, content: XmlEleme
 	return wrapper;
 }
 /** Deleted/moved-from text is stored as `w:delText` rather than `w:t`. */
-function convertToDeleteText(doc: XmlDocument, run: XmlElement): void {
+export function convertToDeleteText(doc: XmlDocument, run: XmlElement): void {
 	for (const t of children(run, 't')) {
 		const delText = doc.createElementNS(WORD_NS, 'w:delText');
 		const space = t.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'space');

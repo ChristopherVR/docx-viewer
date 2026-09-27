@@ -4,17 +4,14 @@ import { children, first, getW, makeW, type XmlDocument, type XmlElement, WORD_N
 import { writeParagraphProperties } from './write-paragraph-properties.js';
 import { writeNumberingProperties } from './numbering-write.js';
 import { writeTable as writeTableContent } from './write-table.js';
-import { isWordHighlightToken } from './highlight.js';
-import { hasSpecialBreak, isModeledBreak } from './breaks.js';
-import { isValidLanguageTag } from './language.js';
-import {
-	buildInlineNodes,
-	gatherOldRuns,
-	isManagedParagraphChild,
-	isRevisionWrapperElement,
-	writeParagraphMarkRevision,
-} from './write-revisions.js';
+import { writeParagraphMarkRevision } from './write-revisions.js';
 import { runHasUnknownProperties } from './write-run-validation.js';
+import { buildInlineContent, collectInlineSlots, replaceableInlineChildren } from './write-inline.js';
+import {
+	RelationshipAllocator,
+	scanUsedRelationshipIds,
+	type NewRelationship,
+} from './relationship-allocator.js';
 
 const twips = (pixels: number): string => String(Math.round(pixels * 15));
 function setAttribute(element: XmlElement, local: string, value: string): void {
@@ -22,45 +19,6 @@ function setAttribute(element: XmlElement, local: string, value: string): void {
 }
 function removeChildren(element: XmlElement, local: string): void {
 	for (const child of children(element, local)) element.removeChild(child);
-}
-
-function runHasUnsafeChildren(element: XmlElement): boolean {
-	const content = Array.from(element.childNodes).filter(
-		(node) => node.nodeType === 1 && (node as XmlElement).localName !== 'rPr',
-	) as XmlElement[];
-	// A run whose only content is a modeled page/column break matches how the parser
-	// represents it (`TextRun.break`); it is safe to relocate. A break mixed with other
-	// content in the same run is not modeled distinctly and stays protected below.
-	if (content.length === 1 && content[0].localName === 'br' && isModeledBreak(content[0]))
-		return false;
-	for (const runChild of Array.from(element.childNodes)) {
-		if (runChild.nodeType !== 1) continue;
-		const runElement = runChild as XmlElement;
-		if (runElement.localName === 'rPr') continue;
-		if (runElement.localName === 'br' && hasSpecialBreak(runElement)) return true;
-		if (runElement.localName === 'cr' && runElement.attributes.length > 0) return true;
-		if (!['t', 'tab', 'br', 'cr', 'noBreakHyphen', 'delText'].includes(runElement.localName))
-			return true;
-	}
-	return false;
-}
-function hasUnsafeInline(paragraph: XmlElement): boolean {
-	for (const child of Array.from(paragraph.childNodes)) {
-		if (child.nodeType !== 1) continue;
-		const element = child as XmlElement;
-		if (element.localName === 'pPr') continue;
-		if (isManagedParagraphChild(element)) {
-			if (!isRevisionWrapperElement(element)) continue;
-			for (const inner of Array.from(element.childNodes)) {
-				if (inner.nodeType !== 1) continue;
-				const innerElement = inner as XmlElement;
-				if (innerElement.localName !== 'r' || runHasUnsafeChildren(innerElement)) return true;
-			}
-			continue;
-		}
-		if (element.localName !== 'r' || runHasUnsafeChildren(element)) return true;
-	}
-	return false;
 }
 
 function rejectUnsafeRunSegmentation(
@@ -80,14 +38,16 @@ function rejectUnsafeRunSegmentation(
 	);
 }
 
-function writeParagraph(
+function writeParagraphImpl(
 	doc: XmlDocument,
 	paragraph: Paragraph,
 	node: XmlElement,
-	base?: Paragraph,
+	base: Paragraph | undefined,
+	allocator: RelationshipAllocator,
 ): XmlElement {
 	if (base && JSON.stringify(paragraph) === JSON.stringify(base)) return node;
-	if (hasUnsafeInline(node))
+	const slots = collectInlineSlots(node);
+	if (!slots)
 		throw new Error(
 			`Cannot edit paragraph ${paragraph.id}: it contains inline OOXML that this editor cannot safely relocate. The original DOCX package remains unchanged.`,
 		);
@@ -116,35 +76,57 @@ function writeParagraph(
 	writeNumberingProperties(doc, pPr, paragraph, base);
 	writeParagraphMarkRevision(doc, pPr, paragraph, base);
 	removeChildren(pPr, 'pPrChange');
-	const oldRuns = gatherOldRuns(node);
-	rejectUnsafeRunSegmentation(paragraph, base, oldRuns);
-	for (const child of Array.from(node.childNodes)) {
-		if (child.nodeType !== 1) continue;
-		const element = child as XmlElement;
-		if (element.localName === 'r' || isManagedParagraphChild(element)) node.removeChild(element);
+	rejectUnsafeRunSegmentation(
+		paragraph,
+		base,
+		slots.map((slot) => slot.element),
+	);
+	// Bookmarks are preserved but not repositioned precisely: an edited paragraph's bookmarks move
+	// to its boundaries (starts right after pPr, ends at the close) instead of their exact original
+	// run offsets, which this run-level model does not track.
+	const bookmarkStarts = children(node, 'bookmarkStart');
+	const bookmarkEnds = children(node, 'bookmarkEnd');
+	for (const bookmark of [...bookmarkStarts, ...bookmarkEnds]) node.removeChild(bookmark);
+	for (const oldNode of replaceableInlineChildren(node)) node.removeChild(oldNode);
+	const newNodes = buildInlineContent(doc, paragraph.runs, base?.runs, slots, allocator);
+	let anchor: XmlElement = pPr;
+	for (const bookmark of bookmarkStarts) {
+		node.insertBefore(bookmark, anchor.nextSibling);
+		anchor = bookmark;
 	}
-	const newNodes = buildInlineNodes(doc, paragraph.runs, base?.runs, oldRuns);
-	let anchor: any = pPr;
-	for (const item of newNodes) {
-		node.insertBefore(item, anchor.nextSibling);
-		anchor = item;
+	for (const run of newNodes) {
+		node.insertBefore(run, anchor.nextSibling);
+		anchor = run;
+	}
+	for (const bookmark of bookmarkEnds) {
+		node.insertBefore(bookmark, anchor.nextSibling);
+		anchor = bookmark;
 	}
 	if (!pPr.childNodes.length) node.removeChild(pPr);
 	return node;
 }
 
-function createParagraph(doc: XmlDocument, paragraph: Paragraph): XmlElement {
+function createParagraph(
+	doc: XmlDocument,
+	paragraph: Paragraph,
+	allocator: RelationshipAllocator,
+): XmlElement {
 	const node = makeW(doc, 'p');
-	return writeParagraph(doc, paragraph, node);
+	return writeParagraphImpl(doc, paragraph, node, undefined, allocator);
 }
 
-function createTable(doc: XmlDocument, table: Extract<Block, { type: 'table' }>): XmlElement {
+function createTable(
+	doc: XmlDocument,
+	table: Extract<Block, { type: 'table' }>,
+	allocator: RelationshipAllocator,
+): XmlElement {
 	const node = makeW(doc, 'tbl');
 	for (const row of table.rows) {
 		const tr = makeW(doc, 'tr');
 		for (const cell of row) {
 			const tc = makeW(doc, 'tc');
-			for (const paragraph of cell.paragraphs) tc.appendChild(createParagraph(doc, paragraph));
+			for (const paragraph of cell.paragraphs)
+				tc.appendChild(createParagraph(doc, paragraph, allocator));
 			if (!cell.paragraphs.length) tc.appendChild(makeW(doc, 'p'));
 			tr.appendChild(tc);
 		}
@@ -183,9 +165,30 @@ function originalNodes(body: XmlElement): XmlElement[] {
 	) as XmlElement[];
 }
 
-export function applyModel(doc: XmlDocument, model: DocumentModel, original: Block[]): void {
+export interface ApplyModelResult {
+	/** New hyperlink/image relationships save.ts must add to word/_rels/document.xml.rels. */
+	newRelationships: readonly NewRelationship[];
+}
+
+export function applyModel(
+	doc: XmlDocument,
+	model: DocumentModel,
+	original: Block[],
+	/** Relationship ids already declared in word/_rels/document.xml.rels (styles, numbering, ...). */
+	reservedRelationshipIds: Iterable<string> = [],
+): ApplyModelResult {
 	const body = Array.from(doc.getElementsByTagNameNS(WORD_NS, 'body'))[0];
 	if (!body) throw new Error('DOCX document.xml has no w:body');
+	const allocator = new RelationshipAllocator([
+		...scanUsedRelationshipIds(doc),
+		...reservedRelationshipIds,
+	]);
+	const boundWriteParagraph = (
+		writeDoc: XmlDocument,
+		paragraph: Paragraph,
+		node: XmlElement,
+		base?: Paragraph,
+	) => writeParagraphImpl(writeDoc, paragraph, node, base, allocator);
 	const oldNodes = originalNodes(body);
 	const oldById = new Map<string, XmlElement>();
 	original.forEach((block, index) => {
@@ -199,8 +202,8 @@ export function applyModel(doc: XmlDocument, model: DocumentModel, original: Blo
 		if (block.type === 'paragraph')
 			output.push(
 				old
-					? writeParagraph(doc, block, old, base?.type === 'paragraph' ? base : undefined)
-					: createParagraph(doc, block),
+					? boundWriteParagraph(doc, block, old, base?.type === 'paragraph' ? base : undefined)
+					: createParagraph(doc, block, allocator),
 			);
 		else
 			output.push(
@@ -210,10 +213,10 @@ export function applyModel(doc: XmlDocument, model: DocumentModel, original: Blo
 							block,
 							old,
 							base?.type === 'table' ? base : undefined,
-							writeParagraph,
+							boundWriteParagraph,
 							replaceSlots,
 						)
-					: createTable(doc, block),
+					: createTable(doc, block, allocator),
 			);
 	}
 	const slots = originalNodes(body);
@@ -238,4 +241,5 @@ export function applyModel(doc: XmlDocument, model: DocumentModel, original: Blo
 	}
 	for (const side of ['Top', 'Right', 'Bottom', 'Left'] as const)
 		setAttribute(margins, side.toLowerCase(), twips(model.page[`margin${side}`]));
+	return { newRelationships: allocator.newRelationships };
 }

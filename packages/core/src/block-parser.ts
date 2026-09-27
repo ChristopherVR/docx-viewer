@@ -16,6 +16,9 @@ import { canEditTableStructure } from './write-table.js';
 import { classifyBreak } from './breaks.js';
 import { parseRunProperties } from './run-properties.js';
 import { parseTable as parseTableWithFidelity } from './parse-table.js';
+import { parseDrawing, type DrawingContext } from './drawing.js';
+import { resolveHyperlink, parseSimpleHyperlinkField } from './hyperlink.js';
+import { paragraphBookmarkNames } from './bookmarks.js';
 import {
 	collectParagraphRuns,
 	paragraphFormatRevision,
@@ -48,6 +51,13 @@ function fieldPlaceholderText(instr: string | undefined): string {
 	return (code && FIELD_PLACEHOLDERS[code]) || '[Field]';
 }
 
+/**
+ * Package context (relationships, content types, media parts) for the container currently being
+ * parsed. Only the main document body supplies one; headers, footers and notes have their own
+ * relationship parts, so their drawings and external links are not resolved.
+ */
+let activeContext: DrawingContext | undefined;
+
 /** Content children of a run other than its `rPr`, used to detect single-purpose runs. */
 function runContent(node: XmlElement): XmlElement[] {
 	return Array.from(node.childNodes)
@@ -58,6 +68,13 @@ function runContent(node: XmlElement): XmlElement[] {
 function parseRun(node: XmlElement, revision?: Revision): TextRun {
 	const props = first(node, 'rPr');
 	const content = runContent(node);
+	const drawing = content.find((child) => named(child, 'drawing') || named(child, 'pict'));
+	if (drawing && activeContext) {
+		const run: TextRun = { text: '', image: parseDrawing(drawing, activeContext) };
+		const runRevision = revision ?? runFormatRevision(props);
+		if (runRevision) run.revision = runRevision;
+		return run;
+	}
 	let breakKind: 'page' | 'column' | undefined;
 	let noteReference: TextRun['noteReference'];
 	if (content.length === 1) {
@@ -107,11 +124,26 @@ function parseRun(node: XmlElement, revision?: Revision): TextRun {
 function parseParagraph(node: XmlElement, id: string): Paragraph {
 	const props = first(node, 'pPr');
 	const alignment = getW(first(props, 'jc'), 'val');
-	const { runs } = collectParagraphRuns(node, parseRun, (item) =>
-		named(item, 'fldSimple') ? { text: fieldPlaceholderText(getW(item, 'instr')) } : undefined,
+	const { runs } = collectParagraphRuns(
+		node,
+		parseRun,
+		(item) => {
+			if (!named(item, 'fldSimple')) return undefined;
+			const instr = getW(item, 'instr') ?? '';
+			const link = parseSimpleHyperlinkField(instr);
+			if (!link) return [{ text: fieldPlaceholderText(instr) }];
+			return children(item, 'r').map((run) => ({ ...parseRun(run), link }));
+		},
+		(hyperlink) => {
+			if (!activeContext) return undefined;
+			const link = resolveHyperlink(hyperlink, activeContext.rels);
+			return link.href !== undefined || link.anchor !== undefined ? link : undefined;
+		},
 	);
 	if (!runs.length) runs.push({ text: '' });
 	const paragraph: Paragraph = { type: 'paragraph', id, runs };
+	const bookmarks = paragraphBookmarkNames(node);
+	if (bookmarks.length) paragraph.bookmarks = bookmarks;
 	const markRevision = paragraphMarkRevision(props);
 	if (markRevision) paragraph.markRevision = markRevision;
 	const formatRevision = paragraphFormatRevision(props);
@@ -172,7 +204,21 @@ function parseTable(node: XmlElement, id: string): Table {
  * part's root, or a footnote/endnote element) into blocks, reusing one paragraph/table parser
  * everywhere. `idPrefix` namespaces ids so header/footer/note blocks never collide with the body.
  */
-export function parseBlocksFromContainer(container: XmlElement, idPrefix = ''): Block[] {
+export function parseBlocksFromContainer(
+	container: XmlElement,
+	idPrefix = '',
+	context?: DrawingContext,
+): Block[] {
+	const previous = activeContext;
+	activeContext = context;
+	try {
+		return parseContainer(container, idPrefix);
+	} finally {
+		activeContext = previous;
+	}
+}
+
+function parseContainer(container: XmlElement, idPrefix: string): Block[] {
 	const blocks: Block[] = [];
 	let index = 0;
 	for (const node of Array.from(container.childNodes).filter(isElement)) {

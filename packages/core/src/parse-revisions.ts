@@ -13,6 +13,14 @@ const REVISION_WRAPPERS: Record<string, Revision['kind']> = {
 export const REVISION_WRAPPER_NAMES = Object.keys(REVISION_WRAPPERS);
 export const COMMENT_ANCHOR_NAMES = ['commentRangeStart', 'commentRangeEnd', 'commentReference'];
 
+/** A `w:r` whose only content is a `w:commentReference`: a comment anchor, not document text. */
+export function isCommentReferenceRun(run: XmlElement): boolean {
+	const content = Array.from(run.childNodes).filter(
+		(child): child is XmlElement => isElement(child) && !named(child, 'rPr'),
+	);
+	return content.length > 0 && content.every((child) => named(child, 'commentReference'));
+}
+
 function revisionFrom(node: XmlElement, kind: Revision['kind']): Revision {
 	const revision: Revision = {
 		kind,
@@ -55,7 +63,8 @@ export function runFormatRevision(rPr: XmlElement | undefined): Revision | undef
 export function collectParagraphRuns(
 	node: XmlElement,
 	parseRun: (run: XmlElement, revision?: Revision) => TextRun,
-	parseOther?: (item: XmlElement) => TextRun | undefined,
+	parseOther?: (item: XmlElement) => TextRun[] | undefined,
+	resolveLink?: (hyperlink: XmlElement) => TextRun['link'],
 ): { runs: TextRun[]; hasMove: boolean } {
 	const runs: TextRun[] = [];
 	const active: string[] = [];
@@ -65,9 +74,17 @@ export function collectParagraphRuns(
 		runs.push(run);
 	};
 	for (const item of Array.from(node.childNodes).filter(isElement)) {
-		if (named(item, 'r')) push(parseRun(item));
-		else if (named(item, 'hyperlink'))
-			for (const run of children(item, 'r')) push(parseRun(run));
+		if (named(item, 'r')) {
+			if (!isCommentReferenceRun(item)) push(parseRun(item));
+		}
+		else if (named(item, 'hyperlink')) {
+			const link = resolveLink?.(item);
+			for (const run of children(item, 'r')) {
+				const parsed = parseRun(run);
+				if (link) parsed.link = link;
+				push(parsed);
+			}
+		}
 		else if (
 			(!item.namespaceURI || item.namespaceURI === WORD_NS) &&
 			Object.hasOwn(REVISION_WRAPPERS, item.localName)
@@ -84,8 +101,7 @@ export function collectParagraphRuns(
 			const index = id === undefined ? -1 : active.indexOf(id);
 			if (index >= 0) active.splice(index, 1);
 		} else {
-			const run = parseOther?.(item);
-			if (run) push(run);
+			for (const run of parseOther?.(item) ?? []) push(run);
 		}
 	}
 	return { runs, hasMove };

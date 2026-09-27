@@ -2,6 +2,8 @@
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 
 export const WORD_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+/** OOXML relationships namespace used for `r:id`/`r:embed` attributes on drawings and hyperlinks. */
+export const REL_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 export type XmlDocument = Document;
 export type XmlElement = Element;
 export type XmlNode = Node;
@@ -45,6 +47,10 @@ export const first = (
 ): XmlElement | undefined => (parent ? children(parent, local)[0] : undefined);
 export const getW = (element: XmlElement | null | undefined, local: string): string | undefined =>
 	element?.getAttributeNS(WORD_NS, local) ?? element?.getAttribute(`w:${local}`) ?? undefined;
+export const getR = (element: XmlElement | null | undefined, local: string): string | undefined =>
+	element?.getAttributeNS(REL_NS, local) ?? element?.getAttribute(`r:${local}`) ?? undefined;
 export const makeW = (doc: XmlDocument, local: string): XmlElement =>
 	doc.createElementNS(WORD_NS, `w:${local}`);
+export const makeNS = (doc: XmlDocument, ns: string, qualified: string): XmlElement =>
+	doc.createElementNS(ns, qualified);
 export const textContent = (element: XmlElement): string => element.textContent ?? '';

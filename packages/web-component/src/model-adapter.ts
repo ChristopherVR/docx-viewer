@@ -96,6 +96,9 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 				previous &&
 				!previous.noteReference &&
 				!normalized.noteReference &&
+				!previous.image &&
+				!normalized.image &&
+				sameJson(previous.link, normalized.link) &&
 				fields.every((field) => previous[field] === normalized[field]) &&
 				sameRevisionMeta(previous, normalized)
 			)
@@ -130,10 +133,14 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 				run.text === b[index].text &&
 				fields.every((field) => run[field] === b[index][field]) &&
 				sameNoteReference(run.noteReference, b[index].noteReference) &&
+				sameJson(run.link, b[index].link) &&
+				sameJson(run.image, b[index].image) &&
 				sameRevisionMeta(run, b[index]),
 		)
 	);
 }
+const sameJson = (left: unknown, right: unknown): boolean =>
+	JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
 /** `revision`/`commentIds` are objects/arrays; compare by value rather than by reference. */
 function sameRevisionMeta(left: TextRun, right: TextRun): boolean {
 	return (

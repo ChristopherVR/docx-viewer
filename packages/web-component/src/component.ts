@@ -32,6 +32,7 @@ import { moveCursorToBlock } from './print-layout-cursor';
 import { trackChangesPlugin, REMOTE_TRANSACTION_META } from './track-changes-mode';
 import { reviewDisplayPlugin, type ReviewDisplayMode } from './review-display';
 import { ReviewController } from './review-controller';
+import { ImageMediaCache, imageNodeView } from './image-media';
 
 const HTMLElementBase: typeof HTMLElement =
 	typeof HTMLElement === 'undefined' ? (class {} as typeof HTMLElement) : HTMLElement;
@@ -56,6 +57,7 @@ export class DocxEditorElement extends HTMLElementBase {
 	private presence?: EditorPresence;
 	private _locale: EditorLocale = 'en';
 	private printLayout?: PrintLayoutController;
+	private readonly imageMedia = new ImageMediaCache(() => this.loaded?.media);
 	private viewMode: 'draft' | 'print' = 'draft';
 	private reviewDisplayMode: ReviewDisplayMode = 'all';
 	private review?: ReviewController;
@@ -124,6 +126,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		this.detachedState = this.view?.state;
 		this.view?.destroy();
 		this.view = undefined;
+		this.imageMedia.release();
 	}
 
 	async load(input: Uint8Array | ArrayBuffer): Promise<void> {
@@ -132,7 +135,8 @@ export class DocxEditorElement extends HTMLElementBase {
 		try {
 			const session = await loadDocument(input);
 			if (generation !== this.loadGeneration) return;
-			this.loaded = session;
+			this.imageMedia.release();
+		this.loaded = session;
 			this.model = session.model;
 			this.detachedState = undefined;
 			if (this.isConnected) this.renderDocument();
@@ -309,6 +313,7 @@ export class DocxEditorElement extends HTMLElementBase {
 			state,
 			editable: () => !this._readOnly,
 			dispatchTransaction: (transaction: Transaction) => this.applyTransaction(transaction),
+			nodeViews: { image: imageNodeView(this.imageMedia) },
 		});
 		this.detachedState = undefined;
 		this.renderHeaderFooterNotes();

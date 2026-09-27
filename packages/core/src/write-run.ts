@@ -5,6 +5,8 @@ import { isWordHighlightToken } from './highlight.js';
 import { isValidLanguageTag } from './language.js';
 import { setExtendedRunProperties } from './write-run-extra.js';
 import { fractionToThemeByte } from './theme-color.js';
+import { createImageRun } from './write-drawing.js';
+import type { RelationshipAllocator } from './relationship-allocator.js';
 
 function setAttribute(element: XmlElement, local: string, value: string): void {
 	element.setAttributeNS(WORD_NS, `w:${local}`, value);
@@ -192,7 +194,9 @@ export function createRun(
 	run: TextRun,
 	base?: TextRun,
 	old?: XmlElement,
+	allocator?: RelationshipAllocator,
 ): XmlElement {
+	if (run.image) return createImageRun(doc, run.image, base?.image, old, allocator);
 	const node = old ?? makeW(doc, 'r');
 	setRunProperties(doc, node, run, base);
 	for (const child of Array.from(node.childNodes))

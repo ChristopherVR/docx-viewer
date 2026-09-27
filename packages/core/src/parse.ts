@@ -11,7 +11,6 @@ import {
 	WORD_NS,
 } from './xml.js';
 import { remember, saveDocx } from './save.js';
-import { hasSpecialBreak, isModeledBreak } from './breaks.js';
 import { parseParagraphStyleCatalog } from './paragraph-styles.js';
 import { parseBlocksFromContainer } from './block-parser.js';
 import { parseDocumentParts } from './document-parts.js';
@@ -25,50 +24,9 @@ import { parseTheme, parseColorSchemeMapping } from './theme.js';
 const px = (twips: string | undefined, fallback: number): number =>
 	twips === undefined ? fallback : (Number(twips) * 96) / 1440;
 
-function hasAny(document: XmlDocument, names: string[]): boolean {
-	return names.some((name) => document.getElementsByTagNameNS(WORD_NS, name).length > 0);
-}
-
-function warningsFor(document: XmlDocument): string[] {
-	const warnings: string[] = [];
-	const features: [string[], string][] = [
-		[['drawing', 'pict', 'object'], 'Images and drawing objects are preserved but not editable.'],
-		[['altChunk'], 'Embedded alternate-format content is not represented in the document model.'],
-		[
-			['hyperlink'],
-			'Hyperlink targets are not represented in the document model; edits inside linked paragraphs are rejected to protect the original XML.',
-		],
-		[
-			['fldSimple', 'instrText', 'fldChar'],
-			'Field codes such as PAGE and NUMPAGES are shown as static placeholders (or omitted) and are not recalculated.',
-		],
-		[
-			['moveFrom', 'moveTo'],
-			'Moved text is tracked as a paired delete/insert revision; Word’s move linkage between them is not modeled.',
-		],
-		[
-			['rPrChange', 'pPrChange'],
-			'Formatting-change revisions are recorded but their prior formatting snapshot is not modeled or rendered; editing the affected run or paragraph drops the recorded snapshot.',
-		],
-		[
-			['tblPrChange', 'trPrChange', 'tcPrChange'],
-			'Table-structure tracked changes are preserved in the source XML but are not represented in the document model.',
-		],
-	];
-	for (const [names, message] of features) if (hasAny(document, names)) warnings.push(message);
-	const specialBreak =
-		Array.from(document.getElementsByTagNameNS(WORD_NS, 'br')).some(
-			(br: XmlElement) => hasSpecialBreak(br) && !isModeledBreak(br),
-		) ||
-		Array.from(document.getElementsByTagNameNS(WORD_NS, 'cr')).some(
-			(cr: XmlElement) => cr.attributes.length > 0,
-		);
-	if (specialBreak)
-		warnings.push(
-			'Some non-line breaks other than page and column breaks are not distinguished from line breaks in the document model; edits to paragraphs containing them are rejected to preserve the original XML.',
-		);
-	return warnings;
-}
+import { type DrawingContext } from './drawing.js';
+import { parseContentTypes, parseRelationships } from './package-parts.js';
+import { warningsFor, imageAndBookmarkWarnings, forEachParagraph } from './parse-warnings.js';
 
 export interface PackageContext {
 	original: Uint8Array;
@@ -76,9 +34,11 @@ export interface PackageContext {
 	base: DocumentModel;
 }
 
-export async function readPackage(
-	input: Uint8Array | ArrayBuffer,
-): Promise<{ model: DocumentModel; context: PackageContext }> {
+export async function readPackage(input: Uint8Array | ArrayBuffer): Promise<{
+	model: DocumentModel;
+	context: PackageContext;
+	media: ReadonlyMap<string, Uint8Array>;
+}> {
 	const original =
 		input instanceof Uint8Array ? new Uint8Array(input) : new Uint8Array(input.slice(0));
 	if (original.byteLength > 50 * 1024 * 1024)
@@ -100,7 +60,17 @@ export async function readPackage(
 	const document: XmlDocument = parseXml(sourceXml);
 	const body = Array.from(document.getElementsByTagNameNS(WORD_NS, 'body'))[0];
 	if (!body) throw new Error('DOCX document.xml has no w:body');
-	const blocks: Block[] = parseBlocksFromContainer(body);
+	const relsFile = zip.file('word/_rels/document.xml.rels');
+	const contentTypesFile = zip.file('[Content_Types].xml');
+	const mediaParts = new Set(Object.keys(zip.files).filter((name) => !zip.files[name]!.dir));
+	const drawings: DrawingContext = {
+		rels: parseRelationships(relsFile ? await relsFile.async('string') : undefined),
+		contentTypes: parseContentTypes(
+			contentTypesFile ? await contentTypesFile.async('string') : undefined,
+		),
+		mediaParts,
+	};
+	const blocks: Block[] = parseBlocksFromContainer(body, '', drawings);
 	const section = children(body, 'sectPr').at(-1);
 	const size = first(section, 'pgSz');
 	const margins = first(section, 'pgMar');
@@ -146,7 +116,7 @@ export async function readPackage(
 			'Numbering is resolved for decimal, Roman numeral, letter, ordinal, cardinal/ordinal text and bullet formats, including multilevel lvlText and legal numbering. Picture bullets, style-linked numbering and other custom formats fall back to Decimal Number and are not rendered as Word would.',
 			...model.numberingCatalog.warnings,
 		);
-	} else if (hasAny(document, ['numPr'])) {
+	} else if (document.getElementsByTagNameNS(WORD_NS, 'numPr').length > 0) {
 		model.warnings.push(
 			'Paragraphs reference list numbering, but the package has no word/numbering.xml part; numbering is preserved as paragraph XML but not rendered.',
 		);
@@ -189,18 +159,30 @@ export async function readPackage(
 		model.warnings.push(
 			'Nested tables render as a read-only text preview; edit their content from the original document.',
 		);
+	model.warnings.push(...imageAndBookmarkWarnings(blocks));
+	const imagePartNames = new Set<string>();
+	forEachParagraph(blocks, (paragraph) => {
+		for (const run of paragraph.runs)
+			if (run.image?.partName) imagePartNames.add(run.image.partName);
+	});
+	const media = new Map<string, Uint8Array>();
+	for (const partName of imagePartNames) {
+		const part = zip.file(partName);
+		if (part) media.set(partName, await part.async('uint8array'));
+	}
 	const context = { original, sourceXml, base: structuredClone(model) };
 	remember(model, context);
-	return { model, context };
+	return { model, context, media };
 }
 
 export async function loadDocx(input: Uint8Array | ArrayBuffer): Promise<LoadedDocument> {
-	const { model, context } = await readPackage(input);
+	const { model, context, media } = await readPackage(input);
 	return {
 		model,
-		save: (next = model) => {
+		media,
+		save: (next = model, pendingMedia) => {
 			if (next !== model) remember(next, context);
-			return saveDocx(next);
+			return saveDocx(next, pendingMedia);
 		},
 	};
 }

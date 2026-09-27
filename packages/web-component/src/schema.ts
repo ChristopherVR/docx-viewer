@@ -4,6 +4,7 @@ import { noteReferenceNodeSpec, pageBreakNodeSpec } from './break-note-schema';
 import { reviewMarks } from './review-schema';
 import { runPropertiesMark } from './run-extra-mark';
 import { tableStyle, tableCellStyle } from './table-render';
+import { imageNodeSpec, linkMarkSpec } from './inline-content-schema';
 
 function parseFontSize(value: string): number | null {
 	const match = /^\s*(\d+(?:\.\d+)?)\s*(pt|px)?\s*$/i.exec(value);
@@ -108,6 +109,8 @@ export const schema = new Schema({
 				listHangingTwips: { default: null },
 				listFirstLineTwips: { default: null },
 				pageBreakBefore: { default: false },
+				/** Read-only bookmark names starting in this paragraph; not user-editable. */
+				bookmarks: { default: [] },
 			},
 			parseDOM: [
 				{
@@ -139,6 +142,9 @@ export const schema = new Schema({
 						listHangingTwips: null,
 						listFirstLineTwips: null,
 						pageBreakBefore: (el as HTMLElement).dataset.pageBreakBefore === 'true',
+						bookmarks: (el as HTMLElement).dataset.bookmarks
+							? (el as HTMLElement).dataset.bookmarks!.split(',')
+							: [],
 					}),
 				},
 			],
@@ -156,6 +162,9 @@ export const schema = new Schema({
 							}
 						: {}),
 					...(node.attrs.pageBreakBefore ? { 'data-page-break-before': 'true' } : {}),
+					...(Array.isArray(node.attrs.bookmarks) && node.attrs.bookmarks.length
+						? { 'data-bookmarks': node.attrs.bookmarks.join(',') }
+						: {}),
 				},
 				0,
 			],
@@ -172,6 +181,7 @@ export const schema = new Schema({
 		},
 		pageBreak: pageBreakNodeSpec,
 		noteReference: noteReferenceNodeSpec,
+		image: imageNodeSpec,
 		table: {
 			content: 'tableRow+',
 			group: 'block',
@@ -307,6 +317,7 @@ export const schema = new Schema({
 		},
 		...reviewMarks,
 		runProperties: runPropertiesMark,
+		link: linkMarkSpec,
 		font: {
 			attrs: { family: { default: null }, size: { default: null }, color: { default: null } },
 			parseDOM: [
