@@ -5,3 +5,12 @@ export * from './language.js';
 export { parseParagraphStyleCatalog, resolveParagraphFormatting } from './paragraph-styles.js';
 export { loadDocx } from './parse.js';
 export { saveDocx } from './save.js';
+export {
+	acceptAllRevisions,
+	acceptRevision,
+	findRevision,
+	listRevisions,
+	rejectAllRevisions,
+	rejectRevision,
+	type RevisionEntry,
+} from './revision-commands.js';

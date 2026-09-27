@@ -32,6 +32,24 @@ function marksForRun(run: TextRun): Mark[] {
 				color: run.color || null,
 			}),
 		);
+	const revision = run.revision;
+	if (revision?.kind === 'insert' || revision?.kind === 'moveTo')
+		marks.push(
+			schema.marks.insertion.create({
+				author: revision.author,
+				date: revision.date ?? null,
+				id: revision.id,
+			}),
+		);
+	else if (revision?.kind === 'delete' || revision?.kind === 'moveFrom')
+		marks.push(
+			schema.marks.deletion.create({
+				author: revision.author,
+				date: revision.date ?? null,
+				id: revision.id,
+			}),
+		);
+	if (run.commentIds?.length) marks.push(schema.marks.comment.create({ ids: run.commentIds }));
 	return marks;
 }
 
@@ -75,6 +93,18 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 	if (font?.attrs.family) run.fontFamily = font.attrs.family;
 	if (font?.attrs.size) run.fontSize = font.attrs.size;
 	if (font?.attrs.color) run.color = font.attrs.color;
+	const insertion = propertyOfMark(child, 'insertion');
+	const deletion = propertyOfMark(child, 'deletion');
+	const revisionMark = insertion ?? deletion;
+	if (revisionMark)
+		run.revision = {
+			kind: insertion ? 'insert' : 'delete',
+			author: String(revisionMark.attrs.author || ''),
+			id: String(revisionMark.attrs.id || ''),
+			...(revisionMark.attrs.date ? { date: String(revisionMark.attrs.date) } : {}),
+		};
+	const comment = propertyOfMark(child, 'comment');
+	if (comment?.attrs.ids?.length) run.commentIds = [...comment.attrs.ids];
 	const previous = runs.at(-1);
 	const fields: (keyof TextRun)[] = [
 		'bold',
@@ -91,7 +121,9 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 		'fontSize',
 		'color',
 	];
-	if (previous && fields.every((field) => previous[field] === run[field]))
+	const sameRevision = JSON.stringify(previous?.revision) === JSON.stringify(run.revision);
+	const sameComments = JSON.stringify(previous?.commentIds) === JSON.stringify(run.commentIds);
+	if (previous && sameRevision && sameComments && fields.every((field) => previous[field] === run[field]))
 		previous.text += run.text;
 	else runs.push(run);
 }

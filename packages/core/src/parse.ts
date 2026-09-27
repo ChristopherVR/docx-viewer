@@ -5,6 +5,7 @@ import type {
 	DocumentModel,
 	LoadedDocument,
 	Paragraph,
+	Revision,
 	Table,
 	TableCell,
 	TextRun,
@@ -25,6 +26,14 @@ import { remember, saveDocx } from './save.js';
 import { canEditTableStructure } from './write-table.js';
 import { hasSpecialBreak } from './breaks.js';
 import { parseParagraphStyleCatalog } from './paragraph-styles.js';
+import {
+	collectParagraphRuns,
+	paragraphFormatRevision,
+	paragraphMarkRevision,
+	runFormatRevision,
+} from './parse-revisions.js';
+import { parseComments } from './comments.js';
+import { parseTrackChangesSetting } from './settings.js';
 
 const px = (twips: string | undefined, fallback: number): number =>
 	twips === undefined ? fallback : (Number(twips) * 96) / 1440;
@@ -41,12 +50,12 @@ const on = (element: XmlElement | undefined): boolean => {
 	return !['0', 'false', 'off', 'no', 'none'].includes(value ?? '');
 };
 
-function parseRun(node: XmlElement): TextRun {
+function parseRun(node: XmlElement, revision?: Revision): TextRun {
 	const props = first(node, 'rPr');
 	const text = Array.from(node.childNodes)
 		.filter(isElement)
 		.map((child) => {
-			if (named(child, 't')) return textContent(child);
+			if (named(child, 't') || named(child, 'delText')) return textContent(child);
 			if (named(child, 'tab')) return '\t';
 			if (named(child, 'br') || named(child, 'cr')) return '\n';
 			if (named(child, 'noBreakHyphen')) return '\u2011';
@@ -54,6 +63,8 @@ function parseRun(node: XmlElement): TextRun {
 		})
 		.join('');
 	const run: TextRun = { text };
+	const runRevision = revision ?? runFormatRevision(props);
+	if (runRevision) run.revision = runRevision;
 	const language = first(props, 'lang');
 	const languageValue = getW(language, 'val');
 	const eastAsiaLanguage = getW(language, 'eastAsia');
@@ -85,16 +96,13 @@ function parseRun(node: XmlElement): TextRun {
 function parseParagraph(node: XmlElement, id: string): Paragraph {
 	const props = first(node, 'pPr');
 	const alignment = getW(first(props, 'jc'), 'val');
-	const runs: TextRun[] = [];
-	for (const item of Array.from(node.childNodes).filter(isElement)) {
-		if (named(item, 'r')) runs.push(parseRun(item));
-		else if (named(item, 'hyperlink'))
-			Array.from(item.getElementsByTagNameNS(WORD_NS, 'r')).forEach((run: XmlElement) =>
-				runs.push(parseRun(run)),
-			);
-	}
+	const { runs } = collectParagraphRuns(node, parseRun);
 	if (!runs.length) runs.push({ text: '' });
 	const paragraph: Paragraph = { type: 'paragraph', id, runs };
+	const markRevision = paragraphMarkRevision(props);
+	if (markRevision) paragraph.markRevision = markRevision;
+	const formatRevision = paragraphFormatRevision(props);
+	if (formatRevision) paragraph.formatRevision = formatRevision;
 	const bidi = first(props, 'bidi');
 	if (bidi) paragraph.direction = on(bidi) ? 'rtl' : 'ltr';
 	if (
@@ -156,10 +164,6 @@ function warningsFor(document: XmlDocument): string[] {
 			['footnoteReference', 'endnoteReference'],
 			'Footnotes and endnotes are not represented in the document model.',
 		],
-		[
-			['commentRangeStart', 'trackRevisions'],
-			'Comments and tracked review features are not represented in the document model.',
-		],
 		[['altChunk'], 'Embedded alternate-format content is not represented in the document model.'],
 		[
 			['hyperlink'],
@@ -172,6 +176,18 @@ function warningsFor(document: XmlDocument): string[] {
 		[
 			['rStyle'],
 			'Character style inheritance and theme font/color resolution are not modeled; displayed formatting may differ from Word.',
+		],
+		[
+			['moveFrom', 'moveTo'],
+			'Moved text is tracked as a paired delete/insert revision; Word’s move linkage between them is not modeled.',
+		],
+		[
+			['rPrChange', 'pPrChange'],
+			'Formatting-change revisions are recorded but their prior formatting snapshot is not modeled or rendered; editing the affected run or paragraph drops the recorded snapshot.',
+		],
+		[
+			['tblPrChange', 'trPrChange', 'tcPrChange'],
+			'Table-structure tracked changes are preserved in the source XML but are not represented in the document model.',
 		],
 	];
 	for (const [names, message] of features) if (hasAny(document, names)) warnings.push(message);
@@ -254,6 +270,19 @@ export async function readPackage(
 		model.warnings.push(
 			'Merged, nested, or complex tables can be read, but their row and column structure cannot be edited safely.',
 		);
+	const commentsFile = zip.file('word/comments.xml');
+	if (commentsFile) {
+		const extendedFile = zip.file('word/commentsExtended.xml');
+		model.comments = parseComments(
+			await commentsFile.async('string'),
+			await extendedFile?.async('string'),
+		);
+		model.warnings.push(
+			'Comments are anchored per paragraph; a comment range spanning multiple paragraphs is not modeled.',
+		);
+	}
+	const settingsFile = zip.file('word/settings.xml');
+	if (settingsFile) model.trackChanges = parseTrackChangesSetting(await settingsFile.async('string'));
 	const context = { original, sourceXml, base: structuredClone(model) };
 	remember(model, context);
 	return { model, context };

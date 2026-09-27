@@ -2,6 +2,8 @@ import type { TableCommand } from './table-commands';
 import { lineSpacingOptions } from './line-spacing';
 import { createMultilingualControls, type MultilingualAction } from './multilingual-ribbon';
 import { localizeElement, normalizeEditorLocale } from './localization';
+import type { ReviewDisplayMode } from './review-display';
+import { createReviewControls } from './review-ribbon';
 
 export type RibbonAction =
 	| {
@@ -21,7 +23,13 @@ export type RibbonAction =
 	  }
 	| { type: 'zoom'; value: number }
 	| MultilingualAction
-	| { type: 'search' };
+	| { type: 'search' }
+	| {
+			type: 'review';
+			key: 'trackChanges' | 'acceptOne' | 'rejectOne' | 'acceptAll' | 'rejectAll' | 'previous' | 'next';
+	  }
+	| { type: 'reviewDisplay'; value: ReviewDisplayMode }
+	| { type: 'comments'; key: 'toggle' | 'add' };
 
 const button = (label: string, text: string, action: RibbonAction, className = '') => {
 	const el = document.createElement('button');
@@ -285,7 +293,7 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 	languageControls.setAttribute('role', 'group');
 	languageControls.setAttribute('aria-label', 'Language');
 	languageControls.dataset.label = 'Language';
-	panels.get('Review')!.append(languageControls);
+	panels.get('Review')!.append(languageControls, ...createReviewControls());
 	panels
 		.get('Insert')!
 		.append(group('Tables', button('Insert table', '▦ Table', { type: 'table' })));

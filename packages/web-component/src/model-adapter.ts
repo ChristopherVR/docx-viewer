@@ -87,7 +87,11 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 				'fontSize',
 				'color',
 			];
-			if (previous && fields.every((field) => previous[field] === normalized[field]))
+			if (
+				previous &&
+				fields.every((field) => previous[field] === normalized[field]) &&
+				sameRevisionMeta(previous, normalized)
+			)
 				previous.text += normalized.text;
 			else result.push(normalized);
 			return result;
@@ -113,8 +117,17 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 		a.length === b.length &&
 		a.every(
 			(run, index) =>
-				run.text === b[index].text && fields.every((field) => run[field] === b[index][field]),
+				run.text === b[index].text &&
+				fields.every((field) => run[field] === b[index][field]) &&
+				sameRevisionMeta(run, b[index]),
 		)
+	);
+}
+/** `revision`/`commentIds` are objects/arrays; compare by value rather than by reference. */
+function sameRevisionMeta(left: TextRun, right: TextRun): boolean {
+	return (
+		JSON.stringify(left.revision) === JSON.stringify(right.revision) &&
+		JSON.stringify(left.commentIds) === JSON.stringify(right.commentIds)
 	);
 }
 

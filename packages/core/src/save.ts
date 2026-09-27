@@ -4,6 +4,8 @@ import type { DocumentModel } from './model.js';
 import { buildXml, parseXml, type XmlDocument } from './xml.js';
 import type { PackageContext } from './parse.js';
 import { applyModel } from './write.js';
+import { applyTrackChangesSetting } from './settings.js';
+import { applyComments } from './write-comments.js';
 
 const contexts = new WeakMap<DocumentModel, { context: PackageContext; base: DocumentModel }>();
 
@@ -62,5 +64,9 @@ export async function saveDocx(model: DocumentModel): Promise<Uint8Array> {
 			'<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
 		);
 	}
+	if (model.trackChanges !== binding?.base.trackChanges)
+		await applyTrackChangesSetting(zip, model.trackChanges === true);
+	if (JSON.stringify(model.comments ?? []) !== JSON.stringify(binding?.base.comments ?? []))
+		await applyComments(zip, model.comments ?? []);
 	return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
 }

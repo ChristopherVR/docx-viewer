@@ -1,4 +1,25 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
+/** A tracked-change revision recorded on a run or paragraph mark. */
+export interface Revision {
+	/** `moveFrom`/`moveTo` are tracked as delete/insert pairs; Word's move linkage is not modeled. */
+	kind: 'insert' | 'delete' | 'moveFrom' | 'moveTo' | 'formatChange' | 'paragraphChange';
+	author: string;
+	date?: string;
+	/** Source `w:id`; not guaranteed unique outside the paragraph it was parsed from. */
+	id: string;
+}
+/** A comment thread entry parsed from comments.xml / commentsExtended.xml. */
+export interface Comment {
+	id: string;
+	author: string;
+	initials?: string;
+	date?: string;
+	text: string;
+	/** commentsExtended.xml `w15:done`. */
+	resolved?: boolean;
+	/** commentsExtended.xml parent linkage for threaded replies. */
+	parentId?: string;
+}
 export interface TextRun {
 	text: string;
 	bold?: boolean;
@@ -21,6 +42,10 @@ export interface TextRun {
 	fontFamily?: string;
 	/** Direct RGB color, e.g. #28665E. Theme resolution is not yet supported. */
 	color?: string;
+	/** Tracked-change metadata for this run; absent means the run has no pending revision. */
+	revision?: Revision;
+	/** IDs of comments whose range covers this run. */
+	commentIds?: string[];
 }
 export interface Paragraph {
 	type: 'paragraph';
@@ -43,6 +68,10 @@ export interface Paragraph {
 	indentEndTwips?: number;
 	firstLineTwips?: number;
 	hangingTwips?: number;
+	/** Tracked insertion/deletion of the paragraph mark itself (the paragraph break). */
+	markRevision?: Revision;
+	/** Marks that `w:pPrChange` recorded a prior paragraph formatting snapshot; the snapshot itself is not modeled. */
+	formatRevision?: Revision;
 }
 /** Direct paragraph properties supported by the editor, in native Word units. */
 export type ParagraphFormatting = Pick<
@@ -98,6 +127,10 @@ export interface DocumentModel {
 	warnings: string[];
 	/** Source paragraph defaults/styles; editing the catalog itself is not supported. */
 	paragraphStyles?: ParagraphStyleCatalog;
+	/** Comment threads parsed from comments.xml / commentsExtended.xml. */
+	comments?: Comment[];
+	/** settings.xml `w:trackRevisions`; toggling this changes how the editor records new edits. */
+	trackChanges?: boolean;
 }
 export interface LoadedDocument {
 	model: DocumentModel;

@@ -8,6 +8,7 @@ import { syncStylePicker } from './paragraph-styles';
 import { canExecuteTableCommand } from './table-commands';
 import type { RibbonAction } from './ribbon';
 import { countWords } from './word-count';
+import { hasAnyChange, hasChangeAtCursor } from './review-commands';
 
 export function refreshEditorControls(
 	toolbar: HTMLElement | undefined,
@@ -17,6 +18,7 @@ export function refreshEditorControls(
 	collaboration: boolean,
 	locale: EditorLocale,
 	language: string,
+	commentsOpen = false,
 ) {
 	toolbar
 		?.querySelectorAll<HTMLButtonElement | HTMLSelectElement | HTMLInputElement>(
@@ -40,6 +42,24 @@ export function refreshEditorControls(
 		}
 		syncFontControls(toolbar, state);
 		syncParagraphControls(toolbar, state);
+		const trackButton = toolbar.querySelector<HTMLButtonElement>('[aria-label="Track changes"]');
+		trackButton?.setAttribute('aria-pressed', String(Boolean(model.trackChanges)));
+		const commentsButton = toolbar.querySelector<HTMLButtonElement>('[aria-label="Comments"]');
+		commentsButton?.setAttribute('aria-pressed', String(commentsOpen));
+		const changeAtCursor = hasChangeAtCursor(view);
+		const anyChange = hasAnyChange(view);
+		for (const [label, enabled] of [
+			['Accept', changeAtCursor],
+			['Reject', changeAtCursor],
+			['Accept all', anyChange],
+			['Reject all', anyChange],
+			['Previous change', anyChange],
+			['Next change', anyChange],
+			['Add comment', !state.selection.empty],
+		] as const) {
+			const control = toolbar.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`);
+			if (control) control.disabled = readOnly || !enabled;
+		}
 	}
 	const content = state.doc.textBetween(0, state.doc.content.size, ' ').trim();
 	const words = countWords(content, language || undefined);

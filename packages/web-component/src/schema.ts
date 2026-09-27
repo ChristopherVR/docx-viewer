@@ -1,5 +1,6 @@
 import { Schema } from 'prosemirror-model';
 import { isWordHighlightToken, type WordHighlightToken } from '@christophervr/docx-core';
+import { reviewMarks } from './review-schema';
 
 function parseFontSize(value: string): number | null {
 	const match = /^\s*(\d+(?:\.\d+)?)\s*(pt|px)?\s*$/i.exec(value);
@@ -222,6 +223,7 @@ export const schema = new Schema({
 			],
 			toDOM: (mark) => ['span', { dir: mark.attrs.value ? 'rtl' : 'ltr' }, 0],
 		},
+		...reviewMarks,
 		font: {
 			attrs: { family: { default: null }, size: { default: null }, color: { default: null } },
 			parseDOM: [

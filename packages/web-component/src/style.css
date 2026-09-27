@@ -148,6 +148,11 @@
 .ribbon-group[aria-label='Language'] {
 	flex: 0 0 100%;
 }
+.ribbon-panel[data-panel='Review'] .ribbon-group[data-label='Tracking'],
+.ribbon-panel[data-panel='Review'] .ribbon-group[data-label='Changes'],
+.ribbon-panel[data-panel='Review'] .ribbon-group[data-label='Comments'] {
+	flex: 0 0 auto;
+}
 .ribbon-group button {
 	min-width: 32px;
 	flex: none;
@@ -225,6 +230,12 @@
 	color: var(--muted);
 	font-size: 11px;
 }
+.dve-body {
+	display: flex;
+	flex: 1;
+	min-height: 0;
+	min-width: 0;
+}
 .dve-canvas {
 	flex: 1;
 	min-height: 0;
@@ -234,6 +245,22 @@
 	padding: 30px clamp(16px, 5vw, 70px) 60px;
 	background: var(--canvas);
 	overscroll-behavior: contain;
+}
+.dve-revision-insert {
+	color: var(--dve-revision-color, inherit);
+	text-decoration: underline;
+	text-decoration-color: var(--dve-revision-color, currentColor);
+}
+.dve-revision-delete {
+	color: var(--dve-revision-color, inherit);
+	text-decoration: line-through;
+	text-decoration-color: var(--dve-revision-color, currentColor);
+}
+.dve-revision-hidden {
+	display: none;
+}
+.dve-comment-range {
+	background: rgba(255, 212, 0, 0.28);
 }
 .dve-paper {
 	box-sizing: border-box;

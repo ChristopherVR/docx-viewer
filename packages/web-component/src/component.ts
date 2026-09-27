@@ -24,6 +24,9 @@ import {
 import { normalizeEditorLocale, type EditorLocale } from './localization';
 import { EditorPresence } from './editor-presence';
 import { paragraphStylesPlugin, resetStylePicker } from './paragraph-styles';
+import { trackChangesPlugin, REMOTE_TRANSACTION_META } from './track-changes-mode';
+import { reviewDisplayPlugin, type ReviewDisplayMode } from './review-display';
+import { ReviewController } from './review-controller';
 
 const HTMLElementBase: typeof HTMLElement =
 	typeof HTMLElement === 'undefined' ? (class {} as typeof HTMLElement) : HTMLElement;
@@ -43,6 +46,16 @@ export class DocxEditorElement extends HTMLElementBase {
 	private sendScheduled = false;
 	private presence?: EditorPresence;
 	private _locale: EditorLocale = 'en';
+	private reviewDisplayMode: ReviewDisplayMode = 'all';
+	private review?: ReviewController;
+	private _reviewAuthor = 'Author';
+
+	get reviewAuthor(): string {
+		return this._reviewAuthor;
+	}
+	set reviewAuthor(value: string) {
+		this._reviewAuthor = value || 'Author';
+	}
 
 	get locale(): string {
 		return this._locale;
@@ -51,11 +64,13 @@ export class DocxEditorElement extends HTMLElementBase {
 		this._locale = normalizeEditorLocale(value);
 		if (this.toolbar) setRibbonLocale(this.toolbar, this._locale);
 		this.searchPanel?.setLocale(this._locale);
+		this.review?.setLocale(this._locale);
 		this.refreshControls();
 	}
 
 	publishPresence(profile: { name: string; color: string }) {
 		if (!this.presence) throw new Error('Start collaboration before publishing presence.');
+		this._reviewAuthor = profile.name || this._reviewAuthor;
 		return this.presence.publish(profile);
 	}
 	receivePresence(message: unknown) {
@@ -217,7 +232,25 @@ export class DocxEditorElement extends HTMLElementBase {
 			onClose: () => this.view?.focus(),
 		});
 		this.searchPanel.setLocale(this._locale);
-		frame.append(toolbar, this.searchPanel.element, canvas, status);
+		this.review = new ReviewController({
+			getModel: () => this.model,
+			setModel: (model) => {
+				this.model = model;
+			},
+			getView: () => this.view,
+			getReviewAuthor: () => this._reviewAuthor,
+			getCollaborationIds: () => this.collaborationIds,
+			notifyChange: () =>
+				this.dispatchEvent(
+					new CustomEvent('document-change', { detail: this.model, bubbles: true, composed: true }),
+				),
+			refresh: () => this.refreshControls(),
+		});
+		this.review.setLocale(this._locale);
+		const body = document.createElement('div');
+		body.className = 'dve-body';
+		body.append(canvas, this.review.commentsPanel.element);
+		frame.append(toolbar, this.searchPanel.element, body, status);
 		root.append(style, frame);
 		this.toolbar = toolbar;
 		this.paper = paper;
@@ -238,6 +271,11 @@ export class DocxEditorElement extends HTMLElementBase {
 				plugins: [
 					history(),
 					paragraphStylesPlugin(() => this.model),
+					trackChangesPlugin(
+						() => this._reviewAuthor,
+						() => Boolean(this.model.trackChanges),
+					),
+					reviewDisplayPlugin(() => this.reviewDisplayMode),
 					editorKeymap(() => this.showSearch()),
 					...(this.collaboration ? [this.collaboration.plugin] : []),
 					...(this.presence ? [this.presence.client.plugin] : []),
@@ -255,6 +293,7 @@ export class DocxEditorElement extends HTMLElementBase {
 
 	private applyTransaction(transaction: Transaction, remote = false) {
 		if (!this.view) return;
+		if (remote) transaction.setMeta(REMOTE_TRANSACTION_META, true);
 		const applied = this.view.state.applyTransaction(transaction).state;
 		const repaired = remote
 			? null
@@ -287,7 +326,12 @@ export class DocxEditorElement extends HTMLElementBase {
 		else if (action.type === 'zoom') {
 			this.zoom = action.value / 100;
 			if (this.paper) applyPageStyles(this.paper, this.model, this.zoom);
-		} else if (this.view) {
+		} else if (action.type === 'reviewDisplay') {
+			this.reviewDisplayMode = action.value;
+			this.view?.dispatch(this.view.state.tr);
+		} else if (action.type === 'review') this.review?.handleReview(action.key);
+		else if (action.type === 'comments') this.review?.handleComments(action.key);
+		else if (this.view) {
 			runRibbonCommand(this.view, action, this.collaborationIds);
 			if (typeof document.execCommand === 'function') this.view.focus();
 		}
@@ -303,6 +347,7 @@ export class DocxEditorElement extends HTMLElementBase {
 			Boolean(this.collaboration),
 			this._locale,
 			this.lang,
+			Boolean(this.review?.commentsOpen),
 		);
 	}
 }
