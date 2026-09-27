@@ -47,7 +47,7 @@ Still missing:
   numbers show decimals rather than the document's endnote number format.
 - Pictures and new external links inside headers, footers and notes (they need relationships in
   those parts).
-- Table style run formatting (e.g. bold header rows) and cell margins are not yet rendered.
+- Table style run formatting and cell margins render; tables' own default cell margins (`tblCellMar`) and row heights are not modeled yet.
 - Underline/strikethrough cancelled by the style hierarchy still render (bold, italic and caps are handled).
 
 ### Fidelity

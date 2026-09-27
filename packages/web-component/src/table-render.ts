@@ -61,11 +61,28 @@ export function tableStyle(attrs: Record<string, unknown>): string {
 	return declarations.join(';');
 }
 
+/** Word's default cell margins: none above/below, 0.075" (108 twips) left and right. */
+const DEFAULT_CELL_MARGINS = { top: 0, bottom: 0, left: 108, right: 108 };
+
+function cellPadding(value: unknown): string {
+	let margins: Partial<typeof DEFAULT_CELL_MARGINS> = {};
+	if (typeof value === 'string')
+		try {
+			margins = JSON.parse(value) as Partial<typeof DEFAULT_CELL_MARGINS>;
+		} catch {
+			margins = {};
+		}
+	const side = (key: keyof typeof DEFAULT_CELL_MARGINS) =>
+		`${(margins[key] ?? DEFAULT_CELL_MARGINS[key]) / 15}px`;
+	return `padding:${side('top')} ${side('right')} ${side('bottom')} ${side('left')}`;
+}
+
 export function tableCellStyle(attrs: Record<string, unknown>): string {
 	const borders = parseBordersJson(attrs.borders);
 	const verticalAlign =
 		attrs.verticalAlign === 'top' ? 'top' : attrs.verticalAlign === 'bottom' ? 'bottom' : 'middle';
 	const declarations = [
+		cellPadding(attrs.margins),
 		`vertical-align:${verticalAlign}`,
 		twipsPx(attrs.widthTwips) && `width:${twipsPx(attrs.widthTwips)}`,
 		typeof attrs.shadingFill === 'string' && `background-color:${attrs.shadingFill}`,

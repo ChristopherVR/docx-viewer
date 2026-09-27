@@ -210,6 +210,8 @@ export const schema = new Schema({
 				verticalAlign: { default: null },
 				shadingFill: { default: null },
 				borders: { default: null },
+				/** Cell margins (`w:tcMar`) in twips as JSON; display only. */
+				margins: { default: null },
 			},
 			parseDOM: [{ tag: 'td' }, { tag: 'th' }],
 			toDOM: (node) => [

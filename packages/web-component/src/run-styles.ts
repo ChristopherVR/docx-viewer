@@ -3,9 +3,11 @@ import { Decoration, DecorationSet } from 'prosemirror-view';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import {
 	resolveRunFormatting,
+	resolveTableStyleFormatting,
 	resolveThemeColorReference,
 	type DocumentModel,
 	type RunFormatting,
+	type Table,
 	type TextRun,
 } from '@christophervr/docx-core';
 import { appendInlineNode } from './run-adapter';
@@ -62,36 +64,80 @@ function runAt(node: ProseMirrorNode): TextRun | undefined {
 }
 
 /**
- * Renders formatting a run inherits from document defaults, its paragraph style, its character
- * style and the theme. It is display-only: decorations never enter the model or collaboration steps.
+ * Renders formatting a run inherits from document defaults, its paragraph style, its table's style
+ * (e.g. a bold header row), its character style and the theme. It is display-only: decorations
+ * never enter the model or collaboration steps.
  */
 export function runStylesPlugin(getModel: () => DocumentModel) {
 	return new Plugin({
 		props: {
 			decorations(state) {
 				const model = getModel();
-				const runCatalog = model.characterStyles;
-				if (!runCatalog && !model.theme) return null;
+				if (!model.characterStyles && !model.theme && !model.tableStyles) return null;
+				const tables = new Map<string, Table>();
+				for (const block of model.blocks) if (block.type === 'table') tables.set(block.id, block);
 				const decorations: Decoration[] = [];
-				state.doc.descendants((node, pos, parent) => {
-					if (!node.isText) return true;
-					const run = runAt(node);
-					if (!run) return false;
-					const resolved = resolveRunFormatting(run, {
-						runCatalog,
-						paragraphCatalog: model.paragraphStyles,
-						paragraphStyleId: parent?.attrs.style || undefined,
+				const visitParagraph = (
+					paragraph: ProseMirrorNode,
+					start: number,
+					tableStyleRun?: RunFormatting,
+				) =>
+					paragraph.forEach((child, offset) => {
+						if (!child.isText) return;
+						const run = runAt(child);
+						if (!run) return;
+						const resolved = resolveRunFormatting(run, {
+							runCatalog: model.characterStyles,
+							paragraphCatalog: model.paragraphStyles,
+							paragraphStyleId: paragraph.attrs.style || undefined,
+							...(tableStyleRun ? { tableStyleRun } : {}),
+						});
+						const style = runFormattingCss(resolved, model.theme, run);
+						const hidden = resolved.vanish === true;
+						if (style || hidden)
+							decorations.push(
+								Decoration.inline(start + offset, start + offset + child.nodeSize, {
+									...(style ? { style } : {}),
+									...(hidden ? { class: 'dve-hidden-text' } : {}),
+								}),
+							);
 					});
-					const style = runFormattingCss(resolved, model.theme, run);
-					const hidden = resolved.vanish === true;
-					if (style || hidden)
-						decorations.push(
-							Decoration.inline(pos, pos + node.nodeSize, {
-								...(style ? { style } : {}),
-								...(hidden ? { class: 'dve-hidden-text' } : {}),
-							}),
-						);
-					return false;
+				state.doc.forEach((block, blockOffset) => {
+					if (block.type.name === 'paragraph') return visitParagraph(block, blockOffset + 1);
+					if (block.type.name !== 'table') return;
+					const table = tables.get(String(block.attrs.id));
+					let columnCount = 1;
+					block.forEach((row) => {
+						let width = 0;
+						row.forEach((cell) => (width += Number(cell.attrs.colspan) || 1));
+						columnCount = Math.max(columnCount, width);
+					});
+					block.forEach((row, rowOffset, rowIndex) => {
+						let column = 0;
+						const rowStart = blockOffset + 1 + rowOffset + 1;
+						row.forEach((cell, cellOffset) => {
+							const tableStyleRun = table?.style
+								? resolveTableStyleFormatting(
+										table.style,
+										model.tableStyles,
+										table.look,
+										rowIndex,
+										block.childCount,
+										column,
+										columnCount,
+									).run
+								: undefined;
+							cell.forEach((paragraph, paragraphOffset) => {
+								if (paragraph.type.name === 'paragraph')
+									visitParagraph(
+										paragraph,
+										rowStart + cellOffset + 1 + paragraphOffset + 1,
+										tableStyleRun,
+									);
+							});
+							column += Number(cell.attrs.colspan) || 1;
+						});
+					});
 				});
 				return DecorationSet.create(state.doc, decorations);
 			},

@@ -96,4 +96,39 @@ describe('table rendering', () => {
 		expect(reloadedTable.borders?.top).toMatchObject({ style: 'single', sizeEighthPoints: 4 });
 		expect(reloadedTable.grid).toHaveLength(2);
 	});
+
+	it('applies the table style header row text formatting to the first row only', () => {
+		const model = createDocument();
+		model.tableStyles = {
+			styles: {
+				Header: {
+					id: 'Header',
+					conditional: { firstRow: { run: { bold: true, color: '#ffffff' } } },
+				},
+			},
+			warnings: [],
+		};
+		model.blocks = [
+			{
+				type: 'table',
+				id: 't1',
+				style: 'Header',
+				look: { firstRow: true, noHBand: true, noVBand: true },
+				rows: [[cell('head', 'Heading')], [cell('body', 'Body text')]],
+			},
+		];
+		const [header, body] = cells(mount(model));
+		const headerText = header.querySelector<HTMLElement>('[style*="font-weight"]');
+		expect(headerText?.textContent).toBe('Heading');
+		expect(headerText?.style.fontWeight).toBe('700');
+		expect(headerText?.style.color).toBe('rgb(255, 255, 255)');
+		expect(body.querySelector('[style*="font-weight"]')).toBeNull();
+	});
+
+	it('pads cells with their own margins, defaulting to Word margins of 0.075 inch left and right', () => {
+		expect(tableCellStyle({})).toContain('padding:0px 7.2px 0px 7.2px');
+		expect(tableCellStyle({ margins: JSON.stringify({ top: 45, left: 216 }) })).toContain(
+			'padding:3px 7.2px 0px 14.4px',
+		);
+	});
 });

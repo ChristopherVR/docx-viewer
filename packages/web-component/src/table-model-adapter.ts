@@ -64,6 +64,7 @@ export function tableNode(
 						verticalAlign: cell.verticalAlign ?? null,
 						shadingFill: visuals.shadingFill ?? null,
 						borders: visuals.borders ? JSON.stringify(visuals.borders) : null,
+						margins: cell.margins ? JSON.stringify(cell.margins) : null,
 					},
 					children,
 				),
