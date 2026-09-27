@@ -38,6 +38,23 @@ describe('floating pictures', () => {
 		});
 		expect(images[1]?.placement).toMatchObject({ wrap: 'topAndBottom', offsetXPx: 200 });
 		expect(images[2]?.placement).toMatchObject({ wrap: 'none', behindText: true });
+		expect(images[0]?.placement).toMatchObject({ relativeFromV: 'paragraph', offsetYPx: 0 });
+	});
+
+	it('parses vertical alignment and offsets from wp:positionV', async () => {
+		const xml = anchor('<wp:wrapNone/>', '<wp:posOffset>0</wp:posOffset>').replace(
+			'<wp:positionV relativeFrom="paragraph"><wp:posOffset>0</wp:posOffset></wp:positionV>',
+			'<wp:positionV relativeFrom="page"><wp:align>bottom</wp:align></wp:positionV>',
+		);
+		const loaded = await loadDocx(await fixture(`<w:p>${xml}</w:p>`));
+		const image = (loaded.model.blocks[0] as Paragraph).runs[0].image;
+		expect(image?.placement).toMatchObject({ relativeFromV: 'page', alignV: 'bottom' });
+		const offset = anchor('<wp:wrapNone/>', '<wp:posOffset>0</wp:posOffset>').replace(
+			'<wp:posOffset>0</wp:posOffset></wp:positionV>',
+			'<wp:posOffset>476250</wp:posOffset></wp:positionV>',
+		);
+		const shifted = await loadDocx(await fixture(`<w:p>${offset}</w:p>`));
+		expect((shifted.model.blocks[0] as Paragraph).runs[0].image?.placement?.offsetYPx).toBe(50);
 	});
 
 	it('keeps the anchor XML when text beside a floating picture is edited', async () => {

@@ -514,6 +514,19 @@
 }
 .dve-print-column {
 	position: absolute;
+	z-index: 1;
+}
+/* Floating pictures sit in front of text unless anchored behind it (wp:anchor/@behindDoc). */
+.dve-print-float {
+	z-index: 2;
+}
+.dve-print-float-behind {
+	z-index: 0;
+}
+.dve-print-picture-missing {
+	box-sizing: border-box;
+	border: 1px dashed #8a8886;
+	background: #f3f2f1;
 }
 .dve-print-block {
 	position: absolute;

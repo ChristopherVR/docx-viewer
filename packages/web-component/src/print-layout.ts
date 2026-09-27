@@ -23,6 +23,26 @@ export interface PrintLayoutHandle {
 	resolveClick(target: Element, clientX: number): { blockId: string; offset: number } | null;
 }
 
+/** Resolves a package picture part to a displayable URL; undefined draws a placeholder box. */
+export type PictureUrl = (partName: string, contentType: string) => string | undefined;
+
+function pictureElement(
+	object: { partName: string; contentType: string; widthPx: number; heightPx: number },
+	pictureUrl: PictureUrl | undefined,
+): HTMLElement {
+	const url = object.partName ? pictureUrl?.(object.partName, object.contentType) : undefined;
+	const element = document.createElement(url ? 'img' : 'div');
+	if (url) {
+		(element as HTMLImageElement).src = url;
+		(element as HTMLImageElement).alt = '';
+	} else element.classList.add('dve-print-picture-missing');
+	element.classList.add('dve-print-picture');
+	element.style.position = 'absolute';
+	element.style.width = `${object.widthPx}px`;
+	element.style.height = `${object.heightPx}px`;
+	return element;
+}
+
 function styleFragment(el: HTMLSpanElement, fragment: LayoutLine['fragments'][number]) {
 	el.style.position = 'absolute';
 	el.style.left = `${fragment.xPx}px`;
@@ -34,12 +54,24 @@ function styleFragment(el: HTMLSpanElement, fragment: LayoutLine['fragments'][nu
 	el.textContent = fragment.text;
 }
 
-function renderLine(line: LayoutLine, blockId: string, hitboxes: LineHitBox[]): HTMLElement {
+function renderLine(
+	line: LayoutLine,
+	blockId: string,
+	hitboxes: LineHitBox[],
+	pictureUrl: PictureUrl | undefined,
+): HTMLElement {
 	const lineEl = document.createElement('div');
 	lineEl.className = 'dve-print-line';
 	lineEl.style.top = `${line.yPx}px`;
 	lineEl.style.height = `${line.heightPx}px`;
 	for (const fragment of line.fragments) {
+		if (fragment.object) {
+			const picture = pictureElement(fragment.object, pictureUrl);
+			picture.style.left = `${fragment.xPx}px`;
+			picture.style.top = '0';
+			lineEl.append(picture);
+			continue;
+		}
 		if (!fragment.text && fragment.widthPx === 0) continue;
 		const span = document.createElement('span');
 		styleFragment(span, fragment);
@@ -54,13 +86,17 @@ function renderLine(line: LayoutLine, blockId: string, hitboxes: LineHitBox[]): 
 	return lineEl;
 }
 
-function renderBlock(box: LayoutBlockBox, hitboxes: LineHitBox[]): HTMLElement {
+function renderBlock(
+	box: LayoutBlockBox,
+	hitboxes: LineHitBox[],
+	pictureUrl: PictureUrl | undefined,
+): HTMLElement {
 	if (box.kind === 'paragraph') {
 		const el = document.createElement('div');
 		el.className = 'dve-print-block';
 		el.style.top = `${box.yPx}px`;
 		el.style.height = `${box.heightPx}px`;
-		for (const line of box.lines) el.append(renderLine(line, box.blockId, hitboxes));
+		for (const line of box.lines) el.append(renderLine(line, box.blockId, hitboxes, pictureUrl));
 		return el;
 	}
 	const table = document.createElement('div');
@@ -78,7 +114,7 @@ function renderBlock(box: LayoutBlockBox, hitboxes: LineHitBox[]): HTMLElement {
 		for (const cell of row.cells) {
 			const cellEl = document.createElement('div');
 			cellEl.className = 'dve-print-cell';
-			for (const paragraph of cell) cellEl.append(renderBlock(paragraph, hitboxes));
+			for (const paragraph of cell) cellEl.append(renderBlock(paragraph, hitboxes, pictureUrl));
 			rowEl.append(cellEl);
 		}
 		table.append(rowEl);
@@ -87,7 +123,10 @@ function renderBlock(box: LayoutBlockBox, hitboxes: LineHitBox[]): HTMLElement {
 }
 
 /** Pure, framework-neutral renderer: turns a `LayoutResult` into a DOM tree of page sheets. */
-export function renderPrintLayout(result: LayoutResult): PrintLayoutHandle {
+export function renderPrintLayout(
+	result: LayoutResult,
+	pictureUrl?: PictureUrl,
+): PrintLayoutHandle {
 	const container = document.createElement('div');
 	container.className = 'dve-print-pages';
 	const hitboxes: LineHitBox[] = [];
@@ -104,8 +143,16 @@ export function renderPrintLayout(result: LayoutResult): PrintLayoutHandle {
 			columnEl.style.left = `${page.marginLeftPx + column.xPx}px`;
 			columnEl.style.width = `${column.widthPx}px`;
 			columnEl.style.height = `${page.heightPx - page.marginTopPx - page.marginBottomPx}px`;
-			for (const block of column.blocks) columnEl.append(renderBlock(block, hitboxes));
+			for (const block of column.blocks) columnEl.append(renderBlock(block, hitboxes, pictureUrl));
 			sheet.append(columnEl);
+		}
+		for (const float of page.floats ?? []) {
+			const picture = pictureElement(float, pictureUrl);
+			picture.classList.add('dve-print-float');
+			if (float.behindText) picture.classList.add('dve-print-float-behind');
+			picture.style.left = `${float.xPx}px`;
+			picture.style.top = `${float.yPx}px`;
+			sheet.append(picture);
 		}
 		container.append(sheet);
 	});

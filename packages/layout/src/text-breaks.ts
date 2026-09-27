@@ -28,6 +28,8 @@ export type BreakToken =
 	| { kind: 'word'; text: string; runIndex: number; sourceStart: number }
 	| { kind: 'space'; text: string; runIndex: number; sourceStart: number }
 	| { kind: 'tab'; runIndex: number; sourceStart: number }
+	/** An inline picture: an unbreakable box of the run's object size. */
+	| { kind: 'object'; runIndex: number; sourceStart: number }
 	/** A manual line break (`w:br`/`w:cr`); ends the current line without ending the paragraph. */
 	| { kind: 'lineBreak'; runIndex: number; sourceStart: number }
 	/** An explicit page or column break carried on a run (see {@link LayoutRun.breakAfter}). */

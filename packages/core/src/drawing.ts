@@ -149,7 +149,7 @@ const WRAPS: [string, PicturePlacement['wrap']][] = [
 	['wrapNone', 'none'],
 ];
 
-/** Wrapping and horizontal position of a floating `wp:anchor` picture. */
+/** Wrapping and position of a floating `wp:anchor` picture. */
 function parsePlacement(anchor: XmlElement): PicturePlacement {
 	const wrap = WRAPS.find(([local]) => firstNS(anchor, WP_NS, local))?.[1] ?? 'none';
 	const placement: PicturePlacement = { wrap };
@@ -168,6 +168,20 @@ function parsePlacement(anchor: XmlElement): PicturePlacement {
 		placement.align = align;
 	const offset = firstNS(positionH, WP_NS, 'posOffset')?.textContent?.trim();
 	if (offset && /^-?\d+$/.test(offset)) placement.offsetXPx = emuToPx(offset);
+	const positionV = firstNS(anchor, WP_NS, 'positionV');
+	const relativeFromV = positionV?.getAttribute('relativeFrom');
+	if (relativeFromV) placement.relativeFromV = relativeFromV;
+	const alignV = firstNS(positionV, WP_NS, 'align')?.textContent?.trim();
+	if (
+		alignV === 'top' ||
+		alignV === 'center' ||
+		alignV === 'bottom' ||
+		alignV === 'inside' ||
+		alignV === 'outside'
+	)
+		placement.alignV = alignV;
+	const offsetV = firstNS(positionV, WP_NS, 'posOffset')?.textContent?.trim();
+	if (offsetV && /^-?\d+$/.test(offsetV)) placement.offsetYPx = emuToPx(offsetV);
 	return placement;
 }
 

@@ -33,6 +33,12 @@ export interface PicturePlacement {
 	/** `wp:positionH/wp:posOffset` in CSS pixels, relative to `relativeFrom`. */
 	offsetXPx?: number;
 	relativeFrom?: string;
+	/** `wp:positionV/wp:align`, when the picture is aligned vertically rather than offset. */
+	alignV?: 'top' | 'center' | 'bottom' | 'inside' | 'outside';
+	/** `wp:positionV/wp:posOffset` in CSS pixels, relative to `relativeFromV`. */
+	offsetYPx?: number;
+	/** `wp:positionV/@relativeFrom`, e.g. `paragraph`, `page` or `margin`. */
+	relativeFromV?: string;
 }
 /** A `w:hyperlink` target, resolved from its relationship (external) or `w:anchor` (internal). */
 export interface HyperlinkInfo {

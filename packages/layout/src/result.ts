@@ -8,6 +8,8 @@ export interface LayoutFragment {
 	italic?: boolean;
 	fontFamily?: string;
 	fontSizePt?: number;
+	/** An inline picture drawn in this fragment's box, bottom-aligned on the line. */
+	object?: import('./input.js').LayoutObject;
 }
 
 /** One visual line of a paragraph, positioned within its block's box. */
@@ -65,6 +67,19 @@ export interface LayoutPageBox {
 	marginBottomPx: number;
 	marginLeftPx: number;
 	columns: LayoutColumnBox[];
+	/** Floating pictures on this page, in page coordinates (CSS pixels from the sheet's top-left). */
+	floats?: LayoutFloatBox[];
+}
+
+export interface LayoutFloatBox {
+	blockId: string;
+	xPx: number;
+	yPx: number;
+	widthPx: number;
+	heightPx: number;
+	partName: string;
+	contentType: string;
+	behindText: boolean;
 }
 
 export interface LayoutResult {

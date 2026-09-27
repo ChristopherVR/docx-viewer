@@ -63,7 +63,8 @@ function tokenizeParagraph(paragraph: LayoutParagraph): {
 	let cursor = 0;
 	paragraph.runs.forEach((run, runIndex) => {
 		runOffsets.push(cursor);
-		tokens.push(...tokenizeRun(run.text, runIndex));
+		if (run.object) tokens.push({ kind: 'object', runIndex, sourceStart: 0 });
+		else tokens.push(...tokenizeRun(run.text, runIndex));
 		if (run.breakAfter) appendBreakMarker(tokens, runIndex, run.text.length, run.breakAfter);
 		cursor += run.text.length;
 	});
@@ -84,7 +85,15 @@ function lineHeightForTokens(
 	const usedFonts = placed.length
 		? [...new Set(placed.map((p) => p.token.runIndex))].map((i) => fonts[i])
 		: [fonts[0] ?? fontOf({ text: '' })];
-	const natural = Math.max(...usedFonts.map((font) => measurer.lineHeightOf(font)), 0);
+	const textHeight = Math.max(...usedFonts.map((font) => measurer.lineHeightOf(font)), 0);
+	// An inline picture raises its line to the picture's height (plus the text's descent share).
+	const objectHeight = Math.max(
+		0,
+		...placed
+			.filter((p) => p.token.kind === 'object')
+			.map((p) => paragraph.runs[p.token.runIndex]?.object?.heightPx ?? 0),
+	);
+	const natural = Math.max(textHeight, objectHeight ? objectHeight + textHeight * 0.2 : 0);
 	const rule = paragraph.lineSpacingRule ?? (paragraph.lineSpacingTwips != null ? 'auto' : 'auto');
 	const spacingTwips = paragraph.lineSpacingTwips;
 	if (rule === 'exact') return spacingTwips != null ? twipsToPx(spacingTwips) : natural;
@@ -140,6 +149,7 @@ export function layoutParagraph(
 				italic: run?.italic,
 				fontFamily: run?.fontFamily,
 				fontSizePt: run?.fontSizePt,
+				...(token.kind === 'object' && run?.object ? { object: run.object } : {}),
 			});
 			x += widthPx;
 		}
@@ -224,7 +234,9 @@ export function layoutParagraph(
 					)
 				: token.kind === 'word' || token.kind === 'space'
 					? measurer.widthOf(token.text, font)
-					: 0;
+					: token.kind === 'object'
+						? (paragraph.runs[token.runIndex]?.object?.widthPx ?? 0)
+						: 0;
 		const lineIndex = lines.length;
 		const limit = availableWidth(lineIndex);
 		// A pending trailing space only ever gets counted once it turns out to be

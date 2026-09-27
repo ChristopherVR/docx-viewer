@@ -289,10 +289,14 @@ ${chromeStyleText}`;
 		paper.className = 'dve-paper';
 		paper.setAttribute('aria-label', 'Document page');
 		canvas.append(paper);
-		this.printLayout = createPrintLayoutController(canvas, (blockId, offset) => {
-			this.pages.setViewMode('draft');
-			if (this.view) moveCursorToBlock(this.view, blockId, offset);
-		});
+		this.printLayout = createPrintLayoutController(
+			canvas,
+			(blockId, offset) => {
+				this.pages.setViewMode('draft');
+				if (this.view) moveCursorToBlock(this.view, blockId, offset);
+			},
+			(partName, contentType) => this.imageMedia.urlFor(partName, contentType),
+		);
 		canvas.append(this.printLayout.element);
 		canvas.addEventListener('scroll', () => {
 			if (this.pages.viewMode === 'print') {

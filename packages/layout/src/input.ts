@@ -16,6 +16,30 @@ export interface LayoutRun {
 	fontSizePt?: number;
 	/** A hard page/column break placed immediately after this run's text. */
 	breakAfter?: 'page' | 'column';
+	/** An inline picture: occupies its size on the line (`text` is empty). */
+	object?: LayoutObject;
+}
+
+/** A picture's package part and size in CSS pixels; the engine never loads its bytes. */
+export interface LayoutObject {
+	partName: string;
+	contentType: string;
+	widthPx: number;
+	heightPx: number;
+}
+
+/** A floating picture anchored to a paragraph (`wp:anchor`), positioned on the page. */
+export interface LayoutFloat extends LayoutObject {
+	/** `wp:positionH/@relativeFrom`: page, margin, column, leftMargin, rightMargin, character… */
+	relativeFromH?: string;
+	alignH?: 'left' | 'center' | 'right' | 'inside' | 'outside';
+	offsetXPx?: number;
+	/** `wp:positionV/@relativeFrom`: page, margin, paragraph, line, topMargin, bottomMargin… */
+	relativeFromV?: string;
+	alignV?: 'top' | 'center' | 'bottom' | 'inside' | 'outside';
+	offsetYPx?: number;
+	behindText?: boolean;
+	wrap?: string;
 }
 
 export type ParagraphAlign = 'left' | 'center' | 'right' | 'justify';
@@ -48,6 +72,8 @@ export interface LayoutParagraph {
 	keepLines?: boolean;
 	/** `w:widowControl`; Word's document default is on. Undefined means on. */
 	widowControl?: boolean;
+	/** Floating pictures anchored in this paragraph. */
+	floats?: LayoutFloat[];
 }
 
 export interface LayoutTableCell {

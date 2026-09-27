@@ -10,6 +10,7 @@ import { dateFieldResult, fieldName, resolveParagraphFormatting } from '@christo
 import type {
 	LayoutBlock,
 	LayoutDocumentInput,
+	LayoutFloat,
 	LayoutParagraph,
 	LayoutRun,
 	LayoutSection,
@@ -35,6 +36,31 @@ function sectionBreak(
 	return type;
 }
 
+/** Floating pictures anchored in a paragraph, with their `wp:positionH`/`wp:positionV` placement. */
+function floatsOf(paragraph: Paragraph): { floats?: LayoutFloat[] } {
+	const floats: LayoutFloat[] = [];
+	for (const run of paragraph.runs) {
+		const image = run.image;
+		if (!image?.anchored || !image.partName) continue;
+		const placement = image.placement;
+		floats.push({
+			partName: image.partName,
+			contentType: image.contentType,
+			widthPx: image.widthPx,
+			heightPx: image.heightPx,
+			...(placement?.relativeFrom ? { relativeFromH: placement.relativeFrom } : {}),
+			...(placement?.align ? { alignH: placement.align } : {}),
+			...(placement?.offsetXPx !== undefined ? { offsetXPx: placement.offsetXPx } : {}),
+			...(placement?.relativeFromV ? { relativeFromV: placement.relativeFromV } : {}),
+			...(placement?.alignV ? { alignV: placement.alignV } : {}),
+			...(placement?.offsetYPx !== undefined ? { offsetYPx: placement.offsetYPx } : {}),
+			...(placement?.behindText ? { behindText: true } : {}),
+			...(placement?.wrap ? { wrap: placement.wrap } : {}),
+		});
+	}
+	return floats.length ? { floats } : {};
+}
+
 /** Converts a `docx-core` `DocumentModel` into this engine's own input contract. */
 export function adaptDocumentModel(
 	model: DocumentModel,
@@ -57,8 +83,19 @@ export function adaptDocumentModel(
 			run.field && (name === 'DATE' || name === 'TIME')
 				? dateFieldResult(name, run.field.instr, now)
 				: run.text;
+		const image = run.image;
+		const object =
+			image && !image.anchored
+				? {
+						partName: image.partName,
+						contentType: image.contentType,
+						widthPx: image.widthPx,
+						heightPx: image.heightPx,
+					}
+				: undefined;
 		return {
-			text,
+			text: image ? '' : text,
+			...(object ? { object } : {}),
 			bold: run.bold,
 			italic: run.italic,
 			fontFamily: run.fontFamily,
@@ -73,6 +110,7 @@ export function adaptDocumentModel(
 			kind: 'paragraph',
 			id: paragraph.id,
 			runs: paragraph.runs.map(adaptRun),
+			...floatsOf(paragraph),
 			align: resolved.align,
 			direction: resolved.direction,
 			spacingBeforeTwips: resolved.spacingBeforeTwips,

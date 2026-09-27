@@ -63,8 +63,11 @@ Still missing:
 - Print Layout recalculates PAGE, NUMPAGES, SECTIONPAGES, DATE and TIME (with `\@` pictures); TOC,
   cross-references and other fields show Word's saved result. Field results are editable; the
   begin/code/separate/end structure is preserved and guarded against partial deletion.
-- Picture crop and effects; floating pictures follow their wrapping approximately (floats), but exact
-  positions, vertical offsets and in-front/behind layering are not reproduced.
+- Picture crop and effects. Print Layout draws inline pictures on their lines and floating pictures
+  at their `wp:positionH`/`wp:positionV` positions, in front of or behind text. Body text does not
+  wrap around them yet, `character`/`line` frames approximate to the column/paragraph, and pictures
+  in table cells, headers and footers are not paginated. The editing surface still approximates
+  floats with CSS floats.
 - Picture bullets, `numStyleLink`, Word's exact `lvlRestart` cascade.
 - Move linkage for `moveFrom`/`moveTo`, prior-formatting snapshots for `rPrChange`/`pPrChange`, table-structure revisions, and comments spanning multiple paragraphs.
 - Pagination against real font metrics, footnote placement, floating objects, and Word-rendered reference comparisons.

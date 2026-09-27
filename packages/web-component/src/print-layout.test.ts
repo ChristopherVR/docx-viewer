@@ -78,3 +78,53 @@ describe('renderPrintLayout', () => {
 		expect(handle.resolveClick(document.body, 0)).toBeNull();
 	});
 });
+
+describe('Print Layout pictures', () => {
+	const picture = {
+		partName: 'word/media/a.png',
+		contentType: 'image/png',
+		widthPx: 60,
+		heightPx: 30,
+	};
+
+	it('draws inline pictures on their line and floating pictures at their page position', () => {
+		const result = sampleResult();
+		const page = result.pages[0];
+		const paragraph = page.columns[0].blocks[0];
+		if (paragraph.kind === 'paragraph')
+			paragraph.lines[0].fragments.push({
+				text: '',
+				xPx: 40,
+				widthPx: 60,
+				runIndex: 1,
+				object: picture,
+			});
+		page.floats = [
+			{ blockId: 'p1', xPx: 200, yPx: 150, ...picture, behindText: false },
+			{
+				blockId: 'p1',
+				xPx: 5,
+				yPx: 5,
+				...picture,
+				partName: 'word/media/missing.png',
+				behindText: true,
+			},
+		];
+		const urls: Record<string, string> = { 'word/media/a.png': 'blob:a' };
+		const { element } = renderPrintLayout(result, (partName) => urls[partName]);
+		const inline = element.querySelector<HTMLImageElement>(
+			'.dve-print-line img.dve-print-picture',
+		)!;
+		expect(inline.getAttribute('src')).toBe('blob:a');
+		expect([inline.style.left, inline.style.width, inline.style.height]).toEqual([
+			'40px',
+			'60px',
+			'30px',
+		]);
+		const floats = element.querySelectorAll<HTMLElement>('.dve-print-page > .dve-print-float');
+		expect(floats).toHaveLength(2);
+		expect([floats[0].style.left, floats[0].style.top]).toEqual(['200px', '150px']);
+		expect(floats[1].classList.contains('dve-print-float-behind')).toBe(true);
+		expect(floats[1].classList.contains('dve-print-picture-missing')).toBe(true);
+	});
+});

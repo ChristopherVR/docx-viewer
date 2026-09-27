@@ -13,3 +13,4 @@ export { placeTable } from './flow-table.js';
 export { layoutSections } from './page-flow.js';
 export { adaptDocumentModel } from './adapter.js';
 export { layoutDocument, layoutDocumentModel } from './layout.js';
+export { positionFloats, FLOAT_WRAP_NOTE } from './floats.js';

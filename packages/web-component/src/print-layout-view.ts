@@ -4,7 +4,7 @@ import {
 	layoutDocumentModel,
 	type LayoutResult,
 } from '@christophervr/docx-layout';
-import { renderPrintLayout, type PrintLayoutHandle } from './print-layout.js';
+import { renderPrintLayout, type PictureUrl, type PrintLayoutHandle } from './print-layout.js';
 import { decoratePages } from './print-header-footer';
 
 const RELAYOUT_DEBOUNCE_MS = 150;
@@ -36,6 +36,7 @@ export interface PrintLayoutController {
 export function createPrintLayoutController(
 	scrollContainer: HTMLElement,
 	onRequestCursor: (blockId: string, offset: number) => void,
+	pictureUrl?: PictureUrl,
 ): PrintLayoutController {
 	const measurer = createCanvasMeasurer();
 	const element = document.createElement('div');
@@ -49,7 +50,7 @@ export function createPrintLayoutController(
 
 	function relayout(model: DocumentModel) {
 		result = layoutDocumentModel(model, measurer);
-		handle = renderPrintLayout(result);
+		handle = renderPrintLayout(result, pictureUrl);
 		decoratePages(model, result.pages, [
 			...handle.element.querySelectorAll<HTMLElement>('.dve-print-page'),
 		]);
