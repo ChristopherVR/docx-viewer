@@ -84,6 +84,9 @@ function setRunProperties(
 		runNode.insertBefore(props, runNode.firstChild);
 	}
 	if (!props) return;
+	// A rewritten run drops any recorded formatting-change snapshot; reconstructing historical
+	// rPrChange diffs is not supported (see model.ts Revision / parse-revisions.ts).
+	removeChildren(props, 'rPrChange');
 	if (changed('bold')) setToggle(doc, props, 'b', run.bold === true);
 	if (changed('italic')) setToggle(doc, props, 'i', run.italic === true);
 	if (changed('strike')) {

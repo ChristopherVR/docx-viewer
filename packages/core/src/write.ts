@@ -13,10 +13,16 @@ import {
 import { writeParagraphProperties } from './write-paragraph-properties.js';
 import { writeNumberingProperties } from './numbering-write.js';
 import { writeTable as writeTableContent } from './write-table.js';
-import { createRun } from './write-run.js';
 import { isWordHighlightToken } from './highlight.js';
 import { hasSpecialBreak, isModeledBreak } from './breaks.js';
 import { isValidLanguageTag } from './language.js';
+import {
+	buildInlineNodes,
+	gatherOldRuns,
+	isManagedParagraphChild,
+	isRevisionWrapperElement,
+	writeParagraphMarkRevision,
+} from './write-revisions.js';
 
 const twips = (pixels: number): string => String(Math.round(pixels * 15));
 function setAttribute(element: XmlElement, local: string, value: string): void {
@@ -26,25 +32,41 @@ function removeChildren(element: XmlElement, local: string): void {
 	for (const child of children(element, local)) element.removeChild(child);
 }
 
+function runHasUnsafeChildren(element: XmlElement): boolean {
+	const content = Array.from(element.childNodes).filter(
+		(node) => node.nodeType === 1 && (node as XmlElement).localName !== 'rPr',
+	) as XmlElement[];
+	// A run whose only content is a modeled page/column break matches how the parser
+	// represents it (`TextRun.break`); it is safe to relocate. A break mixed with other
+	// content in the same run is not modeled distinctly and stays protected below.
+	if (content.length === 1 && content[0].localName === 'br' && isModeledBreak(content[0]))
+		return false;
+	for (const runChild of Array.from(element.childNodes)) {
+		if (runChild.nodeType !== 1) continue;
+		const runElement = runChild as XmlElement;
+		if (runElement.localName === 'rPr') continue;
+		if (runElement.localName === 'br' && hasSpecialBreak(runElement)) return true;
+		if (runElement.localName === 'cr' && runElement.attributes.length > 0) return true;
+		if (!['t', 'tab', 'br', 'cr', 'noBreakHyphen', 'delText'].includes(runElement.localName))
+			return true;
+	}
+	return false;
+}
 function hasUnsafeInline(paragraph: XmlElement): boolean {
 	for (const child of Array.from(paragraph.childNodes)) {
 		if (child.nodeType !== 1) continue;
 		const element = child as XmlElement;
 		if (element.localName === 'pPr') continue;
-		if (element.localName !== 'r') return true;
-		const content = Array.from(element.childNodes).filter(
-			(node) => node.nodeType === 1 && (node as XmlElement).localName !== 'rPr',
-		) as XmlElement[];
-		// A run whose only content is a modeled page/column break matches how the parser
-		// represents it (`TextRun.break`); it is safe to relocate. A break mixed with other
-		// content in the same run is not modeled distinctly and stays protected below.
-		if (content.length === 1 && content[0].localName === 'br' && isModeledBreak(content[0]))
+		if (isManagedParagraphChild(element)) {
+			if (!isRevisionWrapperElement(element)) continue;
+			for (const inner of Array.from(element.childNodes)) {
+				if (inner.nodeType !== 1) continue;
+				const innerElement = inner as XmlElement;
+				if (innerElement.localName !== 'r' || runHasUnsafeChildren(innerElement)) return true;
+			}
 			continue;
-		for (const runElement of content) {
-			if (runElement.localName === 'br' && hasSpecialBreak(runElement)) return true;
-			if (runElement.localName === 'cr' && runElement.attributes.length > 0) return true;
-			if (!['t', 'tab', 'br', 'cr', 'noBreakHyphen'].includes(runElement.localName)) return true;
 		}
+		if (element.localName !== 'r' || runHasUnsafeChildren(element)) return true;
 	}
 	return false;
 }
@@ -173,14 +195,20 @@ function writeParagraph(
 	}
 	writeParagraphProperties(doc, pPr, paragraph, base);
 	writeNumberingProperties(doc, pPr, paragraph, base);
-	const oldRuns = children(node, 'r');
+	writeParagraphMarkRevision(doc, pPr, paragraph, base);
+	removeChildren(pPr, 'pPrChange');
+	const oldRuns = gatherOldRuns(node);
 	rejectUnsafeRunSegmentation(paragraph, base, oldRuns);
-	for (const run of oldRuns) node.removeChild(run);
-	const newRuns = paragraph.runs.map((run, i) => createRun(doc, run, base?.runs[i], oldRuns[i]));
+	for (const child of Array.from(node.childNodes)) {
+		if (child.nodeType !== 1) continue;
+		const element = child as XmlElement;
+		if (element.localName === 'r' || isManagedParagraphChild(element)) node.removeChild(element);
+	}
+	const newNodes = buildInlineNodes(doc, paragraph.runs, base?.runs, oldRuns);
 	let anchor: any = pPr;
-	for (const run of newRuns) {
-		node.insertBefore(run, anchor.nextSibling);
-		anchor = run;
+	for (const item of newNodes) {
+		node.insertBefore(item, anchor.nextSibling);
+		anchor = item;
 	}
 	if (!pPr.childNodes.length) node.removeChild(pPr);
 	return node;

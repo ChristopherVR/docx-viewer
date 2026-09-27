@@ -5,6 +5,8 @@ import { buildXml, parseXml, type XmlDocument } from './xml.js';
 import type { PackageContext } from './parse.js';
 import { applyModel } from './write.js';
 import { applyNumberingCatalog } from './numbering-package.js';
+import { applyTrackChangesSetting } from './settings.js';
+import { applyComments } from './write-comments.js';
 
 const contexts = new WeakMap<DocumentModel, { context: PackageContext; base: DocumentModel }>();
 
@@ -80,5 +82,9 @@ export async function saveDocx(model: DocumentModel): Promise<Uint8Array> {
 		);
 	}
 	await applyNumberingCatalog(zip, model, binding);
+	if (model.trackChanges !== binding?.base.trackChanges)
+		await applyTrackChangesSetting(zip, model.trackChanges === true);
+	if (JSON.stringify(model.comments ?? []) !== JSON.stringify(binding?.base.comments ?? []))
+		await applyComments(zip, model.comments ?? []);
 	return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
 }

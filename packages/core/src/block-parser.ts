@@ -1,7 +1,7 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 // Paragraph/table/run parsing shared by the main document body, headers, footers, footnotes and
 // endnotes (moved out of parse.ts so every container can reuse the identical parser).
-import type { Block, Paragraph, Table, TableCell, TextRun } from './model.js';
+import type { Block, Paragraph, Revision, Table, TableCell, TextRun } from './model.js';
 import {
 	children,
 	first,
@@ -14,6 +14,12 @@ import {
 } from './xml.js';
 import { canEditTableStructure } from './write-table.js';
 import { classifyBreak } from './breaks.js';
+import {
+	collectParagraphRuns,
+	paragraphFormatRevision,
+	paragraphMarkRevision,
+	runFormatRevision,
+} from './parse-revisions.js';
 
 const points = (halfPoints: string | undefined): number | undefined =>
 	halfPoints === undefined ? undefined : Number(halfPoints) / 2;
@@ -47,7 +53,7 @@ function runContent(node: XmlElement): XmlElement[] {
 		.filter((child) => child.localName !== 'rPr');
 }
 
-function parseRun(node: XmlElement): TextRun {
+function parseRun(node: XmlElement, revision?: Revision): TextRun {
 	const props = first(node, 'rPr');
 	const content = runContent(node);
 	let breakKind: 'page' | 'column' | undefined;
@@ -70,7 +76,7 @@ function parseRun(node: XmlElement): TextRun {
 			? ''
 			: content
 					.map((child) => {
-						if (named(child, 't')) return textContent(child);
+						if (named(child, 't') || named(child, 'delText')) return textContent(child);
 						if (named(child, 'tab')) return '\t';
 						if (named(child, 'br') || named(child, 'cr')) return '\n';
 						if (named(child, 'noBreakHyphen')) return '‑';
@@ -80,6 +86,8 @@ function parseRun(node: XmlElement): TextRun {
 	const run: TextRun = { text };
 	if (breakKind) run.break = breakKind;
 	if (noteReference) run.noteReference = noteReference;
+	const runRevision = revision ?? runFormatRevision(props);
+	if (runRevision) run.revision = runRevision;
 	const language = first(props, 'lang');
 	const languageValue = getW(language, 'val');
 	const eastAsiaLanguage = getW(language, 'eastAsia');
@@ -111,18 +119,15 @@ function parseRun(node: XmlElement): TextRun {
 function parseParagraph(node: XmlElement, id: string): Paragraph {
 	const props = first(node, 'pPr');
 	const alignment = getW(first(props, 'jc'), 'val');
-	const runs: TextRun[] = [];
-	for (const item of Array.from(node.childNodes).filter(isElement)) {
-		if (named(item, 'r')) runs.push(parseRun(item));
-		else if (named(item, 'hyperlink'))
-			Array.from(item.getElementsByTagNameNS(WORD_NS, 'r')).forEach((run: XmlElement) =>
-				runs.push(parseRun(run)),
-			);
-		else if (named(item, 'fldSimple'))
-			runs.push({ text: fieldPlaceholderText(getW(item, 'instr')) });
-	}
+	const { runs } = collectParagraphRuns(node, parseRun, (item) =>
+		named(item, 'fldSimple') ? { text: fieldPlaceholderText(getW(item, 'instr')) } : undefined,
+	);
 	if (!runs.length) runs.push({ text: '' });
 	const paragraph: Paragraph = { type: 'paragraph', id, runs };
+	const markRevision = paragraphMarkRevision(props);
+	if (markRevision) paragraph.markRevision = markRevision;
+	const formatRevision = paragraphFormatRevision(props);
+	if (formatRevision) paragraph.formatRevision = formatRevision;
 	const bidi = first(props, 'bidi');
 	if (bidi) paragraph.direction = on(bidi) ? 'rtl' : 'ltr';
 	if (

@@ -18,3 +18,12 @@ export {
 } from './numbering-format.js';
 export { ensureListDefinition, type ListKind } from './numbering-editing.js';
 export { formatNoteNumber, numberNotesInOrder } from './notes.js';
+export {
+	acceptAllRevisions,
+	acceptRevision,
+	findRevision,
+	listRevisions,
+	rejectAllRevisions,
+	rejectRevision,
+	type RevisionEntry,
+} from './revision-commands.js';

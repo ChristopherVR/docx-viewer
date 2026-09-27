@@ -16,6 +16,8 @@ import { parseParagraphStyleCatalog } from './paragraph-styles.js';
 import { parseBlocksFromContainer } from './block-parser.js';
 import { parseDocumentParts } from './document-parts.js';
 import { parseNumberingCatalog } from './numbering-parse.js';
+import { parseComments } from './comments.js';
+import { parseTrackChangesSetting } from './settings.js';
 
 const px = (twips: string | undefined, fallback: number): number =>
 	twips === undefined ? fallback : (Number(twips) * 96) / 1440;
@@ -28,10 +30,6 @@ function warningsFor(document: XmlDocument): string[] {
 	const warnings: string[] = [];
 	const features: [string[], string][] = [
 		[['drawing', 'pict', 'object'], 'Images and drawing objects are preserved but not editable.'],
-		[
-			['commentRangeStart', 'trackRevisions'],
-			'Comments and tracked review features are not represented in the document model.',
-		],
 		[['altChunk'], 'Embedded alternate-format content is not represented in the document model.'],
 		[
 			['hyperlink'],
@@ -44,6 +42,18 @@ function warningsFor(document: XmlDocument): string[] {
 		[
 			['fldSimple', 'instrText', 'fldChar'],
 			'Field codes such as PAGE and NUMPAGES are shown as static placeholders (or omitted) and are not recalculated.',
+		],
+		[
+			['moveFrom', 'moveTo'],
+			'Moved text is tracked as a paired delete/insert revision; Word’s move linkage between them is not modeled.',
+		],
+		[
+			['rPrChange', 'pPrChange'],
+			'Formatting-change revisions are recorded but their prior formatting snapshot is not modeled or rendered; editing the affected run or paragraph drops the recorded snapshot.',
+		],
+		[
+			['tblPrChange', 'trPrChange', 'tcPrChange'],
+			'Table-structure tracked changes are preserved in the source XML but are not represented in the document model.',
 		],
 	];
 	for (const [names, message] of features) if (hasAny(document, names)) warnings.push(message);
@@ -143,6 +153,19 @@ export async function readPackage(
 		model.warnings.push(
 			'Merged, nested, or complex tables can be read, but their row and column structure cannot be edited safely.',
 		);
+	const commentsFile = zip.file('word/comments.xml');
+	if (commentsFile) {
+		const extendedFile = zip.file('word/commentsExtended.xml');
+		model.comments = parseComments(
+			await commentsFile.async('string'),
+			await extendedFile?.async('string'),
+		);
+		model.warnings.push(
+			'Comments are anchored per paragraph; a comment range spanning multiple paragraphs is not modeled.',
+		);
+	}
+	const settingsFile = zip.file('word/settings.xml');
+	if (settingsFile) model.trackChanges = parseTrackChangesSetting(await settingsFile.async('string'));
 	const context = { original, sourceXml, base: structuredClone(model) };
 	remember(model, context);
 	return { model, context };

@@ -26,9 +26,11 @@ test('all bindings keep the shared ribbon, canvas, and status within their host'
 					const next = groups[index + 1]?.getBoundingClientRect();
 					return next ? current.right > next.left + 1 : false;
 				}),
-				statusAtBottom:
-					root.querySelector('.dve-status')?.previousElementSibling ===
-					root.querySelector('.dve-canvas'),
+				statusAtBottom: Boolean(
+					root
+						.querySelector('.dve-status')
+						?.previousElementSibling?.contains(root.querySelector('.dve-canvas')),
+				),
 			};
 		});
 		expect(desktop.hostWidth).toBeLessThanOrEqual(desktop.containerWidth + 1);
