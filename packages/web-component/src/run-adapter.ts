@@ -107,6 +107,7 @@ export function runToInlineNodes(run: TextRun, noteNumber?: NoteNumberLookup): P
 					altText: run.image.altText ?? null,
 					title: run.image.title ?? null,
 					anchored: Boolean(run.image.anchored),
+					placement: run.image.placement ? JSON.stringify(run.image.placement) : null,
 					unsupported: run.image.unsupported ?? null,
 				},
 				null,
@@ -210,6 +211,9 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 				...(child.attrs.altText ? { altText: child.attrs.altText } : {}),
 				...(child.attrs.title ? { title: child.attrs.title } : {}),
 				...(child.attrs.anchored ? { anchored: true } : {}),
+				...(typeof child.attrs.placement === 'string'
+					? { placement: JSON.parse(child.attrs.placement) }
+					: {}),
 				...(child.attrs.unsupported ? { unsupported: child.attrs.unsupported } : {}),
 			},
 			...(linkFromMarks(child) ? { link: linkFromMarks(child) } : {}),

@@ -1,6 +1,7 @@
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import type { EditorView, NodeView } from 'prosemirror-view';
 import { schema } from './schema';
+import { placementClass } from './inline-content-schema';
 
 /**
  * Resolves inline picture bytes (kept off the JSON model by docx-core) into object URLs. URLs are
@@ -74,7 +75,7 @@ export function imageNodeView(cache: ImageMediaCache, options: ImageNodeViewOpti
 		if (src) content.setAttribute('src', src);
 		else content.classList.add('dve-image-missing');
 		const dom = document.createElement('span');
-		dom.className = 'dve-picture';
+		dom.className = ['dve-picture', placementClass(node.attrs.placement)].filter(Boolean).join(' ');
 		dom.append(content);
 		content.addEventListener('dblclick', () => {
 			const pos = getPos();

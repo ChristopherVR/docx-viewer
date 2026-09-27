@@ -53,7 +53,8 @@ Still missing:
 ### Fidelity
 
 - Field recalculation beyond PAGE/NUMPAGES/SECTIONPAGES in Print Layout (DATE, TOC, cross-references); paragraphs containing fields stay protected from edits.
-- Picture crop and effects; floating object position and text wrapping.
+- Picture crop and effects; floating pictures follow their wrapping approximately (floats), but exact
+  positions, vertical offsets and in-front/behind layering are not reproduced.
 - Picture bullets, `numStyleLink`, Word's exact `lvlRestart` cascade.
 - Move linkage for `moveFrom`/`moveTo`, prior-formatting snapshots for `rPrChange`/`pPrChange`, table-structure revisions, and comments spanning multiple paragraphs.
 - Pagination against real font metrics, footnote placement, floating objects, and Word-rendered reference comparisons.

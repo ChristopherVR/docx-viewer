@@ -85,7 +85,7 @@ export function imageAndBookmarkWarnings(blocks: Block[]): string[] {
 		);
 	if (hasAnchored)
 		warnings.push(
-			'Floating (anchored) picture position and text wrapping are not reproduced; they render as inline placeholders sized to the original picture.',
+			'Floating pictures follow their text wrapping approximately (floated left or right, or on their own line); exact positions, vertical offsets and in-front/behind layering are not reproduced.',
 		);
 	if (unsupportedKinds.size)
 		warnings.push(

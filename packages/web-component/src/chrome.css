@@ -559,3 +559,27 @@
 	text-align: center;
 	user-select: none;
 }
+
+/* Floating pictures: an approximation of Word's text wrapping */
+.dve-paper .dve-float-left,
+.dve-header-footer-body .dve-float-left {
+	float: left;
+	margin: 2px 12px 6px 0;
+}
+.dve-paper .dve-float-right,
+.dve-header-footer-body .dve-float-right {
+	float: right;
+	margin: 2px 0 6px 12px;
+}
+.dve-paper .dve-float-block {
+	display: block;
+	width: fit-content;
+	margin: 6px 0;
+}
+.dve-paper .dve-float-block-center {
+	margin-right: auto;
+	margin-left: auto;
+}
+.dve-paper .dve-float-block-right {
+	margin-left: auto;
+}

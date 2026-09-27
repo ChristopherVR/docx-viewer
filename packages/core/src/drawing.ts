@@ -2,7 +2,7 @@
 // Parses w:drawing (wp:inline / wp:anchor pictures) and legacy w:pict (VML) into InlineImage.
 // Adapted layout/EMU-conversion approach from pptx-viewer-new packages/core/src/core (DrawingML
 // picture parsing); reimplemented here against @xmldom/xmldom instead of that package's DOM layer.
-import type { InlineImage } from './model.js';
+import type { InlineImage, PicturePlacement } from './model.js';
 import {
 	contentTypeForPart,
 	resolveInternalTarget,
@@ -103,12 +103,22 @@ function parseModernDrawing(node: XmlElement, context: DrawingContext): InlineIm
 	const altText = docPr?.getAttribute('descr') || undefined;
 	const title = docPr?.getAttribute('title') || undefined;
 	const anchored = Boolean(anchor && anchor !== inline) || undefined;
+	const placement = anchored && anchor ? parsePlacement(anchor) : undefined;
 	const graphicData = descendantNS(anchor, A_NS, 'graphicData');
 	const uri = graphicData?.getAttribute('uri') ?? '';
 	const blip = descendantNS(graphicData, A_NS, 'blip');
 	const relId = (blip && getR(blip, 'embed')) || undefined;
 	const picture = uri === PICTURE_GRAPHIC_URI && relId ? resolvePicture(relId, context) : undefined;
-	if (picture) return { ...picture, widthPx, heightPx, altText, title, anchored };
+	if (picture)
+		return {
+			...picture,
+			widthPx,
+			heightPx,
+			altText,
+			title,
+			anchored,
+			...(placement ? { placement } : {}),
+		};
 	return {
 		relId: relId ?? '',
 		partName: '',
@@ -120,6 +130,36 @@ function parseModernDrawing(node: XmlElement, context: DrawingContext): InlineIm
 		anchored,
 		unsupported: unsupportedKindLabel(uri),
 	};
+}
+
+const WRAPS: [string, PicturePlacement['wrap']][] = [
+	['wrapSquare', 'square'],
+	['wrapTight', 'tight'],
+	['wrapThrough', 'through'],
+	['wrapTopAndBottom', 'topAndBottom'],
+	['wrapNone', 'none'],
+];
+
+/** Wrapping and horizontal position of a floating `wp:anchor` picture. */
+function parsePlacement(anchor: XmlElement): PicturePlacement {
+	const wrap = WRAPS.find(([local]) => firstNS(anchor, WP_NS, local))?.[1] ?? 'none';
+	const placement: PicturePlacement = { wrap };
+	if (anchor.getAttribute('behindDoc') === '1') placement.behindText = true;
+	const positionH = firstNS(anchor, WP_NS, 'positionH');
+	const relativeFrom = positionH?.getAttribute('relativeFrom');
+	if (relativeFrom) placement.relativeFrom = relativeFrom;
+	const align = firstNS(positionH, WP_NS, 'align')?.textContent?.trim();
+	if (
+		align === 'left' ||
+		align === 'center' ||
+		align === 'right' ||
+		align === 'inside' ||
+		align === 'outside'
+	)
+		placement.align = align;
+	const offset = firstNS(positionH, WP_NS, 'posOffset')?.textContent?.trim();
+	if (offset && /^-?\d+$/.test(offset)) placement.offsetXPx = emuToPx(offset);
+	return placement;
 }
 
 /** Best-effort parse of a legacy VML `w:pict` picture (`v:shape/v:imagedata`). */

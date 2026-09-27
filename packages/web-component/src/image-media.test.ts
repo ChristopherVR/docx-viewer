@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDocument } from '@christophervr/docx-core';
 import { DocxEditorElement, registerDocxEditor } from './index';
+import { placementClass } from './inline-content-schema';
 
 registerDocxEditor();
 
@@ -135,5 +136,18 @@ describe('pictures in headers', () => {
 			'.dve-header img[data-docx-image]',
 		);
 		expect(image?.getAttribute('src')).toBe('blob:header-logo');
+	});
+});
+
+describe('floating picture classes', () => {
+	it('approximates Word wrapping with floats and blocks', () => {
+		const json = (value: object) => JSON.stringify(value);
+		expect(placementClass(json({ wrap: 'square', align: 'right' }))).toBe('dve-float-right');
+		expect(placementClass(json({ wrap: 'tight', offsetXPx: 20 }))).toBe('dve-float-left');
+		expect(placementClass(json({ wrap: 'topAndBottom', align: 'center' }))).toBe(
+			'dve-float-block dve-float-block-center',
+		);
+		expect(placementClass(json({ wrap: 'none', behindText: true }))).toBe('');
+		expect(placementClass(null)).toBe('');
 	});
 });

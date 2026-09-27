@@ -2,6 +2,35 @@ import type { NodeSpec, MarkSpec } from 'prosemirror-model';
 
 const safeAttrValue = (value: unknown): string => String(value ?? '').replace(/[;{}"]/g, '');
 
+/**
+ * CSS class approximating a floating picture's wrapping: square/tight/through wrapping floats it
+ * left or right, top-and-bottom puts it on its own line, and no wrapping (in front of/behind text)
+ * keeps it in line. Offsets beyond roughly half a page width are treated as right-aligned.
+ */
+export function placementClass(value: unknown): string {
+	if (typeof value !== 'string') return '';
+	let placement: { wrap?: string; align?: string; offsetXPx?: number };
+	try {
+		placement = JSON.parse(value);
+	} catch {
+		return '';
+	}
+	const side =
+		placement.align === 'right' || placement.align === 'outside'
+			? 'right'
+			: placement.align === 'center'
+				? 'center'
+				: placement.align
+					? 'left'
+					: (placement.offsetXPx ?? 0) > 312
+						? 'right'
+						: 'left';
+	if (placement.wrap === 'topAndBottom') return `dve-float-block dve-float-block-${side}`;
+	if (placement.wrap === 'square' || placement.wrap === 'tight' || placement.wrap === 'through')
+		return side === 'center' ? 'dve-float-block dve-float-block-center' : `dve-float-${side}`;
+	return '';
+}
+
 /** Inline picture atom: a placeholder span for unsupported drawings, an `<img>` for real pictures.
  * Actual `src` resolution from package media bytes happens in a node view (image-media.ts), not here. */
 export const imageNodeSpec: NodeSpec = {
@@ -18,6 +47,8 @@ export const imageNodeSpec: NodeSpec = {
 		altText: { default: null },
 		title: { default: null },
 		anchored: { default: false },
+		/** Floating picture wrapping/position (`PicturePlacement`) as JSON; display only. */
+		placement: { default: null },
 		unsupported: { default: null },
 	},
 	parseDOM: [
@@ -57,7 +88,13 @@ export const imageNodeSpec: NodeSpec = {
 						'data-width-px': String(node.attrs.widthPx),
 						'data-height-px': String(node.attrs.heightPx),
 						'data-anchored': node.attrs.anchored ? '1' : '0',
-						class: node.attrs.anchored ? 'dve-image dve-image-anchored' : 'dve-image',
+						class: [
+							'dve-image',
+							node.attrs.anchored ? 'dve-image-anchored' : '',
+							placementClass(node.attrs.placement),
+						]
+							.filter(Boolean)
+							.join(' '),
 						alt: node.attrs.altText || '',
 						title: node.attrs.title || '',
 						width: String(node.attrs.widthPx),
