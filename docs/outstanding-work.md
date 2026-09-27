@@ -1,6 +1,6 @@
 # Outstanding parity work
 
-Status as of 2026-09-27. Six parity workstreams were run in parallel and are now
+Status as of 2026-09-28. Six parity workstreams were run in parallel and are now
 all merged into `main`. Four of them were interrupted before their authors
 finished, so they were completed during integration. The gaps below are what
 remains. None of this is Word parity; see the [parity roadmap](/parity-roadmap)
@@ -34,6 +34,10 @@ command search, Editing/Viewing mode; File backstage; status bar with zoom and c
 notes), Insert Picture (PNG, JPEG, GIF, BMP, and SVG with a PNG fallback), insert/edit/remove hyperlink with Ctrl+K and a
 "Place in this document" bookmark list, Ctrl+Click to follow links, a character style picker,
 inherited run formatting and theme fonts/colors rendered in the editor, and a hidden-text toggle.
+Fields are editable (complex `fldChar`/`instrText` and `fldSimple`): the result text edits in place
+and the field structure is kept. A References tab has Table of Contents and Update Table: entries
+come from heading styles (`\o` levels), and page numbers come from Print Layout pagination. Paragraph
+tab stops (`w:tabs`) are modeled and saved.
 
 Still missing:
 
@@ -43,7 +47,11 @@ Still missing:
   modeled). The continuous surface shows columns only for single-section documents (Print Layout
   shows all); vertically justified sections lay out top-aligned.
 - Ctrl+Alt+F / Ctrl+Alt+D (insert footnote/endnote) are bound, but Windows browsers can report
-  Ctrl+Alt as AltGr and not deliver them; the Insert ribbon buttons always work.
+  Ctrl+Alt as AltGr and not deliver them; the References ribbon buttons always work.
+- Table of contents entries are plain text with a dot-leader tab. They are not `\h` hyperlinks with
+  `_Toc` bookmarks and `PAGEREF` fields, as Word writes them; Word rebuilds those when the field
+  updates. Tab stops are saved but the editing surface shows tabs at default widths, not at their
+  stops. TC fields and custom style mappings (`\t`) are not collected.
 - Pictures and links in headers, footers and notes are resolved, shown and saved with each part's own
   relationships; while a header, footer or note is being edited, the ribbon (formatting, Insert
   Picture, Link) targets it.

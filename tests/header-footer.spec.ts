@@ -142,7 +142,7 @@ test('inserts footnotes in a new document, numbers them in order and saves them'
 	await surface.locator('p').first().click();
 	await page.keyboard.type('Second claim');
 	// Ctrl+Alt+F is also bound, but Windows reports Ctrl+Alt as AltGr, so drive the ribbon.
-	await editor.getByRole('tab', { name: 'Insert', exact: true }).click();
+	await editor.getByRole('tab', { name: 'References', exact: true }).click();
 	await editor.getByRole('button', { name: 'Insert footnote', exact: true }).click();
 	const secondNote = editor.locator('.dve-notes-footnote li').first();
 	await expect(secondNote.locator('.ProseMirror')).toBeFocused();

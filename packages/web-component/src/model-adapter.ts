@@ -38,6 +38,7 @@ function paragraphNode(paragraph: Paragraph, labels: ListLabels, noteNumber?: No
 			listHangingTwips: label?.hangingTwips ?? null,
 			listFirstLineTwips: label?.firstLineTwips ?? null,
 			pageBreakBefore: paragraph.pageBreakBefore ?? false,
+			tabStops: paragraph.tabStops?.length ? paragraph.tabStops : null,
 			bookmarks: paragraph.bookmarks ?? [],
 		},
 		children,
@@ -128,6 +129,7 @@ export function docToModel(
 			(previous.numbering?.numId ?? null) === (node.attrs.numId ?? null) &&
 			(previous.numbering ? previous.numbering.level : null) === (node.attrs.ilvl ?? null) &&
 			Boolean(previous.pageBreakBefore) === Boolean(node.attrs.pageBreakBefore) &&
+			sameJson(previous.tabStops ?? null, node.attrs.tabStops ?? null) &&
 			sameJson(previous.bookmarks ?? [], node.attrs.bookmarks ?? [])
 		)
 			return previous;
@@ -166,6 +168,7 @@ export function docToModel(
 				? { numbering: { numId: node.attrs.numId, level: node.attrs.ilvl ?? 0 } }
 				: {}),
 			...(node.attrs.pageBreakBefore ? { pageBreakBefore: true } : {}),
+			...(node.attrs.tabStops?.length ? { tabStops: structuredClone(node.attrs.tabStops) } : {}),
 			...(node.attrs.bookmarks?.length ? { bookmarks: [...node.attrs.bookmarks] } : {}),
 		};
 	};

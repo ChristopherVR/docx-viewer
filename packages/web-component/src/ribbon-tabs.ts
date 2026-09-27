@@ -2,7 +2,7 @@ import { createMultilingualControls } from './multilingual-ribbon';
 import { createReviewControls } from './review-ribbon';
 import { button, group, select } from './ribbon-parts';
 
-/** The Review, Insert, Layout and View tabs. */
+/** The Insert, Layout, References, Review and View tabs. */
 export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 	const languageControls = createMultilingualControls();
 	languageControls.setAttribute('role', 'group');
@@ -20,14 +20,23 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 			),
 			group('Links', button('Insert link', 'Link', { type: 'link' })),
 			group(
-				'Footnotes',
-				button('Insert footnote', 'Footnote', { type: 'insertNote', kind: 'footnote' }),
-				button('Insert endnote', 'Endnote', { type: 'insertNote', kind: 'endnote' }),
-			),
-			group(
 				'Breaks',
 				button('Insert page break', 'Page break', { type: 'insertBreak', kind: 'page' }),
 				button('Insert column break', 'Column break', { type: 'insertBreak', kind: 'column' }),
+			),
+		);
+	panels
+		.get('References')!
+		.append(
+			group(
+				'Table of Contents',
+				button('Insert table of contents', 'Table of Contents', { type: 'toc', key: 'insert' }),
+				button('Update table of contents', 'Update Table', { type: 'toc', key: 'update' }),
+			),
+			group(
+				'Footnotes',
+				button('Insert footnote', 'Footnote', { type: 'insertNote', kind: 'footnote' }),
+				button('Insert endnote', 'Endnote', { type: 'insertNote', kind: 'endnote' }),
 			),
 		);
 	panels.get('Layout')!.append(

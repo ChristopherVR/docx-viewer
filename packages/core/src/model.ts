@@ -143,6 +143,12 @@ export interface TextRun {
 	/** Hyperlink target for this run, from `w:hyperlink` (or a simple `HYPERLINK` field). */
 	link?: HyperlinkInfo;
 }
+/** A paragraph tab stop (`w:tab`): position from the text margin, alignment and leader fill. */
+export interface TabStop {
+	posTwips: number;
+	align: 'left' | 'center' | 'right' | 'decimal' | 'bar' | 'clear' | 'start' | 'end' | 'num';
+	leader?: 'none' | 'dot' | 'hyphen' | 'underscore' | 'heavy' | 'middleDot';
+}
 export interface Paragraph {
 	type: 'paragraph';
 	/** Stable identity across edits, unique throughout the document. */
@@ -172,6 +178,8 @@ export interface Paragraph {
 	markRevision?: Revision;
 	/** Marks that `w:pPrChange` recorded a prior paragraph formatting snapshot; the snapshot itself is not modeled. */
 	formatRevision?: Revision;
+	/** Custom tab stops (`w:tabs`), in document order. */
+	tabStops?: TabStop[];
 	/** Read-only bookmark names starting in this paragraph (`w:bookmarkStart/@w:name`); bookmarks cannot be created or moved through the model. */
 	bookmarks?: string[];
 }

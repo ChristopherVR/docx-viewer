@@ -11,6 +11,7 @@ import { insertPicture, PICTURE_TYPES, stagePicture } from './picture-commands';
 import type { RibbonAction } from './ribbon';
 import type { EditorLocale } from './localization';
 import { focusView } from './focus-view';
+import { insertTableOfContents, updateTableOfContents } from './toc-commands';
 
 export interface InsertControllerHost {
 	view(): EditorView | undefined;
@@ -62,7 +63,17 @@ export class InsertController {
 			if (view?.editable) applyCharacterStyle(view, action.value);
 			focusView(view);
 		} else if (action.type === 'showHidden') this.setShowHidden(!this.showHidden);
-		else return false;
+		else if (action.type === 'toc') {
+			if (!view || !editable) return true;
+			try {
+				if (action.key === 'insert') insertTableOfContents(view, this.host.model());
+				else if (!updateTableOfContents(view, this.host.model()))
+					this.host.reportError(new Error('This document has no table of contents to update.'));
+			} catch (error) {
+				this.host.reportError(error instanceof Error ? error : new Error(String(error)));
+			}
+			focusView(view);
+		} else return false;
 		return true;
 	}
 

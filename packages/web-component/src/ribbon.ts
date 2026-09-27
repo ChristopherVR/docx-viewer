@@ -15,7 +15,7 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 	tabs.setAttribute('role', 'tablist');
 	tabs.setAttribute('aria-label', 'Ribbon tabs');
 	const panels = new Map<string, HTMLElement>();
-	for (const name of ['Home', 'Insert', 'Layout', 'Review', 'View', 'Table']) {
+	for (const name of ['Home', 'Insert', 'Layout', 'References', 'Review', 'View', 'Table']) {
 		const id = `dve-tab-${name.toLowerCase()}`;
 		const tab = document.createElement('button');
 		tab.type = 'button';

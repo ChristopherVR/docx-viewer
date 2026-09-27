@@ -2,6 +2,7 @@
 import type { Block, DocumentModel, Paragraph, SectionProperties } from './model.js';
 import { children, first, getW, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
 import { writeParagraphProperties } from './write-paragraph-properties.js';
+import { orderParagraphProperties, writeTabStops } from './tab-stops.js';
 import { writeNumberingProperties } from './numbering-write.js';
 import { writeTable as writeTableContent } from './write-table.js';
 import { buildNewTableProperties } from './table-defaults.js';
@@ -82,6 +83,8 @@ function writeParagraphImpl(
 	writeNumberingProperties(doc, pPr, paragraph, base);
 	writeParagraphMarkRevision(doc, pPr, paragraph, base);
 	removeChildren(pPr, 'pPrChange');
+	writeTabStops(doc, pPr, paragraph, base);
+	orderParagraphProperties(pPr);
 	rejectUnsafeRunSegmentation(
 		paragraph,
 		base,

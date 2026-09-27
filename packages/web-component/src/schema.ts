@@ -89,6 +89,8 @@ export const schema = new Schema({
 				listHangingTwips: { default: null },
 				listFirstLineTwips: { default: null },
 				pageBreakBefore: { default: false },
+				/** Custom tab stops (`w:tabs`) as an array; kept for saving, not rendered at their positions. */
+				tabStops: { default: null },
 				/** Read-only bookmark names starting in this paragraph; not user-editable. */
 				bookmarks: { default: [] },
 			},
@@ -122,6 +124,7 @@ export const schema = new Schema({
 						listHangingTwips: null,
 						listFirstLineTwips: null,
 						pageBreakBefore: (el as HTMLElement).dataset.pageBreakBefore === 'true',
+						tabStops: null,
 						bookmarks: (el as HTMLElement).dataset.bookmarks
 							? (el as HTMLElement).dataset.bookmarks!.split(',')
 							: [],

@@ -43,3 +43,4 @@ export {
 export { DEFAULT_TABLE_BORDERS } from './table-defaults.js';
 export { fieldName } from './field-runs.js';
 export { dateFieldResult, datePicture, formatWordDate } from './field-date.js';
+export * from './table-of-contents.js';
