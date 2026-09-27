@@ -1,21 +1,15 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import type { Block, DocumentModel, Paragraph } from './model.js';
-import {
-	children,
-	elements,
-	first,
-	getW,
-	makeW,
-	type XmlDocument,
-	type XmlElement,
-	WORD_NS,
-} from './xml.js';
+import { children, first, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
 import { writeParagraphProperties } from './write-paragraph-properties.js';
 import { writeTable as writeTableContent } from './write-table.js';
-import { createRun } from './write-run.js';
-import { isWordHighlightToken } from './highlight.js';
-import { hasSpecialBreak } from './breaks.js';
-import { isValidLanguageTag } from './language.js';
+import { collectRunSlots, buildRunNodes } from './write-hyperlink.js';
+import { hasUnsafeRunContent, rejectUnsafeRunSegmentation } from './write-safety.js';
+import {
+	RelationshipAllocator,
+	scanUsedRelationshipIds,
+	type NewRelationship,
+} from './relationship-allocator.js';
 
 const twips = (pixels: number): string => String(Math.round(pixels * 15));
 function setAttribute(element: XmlElement, local: string, value: string): void {
@@ -25,122 +19,16 @@ function removeChildren(element: XmlElement, local: string): void {
 	for (const child of children(element, local)) element.removeChild(child);
 }
 
-function hasUnsafeInline(paragraph: XmlElement): boolean {
-	for (const child of Array.from(paragraph.childNodes)) {
-		if (child.nodeType !== 1) continue;
-		const element = child as XmlElement;
-		if (element.localName === 'pPr') continue;
-		if (element.localName !== 'r') return true;
-		for (const runChild of Array.from(element.childNodes)) {
-			if (runChild.nodeType !== 1) continue;
-			const runElement = runChild as XmlElement;
-			if (runElement.localName === 'rPr') continue;
-			if (runElement.localName === 'br' && hasSpecialBreak(runElement)) return true;
-			if (runElement.localName === 'cr' && runElement.attributes.length > 0) return true;
-			if (!['t', 'tab', 'br', 'cr', 'noBreakHyphen'].includes(runElement.localName)) return true;
-		}
-	}
-	return false;
-}
-
-const modeledRunProperties = new Set([
-	'b',
-	'i',
-	'strike',
-	'u',
-	'highlight',
-	'vertAlign',
-	'sz',
-	'rFonts',
-	'color',
-	'lang',
-	'rtl',
-]);
-function hasUnexpectedAttributes(element: XmlElement, allowed: string[]): boolean {
-	for (const attribute of Array.from(element.attributes)) {
-		if (attribute.namespaceURI === 'http://www.w3.org/2000/xmlns/') continue;
-		if (attribute.namespaceURI !== WORD_NS || !allowed.includes(attribute.localName)) return true;
-	}
-	return false;
-}
-function runHasUnknownProperties(run: XmlElement): boolean {
-	const properties = first(run, 'rPr');
-	if (!properties) return false;
-	if (hasUnexpectedAttributes(properties, [])) return true;
-	for (const node of Array.from(properties.childNodes)) {
-		if (node.nodeType !== 1) {
-			if (node.nodeType === 3 && node.textContent?.trim()) return true;
-			continue;
-		}
-		const property = node as XmlElement;
-		if (property.namespaceURI !== WORD_NS || !modeledRunProperties.has(property.localName))
-			return true;
-		const allowed =
-			property.localName === 'rFonts'
-				? ['ascii', 'hAnsi']
-				: property.localName === 'lang'
-					? ['val', 'eastAsia', 'bidi']
-					: ['b', 'i', 'strike', 'u', 'highlight', 'vertAlign', 'sz', 'color', 'rtl'].includes(
-								property.localName,
-						  )
-						? ['val']
-						: [];
-		if (hasUnexpectedAttributes(property, allowed) || elements(property).length > 0) return true;
-		const value = getW(property, 'val');
-		if (property.localName === 'highlight' && value && !isWordHighlightToken(value)) return true;
-		if (
-			property.localName === 'rtl' &&
-			value &&
-			!['1', 'true', 'on', '0', 'false', 'off', 'no'].includes(value)
-		)
-			return true;
-		if (
-			property.localName === 'lang' &&
-			['val', 'eastAsia', 'bidi'].some((key) => {
-				const language = getW(property, key);
-				return language !== undefined && !isValidLanguageTag(language);
-			})
-		)
-			return true;
-		if (property.localName === 'vertAlign' && value !== 'superscript' && value !== 'subscript')
-			return true;
-		if (
-			property.localName === 'u' &&
-			value &&
-			!['single', 'none', '0', 'false', 'off', '1', 'true', 'on'].includes(value)
-		)
-			return true;
-		if (property.localName === 'sz' && value && !/^\d+$/.test(value)) return true;
-		if (property.localName === 'color' && value && !/^[0-9a-f]{6}$/i.test(value)) return true;
-	}
-	return false;
-}
-
-function rejectUnsafeRunSegmentation(
-	paragraph: Paragraph,
-	base: Paragraph | undefined,
-	oldRuns: XmlElement[],
-): void {
-	if (!base || !oldRuns.some(runHasUnknownProperties)) return;
-	const sameText =
-		paragraph.runs.map((run) => run.text).join('') === base.runs.map((run) => run.text).join('');
-	const sameBoundaries =
-		paragraph.runs.length === base.runs.length &&
-		paragraph.runs.every((run, index) => run.text === base.runs[index]?.text);
-	if (sameBoundaries || (!sameText && paragraph.runs.length === base.runs.length)) return;
-	throw new Error(
-		`Cannot edit paragraph ${paragraph.id}: changing run boundaries could drop unsupported run properties. The original DOCX package remains unchanged.`,
-	);
-}
-
-function writeParagraph(
+function writeParagraphImpl(
 	doc: XmlDocument,
 	paragraph: Paragraph,
 	node: XmlElement,
-	base?: Paragraph,
+	base: Paragraph | undefined,
+	allocator: RelationshipAllocator,
 ): XmlElement {
 	if (base && JSON.stringify(paragraph) === JSON.stringify(base)) return node;
-	if (hasUnsafeInline(node))
+	const slots = collectRunSlots(node);
+	if (!slots || slots.some((slot) => hasUnsafeRunContent(slot.element)))
 		throw new Error(
 			`Cannot edit paragraph ${paragraph.id}: it contains inline OOXML that this editor cannot safely relocate. The original DOCX package remains unchanged.`,
 		);
@@ -166,31 +54,60 @@ function writeParagraph(
 		}
 	}
 	writeParagraphProperties(doc, pPr, paragraph, base);
-	const oldRuns = children(node, 'r');
-	rejectUnsafeRunSegmentation(paragraph, base, oldRuns);
-	for (const run of oldRuns) node.removeChild(run);
-	const newRuns = paragraph.runs.map((run, i) => createRun(doc, run, base?.runs[i], oldRuns[i]));
-	let anchor: any = pPr;
-	for (const run of newRuns) {
+	rejectUnsafeRunSegmentation(
+		paragraph,
+		base,
+		slots.map((slot) => slot.element),
+	);
+	// Bookmarks are preserved but not repositioned precisely: an edited paragraph's bookmarks move
+	// to its boundaries (starts right after pPr, ends at the close) instead of their exact original
+	// run offsets, which this run-level model does not track.
+	const bookmarkStarts = children(node, 'bookmarkStart');
+	const bookmarkEnds = children(node, 'bookmarkEnd');
+	for (const bookmark of [...bookmarkStarts, ...bookmarkEnds]) node.removeChild(bookmark);
+	const topLevel = new Set<XmlElement>(
+		slots.map((slot) => (slot.kind === 'link' ? slot.container : slot.element)),
+	);
+	for (const oldNode of topLevel) node.removeChild(oldNode);
+	const newNodes = buildRunNodes(doc, paragraph.runs, base?.runs, slots, allocator);
+	let anchor: XmlElement = pPr;
+	for (const bookmark of bookmarkStarts) {
+		node.insertBefore(bookmark, anchor.nextSibling);
+		anchor = bookmark;
+	}
+	for (const run of newNodes) {
 		node.insertBefore(run, anchor.nextSibling);
 		anchor = run;
+	}
+	for (const bookmark of bookmarkEnds) {
+		node.insertBefore(bookmark, anchor.nextSibling);
+		anchor = bookmark;
 	}
 	if (!pPr.childNodes.length) node.removeChild(pPr);
 	return node;
 }
 
-function createParagraph(doc: XmlDocument, paragraph: Paragraph): XmlElement {
+function createParagraph(
+	doc: XmlDocument,
+	paragraph: Paragraph,
+	allocator: RelationshipAllocator,
+): XmlElement {
 	const node = makeW(doc, 'p');
-	return writeParagraph(doc, paragraph, node);
+	return writeParagraphImpl(doc, paragraph, node, undefined, allocator);
 }
 
-function createTable(doc: XmlDocument, table: Extract<Block, { type: 'table' }>): XmlElement {
+function createTable(
+	doc: XmlDocument,
+	table: Extract<Block, { type: 'table' }>,
+	allocator: RelationshipAllocator,
+): XmlElement {
 	const node = makeW(doc, 'tbl');
 	for (const row of table.rows) {
 		const tr = makeW(doc, 'tr');
 		for (const cell of row) {
 			const tc = makeW(doc, 'tc');
-			for (const paragraph of cell.paragraphs) tc.appendChild(createParagraph(doc, paragraph));
+			for (const paragraph of cell.paragraphs)
+				tc.appendChild(createParagraph(doc, paragraph, allocator));
 			if (!cell.paragraphs.length) tc.appendChild(makeW(doc, 'p'));
 			tr.appendChild(tc);
 		}
@@ -229,9 +146,25 @@ function originalNodes(body: XmlElement): XmlElement[] {
 	) as XmlElement[];
 }
 
-export function applyModel(doc: XmlDocument, model: DocumentModel, original: Block[]): void {
+export interface ApplyModelResult {
+	/** New hyperlink/image relationships save.ts must add to word/_rels/document.xml.rels. */
+	newRelationships: readonly NewRelationship[];
+}
+
+export function applyModel(
+	doc: XmlDocument,
+	model: DocumentModel,
+	original: Block[],
+): ApplyModelResult {
 	const body = Array.from(doc.getElementsByTagNameNS(WORD_NS, 'body'))[0];
 	if (!body) throw new Error('DOCX document.xml has no w:body');
+	const allocator = new RelationshipAllocator(scanUsedRelationshipIds(doc));
+	const boundWriteParagraph = (
+		writeDoc: XmlDocument,
+		paragraph: Paragraph,
+		node: XmlElement,
+		base?: Paragraph,
+	) => writeParagraphImpl(writeDoc, paragraph, node, base, allocator);
 	const oldNodes = originalNodes(body);
 	const oldById = new Map<string, XmlElement>();
 	original.forEach((block, index) => {
@@ -245,8 +178,8 @@ export function applyModel(doc: XmlDocument, model: DocumentModel, original: Blo
 		if (block.type === 'paragraph')
 			output.push(
 				old
-					? writeParagraph(doc, block, old, base?.type === 'paragraph' ? base : undefined)
-					: createParagraph(doc, block),
+					? boundWriteParagraph(doc, block, old, base?.type === 'paragraph' ? base : undefined)
+					: createParagraph(doc, block, allocator),
 			);
 		else
 			output.push(
@@ -256,10 +189,10 @@ export function applyModel(doc: XmlDocument, model: DocumentModel, original: Blo
 							block,
 							old,
 							base?.type === 'table' ? base : undefined,
-							writeParagraph,
+							boundWriteParagraph,
 							replaceSlots,
 						)
-					: createTable(doc, block),
+					: createTable(doc, block, allocator),
 			);
 	}
 	const slots = originalNodes(body);
@@ -284,4 +217,5 @@ export function applyModel(doc: XmlDocument, model: DocumentModel, original: Blo
 	}
 	for (const side of ['Top', 'Right', 'Bottom', 'Left'] as const)
 		setAttribute(margins, side.toLowerCase(), twips(model.page[`margin${side}`]));
+	return { newRelationships: allocator.newRelationships };
 }

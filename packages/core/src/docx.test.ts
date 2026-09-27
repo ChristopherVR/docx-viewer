@@ -136,22 +136,89 @@ describe('DOCX core', () => {
 		expect(xml.indexOf('<w:tbl')).toBeLessThan(xml.indexOf('Edited'));
 	});
 
-	it('preserves untouched hyperlink XML and rejects unsafe edits inside it', async () => {
+	it('preserves an untouched hyperlink and edits its text in place, reusing the relationship', async () => {
 		const zip = new JSZip();
 		zip.file(
 			'word/document.xml',
-			'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:hyperlink w:history="1"><w:r><w:t>Link</w:t></w:r></w:hyperlink></w:p><w:p><w:r><w:t>Plain</w:t></w:r></w:p><w:sectPr/></w:body></w:document>',
+			'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body><w:p><w:hyperlink r:id="rId5" w:history="1"><w:r><w:t>Link</w:t></w:r></w:hyperlink></w:p><w:p><w:r><w:t>Plain</w:t></w:r></w:p><w:sectPr/></w:body></w:document>',
+		);
+		zip.file(
+			'word/_rels/document.xml.rels',
+			'<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="https://example.com/" TargetMode="External"/></Relationships>',
 		);
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
 		const plain = loaded.model.blocks[1];
 		if (plain.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
 		plain.runs[0].text = 'Changed';
-		const output = await JSZip.loadAsync(await loaded.save());
-		expect(await output.file('word/document.xml')?.async('string')).toContain('<w:hyperlink');
 		const linked = loaded.model.blocks[0];
 		if (linked.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		expect(linked.runs[0]).toMatchObject({ text: 'Link', link: { href: 'https://example.com/' } });
 		linked.runs[0].text = 'Changed link';
-		await expect(loaded.save()).rejects.toThrow('Cannot edit paragraph p0');
+		const output = await JSZip.loadAsync(await loaded.save());
+		const xml = (await output.file('word/document.xml')?.async('string')) ?? '';
+		expect(xml).toContain('<w:hyperlink');
+		expect(xml).toContain('Changed link');
+		const rels = (await output.file('word/_rels/document.xml.rels')?.async('string')) ?? '';
+		expect(rels.match(/rId5/g)).toHaveLength(1);
+		const reopened = await loadDocx(await output.generateAsync({ type: 'uint8array' }));
+		const reopenedLinked = reopened.model.blocks[0];
+		if (reopenedLinked.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		expect(reopenedLinked.runs[0]).toMatchObject({
+			text: 'Changed link',
+			link: { href: 'https://example.com/' },
+		});
+	});
+
+	it('creates a new external relationship when linking plain text, and unwraps a removed link', async () => {
+		const zip = new JSZip();
+		zip.file(
+			'word/document.xml',
+			'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Plain</w:t></w:r></w:p><w:sectPr/></w:body></w:document>',
+		);
+		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
+		const paragraph = loaded.model.blocks[0];
+		if (paragraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		paragraph.runs[0].link = { href: 'https://example.org/' };
+		const saved = await JSZip.loadAsync(await loaded.save());
+		const xml = (await saved.file('word/document.xml')?.async('string')) ?? '';
+		expect(xml).toContain('<w:hyperlink');
+		const rels = (await saved.file('word/_rels/document.xml.rels')?.async('string')) ?? '';
+		expect(rels).toContain('TargetMode="External"');
+		expect(rels).toContain('https://example.org/');
+		const reopened = await loadDocx(await saved.generateAsync({ type: 'uint8array' }));
+		const reopenedParagraph = reopened.model.blocks[0];
+		if (reopenedParagraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		expect(reopenedParagraph.runs[0]).toMatchObject({
+			text: 'Plain',
+			link: { href: 'https://example.org/' },
+		});
+		reopenedParagraph.runs[0].link = undefined;
+		const unwrapped = await JSZip.loadAsync(await reopened.save());
+		expect(await unwrapped.file('word/document.xml')?.async('string')).not.toContain(
+			'<w:hyperlink',
+		);
+	});
+
+	it('rejects an unsafe hyperlink scheme instead of writing it', async () => {
+		const model = {
+			blocks: [
+				{
+					type: 'paragraph' as const,
+					id: 'p',
+					runs: [{ text: 'Click', link: { href: 'javascript:alert(1)' } }],
+				},
+			],
+			page: {
+				width: 816,
+				height: 1056,
+				marginTop: 96,
+				marginRight: 96,
+				marginBottom: 96,
+				marginLeft: 96,
+			},
+			warnings: [],
+		};
+		await expect(saveDocx(model)).rejects.toThrow('Unsupported hyperlink target');
 	});
 
 	it('keeps run text, tabs, breaks and explicit bold removal in order', async () => {

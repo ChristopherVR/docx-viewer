@@ -87,7 +87,13 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 				'fontSize',
 				'color',
 			];
-			if (previous && fields.every((field) => previous[field] === normalized[field]))
+			if (
+				previous &&
+				!previous.image &&
+				!normalized.image &&
+				sameJson(previous.link, normalized.link) &&
+				fields.every((field) => previous[field] === normalized[field])
+			)
 				previous.text += normalized.text;
 			else result.push(normalized);
 			return result;
@@ -113,7 +119,10 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 		a.length === b.length &&
 		a.every(
 			(run, index) =>
-				run.text === b[index].text && fields.every((field) => run[field] === b[index][field]),
+				run.text === b[index].text &&
+				sameJson(run.link, b[index].link) &&
+				sameJson(run.image, b[index].image) &&
+				fields.every((field) => run[field] === b[index][field]),
 		)
 	);
 }

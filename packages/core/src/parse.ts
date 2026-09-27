@@ -23,8 +23,12 @@ import {
 } from './xml.js';
 import { remember, saveDocx } from './save.js';
 import { canEditTableStructure } from './write-table.js';
-import { hasSpecialBreak } from './breaks.js';
 import { parseParagraphStyleCatalog } from './paragraph-styles.js';
+import { parseDrawing, type DrawingContext } from './drawing.js';
+import { resolveHyperlink, parseSimpleHyperlinkField } from './hyperlink.js';
+import { paragraphBookmarkNames } from './bookmarks.js';
+import { parseContentTypes, parseRelationships } from './package-parts.js';
+import { warningsFor, imageAndBookmarkWarnings, forEachParagraph } from './parse-warnings.js';
 
 const px = (twips: string | undefined, fallback: number): number =>
 	twips === undefined ? fallback : (Number(twips) * 96) / 1440;
@@ -41,8 +45,12 @@ const on = (element: XmlElement | undefined): boolean => {
 	return !['0', 'false', 'off', 'no', 'none'].includes(value ?? '');
 };
 
-function parseRun(node: XmlElement): TextRun {
+function parseRun(node: XmlElement, drawings: DrawingContext): TextRun {
 	const props = first(node, 'rPr');
+	const drawingChild = Array.from(node.childNodes)
+		.filter(isElement)
+		.find((child) => named(child, 'drawing') || named(child, 'pict'));
+	if (drawingChild) return { text: '', image: parseDrawing(drawingChild, drawings) };
 	const text = Array.from(node.childNodes)
 		.filter(isElement)
 		.map((child) => {
@@ -82,19 +90,33 @@ function parseRun(node: XmlElement): TextRun {
 	return run;
 }
 
-function parseParagraph(node: XmlElement, id: string): Paragraph {
+function parseParagraph(node: XmlElement, id: string, drawings: DrawingContext): Paragraph {
 	const props = first(node, 'pPr');
 	const alignment = getW(first(props, 'jc'), 'val');
 	const runs: TextRun[] = [];
 	for (const item of Array.from(node.childNodes).filter(isElement)) {
-		if (named(item, 'r')) runs.push(parseRun(item));
-		else if (named(item, 'hyperlink'))
-			Array.from(item.getElementsByTagNameNS(WORD_NS, 'r')).forEach((run: XmlElement) =>
-				runs.push(parseRun(run)),
-			);
+		if (named(item, 'r')) runs.push(parseRun(item, drawings));
+		else if (named(item, 'hyperlink')) {
+			const link = resolveHyperlink(item, drawings.rels);
+			const hasTarget = link.href !== undefined || link.anchor !== undefined;
+			for (const run of children(item, 'r')) {
+				const parsed = parseRun(run, drawings);
+				if (hasTarget) parsed.link = link;
+				runs.push(parsed);
+			}
+		} else if (named(item, 'fldSimple')) {
+			const link = parseSimpleHyperlinkField(getW(item, 'instr') ?? '');
+			for (const run of children(item, 'r')) {
+				const parsed = parseRun(run, drawings);
+				if (link) parsed.link = link;
+				runs.push(parsed);
+			}
+		}
 	}
 	if (!runs.length) runs.push({ text: '' });
 	const paragraph: Paragraph = { type: 'paragraph', id, runs };
+	const bookmarks = paragraphBookmarkNames(node);
+	if (bookmarks.length) paragraph.bookmarks = bookmarks;
 	const bidi = first(props, 'bidi');
 	if (bidi) paragraph.direction = on(bidi) ? 'rtl' : 'ltr';
 	if (
@@ -134,57 +156,15 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 	return paragraph;
 }
 
-function parseTable(node: XmlElement, id: string): Table {
+function parseTable(node: XmlElement, id: string, drawings: DrawingContext): Table {
 	const rows = children(node, 'tr').map((row, ri) =>
 		children(row, 'tc').map((cell, ci): TableCell => ({
-			paragraphs: children(cell, 'p').map((p, pi) => parseParagraph(p, `${id}-r${ri}c${ci}p${pi}`)),
+			paragraphs: children(cell, 'p').map((p, pi) =>
+				parseParagraph(p, `${id}-r${ri}c${ci}p${pi}`, drawings),
+			),
 		})),
 	);
 	return { type: 'table', id, rows, structureEditable: canEditTableStructure(node) };
-}
-
-function hasAny(document: XmlDocument, names: string[]): boolean {
-	return names.some((name) => document.getElementsByTagNameNS(WORD_NS, name).length > 0);
-}
-
-function warningsFor(document: XmlDocument): string[] {
-	const warnings: string[] = [];
-	const features: [string[], string][] = [
-		[['drawing', 'pict', 'object'], 'Images and drawing objects are preserved but not editable.'],
-		[['cols'], 'Multi-column layout is not represented in the document model.'],
-		[
-			['footnoteReference', 'endnoteReference'],
-			'Footnotes and endnotes are not represented in the document model.',
-		],
-		[
-			['commentRangeStart', 'trackRevisions'],
-			'Comments and tracked review features are not represented in the document model.',
-		],
-		[['altChunk'], 'Embedded alternate-format content is not represented in the document model.'],
-		[
-			['hyperlink'],
-			'Hyperlink targets are not represented in the document model; edits inside linked paragraphs are rejected to protect the original XML.',
-		],
-		[
-			['numPr'],
-			'List numbering is preserved as paragraph XML but is not represented in the document model.',
-		],
-		[
-			['rStyle'],
-			'Character style inheritance and theme font/color resolution are not modeled; displayed formatting may differ from Word.',
-		],
-	];
-	for (const [names, message] of features) if (hasAny(document, names)) warnings.push(message);
-	const specialBreak =
-		Array.from(document.getElementsByTagNameNS(WORD_NS, 'br')).some(hasSpecialBreak) ||
-		Array.from(document.getElementsByTagNameNS(WORD_NS, 'cr')).some(
-			(cr: XmlElement) => cr.attributes.length > 0,
-		);
-	if (specialBreak)
-		warnings.push(
-			'Page, column, and other non-line breaks are not distinguished from line breaks in the document model; edits to paragraphs containing them are rejected to preserve the original XML.',
-		);
-	return warnings;
 }
 
 export interface PackageContext {
@@ -193,9 +173,11 @@ export interface PackageContext {
 	base: DocumentModel;
 }
 
-export async function readPackage(
-	input: Uint8Array | ArrayBuffer,
-): Promise<{ model: DocumentModel; context: PackageContext }> {
+export async function readPackage(input: Uint8Array | ArrayBuffer): Promise<{
+	model: DocumentModel;
+	context: PackageContext;
+	media: ReadonlyMap<string, Uint8Array>;
+}> {
 	const original =
 		input instanceof Uint8Array ? new Uint8Array(input) : new Uint8Array(input.slice(0));
 	if (original.byteLength > 50 * 1024 * 1024)
@@ -217,11 +199,21 @@ export async function readPackage(
 	const document: XmlDocument = parseXml(sourceXml);
 	const body = Array.from(document.getElementsByTagNameNS(WORD_NS, 'body'))[0];
 	if (!body) throw new Error('DOCX document.xml has no w:body');
+	const relsFile = zip.file('word/_rels/document.xml.rels');
+	const contentTypesFile = zip.file('[Content_Types].xml');
+	const mediaParts = new Set(Object.keys(zip.files).filter((name) => !zip.files[name]!.dir));
+	const drawings: DrawingContext = {
+		rels: parseRelationships(relsFile ? await relsFile.async('string') : undefined),
+		contentTypes: parseContentTypes(
+			contentTypesFile ? await contentTypesFile.async('string') : undefined,
+		),
+		mediaParts,
+	};
 	const blocks: Block[] = [];
 	let index = 0;
 	for (const node of Array.from(body.childNodes).filter(isElement)) {
-		if (named(node, 'p')) blocks.push(parseParagraph(node, `p${index++}`));
-		else if (named(node, 'tbl')) blocks.push(parseTable(node, `t${index++}`));
+		if (named(node, 'p')) blocks.push(parseParagraph(node, `p${index++}`, drawings));
+		else if (named(node, 'tbl')) blocks.push(parseTable(node, `t${index++}`, drawings));
 	}
 	const section = children(body, 'sectPr').at(-1);
 	const size = first(section, 'pgSz');
@@ -254,18 +246,30 @@ export async function readPackage(
 		model.warnings.push(
 			'Merged, nested, or complex tables can be read, but their row and column structure cannot be edited safely.',
 		);
+	model.warnings.push(...imageAndBookmarkWarnings(blocks));
+	const imagePartNames = new Set<string>();
+	forEachParagraph(blocks, (paragraph) => {
+		for (const run of paragraph.runs)
+			if (run.image?.partName) imagePartNames.add(run.image.partName);
+	});
+	const media = new Map<string, Uint8Array>();
+	for (const partName of imagePartNames) {
+		const part = zip.file(partName);
+		if (part) media.set(partName, await part.async('uint8array'));
+	}
 	const context = { original, sourceXml, base: structuredClone(model) };
 	remember(model, context);
-	return { model, context };
+	return { model, context, media };
 }
 
 export async function loadDocx(input: Uint8Array | ArrayBuffer): Promise<LoadedDocument> {
-	const { model, context } = await readPackage(input);
+	const { model, context, media } = await readPackage(input);
 	return {
 		model,
-		save: (next = model) => {
+		media,
+		save: (next = model, pendingMedia) => {
 			if (next !== model) remember(next, context);
-			return saveDocx(next);
+			return saveDocx(next, pendingMedia);
 		},
 	};
 }

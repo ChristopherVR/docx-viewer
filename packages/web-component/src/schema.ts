@@ -1,5 +1,6 @@
 import { Schema } from 'prosemirror-model';
 import { isWordHighlightToken, type WordHighlightToken } from '@christophervr/docx-core';
+import { imageNodeSpec, linkMarkSpec } from './inline-content-schema';
 
 function parseFontSize(value: string): number | null {
 	const match = /^\s*(\d+(?:\.\d+)?)\s*(pt|px)?\s*$/i.exec(value);
@@ -91,6 +92,8 @@ export const schema = new Schema({
 				indentEndTwips: { default: null },
 				firstLineTwips: { default: null },
 				hangingTwips: { default: null },
+				/** Read-only bookmark names starting in this paragraph; not user-editable. */
+				bookmarks: { default: [] },
 			},
 			parseDOM: [
 				{
@@ -110,6 +113,9 @@ export const schema = new Schema({
 						indentEndTwips: null,
 						firstLineTwips: null,
 						hangingTwips: null,
+						bookmarks: (el as HTMLElement).dataset.bookmarks
+							? (el as HTMLElement).dataset.bookmarks!.split(',')
+							: [],
 					}),
 				},
 			],
@@ -119,6 +125,9 @@ export const schema = new Schema({
 					style: paragraphStyle(node.attrs),
 					dir: node.attrs.direction || null,
 					'data-id': node.attrs.id,
+					...(Array.isArray(node.attrs.bookmarks) && node.attrs.bookmarks.length
+						? { 'data-bookmarks': node.attrs.bookmarks.join(',') }
+						: {}),
 				},
 				0,
 			],
@@ -133,6 +142,7 @@ export const schema = new Schema({
 			parseDOM: [{ tag: 'br' }],
 			toDOM: () => ['br'],
 		},
+		image: imageNodeSpec,
 		table: {
 			content: 'tableRow+',
 			group: 'block',
@@ -222,6 +232,7 @@ export const schema = new Schema({
 			],
 			toDOM: (mark) => ['span', { dir: mark.attrs.value ? 'rtl' : 'ltr' }, 0],
 		},
+		link: linkMarkSpec,
 		font: {
 			attrs: { family: { default: null }, size: { default: null }, color: { default: null } },
 			parseDOM: [

@@ -1,9 +1,18 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import JSZip from 'jszip';
-import type { DocumentModel } from './model.js';
+import type { DocumentModel, PendingMediaPart } from './model.js';
 import { buildXml, parseXml, type XmlDocument } from './xml.js';
 import type { PackageContext } from './parse.js';
 import { applyModel } from './write.js';
+import {
+	buildRelationshipsXml,
+	ensureContentTypeDefault,
+	parseRelationships,
+} from './package-parts.js';
+
+const RELS_PART = 'word/_rels/document.xml.rels';
+const CONTENT_TYPES_PART = '[Content_Types].xml';
+const extensionOf = (partName: string): string => partName.split('.').pop()?.toLowerCase() ?? '';
 
 const contexts = new WeakMap<DocumentModel, { context: PackageContext; base: DocumentModel }>();
 
@@ -20,7 +29,10 @@ function newDocument(): XmlDocument {
 	);
 }
 
-export async function saveDocx(model: DocumentModel): Promise<Uint8Array> {
+export async function saveDocx(
+	model: DocumentModel,
+	pendingMedia?: ReadonlyMap<string, PendingMediaPart>,
+): Promise<Uint8Array> {
 	const ids = new Set<string>();
 	for (const block of model.blocks) {
 		if (ids.has(block.id)) throw new Error(`Duplicate document block id: ${block.id}`);
@@ -50,7 +62,7 @@ export async function saveDocx(model: DocumentModel): Promise<Uint8Array> {
 		);
 	const zip = binding ? await JSZip.loadAsync(binding.context.original) : new JSZip();
 	const document = binding ? parseXml(binding.context.sourceXml) : newDocument();
-	applyModel(document, model, binding?.base.blocks ?? []);
+	const { newRelationships } = applyModel(document, model, binding?.base.blocks ?? []);
 	zip.file('word/document.xml', buildXml(document));
 	if (!binding) {
 		zip.file(
@@ -61,6 +73,30 @@ export async function saveDocx(model: DocumentModel): Promise<Uint8Array> {
 			'_rels/.rels',
 			'<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
 		);
+	}
+	if (newRelationships.length) {
+		const relationships = parseRelationships(await zip.file(RELS_PART)?.async('string'));
+		let contentTypesXml = await zip.file(CONTENT_TYPES_PART)?.async('string');
+		for (const relationship of newRelationships) {
+			relationships.set(relationship.id, {
+				target: relationship.target,
+				mode: relationship.mode,
+				type: relationship.type,
+			});
+			if (relationship.partName) {
+				const pending = pendingMedia?.get(relationship.partName);
+				if (!pending)
+					throw new Error(`Missing bytes for newly inserted media part: ${relationship.partName}`);
+				zip.file(relationship.partName, pending.bytes);
+				contentTypesXml = ensureContentTypeDefault(
+					contentTypesXml,
+					extensionOf(relationship.partName),
+					pending.contentType,
+				);
+			}
+		}
+		zip.file(RELS_PART, buildRelationshipsXml(relationships));
+		if (contentTypesXml) zip.file(CONTENT_TYPES_PART, contentTypesXml);
 	}
 	return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
 }
