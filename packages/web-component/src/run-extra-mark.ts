@@ -7,7 +7,6 @@ import type { MarkSpec } from 'prosemirror-model';
  * so the writer never strips them from the source XML).
  */
 export const extraRunFields = [
-	'style',
 	'caps',
 	'smallCaps',
 	'doubleStrike',
@@ -79,7 +78,6 @@ export const runPropertiesMark: MarkSpec = {
 			'span',
 			{
 				'data-run-props': JSON.stringify(props),
-				...(props.style ? { 'data-char-style': props.style } : {}),
 				...(props.vanish ? { class: 'dve-hidden-text' } : {}),
 				...(style ? { style } : {}),
 			},

@@ -36,6 +36,7 @@ function paragraphNode(paragraph: Paragraph, labels: ListLabels, noteNumber?: No
 			listHangingTwips: label?.hangingTwips ?? null,
 			listFirstLineTwips: label?.firstLineTwips ?? null,
 			pageBreakBefore: paragraph.pageBreakBefore ?? false,
+			bookmarks: paragraph.bookmarks ?? [],
 		},
 		children,
 	);
@@ -90,6 +91,7 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 				'fontFamily',
 				'fontSize',
 				'color',
+				'style',
 				'break',
 			];
 			if (
@@ -122,6 +124,7 @@ function sameRuns(left: TextRun[], right: TextRun[]) {
 		'fontFamily',
 		'fontSize',
 		'color',
+		'style',
 		'break',
 	];
 	const sameNoteReference = (x?: TextRun['noteReference'], y?: TextRun['noteReference']) =>
@@ -190,7 +193,8 @@ export function docToModel(
 			previous.hangingTwips === (node.attrs.hangingTwips ?? undefined) &&
 			(previous.numbering?.numId ?? null) === (node.attrs.numId ?? null) &&
 			(previous.numbering ? previous.numbering.level : null) === (node.attrs.ilvl ?? null) &&
-			Boolean(previous.pageBreakBefore) === Boolean(node.attrs.pageBreakBefore)
+			Boolean(previous.pageBreakBefore) === Boolean(node.attrs.pageBreakBefore) &&
+			sameJson(previous.bookmarks ?? [], node.attrs.bookmarks ?? [])
 		)
 			return previous;
 		return {
@@ -228,6 +232,7 @@ export function docToModel(
 				? { numbering: { numId: node.attrs.numId, level: node.attrs.ilvl ?? 0 } }
 				: {}),
 			...(node.attrs.pageBreakBefore ? { pageBreakBefore: true } : {}),
+			...(node.attrs.bookmarks?.length ? { bookmarks: [...node.attrs.bookmarks] } : {}),
 		};
 	};
 

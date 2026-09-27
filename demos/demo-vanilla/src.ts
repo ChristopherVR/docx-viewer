@@ -96,3 +96,6 @@ document.addEventListener('drop', (event) => {
 	const file = event.dataTransfer?.files[0];
 	if (file) void openFile(file);
 });
+
+// Signals that landing actions are wired (used by browser contracts before clicking).
+document.documentElement.dataset.demoReady = 'true';

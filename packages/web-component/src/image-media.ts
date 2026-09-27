@@ -8,12 +8,12 @@ import { schema } from './schema';
  */
 export class ImageMediaCache {
 	private readonly urls = new Map<string, string>();
-	constructor(private readonly lookup: () => ReadonlyMap<string, Uint8Array> | undefined) {}
+	constructor(private readonly lookup: (partName: string) => Uint8Array | undefined) {}
 
 	urlFor(partName: string, contentType: string): string | undefined {
 		const cached = this.urls.get(partName);
 		if (cached) return cached;
-		const bytes = this.lookup()?.get(partName);
+		const bytes = this.lookup(partName);
 		if (!bytes || typeof URL.createObjectURL !== 'function') return undefined;
 		const url = URL.createObjectURL(new Blob([bytes.slice()], { type: contentType }));
 		this.urls.set(partName, url);

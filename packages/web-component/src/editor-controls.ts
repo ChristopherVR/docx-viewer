@@ -5,6 +5,7 @@ import { formatPageStatus, formatWordCount } from './localization';
 import { syncFontControls, syncParagraphControls, syncFormatControls } from './ribbon-controls';
 import { syncMultilingualControls } from './multilingual-ribbon';
 import { syncStylePicker } from './paragraph-styles';
+import { syncCharacterStylePicker } from './character-style-picker';
 import { canExecuteTableCommand } from './table-commands';
 import type { RibbonAction } from './ribbon';
 import { countWords } from './word-count';
@@ -27,13 +28,18 @@ export function refreshEditorControls(
 		)
 		.forEach((control) => {
 			const label = control.dataset.localearialabel ?? control.getAttribute('aria-label');
-			control.disabled = readOnly && label !== 'Find and replace' && label !== 'Zoom';
+			control.disabled =
+				readOnly &&
+				!['Find and replace', 'Zoom', 'Show hidden text', 'Layout view', 'Print'].includes(
+					label ?? '',
+				);
 		});
 	if (!view) return undefined;
 	const { state } = view;
 	if (toolbar) {
 		syncMultilingualControls(toolbar, state);
 		syncStylePicker(toolbar, view, model, locale);
+		syncCharacterStylePicker(toolbar, view, model, locale);
 		syncFormatControls(toolbar, state);
 		for (const button of toolbar.querySelectorAll<HTMLButtonElement>('button[data-action]')) {
 			const action = JSON.parse(button.dataset.action!) as RibbonAction;

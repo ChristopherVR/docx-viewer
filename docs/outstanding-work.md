@@ -29,11 +29,21 @@ and the model warnings emitted at parse time.
 
 ### Editor commands and UI
 
-- Insert Picture command (core package surgery exists: media part, relationship, content type, `wp:inline`), and picture resize.
-- Insert/edit/remove hyperlink (Ctrl+K), Ctrl+Click to follow http/https/mailto links, and scrolling to bookmark anchors.
-- Character style picker; show/hide hidden text; resolved (inherited) run formatting and theme colors are modeled in core but not yet rendered by the editor.
+Done since the merge: Word-style window chrome (title bar with quick access, "Tell me"
+command search, Editing/Viewing mode; File backstage; status bar with zoom and compatibility
+notes), Insert Picture (PNG, JPEG, GIF, BMP), insert/edit/remove hyperlink with Ctrl+K and a
+"Place in this document" bookmark list, Ctrl+Click to follow links, a character style picker,
+inherited run formatting and theme fonts/colors rendered in the editor, and a hidden-text toggle.
+
+Still missing:
+
+- Picture resize handles, alt-text editing, SVG pictures (they need a PNG fallback part), and
+  floating picture layout.
 - Header/footer, footnote/endnote and section editing; multi-column rendering on the continuous surface.
-- Table rendering in the editor for colspan/rowspan, borders, shading and cell alignment (`table-render.ts` exists; verify against Word-authored fixtures), and read-only nested tables.
+- Table rendering in the editor for colspan/rowspan, borders, shading and cell alignment
+  (`table-render.ts` exists; verify against Word-authored fixtures), and read-only nested tables.
+- Toggle-property XOR between inherited and direct formatting is approximated in the editor
+  display (the core resolver implements it; direct marks still render on top).
 
 ### Fidelity
 
@@ -46,8 +56,6 @@ and the model warnings emitted at parse time.
 
 ### Engineering follow-ups
 
-- Modules over the 300-line guideline: `web-component/src/component.ts` (449), `localization.ts` (411), `ribbon.ts` (394), `schema.ts` (364), `core/src/model.ts` (355).
+- Modules over the 300-line guideline: `web-component/src/component.ts` (~560), `ribbon.ts` (~410), `schema.ts` (~365), `core/src/model.ts` (~355) and the `localization-strings.ts` data table.
 - Superseded helpers from the parallel branches remain (`write-hyperlink.ts`, `write-safety.ts`, and `buildInlineNodes`/`gatherOldRuns` in `write-revisions.ts`) now that `write-inline.ts` is the single inline writer; remove them once no tests depend on them.
 - The Track Changes plugin handles transactions of plain replace steps; multi-step transactions mixing deletions and insertions need position mapping between steps.
-- The browser suite is intermittently flaky on first load (the same behavior reproduces on earlier commits).
-- `bun run fmt:check` fails on a clean checkout because `core.autocrlf=true` produces CRLF files while oxfmt expects LF. A `.gitattributes` with `* text=auto eol=lf` would fix it.

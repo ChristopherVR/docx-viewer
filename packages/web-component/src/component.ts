@@ -35,6 +35,8 @@ import { reviewDisplayPlugin, type ReviewDisplayMode } from './review-display';
 import { ReviewController } from './review-controller';
 import { ImageMediaCache, imageNodeView } from './image-media';
 import { EditorChrome } from './editor-chrome';
+import { InsertController } from './insert-controller';
+import { runStylesPlugin } from './run-styles';
 import { countWords } from './word-count';
 
 const HTMLElementBase: typeof HTMLElement =
@@ -60,7 +62,21 @@ export class DocxEditorElement extends HTMLElementBase {
 	private presence?: EditorPresence;
 	private _locale: EditorLocale = 'en';
 	private printLayout?: PrintLayoutController;
-	private readonly imageMedia = new ImageMediaCache(() => this.loaded?.media);
+	private readonly inserts = new InsertController({
+		view: () => this.view,
+		model: () => this.model,
+		contentWidth: () =>
+			this.model.page.width - this.model.page.marginLeft - this.model.page.marginRight,
+		paper: () => this.paper,
+		toolbar: () => this.toolbar,
+		reportError: (error) =>
+			this.dispatchEvent(
+				new CustomEvent('document-error', { detail: error, bubbles: true, composed: true }),
+			),
+	});
+	private readonly imageMedia = new ImageMediaCache((partName) =>
+		this.inserts.media(partName, this.loaded?.media),
+	);
 	private viewMode: 'draft' | 'print' = 'draft';
 	private reviewDisplayMode: ReviewDisplayMode = 'all';
 	private review?: ReviewController;
@@ -94,6 +110,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		this.renderHeaderFooterNotes();
 		this.review?.setLocale(this._locale);
 		this.chrome?.setLocale(this._locale);
+		this.inserts.setLocale(this._locale);
 		this.refreshControls();
 	}
 
@@ -119,6 +136,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		this.loadGeneration++;
 		this.loaded = undefined;
 		this.model = value || createDocument();
+		this.inserts.reset();
 		this.chrome?.setSaveState('saved');
 		if (this.isConnected) this.renderDocument();
 	}
@@ -152,6 +170,7 @@ export class DocxEditorElement extends HTMLElementBase {
 			const session = await loadDocument(input);
 			if (generation !== this.loadGeneration) return;
 			this.imageMedia.release();
+			this.inserts.reset();
 			this.loaded = session;
 			this.model = session.model;
 			this.detachedState = undefined;
@@ -172,13 +191,18 @@ export class DocxEditorElement extends HTMLElementBase {
 		this.assertDocumentReplaceable();
 		this.detachedState = undefined;
 		this.loadGeneration++;
+		this.inserts.reset();
 		this.loaded = session;
 		this.model = session.model;
 		if (this.isConnected) this.renderDocument();
 	}
 
 	async save(): Promise<Uint8Array> {
-		return this.loaded ? this.loaded.save(this.model) : saveDocx(this.model);
+		// Only pass staged pictures when there are any: legacy DOC sessions take the model alone.
+		const media = this.inserts.pendingMedia.size ? this.inserts.pendingMedia : undefined;
+		if (this.loaded)
+			return media ? this.loaded.save(this.model, media) : this.loaded.save(this.model);
+		return saveDocx(this.model, media);
 	}
 
 	/** Join only after loading the authority's matching document snapshot and version. */
@@ -288,12 +312,14 @@ ${chromeStyleText}`;
 			refresh: () => this.refreshControls(),
 		});
 		this.review.setLocale(this._locale);
+		this.inserts.setLocale(this._locale);
 		const body = document.createElement('div');
 		body.className = 'dve-body';
 		body.append(canvas, this.review.commentsPanel.element);
 		frame.append(toolbar, this.searchPanel.element, body);
 		this.chrome = this.createChrome();
 		this.chrome.mount(frame, toolbar);
+		frame.append(this.inserts.linkDialog.element, this.inserts.pictureInput);
 		if (this.pendingFileName) this.chrome.fileName = this.pendingFileName;
 		this.chrome.setLocale(this._locale);
 		root.append(style, frame);
@@ -316,6 +342,8 @@ ${chromeStyleText}`;
 				doc: modelToDoc(this.model),
 				plugins: [
 					history(),
+					...this.inserts.plugins(),
+					runStylesPlugin(() => this.model),
 					paragraphStylesPlugin(() => this.model),
 					trackChangesPlugin(
 						() => this._reviewAuthor,
@@ -332,8 +360,10 @@ ${chromeStyleText}`;
 			editable: () => !this._readOnly,
 			dispatchTransaction: (transaction: Transaction) => this.applyTransaction(transaction),
 			nodeViews: { image: imageNodeView(this.imageMedia) },
+			handleClick: (view, pos, event) => this.inserts.handleClick(view, pos, event),
 		});
 		this.detachedState = undefined;
+		this.inserts.syncPaper();
 		this.renderHeaderFooterNotes();
 		if (this.viewMode === 'print') this.printLayout?.scheduleRelayout(this.model);
 		this.refreshControls();
@@ -388,6 +418,7 @@ ${chromeStyleText}`;
 	}
 
 	private handleRibbonAction(action: RibbonAction) {
+		if (this.inserts.handle(action)) return;
 		if (action.type === 'search') this.showSearch();
 		else if (action.type === 'zoom') this.setZoom(action.value);
 		else if (action.type === 'list') this.handleListAction(action.key);

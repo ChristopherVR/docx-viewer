@@ -40,7 +40,11 @@ export type RibbonAction =
 				| 'next';
 	  }
 	| { type: 'reviewDisplay'; value: ReviewDisplayMode }
-	| { type: 'comments'; key: 'toggle' | 'add' };
+	| { type: 'comments'; key: 'toggle' | 'add' }
+	| { type: 'insertPicture' }
+	| { type: 'link' }
+	| { type: 'characterStyle'; value: string }
+	| { type: 'showHidden' };
 
 const button = (label: string, text: string, action: RibbonAction, className = '') => {
 	const el = document.createElement('button');
@@ -316,6 +320,8 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 		.get('Insert')!
 		.append(
 			group('Tables', button('Insert table', '▦ Table', { type: 'table' })),
+			group('Illustrations', button('Insert picture', 'Pictures', { type: 'insertPicture' })),
+			group('Links', button('Insert link', 'Link', { type: 'link' })),
 			group(
 				'Breaks',
 				button('Insert page break', 'Page break', { type: 'insertBreak', kind: 'page' }),
@@ -345,6 +351,7 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 		),
 	);
 	panels.get('View')!.append(
+		group('Show', button('Show hidden text', 'Hidden text', { type: 'showHidden' })),
 		group(
 			'Zoom',
 			select(

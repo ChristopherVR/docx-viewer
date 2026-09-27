@@ -391,3 +391,94 @@
 		padding: 20px;
 	}
 }
+
+/* Dialogs (Insert link) */
+.dve-dialog {
+	position: absolute;
+	z-index: 35;
+	top: 150px;
+	left: 50%;
+	display: grid;
+	width: min(440px, calc(100% - 32px));
+	gap: 10px;
+	padding: 18px 20px;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	background: var(--surface);
+	box-shadow: 0 12px 32px #0003;
+	color: var(--ink);
+	transform: translateX(-50%);
+}
+.dve-dialog[hidden],
+.dve-dialog label[hidden] {
+	display: none;
+}
+.dve-dialog h2 {
+	margin: 0 0 4px;
+	font-size: 16px;
+	font-weight: 600;
+}
+.dve-dialog label {
+	display: grid;
+	gap: 4px;
+	color: var(--muted);
+	font-size: 12px;
+}
+.dve-dialog input,
+.dve-dialog select {
+	height: 30px;
+	padding: 0 8px;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+	background: var(--surface);
+	color: var(--ink);
+	font: inherit;
+}
+.dve-dialog-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 6px;
+}
+.dve-dialog-actions button {
+	min-height: 30px;
+	padding: 0 14px;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+	background: var(--surface);
+	color: var(--ink);
+	font: inherit;
+	cursor: pointer;
+}
+.dve-dialog-actions .dve-dialog-primary {
+	border-color: var(--word);
+	background: var(--word);
+	color: #fff;
+}
+
+/* Links, pictures and hidden text in the document */
+.dve-paper a.dve-link {
+	color: var(--word);
+	text-decoration: underline;
+	cursor: text;
+}
+.dve-paper img.dve-image {
+	max-width: 100%;
+	height: auto;
+	vertical-align: bottom;
+}
+.dve-paper .dve-image-placeholder {
+	display: inline-grid;
+	place-items: center;
+	border: 1px dashed var(--line);
+	background: var(--canvas);
+	color: var(--muted);
+	font-size: 11px;
+}
+.dve-paper:not([data-show-hidden]) .dve-hidden-text {
+	display: none;
+}
+.dve-paper[data-show-hidden] .dve-hidden-text {
+	opacity: 0.55;
+	text-decoration: underline dotted;
+}

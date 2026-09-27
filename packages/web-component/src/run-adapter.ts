@@ -59,6 +59,7 @@ function marksForRun(run: TextRun): Mark[] {
 			}),
 		);
 	if (run.commentIds?.length) marks.push(schema.marks.comment.create({ ids: run.commentIds }));
+	if (run.style) marks.push(schema.marks.characterStyle.create({ id: run.style }));
 	const extra = extraRunProperties(run);
 	if (extra) marks.push(schema.marks.runProperties.create({ props: extra }));
 	return marks;
@@ -195,6 +196,8 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 		};
 	const comment = propertyOfMark(child, 'comment');
 	if (comment?.attrs.ids?.length) run.commentIds = [...comment.attrs.ids];
+	const characterStyle = propertyOfMark(child, 'characterStyle');
+	if (characterStyle?.attrs.id) run.style = String(characterStyle.attrs.id);
 	const extra = propertyOfMark(child, 'runProperties');
 	if (extra?.attrs.props) Object.assign(run, structuredClone(extra.attrs.props));
 	const previous = runs.at(-1);
@@ -212,6 +215,7 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 		'fontFamily',
 		'fontSize',
 		'color',
+		'style',
 	];
 	const sameRevision = JSON.stringify(previous?.revision) === JSON.stringify(run.revision);
 	const sameComments = JSON.stringify(previous?.commentIds) === JSON.stringify(run.commentIds);
