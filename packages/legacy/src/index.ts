@@ -24,6 +24,8 @@ function toBytes(input: Uint8Array | ArrayBuffer): Uint8Array {
 }
 
 function paragraphText(model: DocumentModel): string[] {
+	if (model.paragraphStyles)
+		throw new LegacyDocError('Paragraph style catalogs are unsupported in legacy .doc save.');
 	if (model.blocks.some((block) => block.type !== 'paragraph')) {
 		throw new LegacyDocError(
 			'Legacy .doc save supports paragraph text only; tables are unsupported.',

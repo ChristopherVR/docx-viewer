@@ -44,3 +44,23 @@ The [collaboration guide](/collaboration) describes the versioned editing protoc
 and how an application connects the shared editor to its authority. This is an
 integration API, not a hosted collaboration service. Access control, networking,
 storage and reconnect policy belong to the application.
+
+## Interface language
+
+Set the shared editor's `locale` property (or the binding's `locale` prop) to `fr`
+for French or `en` for English. Regional tags such as `fr-CA` use the French UI;
+unsupported locales fall back to English. Changing the interface language preserves
+the current document, selection, undo history and document-language metadata.
+
+## Imported paragraph styles
+
+The Home ribbon's Style picker lists paragraph styles from the loaded DOCX.
+The editor resolves supported alignment, direction, spacing and indentation through
+document defaults and the selected style's inheritance chain. Direct paragraph
+formatting still takes precedence. Choosing a style changes its reference, without
+flattening inherited properties into every paragraph.
+
+The original styles part is preserved when saving the loaded document. Creating or
+editing style definitions, character styles, inherited run formatting and theme
+resolution are not supported yet. Exporting a new package with a style catalog is
+rejected; use Save on the loaded document to preserve its original style definitions.

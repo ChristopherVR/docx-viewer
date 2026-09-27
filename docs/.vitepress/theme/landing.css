@@ -1,0 +1,278 @@
+/* Visual reference: pptx-viewer LandingHome. Compact Word-specific composition;
+   the editor remains shared through iframe routes, never copied into this theme. */
+.dv-landing {
+	--dv-canvas: #fbfaf7;
+	--dv-surface: #fff;
+	--dv-ink: #1a1d21;
+	--dv-muted: #5a626e;
+	--dv-line: #e6e2d9;
+	--dv-accent: #c2431f;
+	background: var(--dv-canvas);
+	color: var(--dv-ink);
+	overflow-x: clip;
+}
+.dark .dv-landing {
+	--dv-canvas: #0f1113;
+	--dv-surface: #171a1e;
+	--dv-ink: #f0efec;
+	--dv-muted: #9aa1ab;
+	--dv-line: #272c33;
+	--dv-accent: #e86a40;
+}
+.dv-hero {
+	min-height: calc(100vh - 64px);
+	display: flex;
+	align-items: center;
+	background-image: radial-gradient(
+		color-mix(in srgb, var(--dv-ink) 9%, transparent) 1px,
+		transparent 1px
+	);
+	background-size: 26px 26px;
+}
+.dv-hero-inner,
+.dv-section {
+	max-width: 84rem;
+	width: 100%;
+	margin: auto;
+	padding: clamp(4rem, 9vh, 8rem) clamp(1.4rem, 5vw, 4.5rem);
+}
+.dv-hero-inner {
+	display: grid;
+	grid-template-columns: 1.05fr 1fr;
+	gap: clamp(2rem, 5vw, 5rem);
+	align-items: center;
+}
+.dv-kicker {
+	font-family: var(--docx-mono);
+	font-size: 0.72rem;
+	font-weight: 500;
+	letter-spacing: 0.3em;
+	color: var(--dv-accent);
+}
+.dv-hero h1 {
+	font-family: var(--docx-display);
+	font-size: clamp(2.7rem, 6.2vw, 5.2rem);
+	font-weight: 680;
+	line-height: 0.99;
+	letter-spacing: -0.025em;
+	margin: 1.4rem 0 1.6rem;
+}
+.dv-hero h1 em {
+	font-weight: 460;
+	color: var(--dv-accent);
+}
+.dv-copy {
+	font-size: 1.05rem;
+	line-height: 1.75;
+	color: var(--dv-muted);
+	max-width: 34rem;
+}
+.dv-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.9rem;
+	margin: 2.2rem 0;
+}
+.dv-button {
+	display: inline-block;
+	font-family: var(--docx-mono);
+	font-size: 0.75rem;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	padding: 0.95rem 1.5rem;
+	border: 1px solid var(--dv-accent);
+	border-radius: 3px;
+	background: var(--dv-accent);
+	color: white;
+	cursor: pointer;
+}
+.dv-button:hover {
+	filter: brightness(0.9);
+}
+.dv-ghost {
+	background: transparent;
+	color: var(--dv-ink);
+	border-color: var(--dv-line);
+}
+.dv-install {
+	padding: 1.2rem 0;
+	font-size: 0.85rem;
+}
+.dv-install span {
+	display: block;
+	font: 0.65rem var(--docx-mono);
+	letter-spacing: 0.13em;
+	color: var(--dv-muted);
+	margin-bottom: 0.5rem;
+}
+.dv-install code {
+	font-family: var(--docx-mono);
+}
+.dv-preview,
+.dv-live {
+	display: block;
+	border: 1px solid var(--dv-line);
+	border-radius: 8px;
+	overflow: hidden;
+	background: var(--dv-surface);
+	box-shadow: 0 24px 60px -24px #1a1d2140;
+}
+.dv-framebar {
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+	padding: 0.7rem 0.9rem;
+	border-bottom: 1px solid var(--dv-line);
+	font: 0.68rem var(--docx-mono);
+	color: var(--dv-muted);
+}
+.dv-framebar > :last-child {
+	margin-left: auto;
+}
+.dv-dots {
+	color: var(--dv-accent);
+	letter-spacing: 0.15em;
+}
+.dv-mini-ribbon {
+	font-size: 0.7rem;
+	padding: 0.8rem;
+	border-bottom: 1px solid var(--dv-line);
+}
+.dv-paper {
+	margin: 1.8rem auto;
+	padding: 2rem;
+	width: 82%;
+	background: white;
+	color: #1a1d21;
+	box-shadow: 0 1px 8px #0001;
+}
+.dv-paper > span {
+	font: 0.6rem var(--docx-mono);
+	color: #c2431f;
+	letter-spacing: 0.16em;
+}
+.dv-paper h2 {
+	font: 600 clamp(1.6rem, 3vw, 2.5rem)/1.1 var(--docx-display);
+	margin: 1.5rem 0;
+}
+.dv-paper p {
+	font-size: 0.8rem;
+	line-height: 1.7;
+	margin: 1rem 0;
+}
+.dv-paper hr {
+	border-color: #ddd;
+}
+.dv-lines {
+	height: 50px;
+	background: repeating-linear-gradient(transparent 0 12px, #e6e2d9 13px 14px);
+}
+.dv-h2 {
+	font: 640 clamp(2.1rem, 4.6vw, 3.6rem)/1.04 var(--docx-display);
+	letter-spacing: -0.02em;
+	margin: 1.1rem 0 1.2rem;
+}
+.dv-controls {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.9rem 1.4rem;
+	margin: 2.2rem 0 1rem;
+}
+.dv-tabs {
+	display: flex;
+	gap: 0.2rem;
+	flex-wrap: wrap;
+}
+.dv-tabs button {
+	font: 0.75rem var(--docx-mono);
+	padding: 0.6rem 0.85rem;
+	border: 1px solid transparent;
+	border-radius: 3px;
+	color: var(--dv-muted);
+	cursor: pointer;
+}
+.dv-tabs button[aria-selected='true'],
+.dv-tabs button[aria-pressed='true'] {
+	border-color: var(--dv-accent);
+	color: var(--dv-accent);
+	background: color-mix(in srgb, var(--dv-accent) 8%, transparent);
+}
+.dv-guest {
+	font: 0.75rem var(--docx-mono);
+}
+.dv-guest select {
+	padding: 0.5rem;
+	border: 1px solid var(--dv-line);
+	margin-left: 0.5rem;
+	background: var(--dv-surface);
+}
+.dv-live iframe {
+	display: block;
+	width: 100%;
+	height: 780px;
+	border: 0;
+	background: var(--dv-canvas);
+}
+.dv-poster {
+	display: grid;
+	place-items: center;
+	min-height: 400px;
+	background: radial-gradient(
+		ellipse at center,
+		color-mix(in srgb, var(--dv-accent) 8%, transparent),
+		transparent
+	);
+}
+.dv-hint {
+	font-size: 0.8rem;
+	color: var(--dv-muted);
+	margin-top: 1rem;
+}
+.dv-features {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 4rem;
+	border-top: 1px solid var(--dv-line);
+}
+.dv-features h3 {
+	font: 600 1.3rem var(--docx-display);
+	margin: 1.5rem 0 0.5rem;
+}
+.dv-features p {
+	line-height: 1.75;
+	color: var(--dv-muted);
+}
+.dv-features a {
+	display: block;
+	color: var(--dv-accent);
+	margin-top: 1.5rem;
+}
+.dv-finale {
+	border-top: 1px solid var(--dv-line);
+}
+.dv-landing :focus-visible {
+	outline: 2px solid var(--dv-accent);
+	outline-offset: 3px;
+}
+@media (max-width: 800px) {
+	.dv-hero-inner,
+	.dv-features {
+		grid-template-columns: 1fr;
+	}
+	.dv-hero {
+		min-height: auto;
+	}
+	.dv-preview {
+		max-width: 540px;
+	}
+	.dv-live iframe {
+		height: 850px;
+	}
+	.dv-framebar {
+		flex-wrap: wrap;
+	}
+	.dv-features {
+		gap: 1rem;
+	}
+}

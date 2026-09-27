@@ -2,5 +2,6 @@
 export * from './model.js';
 export * from './highlight.js';
 export * from './language.js';
+export { parseParagraphStyleCatalog, resolveParagraphFormatting } from './paragraph-styles.js';
 export { loadDocx } from './parse.js';
 export { saveDocx } from './save.js';

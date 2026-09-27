@@ -66,7 +66,7 @@ jobs:
           VERSION="${RELEASE_TAG#v}"
           ARTIFACT_DIR="$RUNNER_TEMP/npm-release"
           mkdir -p "$ARTIFACT_DIR"
-          for PACKAGE in core legacy document web-component bindings; do
+          for PACKAGE in core legacy document web-component bindings viewer; do
             npm pack "https://registry.npmjs.org/@christophervr/docx-$PACKAGE/-/docx-$PACKAGE-$VERSION.tgz" --ignore-scripts --pack-destination "$ARTIFACT_DIR"
           done
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then

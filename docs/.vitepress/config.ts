@@ -36,22 +36,24 @@ export default defineConfig({
 		darkModeSwitchTitle: 'Switch to dark theme',
 		nav: [
 			{ text: 'Developer Guide', link: '/architecture', activeMatch: '/architecture' },
-			{ text: 'Editor Demo', link: '/demo/' },
+			{ text: 'User Guide', link: '/editing' },
 			{
-				text: 'Frameworks',
+				text: 'Packages',
 				items: [
-					{ text: 'React demo', link: '/demo/' },
-					{ text: 'Vue demo', link: '/demo-vue/' },
-					{ text: 'Angular demo', link: '/demo-angular/' },
-					{ text: 'Vanilla JavaScript demo', link: '/demo-vanilla/' },
-					{ text: 'Svelte demo', link: '/demo-svelte/' },
+					{ text: 'Core engine', link: '/architecture' },
+					{ text: 'React', link: '/frameworks/react' },
+					{ text: 'Vue 3', link: '/frameworks/vue' },
+					{ text: 'Angular', link: '/frameworks/angular' },
+					{ text: 'Vanilla JavaScript', link: '/frameworks/vanilla' },
+					{ text: 'Svelte', link: '/frameworks/svelte' },
 				],
 			},
-			{ text: 'Support', link: '/parity-roadmap' },
+			{ text: 'Releases', link: '/releasing' },
 			{
 				text: 'Resources',
 				items: [
-					{ text: 'Demo routes', link: '/#try-the-demos' },
+					{ text: 'Live demos', link: '/#live-demo' },
+					{ text: 'Support roadmap', link: '/parity-roadmap' },
 					{ text: 'Shared format code', link: '/reuse-audit' },
 					{ text: 'Release policy', link: '/releasing' },
 				],

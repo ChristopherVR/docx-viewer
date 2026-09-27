@@ -139,7 +139,7 @@ export function docToModel(
 		if (
 			previous &&
 			sameRuns(previous.runs, runs) &&
-			(previous.align || 'left') === (node.attrs.align || 'left') &&
+			previous.align === (node.attrs.align ?? undefined) &&
 			previous.direction === (node.attrs.direction ?? undefined) &&
 			(previous.style || '') === (node.attrs.style || '') &&
 			previous.spacingBeforeTwips === (node.attrs.spacingBeforeTwips ?? undefined) &&

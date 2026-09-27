@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -43,7 +43,7 @@ try {
 	const tarballs = [];
 	const peers = new Map();
 	await mkdir(scope, { recursive: true });
-	for (const name of ['core', 'legacy', 'document', 'web-component', 'bindings']) {
+	for (const name of ['core', 'legacy', 'document', 'web-component', 'bindings', 'viewer']) {
 		const packageDir = path.join(root, 'packages', name);
 		const packed = JSON.parse(
 			run('npm', ['pack', '--json', '--pack-destination', work, packageDir]),
@@ -89,6 +89,15 @@ try {
 		{ cwd: work },
 	);
 	const packageNames = [
+		'docx-viewer',
+		'docx-viewer/core',
+		'docx-viewer/document',
+		'docx-viewer/legacy',
+		'docx-viewer/web-component',
+		'docx-viewer/vanilla',
+		'docx-viewer/react',
+		'docx-viewer/vue',
+		'docx-viewer/angular',
 		'docx-core',
 		'docx-core/embedded',
 		'docx-legacy',
@@ -105,6 +114,12 @@ try {
 		consumer,
 		`${imports}
 import assert from 'node:assert/strict';
+import * as umbrella from '@christophervr/docx-viewer';
+import * as umbrellaCore from '@christophervr/docx-viewer/core';
+assert.equal(typeof umbrella.createDocument, 'function');
+assert.equal(typeof umbrella.mountEditor, 'function');
+assert.equal(typeof umbrellaCore.loadDocx, 'function');
+assert.equal(typeof globalThis.document, 'undefined', 'SSR import must not require a DOM');
 import { createDocument, saveDocx } from '@christophervr/docx-core';
 import { loadDocument } from '@christophervr/docx-document';
 import { createCollaborationAuthority } from '@christophervr/docx-web-component';
@@ -135,6 +150,61 @@ assert.equal(edited.model.blocks[0].runs[0].text, 'Packed first line\\nSecond li
 `,
 	);
 	run('node', [consumer], { cwd: work });
+	const typing = path.join(work, 'consumer.ts');
+	await writeFile(
+		typing,
+		`
+import { createDocument, mountEditor, type EditorOptions } from '@christophervr/docx-viewer';
+import { WordEditor as ReactEditor } from '@christophervr/docx-viewer/react';
+import { WordEditor as VueEditor } from '@christophervr/docx-viewer/vue';
+import { WordEditorComponent } from '@christophervr/docx-viewer/angular';
+import SvelteEditor from '@christophervr/docx-viewer/svelte';
+import { PresenceClient } from '@christophervr/docx-viewer/web-component';
+import { resolveParagraphFormatting } from '@christophervr/docx-viewer/core';
+const options: EditorOptions = { documentModel: createDocument(), locale: 'fr' };
+void [mountEditor, options, ReactEditor, VueEditor, WordEditorComponent, SvelteEditor, PresenceClient, resolveParagraphFormatting];
+`,
+	);
+	run(
+		'node',
+		[
+			path.join(root, 'node_modules/typescript/bin/tsc'),
+			'--noEmit',
+			'--strict',
+			'--skipLibCheck',
+			'--target',
+			'ES2022',
+			'--module',
+			'ESNext',
+			'--moduleResolution',
+			'bundler',
+			typing,
+		],
+		{ cwd: work },
+	);
+	// A fresh Node process must import the neutral entry without any framework installed.
+	const hidden = path.join(work, 'optional-peers');
+	await mkdir(hidden);
+	const moved = [];
+	try {
+		for (const peer of ['react', 'vue', 'svelte', '@angular']) {
+			const source = path.join(modules, peer);
+			const destination = path.join(hidden, peer.replace('@', ''));
+			await rename(source, destination);
+			moved.push([source, destination]);
+		}
+		run(
+			'node',
+			[
+				'--input-type=module',
+				'-e',
+				"const pkg = await import('@christophervr/docx-viewer'); if (typeof pkg.mountEditor !== 'function' || !pkg.createDocument().blocks.length) throw new Error('Neutral entry unavailable');",
+			],
+			{ cwd: work },
+		);
+	} finally {
+		for (const [source, destination] of moved) await rename(destination, source);
+	}
 	const bindings = JSON.parse(
 		await readFile(path.join(scope, 'docx-bindings', 'package.json'), 'utf8'),
 	);
@@ -143,6 +213,17 @@ assert.equal(edited.model.blocks[0].runs[0].text, 'Packed first line\\nSecond li
 	const svelteFile = path.join(scope, 'docx-bindings', 'src', 'WordEditor.svelte');
 	const svelteSource = await readFile(svelteFile, 'utf8');
 	compile(svelteSource, { filename: svelteFile, generate: 'client' });
+	const viewerManifest = JSON.parse(
+		await readFile(path.join(scope, 'docx-viewer', 'package.json'), 'utf8'),
+	);
+	assert.equal(viewerManifest.exports['./core'].import, './dist/core.js');
+	assert.equal(viewerManifest.exports['./react'].types, './dist/react.d.ts');
+	assert.equal(viewerManifest.exports['./svelte'].svelte, './dist/WordEditor.svelte');
+	const viewerSvelte = await readFile(
+		path.join(scope, 'docx-viewer', 'dist', 'WordEditor.svelte'),
+		'utf8',
+	);
+	compile(viewerSvelte, { filename: 'WordEditor.svelte', generate: 'client' });
 	const componentBundle = await readFile(
 		path.join(scope, 'docx-web-component', 'dist', 'index.js'),
 		'utf8',

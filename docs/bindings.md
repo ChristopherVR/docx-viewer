@@ -1,11 +1,17 @@
 # Framework bindings
 
+Install the entry-point package once, then add the matching framework if your application does not already include it:
+
+```sh
+npm install @christophervr/docx-viewer
+```
+
 All bindings mount `<docx-editor>` through the same `mountEditor` function. A property assignment is an external document replacement, not an edit event. `document-change` carries a `DocumentModel` directly; `document-error` carries an `Error`. Both events bubble across the shadow boundary.
 
 React:
 
 ```tsx
-import { WordEditor } from '@christophervr/docx-bindings/react';
+import { WordEditor } from '@christophervr/docx-viewer/react';
 <WordEditor documentModel={model} readOnly={false} onDocumentChange={setModel} />;
 ```
 
@@ -15,7 +21,7 @@ Vue:
 
 ```vue
 <script setup>
-import { WordEditor } from '@christophervr/docx-bindings/vue';
+import { WordEditor } from '@christophervr/docx-viewer/vue';
 </script>
 <template>
 	<WordEditor :document-model="model" @document-change="model = $event" />
@@ -25,7 +31,7 @@ import { WordEditor } from '@christophervr/docx-bindings/vue';
 Angular:
 
 ```ts
-import { WordEditorComponent } from '@christophervr/docx-bindings/angular';
+import { WordEditorComponent } from '@christophervr/docx-viewer/angular';
 // Add WordEditorComponent to your standalone component imports.
 ```
 
@@ -37,7 +43,7 @@ Svelte 5:
 
 ```svelte
 <script>
-  import WordEditor from '@christophervr/docx-bindings/svelte';
+  import WordEditor from '@christophervr/docx-viewer/svelte';
   let model = $state(initialDocument);
 </script>
 <WordEditor documentModel={model} ondocumentchange={next => model = next} />
@@ -46,13 +52,15 @@ Svelte 5:
 Custom element:
 
 ```ts
-import { registerDocxEditor } from '@christophervr/docx-web-component';
+import { registerDocxEditor } from '@christophervr/docx-viewer/web-component';
 registerDocxEditor();
 const element = document.createElement('docx-editor');
 element.documentModel = model;
 document.body.append(element);
 ```
 
-The vanilla mount adapter is exported from `@christophervr/docx-bindings/vanilla` and returns update, destroy, load, save, and element operations. It avoids feedback resets when a parent returns the emitted model. Supply a new object for external model changes; mutating a model in place is not a supported reactivity mechanism.
+The vanilla mount adapter is exported from `@christophervr/docx-viewer/vanilla` and returns update, destroy, load, save, and element operations. It avoids feedback resets when a parent returns the emitted model. Supply a new object for external model changes; mutating a model in place is not a supported reactivity mechanism.
 
 Framework packages use their own native lifecycle and ref APIs. No framework template contains a toolbar, page renderer or document command implementation. SSR imports do not register elements; mounting is a client operation. The current browser contract validates the installed versions, not every historical peer version.
+
+Set the optional `locale` prop on any framework editor to localize the ribbon and search controls (for example, `locale="fr"`). This affects interface text only; it does not translate document content.

@@ -18,6 +18,8 @@ describe('shared binding lifecycle', () => {
 		binding.update({ documentModel: source, readOnly: true });
 		expect(binding.element.documentModel).toBe(edited);
 		expect(binding.element.readOnly).toBe(true);
+		binding.update({ documentModel: source, locale: 'fr-FR' });
+		expect(binding.element.locale).toBe('fr');
 		binding.update({ documentModel: edited });
 		expect(binding.element.documentModel).toBe(edited);
 		const replacement = createDocument();

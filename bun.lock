@@ -83,6 +83,29 @@
         "@christophervr/ole2": "0.2.0",
       },
     },
+    "packages/viewer": {
+      "name": "@christophervr/docx-viewer",
+      "version": "0.1.0",
+      "dependencies": {
+        "@christophervr/docx-bindings": "0.1.0",
+        "@christophervr/docx-core": "0.1.0",
+        "@christophervr/docx-document": "0.1.0",
+        "@christophervr/docx-legacy": "0.1.0",
+        "@christophervr/docx-web-component": "0.1.0",
+      },
+      "peerDependencies": {
+        "@angular/core": ">=19",
+        "react": ">=18",
+        "svelte": "^5",
+        "vue": "^3",
+      },
+      "optionalPeers": [
+        "@angular/core",
+        "react",
+        "svelte",
+        "vue",
+      ],
+    },
     "packages/web-component": {
       "name": "@christophervr/docx-web-component",
       "version": "0.1.0",
@@ -126,6 +149,8 @@
     "@christophervr/docx-document": ["@christophervr/docx-document@workspace:packages/document"],
 
     "@christophervr/docx-legacy": ["@christophervr/docx-legacy@workspace:packages/legacy"],
+
+    "@christophervr/docx-viewer": ["@christophervr/docx-viewer@workspace:packages/viewer"],
 
     "@christophervr/docx-web-component": ["@christophervr/docx-web-component@workspace:packages/web-component"],
 

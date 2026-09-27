@@ -42,6 +42,32 @@
 	font-size: 14px;
 	margin: 8px 0;
 }
+.peer-profile {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 10px 16px;
+	margin: 8px 0 10px;
+	color: var(--demo-muted);
+	font-size: 12px;
+}
+.peer-profile label {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+.peer-profile input,
+.peer-profile select {
+	min-height: 30px;
+	border: 1px solid var(--demo-line);
+	border-radius: 4px;
+	padding: 4px 8px;
+	background: var(--demo-surface);
+	color: var(--demo-ink);
+}
+.peer-profile input {
+	width: 110px;
+}
 #peer-a,
 #peer-b {
 	height: 620px;

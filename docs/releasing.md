@@ -1,6 +1,6 @@
 # Releasing packages
 
-The Word packages use the `@christophervr` npm scope and share version `0.1.0`. This guide documents the future Word release process and the current shared-package prerequisite.
+The Word packages use the `@christophervr` npm scope and share a version. The public umbrella package is `@christophervr/docx-viewer`; installing it brings in the internal core, document, legacy, web-component and bindings packages.
 
 ## Current release scope
 
@@ -18,13 +18,14 @@ The Word release workflow supports npm trusted publishing through GitHub OIDC an
 
 ## Future Word release
 
-When Word package publication and the PowerPoint migration are ready, all five Word packages are released at the same version. The release script builds, checks, packs, and publishes them in dependency order:
+When Word package publication and the PowerPoint migration are ready, all six Word packages are released at the same version. The release script builds, checks, packs, and publishes them in dependency order:
 
 1. `@christophervr/docx-core` provides the shared DOCX model, parser, serializer, and embedded-DOCX API.
 2. `@christophervr/docx-legacy` adapts legacy `.doc` documents using `@christophervr/ole2`.
 3. `@christophervr/docx-document` detects DOCX and legacy DOC input and loads it through the two adapters.
 4. `@christophervr/docx-web-component` provides the custom-element editor.
 5. `@christophervr/docx-bindings` provides framework lifecycle adapters.
+6. `@christophervr/docx-viewer` provides one-install root and framework subpath exports.
 
 `ole2` is released separately before this sequence. Keep each Word manifest at the same version because internal Word package dependencies are version matched.
 
@@ -46,4 +47,4 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The tag starts the [release workflow](https://github.com/ChristopherVR/docx-viewer/blob/main/.github/workflows/release.yml), which validates the version and publishes the five Word packages. A manual workflow dispatch accepts the version as `0.1.0` or `v0.1.0`.
+The tag starts the [release workflow](https://github.com/ChristopherVR/docx-viewer/blob/main/.github/workflows/release.yml), which validates the version and publishes the six Word packages. A manual workflow dispatch accepts the version as `0.1.0` or `v0.1.0`.

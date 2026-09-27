@@ -8,8 +8,10 @@ import type { DocxEditorElement } from '@christophervr/docx-web-component';
 export async function mountFramework(
 	host: HTMLElement,
 	options: EditorOptions,
+	frameworkOverride?: string,
 ): Promise<EditorHandle> {
 	const framework =
+		frameworkOverride ||
 		new URLSearchParams(location.search).get('framework') ||
 		import.meta.env.VITE_DEMO_FRAMEWORK ||
 		'vanilla';

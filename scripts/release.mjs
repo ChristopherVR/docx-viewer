@@ -27,7 +27,7 @@ if (releaseTag) {
 	if (head.status !== 0 || tagHead.status !== 0 || head.stdout.trim() !== tagHead.stdout.trim())
 		throw new Error(`Checked-out HEAD does not match existing release tag ${releaseTag}.`);
 }
-const names = ['core', 'legacy', 'document', 'web-component', 'bindings'];
+const names = ['core', 'legacy', 'document', 'web-component', 'bindings', 'viewer'];
 const packages = [];
 const npm =
 	process.platform === 'win32'

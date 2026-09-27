@@ -2,6 +2,7 @@ import type { EditorState } from 'prosemirror-state';
 import type { Mark } from 'prosemirror-model';
 import { schema } from './schema';
 import { lineSpacingLabel, lineSpacingValue } from './line-spacing';
+import { findLocalizedControl } from './localization';
 
 export function syncFontControls(toolbar: HTMLElement, state: EditorState) {
 	const type = schema.marks.font;
@@ -28,7 +29,7 @@ export function syncFontControls(toolbar: HTMLElement, state: EditorState) {
 	}
 	for (const key of Object.keys(values) as Array<keyof typeof values>) {
 		const label = key === 'family' ? 'Font family' : key === 'size' ? 'Font size' : 'Font color';
-		const select = toolbar.querySelector<HTMLSelectElement>(`[aria-label="${label}"]`);
+		const select = findLocalizedControl<HTMLSelectElement>(toolbar, label);
 		if (!select) continue;
 		const distinct = [...new Set(values[key].map(String))];
 		if (distinct.length !== 1) {
@@ -77,12 +78,13 @@ export function syncFormatControls(toolbar: HTMLElement, state: EditorState) {
 	};
 	for (const [key, label] of Object.entries(labels)) {
 		const values = marked.get(key)!;
-		toolbar
-			.querySelector(`[aria-label="${label}"]`)
-			?.setAttribute('aria-pressed', String(values.size === 1 && values.has(true)));
+		findLocalizedControl(toolbar, label)?.setAttribute(
+			'aria-pressed',
+			String(values.size === 1 && values.has(true)),
+		);
 	}
-	const superButton = toolbar.querySelector('[aria-label="Superscript"]');
-	const subButton = toolbar.querySelector('[aria-label="Subscript"]');
+	const superButton = findLocalizedControl(toolbar, 'Superscript');
+	const subButton = findLocalizedControl(toolbar, 'Subscript');
 	const aligns = new Set<string>();
 	if (state.selection.empty) {
 		const align = (state.storedMarks || state.selection.$from.marks()).find(
@@ -102,7 +104,7 @@ export function syncFormatControls(toolbar: HTMLElement, state: EditorState) {
 	}
 	superButton?.setAttribute('aria-pressed', String(aligns.size === 1 && aligns.has('superscript')));
 	subButton?.setAttribute('aria-pressed', String(aligns.size === 1 && aligns.has('subscript')));
-	const highlight = toolbar.querySelector<HTMLSelectElement>('[aria-label="Text highlight"]');
+	const highlight = findLocalizedControl<HTMLSelectElement>(toolbar, 'Text highlight');
 	if (highlight && highlights.size === 1) highlight.value = [...highlights][0];
 	else if (highlight) highlight.selectedIndex = -1;
 }
@@ -125,7 +127,7 @@ export function syncParagraphControls(toolbar: HTMLElement, state: EditorState) 
 		});
 	}
 	for (const label of Object.keys(values) as Array<keyof typeof values>) {
-		const control = toolbar.querySelector<HTMLSelectElement>(`[aria-label="${label}"]`);
+		const control = findLocalizedControl<HTMLSelectElement>(toolbar, label);
 		if (!control) continue;
 		const distinct = [...values[label]];
 		if (label === 'Line spacing') {

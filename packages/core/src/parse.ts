@@ -24,6 +24,7 @@ import {
 import { remember, saveDocx } from './save.js';
 import { canEditTableStructure } from './write-table.js';
 import { hasSpecialBreak } from './breaks.js';
+import { parseParagraphStyleCatalog } from './paragraph-styles.js';
 
 const px = (twips: string | undefined, fallback: number): number =>
 	twips === undefined ? fallback : (Number(twips) * 96) / 1440;
@@ -169,8 +170,8 @@ function warningsFor(document: XmlDocument): string[] {
 			'List numbering is preserved as paragraph XML but is not represented in the document model.',
 		],
 		[
-			['pStyle', 'rStyle'],
-			'Style inheritance and theme font/color resolution are not modeled; displayed formatting may differ from Word.',
+			['rStyle'],
+			'Character style inheritance and theme font/color resolution are not modeled; displayed formatting may differ from Word.',
 		],
 	];
 	for (const [names, message] of features) if (hasAny(document, names)) warnings.push(message);
@@ -237,10 +238,14 @@ export async function readPackage(
 		},
 		warnings: warningsFor(document),
 	};
-	if (zip.file('word/styles.xml'))
+	const stylesFile = zip.file('word/styles.xml');
+	if (stylesFile) {
+		model.paragraphStyles = parseParagraphStyleCatalog(await stylesFile.async('string'));
 		model.warnings.push(
-			'Word styles and theme inheritance are not resolved; inherited formatting can differ from Word.',
+			'Paragraph style inheritance is resolved for alignment, direction, spacing and indentation. Run formatting, character styles and theme values remain unresolved; display can differ from Word.',
+			...model.paragraphStyles.warnings,
 		);
+	}
 	if (blocks.some((block) => block.type === 'table'))
 		model.warnings.push(
 			'Table text and cell structure are supported; table widths, borders, shading and cell formatting are not modeled.',

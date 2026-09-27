@@ -44,6 +44,35 @@ export interface Paragraph {
 	firstLineTwips?: number;
 	hangingTwips?: number;
 }
+/** Direct paragraph properties supported by the editor, in native Word units. */
+export type ParagraphFormatting = Pick<
+	Paragraph,
+	| 'align'
+	| 'direction'
+	| 'spacingBeforeTwips'
+	| 'spacingAfterTwips'
+	| 'lineSpacingTwips'
+	| 'lineSpacingRule'
+	| 'indentLeftTwips'
+	| 'indentRightTwips'
+	| 'indentStartTwips'
+	| 'indentEndTwips'
+	| 'firstLineTwips'
+	| 'hangingTwips'
+>;
+export interface ParagraphStyleDefinition {
+	id: string;
+	name?: string;
+	basedOn?: string;
+	isDefault?: boolean;
+	formatting: ParagraphFormatting;
+}
+/** Parsed source style data. It is retained for inheritance and never flattened on save. */
+export interface ParagraphStyleCatalog {
+	docDefaults: ParagraphFormatting;
+	styles: Record<string, ParagraphStyleDefinition>;
+	warnings: string[];
+}
 export interface TableCell {
 	paragraphs: Paragraph[];
 }
@@ -67,6 +96,8 @@ export interface DocumentModel {
 		marginLeft: number;
 	};
 	warnings: string[];
+	/** Source paragraph defaults/styles; editing the catalog itself is not supported. */
+	paragraphStyles?: ParagraphStyleCatalog;
 }
 export interface LoadedDocument {
 	model: DocumentModel;

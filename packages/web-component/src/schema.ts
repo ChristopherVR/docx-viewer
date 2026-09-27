@@ -32,7 +32,7 @@ export const wordHighlightColors = {
 	lightGray: '#c0c0c0',
 } satisfies Record<Exclude<WordHighlightToken, 'none'>, string>;
 
-function paragraphStyle(attrs: Record<string, unknown>): string {
+export function paragraphStyle(attrs: Record<string, unknown>): string {
 	const declarations = [
 		attrs.align
 			? `text-align:${safeCssValue(attrs.align)}`

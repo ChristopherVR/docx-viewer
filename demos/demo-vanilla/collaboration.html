@@ -31,17 +31,48 @@
 			<div class="collab-editors">
 				<section aria-label="Editor A">
 					<h2>Editor A</h2>
+					<div class="peer-profile">
+						<label>Name <input id="peer-a-name" maxlength="80" value="Ada" /></label>
+						<label
+							>Cursor color
+							<select id="peer-a-color" aria-label="Editor A cursor color">
+								<option value="#2563eb">Blue</option>
+								<option value="#c2410c">Orange</option>
+								<option value="#15803d">Green</option>
+								<option value="#a21caf">Purple</option>
+								<option value="#0e7490">Teal</option>
+								<option value="#b91c1c">Red</option>
+								<option value="#4f46e5">Indigo</option>
+								<option value="#a16207">Gold</option>
+							</select></label
+						>
+					</div>
 					<div id="peer-a"></div>
 				</section>
 				<section aria-label="Editor B">
 					<h2>Editor B</h2>
+					<div class="peer-profile">
+						<label>Name <input id="peer-b-name" maxlength="80" value="Grace" /></label>
+						<label
+							>Cursor color
+							<select id="peer-b-color" aria-label="Editor B cursor color">
+								<option value="#2563eb">Blue</option>
+								<option value="#c2410c">Orange</option>
+								<option value="#15803d">Green</option>
+								<option value="#a21caf">Purple</option>
+								<option value="#0e7490">Teal</option>
+								<option value="#b91c1c">Red</option>
+								<option value="#4f46e5">Indigo</option>
+								<option value="#a16207">Gold</option>
+							</select></label
+						>
+					</div>
 					<div id="peer-b"></div>
 				</section>
 			</div>
 			<p>
-				This demonstrates step synchronization and rebasing. A production service must provide
-				authentication, permissions, storage and reconnect handling. Presence cursors and comments
-				are not implemented.
+				Colored selections show transient presence. The demo relays editor changes in memory;
+				production hosts must provide transport, access control, storage and reconnect recovery.
 			</p>
 		</main>
 		<script type="module" src="./collaboration-demo.ts"></script>

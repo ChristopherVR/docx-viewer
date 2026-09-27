@@ -6,6 +6,14 @@ This is an early implementation, not yet Microsoft Word feature or pagination pa
 
 ## Packages and shared code
 
+Install the umbrella package for the editor and framework entry points:
+
+```sh
+npm install @christophervr/docx-viewer
+```
+
+It installs the internal Word packages together. Import `@christophervr/docx-viewer` for the framework-neutral editor API or select a dedicated `@christophervr/docx-viewer/react`, `/vue`, `/angular`, `/svelte`, or `/vanilla` entry. The existing `@christophervr/docx-*` packages remain available for consumers who prefer explicit dependencies. Frameworks remain optional peers; install the framework used by your app.
+
 - `@christophervr/docx-core`: modern DOCX model, import and preserving serialization. Its `/embedded` entry point is the planned PowerPoint integration once this package is published and the consumer migration is ready. PowerPoint's existing embedded-DOCX adapter remains in use for now.
 - `@christophervr/docx-legacy`: legacy Word DOC adapter using `@christophervr/ole2`.
 - `@christophervr/docx-document`: format detection and loading.
@@ -56,8 +64,8 @@ DOC formatting and structural changes are rejected when saving DOC. **Export DOC
 ## API
 
 ```ts
-import { createDocument } from '@christophervr/docx-core';
-import { mountEditor } from '@christophervr/docx-bindings';
+import { createDocument } from '@christophervr/docx-viewer/core';
+import { mountEditor } from '@christophervr/docx-viewer';
 
 const editor = mountEditor(container, {
 	documentModel: createDocument(),

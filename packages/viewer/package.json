@@ -1,0 +1,94 @@
+{
+	"name": "@christophervr/docx-viewer",
+	"version": "0.1.0",
+	"description": "Framework-neutral Word document engine and editor entry points for React, Vue, Angular, Svelte and vanilla JavaScript",
+	"license": "Apache-2.0",
+	"author": "ChristopherVR",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ChristopherVR/docx-viewer.git",
+		"directory": "packages/viewer"
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE",
+		"NOTICE"
+	],
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./core": {
+			"types": "./dist/core.d.ts",
+			"import": "./dist/core.js"
+		},
+		"./document": {
+			"types": "./dist/document.d.ts",
+			"import": "./dist/document.js"
+		},
+		"./legacy": {
+			"types": "./dist/legacy.d.ts",
+			"import": "./dist/legacy.js"
+		},
+		"./web-component": {
+			"types": "./dist/web-component.d.ts",
+			"import": "./dist/web-component.js"
+		},
+		"./vanilla": {
+			"types": "./dist/vanilla.d.ts",
+			"import": "./dist/vanilla.js"
+		},
+		"./react": {
+			"types": "./dist/react.d.ts",
+			"import": "./dist/react.js"
+		},
+		"./vue": {
+			"types": "./dist/vue.d.ts",
+			"import": "./dist/vue.js"
+		},
+		"./angular": {
+			"types": "./dist/angular.d.ts",
+			"import": "./dist/angular.js"
+		},
+		"./svelte": {
+			"types": "./dist/svelte.d.ts",
+			"svelte": "./dist/WordEditor.svelte",
+			"import": "./dist/WordEditor.svelte"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@christophervr/docx-bindings": "0.1.0",
+		"@christophervr/docx-core": "0.1.0",
+		"@christophervr/docx-document": "0.1.0",
+		"@christophervr/docx-legacy": "0.1.0",
+		"@christophervr/docx-web-component": "0.1.0"
+	},
+	"peerDependencies": {
+		"@angular/core": ">=19",
+		"react": ">=18",
+		"svelte": "^5",
+		"vue": "^3"
+	},
+	"peerDependenciesMeta": {
+		"@angular/core": {
+			"optional": true
+		},
+		"react": {
+			"optional": true
+		},
+		"svelte": {
+			"optional": true
+		},
+		"vue": {
+			"optional": true
+		}
+	}
+}

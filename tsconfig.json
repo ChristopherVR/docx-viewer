@@ -17,7 +17,21 @@
 			"@christophervr/docx-core/embedded": ["packages/core/src/embedded.ts"],
 			"@christophervr/docx-legacy": ["packages/legacy/src/index.ts"],
 			"@christophervr/docx-web-component": ["packages/web-component/src/index.ts"],
-			"@christophervr/docx-document": ["packages/document/src/index.ts"]
+			"@christophervr/docx-document": ["packages/document/src/index.ts"],
+			"@christophervr/docx-bindings": ["packages/bindings/src/index.ts"],
+			"@christophervr/docx-bindings/react": ["packages/bindings/src/react.tsx"],
+			"@christophervr/docx-bindings/vue": ["packages/bindings/src/vue.ts"],
+			"@christophervr/docx-bindings/angular": ["packages/bindings/src/angular.ts"],
+			"@christophervr/docx-viewer": ["packages/viewer/src/index.ts"],
+			"@christophervr/docx-viewer/core": ["packages/viewer/src/core.ts"],
+			"@christophervr/docx-viewer/document": ["packages/viewer/src/document.ts"],
+			"@christophervr/docx-viewer/legacy": ["packages/viewer/src/legacy.ts"],
+			"@christophervr/docx-viewer/web-component": ["packages/viewer/src/web-component.ts"],
+			"@christophervr/docx-viewer/vanilla": ["packages/viewer/src/vanilla.ts"],
+			"@christophervr/docx-viewer/react": ["packages/viewer/src/react.ts"],
+			"@christophervr/docx-viewer/vue": ["packages/viewer/src/vue.ts"],
+			"@christophervr/docx-viewer/angular": ["packages/viewer/src/angular.ts"],
+			"@christophervr/docx-viewer/svelte": ["packages/viewer/src/svelte.ts"]
 		},
 		"types": ["node", "vitest/globals", "vite/client"]
 	},

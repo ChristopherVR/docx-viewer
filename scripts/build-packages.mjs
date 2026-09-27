@@ -6,7 +6,7 @@ import { build } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const packages = ['core', 'legacy', 'document', 'web-component', 'bindings'];
+const packages = ['core', 'legacy', 'document', 'web-component', 'bindings', 'viewer'];
 const run = (command, args, options = {}) => {
 	const result = spawnSync(command, args, { cwd: root, stdio: 'inherit', ...options });
 	if (result.status !== 0)
@@ -46,7 +46,22 @@ for (const name of packages) {
 					vue: 'src/vue.ts',
 					angular: 'src/angular.ts',
 				}
-			: { index: 'src/index.ts', ...(name === 'core' ? { embedded: 'src/embedded.ts' } : {}) };
+			: name === 'viewer'
+				? Object.fromEntries(
+						[
+							'index',
+							'core',
+							'document',
+							'legacy',
+							'web-component',
+							'vanilla',
+							'react',
+							'vue',
+							'angular',
+							'svelte',
+						].map((entry) => [entry, `src/${entry}.ts`]),
+					)
+				: { index: 'src/index.ts', ...(name === 'core' ? { embedded: 'src/embedded.ts' } : {}) };
 	await build({
 		configFile: false,
 		root: packageDir,
@@ -74,9 +89,18 @@ for (const name of packages) {
 	if (name === 'bindings') {
 		await writeFile(
 			path.join(distDir, 'svelte.d.ts'),
-			"import type { Component } from 'svelte';\nimport type { DocumentModel } from '@christophervr/docx-core';\ndeclare const WordEditor: Component<{ documentModel?: DocumentModel; readOnly?: boolean; ondocumentchange?: (model: DocumentModel) => void; ondocumenterror?: (error: Error) => void; }>;\nexport default WordEditor;\n",
+			"import type { Component } from 'svelte';\nimport type { DocumentModel } from '@christophervr/docx-core';\ndeclare const WordEditor: Component<{ documentModel?: DocumentModel; readOnly?: boolean; locale?: string; ondocumentchange?: (model: DocumentModel) => void; ondocumenterror?: (error: Error) => void; }>;\nexport default WordEditor;\n",
 		);
 	}
 }
+const viewerDist = path.join(root, 'packages/viewer/dist');
+await cp(
+	path.join(root, 'packages/bindings/src/WordEditor.svelte'),
+	path.join(viewerDist, 'WordEditor.svelte'),
+);
+await writeFile(
+	path.join(viewerDist, 'svelte.d.ts'),
+	"export { default } from '@christophervr/docx-bindings/svelte';\n",
+);
 await rm(path.join(root, '.release-types'), { recursive: true, force: true });
-console.log('Built publishable ESM bundles and TypeScript declarations for all five packages.');
+console.log('Built publishable ESM bundles and TypeScript declarations for all six packages.');

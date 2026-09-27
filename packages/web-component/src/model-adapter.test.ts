@@ -8,6 +8,19 @@ import { insertHardBreak } from './hard-break-command';
 import { schema } from './schema';
 
 describe('paragraph line breaks and spacing adapter', () => {
+	it('retains an explicit left override instead of treating it as inherited alignment', () => {
+		const model = createDocument();
+		model.blocks[0] = {
+			type: 'paragraph',
+			id: 'styled',
+			style: 'Centered',
+			runs: [{ text: 'text' }],
+		};
+		const state = EditorState.create({ doc: modelToDoc(model) });
+		const next = docToModel(state.tr.setNodeAttribute(0, 'align', 'left').doc, model);
+		expect(next.blocks[0]).toMatchObject({ style: 'Centered', align: 'left' });
+		expect(next.blocks[0]).not.toBe(model.blocks[0]);
+	});
 	it('maps model newlines to hard breaks and roundtrips them through DOCX', async () => {
 		const model = createDocument();
 		model.blocks = [

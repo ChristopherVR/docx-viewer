@@ -4,6 +4,7 @@ import type { DocumentModel } from '@christophervr/docx-core';
 export interface EditorOptions {
 	documentModel?: DocumentModel;
 	readOnly?: boolean;
+	locale?: string;
 	onDocumentChange?: (model: DocumentModel) => void;
 	onDocumentError?: (error: Error) => void;
 }
@@ -36,6 +37,7 @@ export function mountEditor(host: HTMLElement, initial: EditorOptions = {}): Edi
 		update(next) {
 			if (destroyed) return;
 			options = next;
+			element.locale = next.locale ?? 'en';
 			element.readOnly = next.readOnly ?? false;
 			if (
 				next.documentModel &&

@@ -1,10 +1,16 @@
 # Svelte
 
+Install the entry-point package once, then add the matching framework if your application does not already include it:
+
+```sh
+npm install @christophervr/docx-viewer
+```
+
 Use the Svelte adapter as a component and handle model changes with the event callback.
 
 ```svelte
 <script>
-	import WordEditor from '@christophervr/docx-bindings/svelte';
+	import WordEditor from '@christophervr/docx-viewer/svelte';
 	let model = $state(initialDocument);
 </script>
 

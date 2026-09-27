@@ -4,6 +4,7 @@ import type { EditorView } from 'prosemirror-view';
 import { closeHistory } from 'prosemirror-history';
 import { isValidLanguageTag } from '@christophervr/docx-core';
 import { schema } from './schema';
+import { findLocalizedControl, localizeElement, normalizeEditorLocale } from './localization';
 
 export type LanguageField = 'language' | 'eastAsiaLanguage' | 'bidiLanguage';
 export type MultilingualAction =
@@ -74,7 +75,7 @@ function languageControl(label: string, key: LanguageField): HTMLElement {
 	return wrapper;
 }
 
-export function createMultilingualControls(): HTMLElement {
+export function createMultilingualControls(locale = 'en'): HTMLElement {
 	const group = document.createElement('div');
 	group.className = 'ribbon-group multilingual-controls';
 	const direction = document.createElement('select');
@@ -121,6 +122,7 @@ export function createMultilingualControls(): HTMLElement {
 	note.className = 'multilingual-note';
 	note.textContent = 'Language tags annotate text; they do not translate or spell-check it.';
 	group.append(note);
+	localizeElement(group, normalizeEditorLocale(locale));
 	return group;
 }
 
@@ -160,7 +162,7 @@ export function syncMultilingualControls(toolbar: HTMLElement, state: EditorStat
 				paragraphs.push(String(node.attrs.direction ?? 'inherit'));
 		});
 	setSelectValue(
-		toolbar.querySelector<HTMLSelectElement>('[aria-label="Paragraph direction"]'),
+		findLocalizedControl<HTMLSelectElement>(toolbar, 'Paragraph direction'),
 		commonValue(paragraphs.length ? paragraphs : ['inherit'])!,
 	);
 	const marks = selectedTextMarks(state);
@@ -176,11 +178,12 @@ export function syncMultilingualControls(toolbar: HTMLElement, state: EditorStat
 		});
 		const value = commonValue(values);
 		setSelectValue(
-			toolbar.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`),
+			findLocalizedControl<HTMLSelectElement>(toolbar, label),
 			value === 'mixed' ? 'mixed' : (value ?? ''),
 		);
-		const input = toolbar.querySelector<HTMLInputElement>(
-			`[aria-label="Custom ${label.toLowerCase()} tag"]`,
+		const input = findLocalizedControl<HTMLInputElement>(
+			toolbar,
+			`Custom ${label.toLowerCase()} tag`,
 		);
 		if (input) input.value = value && value !== 'mixed' ? value : '';
 	}
@@ -190,7 +193,7 @@ export function syncMultilingualControls(toolbar: HTMLElement, state: EditorStat
 	});
 	const rtl = commonValue(rtlValues);
 	setSelectValue(
-		toolbar.querySelector<HTMLSelectElement>('[aria-label="Run direction"]'),
+		findLocalizedControl<HTMLSelectElement>(toolbar, 'Run direction'),
 		rtl ?? 'inherit',
 	);
 }

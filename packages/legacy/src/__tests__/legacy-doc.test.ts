@@ -97,6 +97,11 @@ describe('legacy .doc', () => {
 		await expect(loaded.save()).rejects.toThrow(/line breaks/);
 	});
 
+	it('rejects a style catalog added to a legacy DOC model', async () => {
+		const loaded = await loadLegacyDoc(new Uint8Array(await readFile(fixture)));
+		loaded.model.paragraphStyles = { docDefaults: { align: 'center' }, styles: {}, warnings: [] };
+		await expect(loaded.save()).rejects.toThrow(/style catalogs/);
+	});
 	it('saves supported paragraph text edits and can reopen them', async () => {
 		const loaded = await loadLegacyDoc(new Uint8Array(await readFile(fixture)));
 		const first = loaded.model.blocks[0];

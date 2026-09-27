@@ -1,7 +1,11 @@
 import './style.css';
 import './collaboration.css';
 import { createDocument } from '@christophervr/docx-core';
-import { createCollaborationAuthority, type StepBatch } from '@christophervr/docx-web-component';
+import {
+	createCollaborationAuthority,
+	type StepBatch,
+	type PresenceMessage,
+} from '@christophervr/docx-web-component';
 import { mountFramework } from './framework';
 import { initTheme } from './theme';
 
@@ -20,13 +24,28 @@ const sessionId = 'local-coauthor-demo';
 const authority = createCollaborationAuthority(initial, { sessionId });
 const status = document.getElementById('collaboration-status')!;
 const pause = document.getElementById('pause-delivery') as HTMLButtonElement;
-const handles = await Promise.all(
-	['peer-a', 'peer-b'].map((id) =>
-		mountFramework(document.getElementById(id)!, { documentModel: structuredClone(initial) }),
+const guestFramework = new URLSearchParams(location.search).get('guest') || undefined;
+const handles = await Promise.all([
+	mountFramework(document.getElementById('peer-a')!, { documentModel: structuredClone(initial) }),
+	mountFramework(
+		document.getElementById('peer-b')!,
+		{ documentModel: structuredClone(initial) },
+		guestFramework,
 	),
-);
+]);
 const peers = handles.map((handle) => handle.element);
 const queue = new Map<string, StepBatch>();
+const presenceQueue = new Map<string, PresenceMessage>();
+const profiles = [
+	{
+		name: (document.getElementById('peer-a-name') as HTMLInputElement).value,
+		color: (document.getElementById('peer-a-color') as HTMLSelectElement).value,
+	},
+	{
+		name: (document.getElementById('peer-b-name') as HTMLInputElement).value,
+		color: (document.getElementById('peer-b-color') as HTMLSelectElement).value,
+	},
+];
 let paused = false;
 let draining = false;
 
@@ -51,6 +70,19 @@ function drain() {
 			}
 			queue.delete(id);
 		}
+		for (const [id, message] of presenceQueue) {
+			let retry = false;
+			for (const peer of peers) {
+				const received = peer.receivePresence(message);
+				if (received === 'out-of-order') {
+					retry = true;
+					continue;
+				}
+				if (received !== 'applied' && received !== 'duplicate' && received !== 'stale')
+					throw new Error(`Peer could not receive presence: ${received}`);
+			}
+			if (!retry) presenceQueue.delete(id);
+		}
 		renderStatus();
 	} catch (error) {
 		status.textContent = error instanceof Error ? error.message : String(error);
@@ -62,12 +94,32 @@ function drain() {
 peers.forEach((peer, index) => {
 	peer.addEventListener('collaboration-send', (event) => {
 		const batch = (event as CustomEvent<StepBatch>).detail;
-		queue.set(batch.batchId, batch);
+		queue.set(`${batch.clientId}\u0000${batch.batchId}`, batch);
+		if (paused) renderStatus();
+		else drain();
+	});
+	peer.addEventListener('presence-send', (event) => {
+		const message = (event as CustomEvent<PresenceMessage>).detail;
+		presenceQueue.set(message.clientId, message);
 		if (paused) renderStatus();
 		else drain();
 	});
 	peer.startCollaboration({ sessionId, clientId: `editor-${index + 1}` });
+	const name = document.getElementById(`peer-${index === 0 ? 'a' : 'b'}-name`)!;
+	const color = document.getElementById(`peer-${index === 0 ? 'a' : 'b'}-color`)!;
+	const updateProfile = () => {
+		const nameValue = (name as HTMLInputElement).value.trim();
+		if (!nameValue) return;
+		profiles[index] = {
+			name: nameValue,
+			color: (color as HTMLSelectElement).value,
+		};
+		peer.publishPresence(profiles[index]);
+	};
+	name.addEventListener('input', updateProfile);
+	color.addEventListener('change', updateProfile);
 });
+peers.forEach((peer, index) => peer.publishPresence(profiles[index]));
 pause.addEventListener('click', () => {
 	paused = !paused;
 	pause.textContent = paused ? 'Resume delivery' : 'Pause delivery';

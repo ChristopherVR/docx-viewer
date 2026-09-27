@@ -3,7 +3,7 @@ import type { DocumentModel } from '@christophervr/docx-core';
 import { mountEditor, type EditorBinding } from './index';
 export const WordEditor = defineComponent({
 	name: 'WordEditor',
-	props: { documentModel: Object as PropType<DocumentModel>, readOnly: Boolean },
+	props: { documentModel: Object as PropType<DocumentModel>, readOnly: Boolean, locale: String },
 	emits: {
 		'document-change': (_model: DocumentModel) => true,
 		'document-error': (_error: Error) => true,
@@ -14,6 +14,7 @@ export const WordEditor = defineComponent({
 		const options = () => ({
 			documentModel: props.documentModel,
 			readOnly: props.readOnly,
+			locale: props.locale,
 			onDocumentChange: (model: DocumentModel) => emit('document-change', model),
 			onDocumentError: (error: Error) => emit('document-error', error),
 		});
@@ -21,7 +22,7 @@ export const WordEditor = defineComponent({
 			binding = mountEditor(host.value!, options());
 		});
 		watch(
-			() => [props.documentModel, props.readOnly],
+			() => [props.documentModel, props.readOnly, props.locale],
 			() => binding?.update(options()),
 		);
 		onBeforeUnmount(() => binding?.destroy());

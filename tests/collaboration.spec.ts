@@ -11,8 +11,8 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte']) {
 		const b = page.locator('#peer-b docx-editor');
 		const textA = a.locator('.ProseMirror');
 		const textB = b.locator('.ProseMirror');
-		await expect(textA).toHaveText('Shared document');
-		await expect(textB).toHaveText('Shared document');
+		await expect(textA).toContainText('Shared document');
+		await expect(textB).toContainText('Shared document');
 		await expect(page.locator('#collaboration-status')).toContainText('Synced');
 		await page.getByRole('button', { name: 'Pause delivery', exact: true }).click();
 		await textA.click();
@@ -31,7 +31,16 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte']) {
 		await expect(textA).toContainText('Bob paragraph');
 		await expect(textB).toContainText('Alice paragraph');
 		await expect
-			.poll(async () => (await textA.innerText()) === (await textB.innerText()))
+			.poll(async () => {
+				const models = await Promise.all(
+					[a, b].map((peer) =>
+						peer.evaluate((element) =>
+							JSON.stringify((element as DocxEditorElement).documentModel),
+						),
+					),
+				);
+				return models[0] === models[1];
+			})
 			.toBe(true);
 		await expect(page.locator('#collaboration-status')).toContainText('Synced');
 		await page.getByLabel('Editor B read only', { exact: true }).check();

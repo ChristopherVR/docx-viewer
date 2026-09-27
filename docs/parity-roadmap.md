@@ -10,8 +10,8 @@ Direct formatting includes bold, italic, underline, strikethrough, highlight,
 superscript/subscript, font family/size/color and paragraph spacing/indentation.
 The shared ribbon offers line-spacing multiples from single to triple, including
 1.15 and 1.5, and shows imported exact/minimum spacing in points. Choosing inherited
-spacing removes the direct line-spacing override; style inheritance is not yet
-resolved on the editing surface. Shift+Enter inserts a line break inside the
+spacing removes the direct line-spacing override. Supported paragraph style properties
+resolve through document defaults and basedOn inheritance without flattening exports. Shift+Enter inserts a line break inside the
 current paragraph, while Enter creates another paragraph. Both persist through
 DOCX save and reload in every framework binding.
 Highlight values follow the [WordprocessingML color enumeration](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.highlightcolorvalues?view=openxml-3.0.1).
@@ -32,8 +32,9 @@ The [collaboration protocol](/collaboration) synchronizes versioned ProseMirror
 steps through an authority, rebases supported concurrent edits and preserves
 pending edits while waiting for acknowledgements. The [local coauthoring demo](/demo/collaboration.html)
 provides two editors and paused delivery for testing concurrency. Production
-networking, permissions, persistence, presence cursors and shared-save coordination
-remain application responsibilities. Structural table commands are disabled during
+networking, permissions, persistence and shared-save coordination
+remain application responsibilities. Transient peer cursors/selections and English/French
+interface localization are available in the shared editor. Structural table commands are disabled during
 collaboration because their whole-table replacements are not yet conflict-aware;
 editing text inside tables remains available.
 
@@ -43,11 +44,10 @@ Resolve document defaults, paragraph/character styles, theme fonts/colors, numbe
 
 Add shared OOXML capabilities only when their contracts are established for both consumers. Keep the canonical DOCX model/parser/writer in `docx-core`; `ole2` remains the owner of CFB and binary Word code.
 
-Paragraph styles require a style catalog and separate direct and resolved
-formatting. Resolve document defaults and `basedOn` chains in the core (with
-cycle detection), then expose the same result to the single editor. Preserve
-explicit off values and inherited properties when editing; do not flatten the
-resolved appearance into every run. Style creation must update `styles.xml`, its
+Paragraph styles now have a read-only catalog with separate direct and resolved
+paragraph formatting. Document defaults and `basedOn` chains resolve in the core
+with cycle detection and are rendered by the shared editor. The style picker can
+select existing definitions; inherited paragraph values remain out of direct formatting. Style creation must update `styles.xml`, its
 relationship and content type before a style picker can safely assign new IDs.
 Character styles, theme references and Word toggle-property semantics need
 separate fixtures before claiming full inheritance support.

@@ -15,6 +15,7 @@ import { mountEditor, type EditorBinding } from './index';
 export class WordEditorComponent implements AfterViewInit, OnChanges, OnDestroy {
 	@Input() documentModel?: DocumentModel;
 	@Input() readOnly = false;
+	@Input() locale = 'en';
 	@Output() documentChange = new EventEmitter<DocumentModel>();
 	@Output() documentError = new EventEmitter<Error>();
 	private host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -23,6 +24,7 @@ export class WordEditorComponent implements AfterViewInit, OnChanges, OnDestroy 
 		return {
 			documentModel: this.documentModel,
 			readOnly: this.readOnly,
+			locale: this.locale,
 			onDocumentChange: (model: DocumentModel) => this.documentChange.emit(model),
 			onDocumentError: (error: Error) => this.documentError.emit(error),
 		};

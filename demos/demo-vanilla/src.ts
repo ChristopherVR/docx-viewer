@@ -126,6 +126,7 @@ get<HTMLInputElement>('file').addEventListener('change', async (event) => {
 		input.value = '';
 	}
 });
+get<HTMLInputElement>('file').disabled = false;
 get('new').addEventListener('click', () => {
 	if (
 		get('state').textContent === 'Unsaved changes' &&

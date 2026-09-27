@@ -1,6 +1,7 @@
 import type { TableCommand } from './table-commands';
 import { lineSpacingOptions } from './line-spacing';
 import { createMultilingualControls, type MultilingualAction } from './multilingual-ribbon';
+import { localizeElement, normalizeEditorLocale } from './localization';
 
 export type RibbonAction =
 	| {
@@ -60,7 +61,7 @@ const group = (...children: HTMLElement[]) => {
 	return el;
 };
 
-export function createRibbon(): HTMLElement {
+export function createRibbon(locale: string = 'en'): HTMLElement {
 	const root = document.createElement('div');
 	root.className = 'dve-ribbon';
 	root.setAttribute('role', 'toolbar');
@@ -307,5 +308,12 @@ export function createRibbon(): HTMLElement {
 			}),
 		);
 	});
+	setRibbonLocale(root, locale);
 	return root;
+}
+
+export function setRibbonLocale(root: HTMLElement, value: string): void {
+	const locale = normalizeEditorLocale(value);
+	root.dataset.editorLocale = locale;
+	localizeElement(root, locale);
 }

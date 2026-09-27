@@ -37,6 +37,17 @@ export async function saveDocx(model: DocumentModel): Promise<Uint8Array> {
 	const binding = contexts.get(model);
 	if (binding && JSON.stringify(model) === JSON.stringify(binding.base))
 		return new Uint8Array(binding.context.original);
+	if (
+		binding &&
+		JSON.stringify(model.paragraphStyles) !== JSON.stringify(binding.base.paragraphStyles)
+	)
+		throw new Error(
+			'Editing the paragraph style catalog is not supported; source styles.xml is preserved unchanged.',
+		);
+	if (!binding && model.paragraphStyles)
+		throw new Error(
+			'Creating or editing paragraph styles is not supported by the standalone DOCX writer.',
+		);
 	const zip = binding ? await JSZip.loadAsync(binding.context.original) : new JSZip();
 	const document = binding ? parseXml(binding.context.sourceXml) : newDocument();
 	applyModel(document, model, binding?.base.blocks ?? []);

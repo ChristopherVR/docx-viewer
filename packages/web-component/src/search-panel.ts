@@ -1,5 +1,11 @@
 import type { EditorView } from 'prosemirror-view';
 import { SearchController, type SearchStatus } from './search-controller';
+import {
+	localizeElement,
+	normalizeEditorLocale,
+	translate,
+	type EditorLocale,
+} from './localization';
 
 export interface SearchPanelOptions {
 	getView: () => EditorView | undefined;
@@ -11,6 +17,7 @@ export interface SearchPanelHandle {
 	open(): void;
 	close(): void;
 	refresh(): void;
+	setLocale(locale: string): void;
 	readonly isOpen: boolean;
 }
 
@@ -26,7 +33,11 @@ const styleText = `
 	.dve-search-panel [role=status]{min-width:100px;color:var(--muted,#666)}
 `;
 
-export function createSearchPanel(options: SearchPanelOptions): SearchPanelHandle {
+export function createSearchPanel(
+	options: SearchPanelOptions,
+	initialLocale = 'en',
+): SearchPanelHandle {
+	let locale: EditorLocale = normalizeEditorLocale(initialLocale);
 	const controller = new SearchController(options.getView);
 	const panel = document.createElement('section');
 	panel.className = 'dve-search-panel';
@@ -72,12 +83,12 @@ export function createSearchPanel(options: SearchPanelOptions): SearchPanelHandl
 
 	const renderStatus = (status: SearchStatus) => {
 		result.textContent = !status.query
-			? 'Enter text to search'
+			? translate(locale, 'Enter text to search')
 			: !status.count
-				? '0 matches'
+				? translate(locale, 'No matches')
 				: status.active
-					? `${status.active} of ${status.count} matches`
-					: `${status.count} matches`;
+					? `${status.active} ${translate(locale, 'of')} ${status.count} ${translate(locale, status.count === 1 ? 'matches one' : 'matches many')}`
+					: `${status.count} ${translate(locale, status.count === 1 ? 'matches one' : 'matches many')}`;
 		replace.disabled = status.readOnly || !status.count;
 		replaceAll.disabled = status.readOnly || !status.count;
 		previous.disabled = next.disabled = !status.count;
@@ -134,6 +145,8 @@ export function createSearchPanel(options: SearchPanelOptions): SearchPanelHandl
 		result,
 		close,
 	);
+	localizeElement(panel, locale);
+	renderStatus(controller.status);
 	return {
 		element: panel,
 		get isOpen() {
@@ -148,6 +161,11 @@ export function createSearchPanel(options: SearchPanelOptions): SearchPanelHandl
 		close: closePanel,
 		refresh() {
 			controller.search(findInput.value, caseInput.checked);
+			renderStatus(controller.status);
+		},
+		setLocale(value: string) {
+			locale = normalizeEditorLocale(value);
+			localizeElement(panel, locale);
 			renderStatus(controller.status);
 		},
 	};

@@ -1,17 +1,15 @@
+import { refreshEditorControls } from './editor-controls';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { history } from 'prosemirror-history';
 import type { DocumentModel } from '@christophervr/docx-core';
 import { createDocument, saveDocx } from '@christophervr/docx-core';
 import { loadDocument } from '@christophervr/docx-document';
-import { createRibbon, type RibbonAction } from './ribbon';
-import { syncFontControls, syncParagraphControls, syncFormatControls } from './ribbon-controls';
+import { createRibbon, setRibbonLocale, type RibbonAction } from './ribbon';
 import { applyPageStyles } from './ribbon-commands';
 import { assignMissingParagraphIds, docToModel, modelToDoc } from './model-adapter';
 import styleText from './style.css?inline';
-import { canExecuteTableCommand } from './table-commands';
 import { editorKeymap, runRibbonCommand } from './editor-commands';
-import { countWords } from './word-count';
 import { createSearchPanel, type SearchPanelHandle } from './search-panel';
 import {
 	CollaborationClient,
@@ -23,7 +21,9 @@ import {
 	repairCollaborativeDocumentIds,
 	createCollaborationIdGenerator,
 } from './collaboration-identity';
-import { syncMultilingualControls } from './multilingual-ribbon';
+import { normalizeEditorLocale, type EditorLocale } from './localization';
+import { EditorPresence } from './editor-presence';
+import { paragraphStylesPlugin, resetStylePicker } from './paragraph-styles';
 
 const HTMLElementBase: typeof HTMLElement =
 	typeof HTMLElement === 'undefined' ? (class {} as typeof HTMLElement) : HTMLElement;
@@ -41,6 +41,30 @@ export class DocxEditorElement extends HTMLElementBase {
 	private collaborationIds?: (kind: string) => string;
 	private detachedState?: EditorState;
 	private sendScheduled = false;
+	private presence?: EditorPresence;
+	private _locale: EditorLocale = 'en';
+
+	get locale(): string {
+		return this._locale;
+	}
+	set locale(value: string) {
+		this._locale = normalizeEditorLocale(value);
+		if (this.toolbar) setRibbonLocale(this.toolbar, this._locale);
+		this.searchPanel?.setLocale(this._locale);
+		this.refreshControls();
+	}
+
+	publishPresence(profile: { name: string; color: string }) {
+		if (!this.presence) throw new Error('Start collaboration before publishing presence.');
+		return this.presence.publish(profile);
+	}
+	receivePresence(message: unknown) {
+		if (!this.presence) throw new Error('Start collaboration before receiving presence.');
+		return this.presence.receive(message);
+	}
+	leavePresence() {
+		return this.presence?.leave() ?? null;
+	}
 
 	get documentModel() {
 		return this.model;
@@ -69,6 +93,7 @@ export class DocxEditorElement extends HTMLElementBase {
 	}
 
 	disconnectedCallback() {
+		this.presence?.leave();
 		this.detachedState = this.view?.state;
 		this.view?.destroy();
 		this.view = undefined;
@@ -113,6 +138,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		if (this.collaboration) throw new Error('Stop the current collaboration session first.');
 		if (!this.view) throw new Error('Mount and load the document before starting collaboration.');
 		this.collaboration = new CollaborationClient(config);
+		this.presence = new EditorPresence(config, this, () => this.view);
 		this.collaborationIds = createCollaborationIdGenerator(config.clientId);
 		this.loadGeneration++;
 		this.detachedState = undefined;
@@ -139,6 +165,8 @@ export class DocxEditorElement extends HTMLElementBase {
 				'Acknowledge pending collaboration edits before stopping, or explicitly discard the queue.',
 			);
 		this.collaboration = undefined;
+		this.presence?.leave();
+		this.presence = undefined;
 		this.collaborationIds = undefined;
 		this.detachedState = undefined;
 		if (this.isConnected) this.renderDocument();
@@ -170,7 +198,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		style.textContent = styleText;
 		const frame = document.createElement('section');
 		frame.className = 'dve-frame';
-		const toolbar = createRibbon();
+		const toolbar = createRibbon(this._locale);
 		toolbar.addEventListener('ribbon-action', (event) =>
 			this.handleRibbonAction((event as CustomEvent<RibbonAction>).detail),
 		);
@@ -188,6 +216,7 @@ export class DocxEditorElement extends HTMLElementBase {
 			getView: () => this.view,
 			onClose: () => this.view?.focus(),
 		});
+		this.searchPanel.setLocale(this._locale);
 		frame.append(toolbar, this.searchPanel.element, canvas);
 		root.append(style, frame);
 		this.toolbar = toolbar;
@@ -198,6 +227,7 @@ export class DocxEditorElement extends HTMLElementBase {
 
 	private renderDocument() {
 		if (!this.paper) return;
+		resetStylePicker(this.toolbar);
 		this.view?.destroy();
 		this.paper.replaceChildren();
 		applyPageStyles(this.paper, this.model, this.zoom);
@@ -207,8 +237,10 @@ export class DocxEditorElement extends HTMLElementBase {
 				doc: modelToDoc(this.model),
 				plugins: [
 					history(),
+					paragraphStylesPlugin(() => this.model),
 					editorKeymap(() => this.showSearch()),
 					...(this.collaboration ? [this.collaboration.plugin] : []),
+					...(this.presence ? [this.presence.client.plugin] : []),
 				],
 			});
 		this.view = new EditorView(this.paper, {
@@ -243,6 +275,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		}
 		this.refreshControls();
 		if (transaction.docChanged || remote) this.scheduleCollaborationSend();
+		if (transaction.docChanged || transaction.selectionSet || remote) this.presence?.schedule();
 	}
 
 	private showSearch() {
@@ -262,36 +295,15 @@ export class DocxEditorElement extends HTMLElementBase {
 
 	private refreshControls() {
 		this.searchPanel?.refresh();
-		this.toolbar
-			?.querySelectorAll<HTMLButtonElement | HTMLSelectElement | HTMLInputElement>(
-				'.ribbon-group button, .ribbon-group input, .ribbon-group select:not([aria-label="Zoom"])',
-			)
-			.forEach((control) => {
-				control.disabled =
-					this._readOnly && control.getAttribute('aria-label') !== 'Find and replace';
-			});
-		if (!this.view) return;
-		const { state } = this.view;
-		if (this.toolbar) {
-			syncMultilingualControls(this.toolbar, state);
-			syncFormatControls(this.toolbar, state);
-			for (const button of this.toolbar.querySelectorAll<HTMLButtonElement>(
-				'button[data-action]',
-			)) {
-				const action = JSON.parse(button.dataset.action!) as RibbonAction;
-				if (action.type === 'tableEdit')
-					button.disabled =
-						this._readOnly ||
-						Boolean(this.collaboration) ||
-						!canExecuteTableCommand(this.view, action.key);
-			}
-			syncFontControls(this.toolbar, state);
-			syncParagraphControls(this.toolbar, state);
-		}
-		const content = state.doc.textBetween(0, state.doc.content.size, ' ').trim();
-		const words = countWords(content, this.lang || undefined);
-		const status = this.toolbar?.parentElement?.querySelector('.dve-status');
-		if (status) status.textContent = `Page 1 · ${words} words`;
+		refreshEditorControls(
+			this.toolbar,
+			this.view,
+			this.model,
+			this._readOnly,
+			Boolean(this.collaboration),
+			this._locale,
+			this.lang,
+		);
 	}
 }
 
