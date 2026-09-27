@@ -4,6 +4,8 @@ import type { EditorView } from 'prosemirror-view';
 import type { DocumentModel, PendingMediaPart } from '@christophervr/docx-core';
 import { applyCharacterStyle } from './character-style-picker';
 import { createLinkDialog, type LinkDialog } from './link-dialog';
+import { createPictureDialog, type PictureDialog } from './picture-dialog';
+import { NodeSelection } from 'prosemirror-state';
 import { followLinkAt } from './link-commands';
 import { insertPicture, PICTURE_TYPES, stagePicture } from './picture-commands';
 import type { RibbonAction } from './ribbon';
@@ -23,6 +25,7 @@ export interface InsertControllerHost {
 /** Picture, link, character style and hidden-text commands shared by every editor instance. */
 export class InsertController {
 	readonly linkDialog: LinkDialog;
+	readonly pictureDialog: PictureDialog;
 	readonly pictureInput: HTMLInputElement;
 	/** Bytes for pictures inserted since the document was loaded; passed to save. */
 	readonly pendingMedia = new Map<string, PendingMediaPart>();
@@ -33,6 +36,7 @@ export class InsertController {
 			getView: () => host.view(),
 			onError: (error) => host.reportError(error),
 		});
+		this.pictureDialog = createPictureDialog(() => host.view());
 		this.pictureInput = document.createElement('input');
 		this.pictureInput.type = 'file';
 		this.pictureInput.accept = Object.keys(PICTURE_TYPES).join(',');
@@ -50,6 +54,10 @@ export class InsertController {
 			if (editable) this.pictureInput.click();
 		} else if (action.type === 'link') {
 			if (editable) this.linkDialog.open();
+		} else if (action.type === 'formatPicture') {
+			const selection = view?.state.selection;
+			if (editable && selection instanceof NodeSelection && selection.node.type.name === 'image')
+				this.pictureDialog.open(selection.from);
 		} else if (action.type === 'characterStyle') {
 			if (view?.editable) applyCharacterStyle(view, action.value);
 			focusView(view);
@@ -82,10 +90,12 @@ export class InsertController {
 	reset(): void {
 		this.pendingMedia.clear();
 		if (this.linkDialog.isOpen) this.linkDialog.close();
+		if (this.pictureDialog.isOpen) this.pictureDialog.close();
 	}
 
 	setLocale(locale: EditorLocale): void {
 		this.linkDialog.setLocale(locale);
+		this.pictureDialog.setLocale(locale);
 	}
 
 	/** Re-applies the hidden-text display state after the paper is rebuilt. */

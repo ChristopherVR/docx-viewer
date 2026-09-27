@@ -319,7 +319,11 @@ ${chromeStyleText}`;
 		frame.append(toolbar, this.searchPanel.element, body);
 		this.chrome = this.createChrome();
 		this.chrome.mount(frame, toolbar);
-		frame.append(this.inserts.linkDialog.element, this.inserts.pictureInput);
+		frame.append(
+			this.inserts.linkDialog.element,
+			this.inserts.pictureDialog.element,
+			this.inserts.pictureInput,
+		);
 		if (this.pendingFileName) this.chrome.fileName = this.pendingFileName;
 		this.chrome.setLocale(this._locale);
 		root.append(style, frame);
@@ -359,7 +363,13 @@ ${chromeStyleText}`;
 			state,
 			editable: () => !this._readOnly,
 			dispatchTransaction: (transaction: Transaction) => this.applyTransaction(transaction),
-			nodeViews: { image: imageNodeView(this.imageMedia) },
+			nodeViews: {
+				image: imageNodeView(this.imageMedia, {
+					editPicture: (pos) => this.inserts.pictureDialog.open(pos),
+					maxWidth: () =>
+						this.model.page.width - this.model.page.marginLeft - this.model.page.marginRight,
+				}),
+			},
 			handleClick: (view, pos, event) => this.inserts.handleClick(view, pos, event),
 		});
 		this.detachedState = undefined;

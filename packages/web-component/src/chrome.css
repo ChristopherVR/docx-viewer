@@ -482,3 +482,50 @@
 	opacity: 0.55;
 	text-decoration: underline dotted;
 }
+
+/* Pictures: selection outline and proportional resize handle */
+.dve-paper .dve-picture {
+	position: relative;
+	display: inline-block;
+	max-width: 100%;
+	line-height: 0;
+}
+.dve-paper .dve-picture-selected {
+	outline: 2px solid var(--word);
+	outline-offset: 1px;
+}
+.dve-picture-handle {
+	position: absolute;
+	right: -5px;
+	bottom: -5px;
+	display: none;
+	width: 10px;
+	height: 10px;
+	border: 1px solid var(--word);
+	background: #fff;
+	cursor: nwse-resize;
+}
+.dve-picture-selected .dve-picture-handle {
+	display: block;
+}
+.dve-dialog textarea {
+	min-height: 60px;
+	padding: 6px 8px;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+	background: var(--surface);
+	color: var(--ink);
+	font: inherit;
+	resize: vertical;
+}
+.dve-dialog-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+.dve-dialog .dve-dialog-check {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--ink);
+}

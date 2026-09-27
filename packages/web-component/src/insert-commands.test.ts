@@ -170,3 +170,26 @@ describe('editor insert and formatting commands', () => {
 		expect(paper.hasAttribute('data-show-hidden')).toBe(true);
 	});
 });
+
+describe('toggle property display', () => {
+	afterEach(() => document.body.replaceChildren());
+
+	it('cancels direct bold on a run whose character style is also bold, as Word does', () => {
+		const model = createDocument();
+		model.blocks[0] = {
+			type: 'paragraph',
+			id: 'p1',
+			runs: [{ text: 'Plain again', bold: true, style: 'Strong' }],
+		};
+		model.characterStyles = {
+			docDefaults: {},
+			styles: { Strong: { id: 'Strong', type: 'character', formatting: { bold: true } } },
+			warnings: [],
+		};
+		const editor = mount(model);
+		const decorated = shadow(editor).querySelector<HTMLElement>(
+			'.dve-paper strong [style*="font-weight"]',
+		);
+		expect(decorated?.style.fontWeight).toBe('400');
+	});
+});

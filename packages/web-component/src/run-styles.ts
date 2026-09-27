@@ -22,17 +22,27 @@ const safeColor = (value: string | undefined) =>
 	value && /^#[0-9a-f]{6}$/i.test(value) ? value : undefined;
 
 /** CSS for inherited run formatting; direct formatting still renders through the run's own marks. */
-export function runFormattingCss(formatting: RunFormatting, theme?: Theme): string {
+export function runFormattingCss(
+	formatting: RunFormatting,
+	theme?: Theme,
+	direct: RunFormatting = {},
+): string {
 	const css: string[] = [];
+	// Word toggle properties cancel out when set at an odd number of levels; a direct toggle that the
+	// hierarchy cancels still renders its mark, so the decoration (inside the mark) resets it.
 	if (formatting.bold) css.push('font-weight:700');
+	else if (direct.bold) css.push('font-weight:400');
 	if (formatting.italic) css.push('font-style:italic');
+	else if (direct.italic) css.push('font-style:normal');
 	const lines = [
 		formatting.underline ? 'underline' : '',
 		formatting.strike || formatting.doubleStrike ? 'line-through' : '',
 	].filter(Boolean);
 	if (lines.length) css.push(`text-decoration-line:${lines.join(' ')}`);
 	if (formatting.caps) css.push('text-transform:uppercase');
+	else if (direct.caps) css.push('text-transform:none');
 	if (formatting.smallCaps) css.push('font-variant:small-caps');
+	else if (direct.smallCaps) css.push('font-variant:normal');
 	if (formatting.fontSize) css.push(`font-size:${formatting.fontSize}pt`);
 	const family = formatting.fontFamily ?? themeFont(formatting, theme);
 	if (family) css.push(`font-family:${quoteFont(family)}`);
@@ -72,7 +82,7 @@ export function runStylesPlugin(getModel: () => DocumentModel) {
 						paragraphCatalog: model.paragraphStyles,
 						paragraphStyleId: parent?.attrs.style || undefined,
 					});
-					const style = runFormattingCss(resolved, model.theme);
+					const style = runFormattingCss(resolved, model.theme, run);
 					const hidden = resolved.vanish === true;
 					if (style || hidden)
 						decorations.push(

@@ -42,6 +42,7 @@ export type RibbonAction =
 	| { type: 'reviewDisplay'; value: ReviewDisplayMode }
 	| { type: 'comments'; key: 'toggle' | 'add' }
 	| { type: 'insertPicture' }
+	| { type: 'formatPicture' }
 	| { type: 'link' }
 	| { type: 'characterStyle'; value: string }
 	| { type: 'showHidden' };
@@ -320,7 +321,11 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 		.get('Insert')!
 		.append(
 			group('Tables', button('Insert table', '▦ Table', { type: 'table' })),
-			group('Illustrations', button('Insert picture', 'Pictures', { type: 'insertPicture' })),
+			group(
+				'Illustrations',
+				button('Insert picture', 'Pictures', { type: 'insertPicture' }),
+				button('Format picture', 'Format', { type: 'formatPicture' }),
+			),
 			group('Links', button('Insert link', 'Link', { type: 'link' })),
 			group(
 				'Breaks',

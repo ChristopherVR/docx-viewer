@@ -1,4 +1,5 @@
 import type { EditorView } from 'prosemirror-view';
+import { NodeSelection } from 'prosemirror-state';
 import type { DocumentModel } from '@christophervr/docx-core';
 import type { EditorLocale } from './localization';
 import { formatPageStatus, formatWordCount } from './localization';
@@ -63,8 +64,14 @@ export function refreshEditorControls(
 			['Previous change', anyChange],
 			['Next change', anyChange],
 			['Add comment', !state.selection.empty],
+			[
+				'Format picture',
+				state.selection instanceof NodeSelection && state.selection.node.type.name === 'image',
+			],
 		] as const) {
-			const control = toolbar.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`);
+			const control = toolbar.querySelector<HTMLButtonElement>(
+				`[data-localearialabel="${label}"], [aria-label="${label}"]`,
+			);
 			if (control) control.disabled = readOnly || !enabled;
 		}
 	}
