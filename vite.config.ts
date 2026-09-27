@@ -46,5 +46,30 @@ export default defineConfig({
 			})),
 		],
 	},
+	// Pre-bundle every framework the demo can mount on demand. Otherwise the first visit to a
+	// framework makes Vite discover new dependencies, re-optimize and reload the page mid-session.
+	optimizeDeps: {
+		include: [
+			'@angular/compiler',
+			'@angular/core',
+			'@angular/common',
+			'@angular/platform-browser',
+			'@xmldom/xmldom',
+			'jszip',
+			'prosemirror-commands',
+			'prosemirror-history',
+			'prosemirror-keymap',
+			'prosemirror-model',
+			'prosemirror-state',
+			'prosemirror-view',
+			'react',
+			'react-dom/client',
+			'rxjs',
+			'solid-js',
+			'solid-js/web',
+			'svelte',
+			'vue',
+		],
+	},
 	server: { fs: { allow: [fileURLToPath(new URL('../', import.meta.url))] } },
 });
