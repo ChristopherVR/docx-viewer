@@ -80,7 +80,7 @@ function resolveParagraphMark(model: DocumentModel, id: string, keepBreak: boole
 	const paragraph = paragraphsOf(next.blocks).find((p) => p.markRevision?.id === id);
 	if (!paragraph) throw new Error(`No paragraph mark revision with id ${id} was found.`);
 	if (keepBreak) {
-		paragraph.markRevision = undefined;
+		delete paragraph.markRevision;
 		return next;
 	}
 	next.blocks = mergeIntoNext(next.blocks, paragraph.id);
@@ -125,18 +125,18 @@ function acceptOne(model: DocumentModel, id: string): DocumentModel {
 	if (!entry) throw new Error(`No revision with id ${id} was found.`);
 	if (entry.kind === 'formatChange')
 		return updateRuns(model, id, (paragraph, runIndex) => {
-			paragraph.runs[runIndex].revision = undefined;
+			delete paragraph.runs[runIndex].revision;
 		});
 	if (entry.kind === 'paragraphChange') {
 		const next = structuredClone(model);
 		const paragraph = paragraphsOf(next.blocks).find((p) => p.id === entry.paragraphId)!;
-		paragraph.formatRevision = undefined;
+		delete paragraph.formatRevision;
 		return next;
 	}
 	if (entry.runIndex === undefined) return resolveParagraphMark(model, id, entry.kind === 'insert');
 	if (entry.kind === 'insert' || entry.kind === 'moveTo')
 		return updateRuns(model, id, (paragraph, runIndex) => {
-			paragraph.runs[runIndex].revision = undefined;
+			delete paragraph.runs[runIndex].revision;
 		});
 	return updateRuns(model, id, (paragraph, runIndex) => {
 		paragraph.runs.splice(runIndex, 1);
@@ -157,7 +157,7 @@ function rejectOne(model: DocumentModel, id: string): DocumentModel {
 			paragraph.runs.splice(runIndex, 1);
 		});
 	return updateRuns(model, id, (paragraph, runIndex) => {
-		paragraph.runs[runIndex].revision = undefined;
+		delete paragraph.runs[runIndex].revision;
 	});
 }
 
@@ -176,8 +176,8 @@ function applyAll(
 			if (!fallbackWarning) throw error;
 			const next = structuredClone(current);
 			const paragraph = paragraphsOf(next.blocks).find((p) => p.id === entry.paragraphId)!;
-			if (entry.runIndex !== undefined) paragraph.runs[entry.runIndex].revision = undefined;
-			else paragraph.formatRevision = undefined;
+			if (entry.runIndex !== undefined) delete paragraph.runs[entry.runIndex].revision;
+			else delete paragraph.formatRevision;
 			current = next;
 			warned = true;
 		}

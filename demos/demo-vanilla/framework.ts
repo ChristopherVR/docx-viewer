@@ -37,11 +37,11 @@ export async function mountFramework(
 		createApp({
 			render: () =>
 				h(WordEditor, {
-					documentModel: options.documentModel,
-					readOnly: options.readOnly,
-					locale: options.locale,
-					'onDocument-change': options.onDocumentChange,
-					'onDocument-error': options.onDocumentError,
+					...(options.documentModel && { documentModel: options.documentModel }),
+					...(options.readOnly !== undefined && { readOnly: options.readOnly }),
+					...(options.locale !== undefined && { locale: options.locale }),
+					...(options.onDocumentChange && { 'onDocument-change': options.onDocumentChange }),
+					...(options.onDocumentError && { 'onDocument-error': options.onDocumentError }),
 				}),
 		}).mount(host);
 	} else if (framework === 'svelte') {

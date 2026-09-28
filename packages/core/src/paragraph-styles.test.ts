@@ -112,7 +112,7 @@ describe('paragraph style catalog', () => {
 			const id = `s${index}`;
 			styles[id] = {
 				id,
-				basedOn: index ? `s${index - 1}` : undefined,
+				...(index && { basedOn: `s${index - 1}` }),
 				formatting: index === 0 ? { align: 'center' } : {},
 			};
 		}

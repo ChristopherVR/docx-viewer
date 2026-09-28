@@ -1,3 +1,4 @@
+import { definedProps } from './defined-props.js';
 import type { LayoutFontSpec } from './measure.js';
 import type { LayoutFragment } from './result.js';
 import { appendBreakMarker, tokenizeRun, type BreakToken } from './text-breaks.js';
@@ -11,8 +12,7 @@ export function fontOf(run: LayoutRun): LayoutFontSpec {
 	return {
 		family: run.fontFamily || DEFAULT_FONT_FAMILY,
 		sizePx: ptToPx(run.fontSizePt ?? DEFAULT_FONT_SIZE_PT) * (run.script ? SCRIPT_SCALE : 1),
-		bold: run.bold,
-		italic: run.italic,
+		...definedProps({ bold: run.bold, italic: run.italic }),
 	};
 }
 

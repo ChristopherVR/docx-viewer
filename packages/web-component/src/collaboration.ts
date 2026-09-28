@@ -42,7 +42,7 @@ export class CollaborationClient {
 	readonly clientId: string;
 	private readonly config: CollaborationConfig;
 	private sequence = 0;
-	private pending?: StepBatch;
+	private pending?: StepBatch | undefined;
 	private received = new Map<string, string>();
 
 	constructor(config: CollaborationConfig) {

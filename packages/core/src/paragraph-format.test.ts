@@ -82,8 +82,8 @@ describe('DOCX paragraph formatting', () => {
 		auto.lineSpacingTwips = 480;
 		auto.lineSpacingRule = 'exact';
 		exact.lineSpacingRule = 'atLeast';
-		atLeast.lineSpacingTwips = undefined;
-		atLeast.lineSpacingRule = undefined;
+		delete atLeast.lineSpacingTwips;
+		delete atLeast.lineSpacingRule;
 		inherit.lineSpacingTwips = 300;
 		inherit.lineSpacingRule = 'auto';
 		const xml = await documentXml(await loaded.save());
@@ -121,7 +121,7 @@ describe('DOCX paragraph formatting', () => {
 		paragraph.spacingBeforeTwips = 120;
 		let xml = await documentXml(await loaded.save());
 		expect(xml).toContain('<w:jc w:val="left"');
-		paragraph.align = undefined;
+		delete paragraph.align;
 		xml = await documentXml(await loaded.save());
 		expect(xml).not.toContain('<w:jc w:val="left"');
 	});

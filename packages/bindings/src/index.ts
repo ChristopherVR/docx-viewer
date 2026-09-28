@@ -13,25 +13,26 @@ import type { DocumentModel } from '@christophervr/docx-core';
 
 /** Editor state a framework passes down as props. */
 export interface EditorProps {
-	documentModel?: DocumentModel;
-	readOnly?: boolean;
+	// Framework props are `T | undefined` when unset, so `undefined` means "not provided".
+	documentModel?: DocumentModel | undefined;
+	readOnly?: boolean | undefined;
 	/** Interface language: `en`, `fr`, `de`, `es`, `zh-CN`, or a tag such as `de-DE` that maps to one. */
-	locale?: EditorLocaleInput;
+	locale?: EditorLocaleInput | undefined;
 	/** `light`, `dark`, or `auto` (default) to follow the OS color scheme. */
-	theme?: EditorThemeMode;
+	theme?: EditorThemeMode | undefined;
 	/** Left rail of page thumbnails (needs Print Layout). Default false. */
-	showThumbnails?: boolean;
+	showThumbnails?: boolean | undefined;
 	/** Ribbon visibility. Default true. */
-	showToolbar?: boolean;
+	showToolbar?: boolean | undefined;
 	/** Ribbon controls to hide, by stable id (`RIBBON_ACTION_IDS`). Old English labels still work but warn. */
-	hiddenActions?: readonly RibbonActionInput[];
+	hiddenActions?: readonly RibbonActionInput[] | undefined;
 }
 /** Editor callbacks; each is the framework-neutral form of one entry in `EDITOR_EVENT_NAMES`. */
 export interface EditorEventOptions {
-	onDocumentChange?: (model: DocumentModel) => void;
-	onDocumentError?: (error: Error) => void;
-	onPageChange?: (detail: PageChangeDetail) => void;
-	onDirtyChange?: (dirty: boolean) => void;
+	onDocumentChange?: ((model: DocumentModel) => void) | undefined;
+	onDocumentError?: ((error: Error) => void) | undefined;
+	onPageChange?: ((detail: PageChangeDetail) => void) | undefined;
+	onDirtyChange?: ((dirty: boolean) => void) | undefined;
 }
 export interface EditorOptions extends EditorProps, EditorEventOptions {}
 

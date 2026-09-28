@@ -28,7 +28,7 @@ export class PageCursor {
 	/** Height taken by footnotes (and their separator) at the bottom of the current page. */
 	private reservedPx = 0;
 	/** Footnotes of the paragraph about to be placed; they join the page its first box lands on. */
-	private pending?: { blockId: string; notes: LayoutFootnoteBox[]; heightPx: number };
+	private pending: { blockId: string; notes: LayoutFootnoteBox[]; heightPx: number } | undefined;
 
 	constructor(
 		pages: LayoutPageBox[],

@@ -14,9 +14,9 @@ describe('paragraph keep options', () => {
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
 		const paragraph = loaded.model.blocks[0] as Paragraph;
 		expect(paragraph).toMatchObject({ keepNext: true, widowControl: false });
+		const { keepNext: _keepNext, ...unkept } = paragraph;
 		const edited: Paragraph = {
-			...paragraph,
-			keepNext: undefined,
+			...unkept,
 			keepLines: true,
 			contextualSpacing: true,
 		};

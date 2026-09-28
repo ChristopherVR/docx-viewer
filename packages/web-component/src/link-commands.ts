@@ -19,7 +19,7 @@ export function linkRangeAt(
 	let cursor = $pos.start();
 	$pos.parent.forEach((child) => {
 		const link = child.marks.find((item) => item.type === schema.marks.link);
-		items.push({ from: cursor, to: cursor + child.nodeSize, link });
+		items.push({ from: cursor, to: cursor + child.nodeSize, ...(link && { link }) });
 		cursor += child.nodeSize;
 	});
 	let index = items.findIndex((item) => item.link && item.from <= pos && pos < item.to);

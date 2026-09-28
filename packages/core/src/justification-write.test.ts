@@ -50,7 +50,7 @@ describe('justification on write', () => {
 
 	it('removes jc when align is cleared, even though justification is stale', async () => {
 		const loaded = await loadDocx(await packageFor('end'));
-		paragraphOf(loaded.model).align = undefined;
+		delete paragraphOf(loaded.model).align;
 		expect(await documentXml(await loaded.save())).not.toContain('<w:jc');
 	});
 

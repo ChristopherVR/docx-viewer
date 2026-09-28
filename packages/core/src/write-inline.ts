@@ -84,7 +84,7 @@ function runsOf(
 		if (named(child, 'r')) {
 			if (isCommentReferenceRun(child)) continue;
 			if (!runIsSafe(child)) return false;
-			slots.push({ element: child, container });
+			slots.push({ element: child, ...(container && { container }) });
 		} else if (isRevisionWrapperElement(child) && !container) {
 			if (!runsOf(child, undefined, slots)) return false;
 		} else if ((named(child, 'hyperlink') || named(child, 'fldSimple')) && !container) {

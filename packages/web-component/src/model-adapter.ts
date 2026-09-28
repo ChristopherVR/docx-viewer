@@ -100,7 +100,7 @@ export function modelToDoc(model: DocumentModel) {
 /** A table inserted in the editor keeps the borders it was created with (see insertTable). */
 function tableBordersFromNode(value: unknown): Partial<Table> {
 	const borders = parseBordersJson(value);
-	return borders ? { borders: borders as Table['borders'] } : {};
+	return borders ? { borders: borders as NonNullable<Table['borders']> } : {};
 }
 export function docToModel(
 	doc: ReturnType<typeof modelToDoc>,

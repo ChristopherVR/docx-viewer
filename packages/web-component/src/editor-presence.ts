@@ -12,7 +12,7 @@ import {
 
 export class EditorPresence {
 	readonly client: PresenceClient;
-	private profile?: { name: string; color: string };
+	private profile?: { name: string; color: string } | undefined;
 	private scheduled = false;
 	constructor(
 		config: PresenceConfig,

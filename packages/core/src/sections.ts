@@ -28,12 +28,13 @@ function parseColumns(section: XmlElement): SectionColumns {
 	const separator = parseOnOff(getW(cols, 'sep')) === true;
 	const colChildren = children(cols, 'col');
 	const widths = colChildren.length
-		? colChildren.map((column) => ({
-				widthTwips: twipInt(getW(column, 'w')) ?? 0,
-				...(twipInt(getW(column, 'space')) !== undefined
-					? { spacingTwips: twipInt(getW(column, 'space')) }
-					: {}),
-			}))
+		? colChildren.map((column) => {
+				const space = twipInt(getW(column, 'space'));
+				return {
+					widthTwips: twipInt(getW(column, 'w')) ?? 0,
+					...(space !== undefined && { spacingTwips: space }),
+				};
+			})
 		: undefined;
 	return {
 		count,

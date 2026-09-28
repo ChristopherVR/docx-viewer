@@ -6,9 +6,9 @@ import { EditorPresence } from './editor-presence';
 
 /** One editor's collaboration state: step client, presence and collaborative id generator. */
 export class CollaborationSession {
-	client?: CollaborationClient;
-	presence?: EditorPresence;
-	ids?: (kind: string) => string;
+	client?: CollaborationClient | undefined;
+	presence?: EditorPresence | undefined;
+	ids?: ((kind: string) => string) | undefined;
 	private sendScheduled = false;
 
 	constructor(

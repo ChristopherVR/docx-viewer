@@ -111,3 +111,13 @@ describe('tracked moves', () => {
 		expect(xml).toContain('<w:moveToRangeEnd w:id="8"/>');
 	});
 });
+
+describe('resolved revisions leave no marker key behind', () => {
+	it('drops the revision key instead of writing undefined, so JSON and key checks stay clean', async () => {
+		const { model } = await load();
+		const accepted = acceptRevision(model, '14');
+		for (const block of accepted.blocks)
+			for (const run of (block as Paragraph).runs) expect('revision' in run).toBe(false);
+		expect(JSON.parse(JSON.stringify(accepted))).toEqual(accepted);
+	});
+});

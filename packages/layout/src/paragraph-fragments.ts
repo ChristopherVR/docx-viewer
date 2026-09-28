@@ -1,3 +1,4 @@
+import { definedProps } from './defined-props.js';
 import type { LayoutFragment } from './result.js';
 import type { LayoutParagraph } from './input.js';
 import type { PlacedToken } from './paragraph-tokens.js';
@@ -16,10 +17,12 @@ export function buildFragments(
 			xPx: x,
 			widthPx,
 			runIndex: token.runIndex,
-			bold: run?.bold,
-			italic: run?.italic,
-			fontFamily: run?.fontFamily,
-			fontSizePt: run?.fontSizePt,
+			...definedProps({
+				bold: run?.bold,
+				italic: run?.italic,
+				fontFamily: run?.fontFamily,
+				fontSizePt: run?.fontSizePt,
+			}),
 			...(leader ? { leader } : {}),
 			...(run?.script ? { script: run.script } : {}),
 			...(run?.color ? { color: run.color } : {}),

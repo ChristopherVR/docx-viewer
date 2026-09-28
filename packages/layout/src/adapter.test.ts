@@ -140,3 +140,16 @@ describe('adaptDocumentModel', () => {
 		if (second.kind === 'paragraph') expect(second.pageBreakBefore).toBe(true);
 	});
 });
+
+describe('adaptDocumentModel key presence', () => {
+	it('omits unresolved run and paragraph properties instead of writing undefined keys', () => {
+		const paragraph = adaptDocumentModel(baseModel()).sections[0].blocks[0];
+		if (paragraph.kind !== 'paragraph') throw new Error('Expected a paragraph');
+		const undefinedKeys = [paragraph, ...paragraph.runs].flatMap((node) =>
+			Object.entries(node)
+				.filter(([, value]) => value === undefined)
+				.map(([key]) => key),
+		);
+		expect(undefinedKeys).toEqual([]);
+	});
+});

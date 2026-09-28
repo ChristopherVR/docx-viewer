@@ -16,6 +16,7 @@ import {
 	resolveRunFormatting,
 	resolveThemeColorReference,
 } from '@christophervr/docx-core';
+import { definedProps } from './defined-props.js';
 import { adaptTable } from './adapt-table.js';
 import { groupParagraphBorders, paragraphBox } from './adapt-paragraph-box.js';
 import { endnoteParagraphs, noteLabels, paragraphFootnotes } from './adapt-notes.js';
@@ -41,7 +42,7 @@ const twipsToPx = (twips: number): number => twips / 15;
 function sectionBreak(
 	type: SectionProperties['type'],
 	note: (message: string) => void,
-): LayoutSection['break'] {
+): NonNullable<LayoutSection['break']> | undefined {
 	if (type === 'nextColumn') {
 		note(NEXT_COLUMN_NOTE);
 		return 'continuous';
@@ -150,10 +151,12 @@ export function adaptDocumentModel(
 			// Hidden text (`w:vanish`) takes no space when printed, as in Word by default.
 			text: image || formatting.vanish ? '' : formatting.caps ? text.toUpperCase() : text,
 			...(object ? { object } : {}),
-			bold: formatting.bold,
-			italic: formatting.italic,
-			fontFamily: family,
-			fontSizePt: formatting.fontSize,
+			...definedProps({
+				bold: formatting.bold,
+				italic: formatting.italic,
+				fontFamily: family,
+				fontSizePt: formatting.fontSize,
+			}),
 			...(color && /^#[0-9a-f]{6}$/i.test(color) ? { color } : {}),
 			...(formatting.underline ? { underline: true } : {}),
 			...(formatting.strike || formatting.doubleStrike ? { strike: true } : {}),
@@ -169,10 +172,12 @@ export function adaptDocumentModel(
 		return {
 			text: `${displayListLabel(label.text)}${suffix}`,
 			synthetic: true,
-			bold: first.bold,
-			italic: first.italic,
-			fontFamily: first.fontFamily,
-			fontSizePt: first.fontSizePt,
+			...definedProps({
+				bold: first.bold,
+				italic: first.italic,
+				fontFamily: first.fontFamily,
+				fontSizePt: first.fontSizePt,
+			}),
 			...(first.color ? { color: first.color } : {}),
 		};
 	}
@@ -211,19 +216,21 @@ export function adaptDocumentModel(
 					}
 				: {}),
 			...floatsOf(paragraph),
-			align: resolved.align,
-			direction: resolved.direction,
-			spacingBeforeTwips: resolved.spacingBeforeTwips,
-			spacingAfterTwips: resolved.spacingAfterTwips,
-			lineSpacingTwips: resolved.lineSpacingTwips,
-			lineSpacingRule: resolved.lineSpacingRule,
-			indentLeftTwips: resolved.indentLeftTwips ?? label?.indentLeftTwips,
-			indentRightTwips: resolved.indentRightTwips,
-			indentStartTwips: resolved.indentStartTwips,
-			indentEndTwips: resolved.indentEndTwips,
-			firstLineTwips: ownFirstLine ? resolved.firstLineTwips : label?.firstLineTwips,
-			hangingTwips: ownFirstLine ? resolved.hangingTwips : label?.hangingTwips,
-			styleId: paragraph.style,
+			...definedProps({
+				align: resolved.align,
+				direction: resolved.direction,
+				spacingBeforeTwips: resolved.spacingBeforeTwips,
+				spacingAfterTwips: resolved.spacingAfterTwips,
+				lineSpacingTwips: resolved.lineSpacingTwips,
+				lineSpacingRule: resolved.lineSpacingRule,
+				indentLeftTwips: resolved.indentLeftTwips ?? label?.indentLeftTwips,
+				indentRightTwips: resolved.indentRightTwips,
+				indentStartTwips: resolved.indentStartTwips,
+				indentEndTwips: resolved.indentEndTwips,
+				firstLineTwips: ownFirstLine ? resolved.firstLineTwips : label?.firstLineTwips,
+				hangingTwips: ownFirstLine ? resolved.hangingTwips : label?.hangingTwips,
+				styleId: paragraph.style,
+			}),
 			...(paragraph.pageBreakBefore ? { pageBreakBefore: true } : {}),
 			...(resolved.keepNext ? { keepNext: true } : {}),
 			...(resolved.keepLines ? { keepLines: true } : {}),
@@ -269,6 +276,7 @@ export function adaptDocumentModel(
 		const end = Math.max(start, endIndex);
 		const slice = blocks.slice(start, end);
 		start = end;
+		const sectionStart = index === 0 ? undefined : sectionBreak(section.type, reportOnce);
 		return {
 			page: {
 				widthPx: twipsToPx(section.pageWidthTwips),
@@ -286,7 +294,7 @@ export function adaptDocumentModel(
 						},
 					}
 				: {}),
-			...(index === 0 ? {} : { break: sectionBreak(section.type, reportOnce) }),
+			...(sectionStart && { break: sectionStart }),
 			...(section.verticalAlign ? { verticalAlign: section.verticalAlign } : {}),
 			blocks: slice,
 		};

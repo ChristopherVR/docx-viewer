@@ -23,10 +23,10 @@ export interface PartsControllerHost extends EditorHost {
 
 /** Headers, footers, footnotes and endnotes around the continuous editing surface. */
 export class PartsController {
-	private headerEl?: HTMLElement;
-	private footerEl?: HTMLElement;
-	private notesEl?: HTMLElement;
-	private active?: EditorView;
+	private headerEl?: HTMLElement | undefined;
+	private footerEl?: HTMLElement | undefined;
+	private notesEl?: HTMLElement | undefined;
+	private active?: EditorView | undefined;
 
 	constructor(private readonly host: PartsControllerHost) {}
 
@@ -120,13 +120,13 @@ export class PartsController {
 
 	/** Replaces one footnote's or endnote's blocks. */
 	private updateNote(id: string, blocks: Block[]): void {
-		const replace = (notes: Note[] | undefined) =>
-			notes?.map((note) => (note.id === id ? { ...note, blocks: structuredClone(blocks) } : note));
+		const replace = (notes: Note[]) =>
+			notes.map((note) => (note.id === id ? { ...note, blocks: structuredClone(blocks) } : note));
 		const model = this.host.model();
 		this.host.setModel({
 			...model,
-			footnotes: replace(model.footnotes),
-			endnotes: replace(model.endnotes),
+			...(model.footnotes && { footnotes: replace(model.footnotes) }),
+			...(model.endnotes && { endnotes: replace(model.endnotes) }),
 		});
 		this.host.edited();
 	}

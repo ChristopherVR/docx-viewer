@@ -66,7 +66,11 @@ describe('character style catalog and run formatting resolution', () => {
 		const runCatalog = parseRunStyleCatalog(styles);
 		const paragraphCatalog = parseParagraphStyleCatalog(styles);
 		const bold = (run: Parameters<typeof resolveRunFormatting>[0], paragraphStyleId?: string) =>
-			resolveRunFormatting(run, { runCatalog, paragraphCatalog, paragraphStyleId }).bold;
+			resolveRunFormatting(run, {
+				runCatalog,
+				paragraphCatalog,
+				...(paragraphStyleId !== undefined && { paragraphStyleId }),
+			}).bold;
 		// Within one style's basedOn chain values inherit: B and A both bold is still bold, and C
 		// turning it off wins over A.
 		expect(bold({ text: 'x', style: 'B' })).toBe(true);

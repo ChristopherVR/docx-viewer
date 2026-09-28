@@ -41,7 +41,7 @@ describe('numbering-write', () => {
 	it('removes numPr entirely when numbering is cleared', async () => {
 		const loaded = await loadDocx(await fixture());
 		const paragraph = loaded.model.blocks[0] as Paragraph;
-		paragraph.numbering = undefined;
+		delete paragraph.numbering;
 		const output = await JSZip.loadAsync(await loaded.save());
 		const xml = (await output.file('word/document.xml')?.async('string')) ?? '';
 		expect(xml).not.toContain('<w:numPr>');

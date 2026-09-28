@@ -132,11 +132,12 @@ export function adaptTable(
 				};
 				const width =
 					gridWidth(start, span) ?? (cell.widthTwips ? twipsToPx(cell.widthTwips) : undefined);
+				const xPx = grid ? gridWidth(0, start) : undefined;
 				const fill = cssHex(visuals.shadingFill);
 				return {
 					paragraphs: cell.paragraphs.map(adaptParagraph),
 					...(width !== undefined ? { widthPx: width } : {}),
-					...(grid ? { xPx: gridWidth(0, start) } : {}),
+					...(grid && xPx !== undefined ? { xPx } : {}),
 					padding,
 					...(Object.keys(borders).length ? { borders } : {}),
 					...(fill ? { shading: fill } : {}),

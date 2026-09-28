@@ -178,8 +178,11 @@ export function resolveParagraphFormatting(
 		result.direction === 'rtl' &&
 		(paragraph.align === undefined || paragraph.justification !== undefined) &&
 		result.align === alignFromJustification(result.justification, false)
-	)
-		result.align = alignFromJustification(result.justification, true);
+	) {
+		const align = alignFromJustification(result.justification, true);
+		if (align === undefined) delete result.align;
+		else result.align = align;
+	}
 	return result;
 }
 

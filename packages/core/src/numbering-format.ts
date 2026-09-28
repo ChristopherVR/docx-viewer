@@ -5,6 +5,7 @@ import type {
 	NumberingLevelDefinition,
 	ParagraphListLabel,
 } from './numbering-model.js';
+import { definedProps } from './defined-props.js';
 import { resolveNumberingLevel } from './numbering-parse.js';
 import { resolveStyleNumbering } from './paragraph-styles.js';
 import {
@@ -163,9 +164,11 @@ export function computeListLabels(model: DocumentModel): Map<string, ParagraphLi
 			level,
 			text,
 			suffix: def.suffix ?? 'tab',
-			indentLeftTwips: def.indentLeftTwips,
-			hangingTwips: def.hangingTwips,
-			firstLineTwips: def.firstLineTwips,
+			...definedProps({
+				indentLeftTwips: def.indentLeftTwips,
+				hangingTwips: def.hangingTwips,
+				firstLineTwips: def.firstLineTwips,
+			}),
 		});
 	}
 	return labels;

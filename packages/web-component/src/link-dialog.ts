@@ -75,12 +75,13 @@ export function createLinkDialog(options: LinkDialogOptions): LinkDialog {
 		if (!view) return;
 		const href = address.value.trim();
 		const anchor = place.value;
+		const tip = tooltip.value.trim();
 		try {
 			if (!href && !anchor) removeLink(view);
 			else
 				applyLink(
 					view,
-					{ ...(href ? { href } : { anchor }), tooltip: tooltip.value.trim() || undefined },
+					{ ...(href ? { href } : { anchor }), ...(tip && { tooltip: tip }) },
 					display.value.trim() || undefined,
 				);
 			close();

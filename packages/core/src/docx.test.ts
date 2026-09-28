@@ -192,7 +192,7 @@ describe('DOCX core', () => {
 			text: 'Plain',
 			link: { href: 'https://example.org/' },
 		});
-		reopenedParagraph.runs[0].link = undefined;
+		delete reopenedParagraph.runs[0].link;
 		const unwrapped = await JSZip.loadAsync(await reopened.save());
 		expect(await unwrapped.file('word/document.xml')?.async('string')).not.toContain(
 			'<w:hyperlink',
@@ -261,7 +261,7 @@ describe('DOCX core', () => {
 			verticalAlign: 'superscript',
 		});
 		delete paragraph.runs[0].strike;
-		paragraph.runs[0].highlight = undefined;
+		delete paragraph.runs[0].highlight;
 		paragraph.runs[0].verticalAlign = 'subscript';
 		paragraph.runs[1].strike = true;
 		paragraph.runs[1].highlight = 'cyan';

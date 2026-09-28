@@ -68,9 +68,10 @@ function characterStyleChain(
 }
 
 export interface RunFormattingContext {
-	paragraphStyleId?: string;
-	paragraphCatalog?: ParagraphStyleCatalog;
-	runCatalog?: RunStyleCatalog;
+	// Callers forward optional lookups directly; `undefined` means "no such style/catalog".
+	paragraphStyleId?: string | undefined;
+	paragraphCatalog?: ParagraphStyleCatalog | undefined;
+	runCatalog?: RunStyleCatalog | undefined;
 	/** Simple table style run formatting for the cell/region containing this run, if any. */
 	tableStyleRun?: RunFormatting;
 }

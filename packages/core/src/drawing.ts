@@ -9,6 +9,7 @@ import {
 	type ContentTypes,
 	type Relationship,
 } from './package-parts.js';
+import { definedProps } from './defined-props.js';
 import { getR, isElement, type XmlElement } from './xml.js';
 import { isStRelFromH, isStRelFromV } from './generated/wml-simple-types.js';
 import { enumValue } from './parse-diagnostics.js';
@@ -124,9 +125,7 @@ function parseModernDrawing(node: XmlElement, context: DrawingContext): InlineIm
 			...picture,
 			widthPx,
 			heightPx,
-			altText,
-			title,
-			anchored,
+			...definedProps({ altText, title, anchored }),
 			...(placement ? { placement } : {}),
 			...(svg ? { svgPartName: svg.partName } : {}),
 		};
@@ -136,9 +135,7 @@ function parseModernDrawing(node: XmlElement, context: DrawingContext): InlineIm
 		contentType: 'application/octet-stream',
 		widthPx,
 		heightPx,
-		altText,
-		title,
-		anchored,
+		...definedProps({ altText, title, anchored }),
 		unsupported: unsupportedKindLabel(uri),
 	};
 }

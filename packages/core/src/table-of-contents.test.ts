@@ -71,7 +71,7 @@ describe('table of contents', () => {
 			tabStops: [{ posTwips: 9000, align: 'right', leader: 'dot' }],
 		});
 		// Without TOC styles, entries get matching direct indents.
-		const unstyled = { ...sample(), paragraphStyles: undefined };
+		const { paragraphStyles: _styles, ...unstyled } = sample();
 		expect(buildTableOfContents(unstyled, { newId })[1]).toMatchObject({
 			indentLeftTwips: 220,
 			spacingAfterTwips: 100,

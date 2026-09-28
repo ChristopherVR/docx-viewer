@@ -185,6 +185,7 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 		return;
 	}
 	if (child.type.name === 'image') {
+		const imageLink = linkFromMarks(child);
 		runs.push({
 			text: '',
 			image: {
@@ -202,7 +203,7 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 					: {}),
 				...(child.attrs.unsupported ? { unsupported: child.attrs.unsupported } : {}),
 			},
-			...(linkFromMarks(child) ? { link: linkFromMarks(child) } : {}),
+			...(imageLink && { link: imageLink }),
 		});
 		return;
 	}

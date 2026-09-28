@@ -50,7 +50,7 @@ describe('DOCX multilingual metadata', () => {
 			throw new Error('Expected paragraphs');
 		first.direction = 'ltr';
 		first.runs[0].language = 'en-NZ';
-		first.runs[0].eastAsiaLanguage = undefined;
+		delete first.runs[0].eastAsiaLanguage;
 		first.runs[0].rtl = false;
 		second.direction = 'rtl';
 		const xml = await xmlOf(await loaded.save());

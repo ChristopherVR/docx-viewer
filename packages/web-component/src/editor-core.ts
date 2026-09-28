@@ -47,17 +47,17 @@ export interface ShellParts {
  */
 export class EditorCore {
 	model: DocumentModel = createDocument();
-	view?: EditorView;
-	loaded?: LoadedDocument;
+	view?: EditorView | undefined;
+	loaded?: LoadedDocument | undefined;
 	loadGeneration = 0;
 	readOnly = false;
 	locale: EditorLocale = 'en';
 	reviewAuthor = 'Author';
 	theme: EditorThemeMode = 'auto';
-	themeColors?: Partial<EditorTheme>;
+	themeColors?: Partial<EditorTheme> | undefined;
 	appliedThemeVars: string[] = [];
 	reviewDisplayMode: ReviewDisplayMode = 'all';
-	detachedState?: EditorState;
+	detachedState?: EditorState | undefined;
 	pendingFileName?: string;
 	readonly shell: ShellParts = {};
 	readonly collab: CollaborationSession;
