@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import type { LayoutResult } from '@christophervr/docx-layout';
 import { renderPrintLayout } from './print-layout';
+import { at } from './test-support';
 
 function sampleResult(): LayoutResult {
 	return {
@@ -89,10 +90,10 @@ describe('Print Layout pictures', () => {
 
 	it('draws inline pictures on their line and floating pictures at their page position', () => {
 		const result = sampleResult();
-		const page = result.pages[0];
-		const paragraph = page.columns[0].blocks[0];
+		const page = at(result.pages, 0);
+		const paragraph = at(at(page.columns, 0).blocks, 0);
 		if (paragraph.kind === 'paragraph')
-			paragraph.lines[0].fragments.push({
+			at(paragraph.lines, 0).fragments.push({
 				text: '',
 				xPx: 40,
 				widthPx: 60,
@@ -123,23 +124,25 @@ describe('Print Layout pictures', () => {
 		]);
 		const floats = element.querySelectorAll<HTMLElement>('.dve-print-page > .dve-print-float');
 		expect(floats).toHaveLength(2);
-		expect([floats[0].style.left, floats[0].style.top]).toEqual(['200px', '150px']);
-		expect(floats[1].classList.contains('dve-print-float-behind')).toBe(true);
-		expect(floats[1].classList.contains('dve-print-picture-missing')).toBe(true);
+		const [firstFloat, secondFloat] = [at(floats, 0), at(floats, 1)];
+		expect([firstFloat.style.left, firstFloat.style.top]).toEqual(['200px', '150px']);
+		expect(secondFloat.classList.contains('dve-print-float-behind')).toBe(true);
+		expect(secondFloat.classList.contains('dve-print-picture-missing')).toBe(true);
 	});
 });
 
 describe('Print Layout tab leaders', () => {
 	it('fills a tab with its leader across the tab width', () => {
 		const result = sampleResult();
-		const paragraph = result.pages[0].columns[0].blocks[0];
+		const paragraph = at(at(at(result.pages, 0).columns, 0).blocks, 0);
 		if (paragraph.kind === 'paragraph')
-			paragraph.lines[0].fragments.push(
+			at(paragraph.lines, 0).fragments.push(
 				{ text: '', xPx: 40, widthPx: 120, runIndex: 0, leader: 'dot' },
 				{ text: '', xPx: 160, widthPx: 30, runIndex: 0, leader: 'underscore' },
 			);
 		const { element } = renderPrintLayout(result);
-		const [dots, rule] = element.querySelectorAll<HTMLElement>('.dve-print-leader');
+		const leaders = element.querySelectorAll<HTMLElement>('.dve-print-leader');
+		const [dots, rule] = [at(leaders, 0), at(leaders, 1)];
 		expect(dots.style.width).toBe('120px');
 		expect(dots.textContent).toMatch(/^\.{10,}$/);
 		expect(rule.textContent).toBe('');
@@ -165,7 +168,7 @@ describe('Print Layout tables', () => {
 		};
 		const red = { widthPx: 1, style: 'solid' as const, color: '#ff0000' };
 		const result = sampleResult();
-		result.pages[0].columns[0].blocks = [
+		at(at(result.pages, 0).columns, 0).blocks = [
 			{
 				kind: 'table',
 				blockId: 't',
@@ -205,7 +208,8 @@ describe('Print Layout tables', () => {
 		const { element } = renderPrintLayout(result);
 		const table = element.querySelector<HTMLElement>('.dve-print-table')!;
 		expect(table.style.left).toBe('40px');
-		const [first, second] = element.querySelectorAll<HTMLElement>('.dve-print-cell');
+		const cells = element.querySelectorAll<HTMLElement>('.dve-print-cell');
+		const [first, second] = [at(cells, 0), at(cells, 1)];
 		expect([first.style.left, first.style.width, second.style.left]).toEqual([
 			'0px',
 			'100px',
@@ -230,7 +234,7 @@ describe('Print Layout footnotes', () => {
 			sourceEnd: 1,
 			fragments: [{ text: '1', xPx: 0, widthPx: 6, runIndex: 0, script: 'super' as const }],
 		};
-		result.pages[0].footnotes = [
+		at(result.pages, 0).footnotes = [
 			{
 				id: '1',
 				yPx: 0,

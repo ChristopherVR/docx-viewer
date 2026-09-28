@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PageNavigator, THUMBNAIL_WIDTH } from './page-navigator';
 import { PageTracker } from './page-sync';
+import { at } from './test-support';
 
 function sheets(count: number): HTMLElement[] {
 	return Array.from({ length: count }, (_, index) => {
@@ -72,19 +73,19 @@ describe('PageNavigator', () => {
 		expect(options(navigator).map((o) => o.tabIndex)).toEqual([-1, 0, -1]);
 		navigator.sync(state(3));
 		expect(navigator.currentPage).toBe(3);
-		expect(options(navigator)[2].getAttribute('aria-label')).toBe('Page 3 of 3');
+		expect(at(options(navigator), 2).getAttribute('aria-label')).toBe('Page 3 of 3');
 	});
 
 	it('draws scaled clones without duplicate ids', () => {
 		const { navigator, state } = setup(2);
 		navigator.setOpen(true);
 		navigator.sync(state(1));
-		const clone = options(navigator)[0].querySelector<HTMLElement>('.dve-print-page')!;
+		const clone = at(options(navigator), 0).querySelector<HTMLElement>('.dve-print-page')!;
 		expect(clone.textContent).toBe('Page 1 text');
 		expect(clone.hasAttribute('id')).toBe(false);
 		expect(clone.style.transform).toBe(`scale(${THUMBNAIL_WIDTH / 600})`);
 		expect(
-			options(navigator)[0].querySelector<HTMLElement>('.dve-page-thumb-sheet')!.style.height,
+			at(options(navigator), 0).querySelector<HTMLElement>('.dve-page-thumb-sheet')!.style.height,
 		).toBe('160px');
 	});
 
@@ -92,24 +93,24 @@ describe('PageNavigator', () => {
 		const { navigator, goTo, state } = setup(3);
 		navigator.setOpen(true);
 		navigator.sync(state(1));
-		options(navigator)[2].click();
+		at(options(navigator), 2).click();
 		expect(goTo).toHaveBeenLastCalledWith(3);
-		const second = options(navigator)[1];
+		const second = at(options(navigator), 1);
 		second.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
 		expect(goTo).toHaveBeenLastCalledWith(2);
-		const first = options(navigator)[0];
+		const first = at(options(navigator), 0);
 		first.focus();
 		first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-		expect(options(navigator)[1].tabIndex).toBe(0);
-		expect(options(navigator)[0].tabIndex).toBe(-1);
-		options(navigator)[1].dispatchEvent(
+		expect(at(options(navigator), 1).tabIndex).toBe(0);
+		expect(at(options(navigator), 0).tabIndex).toBe(-1);
+		at(options(navigator), 1).dispatchEvent(
 			new KeyboardEvent('keydown', { key: 'End', bubbles: true }),
 		);
-		expect(options(navigator)[2].tabIndex).toBe(0);
-		options(navigator)[2].dispatchEvent(
+		expect(at(options(navigator), 2).tabIndex).toBe(0);
+		at(options(navigator), 2).dispatchEvent(
 			new KeyboardEvent('keydown', { key: 'Home', bubbles: true }),
 		);
-		expect(options(navigator)[0].tabIndex).toBe(0);
+		expect(at(options(navigator), 0).tabIndex).toBe(0);
 		expect(goTo).toHaveBeenCalledTimes(2);
 	});
 
@@ -139,7 +140,7 @@ describe('PageNavigator', () => {
 		navigator.setOpen(true);
 		navigator.sync({ ...state(1), locale: 'fr' });
 		expect(navigator.element.getAttribute('aria-label')).toBe('Miniatures des pages');
-		expect(options(navigator)[1].getAttribute('aria-label')).toBe('Page 2 sur 2');
+		expect(at(options(navigator), 1).getAttribute('aria-label')).toBe('Page 2 sur 2');
 		expect(navigator.element.title).toContain('approximation');
 	});
 

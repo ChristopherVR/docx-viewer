@@ -2,6 +2,7 @@ import { Plugin } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 import type { EditorView } from 'prosemirror-view';
 import type { DocumentModel, SectionProperties } from '@christophervr/docx-core';
+import { expectDefined } from './defined';
 
 const px = (twips: number) => twips / 15;
 const twips = (pixels: number) => Math.round(pixels * 15);
@@ -38,8 +39,8 @@ function selectedBlockIndex(view: EditorView): number {
 export function currentSectionIndex(view: EditorView, model: DocumentModel): number {
 	const sections = sectionsOf(model);
 	const block = selectedBlockIndex(view);
-	for (let index = 0; index < sections.length - 1; index++) {
-		const end = model.blocks.findIndex((item) => item.id === sections[index].endsAtBlockId);
+	for (const [index, section] of sections.slice(0, -1).entries()) {
+		const end = model.blocks.findIndex((item) => item.id === section.endsAtBlockId);
 		if (end >= block) return index;
 	}
 	return sections.length - 1;
@@ -69,10 +70,11 @@ function withSection(
 	};
 }
 
-const MARGINS: Record<string, number> = { normal: 1440, narrow: 720, wide: 2160 };
+const NORMAL_MARGIN = 1440;
+const MARGINS: Record<string, number> = { normal: NORMAL_MARGIN, narrow: 720, wide: 2160 };
 
 export function setMargins(model: DocumentModel, index: number, preset: string): DocumentModel {
-	const value = MARGINS[preset] ?? MARGINS.normal;
+	const value = MARGINS[preset] ?? NORMAL_MARGIN;
 	return withSection(model, index, (section) => ({
 		...section,
 		marginTopTwips: value,
@@ -161,7 +163,7 @@ export function insertSectionBreak(
 	const sections = sectionsOf(model);
 	if (sections.some((section) => section.endsAtBlockId === block.id)) return model;
 	const index = currentSectionIndex(view, model);
-	const current = sections[index];
+	const current = expectDefined(sections[index], 'current section');
 	const next = [...sections];
 	next.splice(
 		index,
@@ -189,11 +191,10 @@ export function sectionBreaksPlugin() {
 				const sections: SectionProperties[] = typeof json === 'string' ? JSON.parse(json) : [];
 				if (sections.length < 2) return null;
 				const labels = new Map<string, string>();
-				sections
-					.slice(0, -1)
-					.forEach((section, index) =>
-						labels.set(section.endsAtBlockId, BREAK_LABEL[sections[index + 1].type]),
-					);
+				sections.slice(0, -1).forEach((section, index) => {
+					const following = sections[index + 1];
+					if (following) labels.set(section.endsAtBlockId, BREAK_LABEL[following.type]);
+				});
 				const decorations: Decoration[] = [];
 				state.doc.forEach((node, offset) => {
 					const label = labels.get(String(node.attrs.id));

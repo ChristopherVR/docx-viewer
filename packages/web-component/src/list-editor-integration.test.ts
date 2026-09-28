@@ -4,6 +4,7 @@ import { createDocument, type DocumentModel } from '@christophervr/docx-core';
 import { TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { DocxEditorElement, registerDocxEditor } from './index';
+import { must, paragraphAt } from './test-support';
 
 registerDocxEditor();
 
@@ -58,18 +59,16 @@ describe('list editing end to end', () => {
 			pmView.state.tr.setSelection(TextSelection.create(pmView.state.doc, 1)).scrollIntoView(),
 		);
 		click(editor, 'Bulleted list');
-		const paragraph = model(editor).blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('expected a paragraph');
+		const paragraph = paragraphAt(model(editor).blocks, 0);
 		expect(paragraph.numbering).toBeDefined();
-		expect(model(editor).numberingCatalog?.nums[String(paragraph.numbering!.numId)]).toBeDefined();
-		const abstractId =
-			model(editor).numberingCatalog!.nums[String(paragraph.numbering!.numId)].abstractNumId;
-		expect(model(editor).numberingCatalog!.abstractNums[abstractId].levels[0].numFmt).toBe(
-			'bullet',
-		);
+		const numId = String(must(paragraph.numbering).numId);
+		const catalog = must(model(editor).numberingCatalog, 'numbering catalog');
+		expect(catalog.nums[numId]).toBeDefined();
+		const abstractId = must(catalog.nums[numId]).abstractNumId;
+		const abstractNum = must(catalog.abstractNums[abstractId], 'abstract numbering');
+		expect(must(abstractNum.levels[0], 'level 0').numFmt).toBe('bullet');
 		click(editor, 'Bulleted list');
-		const toggledOff = model(editor).blocks[0];
-		if (toggledOff.type !== 'paragraph') throw new Error('expected a paragraph');
+		const toggledOff = paragraphAt(model(editor).blocks, 0);
 		expect(toggledOff.numbering).toBeUndefined();
 		editor.remove();
 	});
@@ -80,16 +79,13 @@ describe('list editing end to end', () => {
 		pmView.dispatch(pmView.state.tr.setSelection(TextSelection.create(pmView.state.doc, 1)));
 		click(editor, 'Numbered list');
 		click(editor, 'Increase list level');
-		let paragraph = model(editor).blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('expected a paragraph');
+		let paragraph = paragraphAt(model(editor).blocks, 0);
 		expect(paragraph.numbering?.level).toBe(1);
 		click(editor, 'Decrease list level');
-		paragraph = model(editor).blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('expected a paragraph');
+		paragraph = paragraphAt(model(editor).blocks, 0);
 		expect(paragraph.numbering?.level).toBe(0);
 		click(editor, 'Remove list');
-		paragraph = model(editor).blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('expected a paragraph');
+		paragraph = paragraphAt(model(editor).blocks, 0);
 		expect(paragraph.numbering).toBeUndefined();
 		editor.remove();
 	});

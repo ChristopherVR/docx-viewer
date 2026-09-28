@@ -1,3 +1,4 @@
+import { expectDefined } from './defined';
 import { Fragment, type Node as ProseMirrorNode } from 'prosemirror-model';
 import { closeHistory } from 'prosemirror-history';
 import { Selection } from 'prosemirror-state';
@@ -119,7 +120,9 @@ export function executeTableCommand(view: EditorView, action: TableCommand): boo
 		const at = ctx.rowIndex + (action === 'rowAfter' ? 1 : 0);
 		const added = schema.nodes.tableRow.create(
 			null,
-			Array.from({ length: rows[0].childCount }, () => emptyCell(nextId)),
+			Array.from({ length: expectDefined(rows[0], 'first table row').childCount }, () =>
+				emptyCell(nextId),
+			),
 		);
 		rows.splice(at, 0, added);
 		replacedTable(view, ctx, rows);
@@ -127,7 +130,7 @@ export function executeTableCommand(view: EditorView, action: TableCommand): boo
 	}
 
 	if (action === 'deleteColumn') {
-		if (rows[0].childCount === 1) replaceWithParagraph(view, ctx);
+		if (expectDefined(rows[0], 'first table row').childCount === 1) replaceWithParagraph(view, ctx);
 		else
 			replacedTable(
 				view,

@@ -89,7 +89,7 @@ export function createContextMenu(host: ContextMenuHost): ContextMenu {
 				: step === 'last' || current < 0
 					? last
 					: (current + step + list.length) % list.length;
-		list[next].focus();
+		list[next]?.focus();
 	};
 
 	const onKeyDown = (event: KeyboardEvent) => {

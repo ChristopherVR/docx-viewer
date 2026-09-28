@@ -188,10 +188,11 @@ export function createTitleBar(handlers: TitleBarHandlers): TitleBar {
 	const mode = document.createElement('select');
 	mode.className = 'dve-mode-select';
 	mode.setAttribute('aria-label', 'Editing mode');
-	for (const [value, text] of [
+	const modeOptions: [string, string][] = [
 		['editing', 'Editing'],
 		['viewing', 'Viewing'],
-	]) {
+	];
+	for (const [value, text] of modeOptions) {
 		const option = document.createElement('option');
 		option.value = value;
 		option.textContent = text;

@@ -76,16 +76,20 @@ export function fieldGuardPlugin(): Plugin {
  */
 function markFieldResults(state: EditorState): Transaction | null {
 	const fieldMark = state.schema.marks.field;
+	if (!fieldMark) return null;
 	const stack: { code: string; inResult: boolean }[] = [];
 	const missing: { from: number; to: number; instr: string }[] = [];
 	state.doc.descendants((node, pos) => {
 		if (node.type.name === 'fieldMarker') {
 			const kind = node.attrs.kind;
 			if (kind === 'begin') stack.push({ code: '', inResult: false });
-			else if (kind === 'code' && stack.length)
-				stack[stack.length - 1].code += node.attrs.code ?? '';
-			else if (kind === 'separate' && stack.length) stack[stack.length - 1].inResult = true;
-			else if (kind === 'end') stack.pop();
+			else if (kind === 'code' && stack.length) {
+				const open = stack[stack.length - 1];
+				if (open) open.code += node.attrs.code ?? '';
+			} else if (kind === 'separate' && stack.length) {
+				const open = stack[stack.length - 1];
+				if (open) open.inResult = true;
+			} else if (kind === 'end') stack.pop();
 			return false;
 		}
 		const top = stack.at(-1);

@@ -5,6 +5,7 @@ import { TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { DocxEditorElement, registerDocxEditor } from './index';
 import { lineSpacingLabel, lineSpacingValue } from './line-spacing';
+import { at, tableAt } from './test-support';
 
 afterEach(() => document.body.replaceChildren());
 
@@ -87,7 +88,7 @@ describe('line spacing ribbon control', () => {
 
 		view.dispatch(
 			view.state.tr.setSelection(
-				TextSelection.create(view.state.doc, textRanges[0].from, textRanges[0].to),
+				TextSelection.create(view.state.doc, at(textRanges, 0).from, at(textRanges, 0).to),
 			),
 		);
 		expect(control.value).toBe('exact:301');
@@ -97,7 +98,7 @@ describe('line spacing ribbon control', () => {
 
 		view.dispatch(
 			view.state.tr.setSelection(
-				TextSelection.create(view.state.doc, textRanges[0].from, textRanges[1].to),
+				TextSelection.create(view.state.doc, at(textRanges, 0).from, at(textRanges, 1).to),
 			),
 		);
 		expect(control.value).toBe('mixed');
@@ -111,19 +112,19 @@ describe('line spacing ribbon control', () => {
 		const { editor, view, textRanges } = mountTableEditor();
 		view.dispatch(
 			view.state.tr.setSelection(
-				TextSelection.create(view.state.doc, textRanges[0].from, textRanges[1].to),
+				TextSelection.create(view.state.doc, at(textRanges, 0).from, at(textRanges, 1).to),
 			),
 		);
 		chooseSpacing(editor, 'auto:360');
-		const table = documentModel(editor).blocks[0];
-		if (table.type !== 'table') throw new Error('Expected a table');
-		expect(table.rows[0][0].paragraphs[0]).toMatchObject({
+		const table = tableAt(documentModel(editor).blocks, 0);
+		const [firstRow = []] = table.rows;
+		expect(at(at(firstRow, 0).paragraphs, 0)).toMatchObject({
 			lineSpacingTwips: 360,
 			lineSpacingRule: 'auto',
 			spacingBeforeTwips: 80,
 			align: 'center',
 		});
-		expect(table.rows[0][1].paragraphs[0]).toMatchObject({
+		expect(at(at(firstRow, 1).paragraphs, 0)).toMatchObject({
 			lineSpacingTwips: 360,
 			lineSpacingRule: 'auto',
 			spacingAfterTwips: 100,
@@ -151,14 +152,14 @@ describe('line spacing ribbon control', () => {
 		});
 
 		chooseSpacing(editor, 'inherit');
-		const cleared = documentModel(editor).blocks[0];
-		if (cleared.type !== 'table') throw new Error('Expected a table');
-		expect(cleared.rows[0].map((cell) => cell.paragraphs[0])).toMatchObject([
+		const cleared = tableAt(documentModel(editor).blocks, 0);
+		const clearedRow = at(cleared.rows, 0);
+		expect(clearedRow.map((cell) => at(cell.paragraphs, 0))).toMatchObject([
 			{ spacingBeforeTwips: 80, align: 'center' },
 			{ spacingAfterTwips: 100, indentLeftTwips: 120 },
 		]);
 		expect(
-			cleared.rows[0]
+			clearedRow
 				.flatMap((cell) => cell.paragraphs)
 				.every((paragraph) => paragraph.lineSpacingTwips == null),
 		).toBe(true);

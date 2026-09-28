@@ -6,6 +6,7 @@ import { TextSelection } from 'prosemirror-state';
 import { undo } from 'prosemirror-history';
 import type { EditorView } from 'prosemirror-view';
 import { DocxEditorElement, registerDocxEditor } from './index';
+import { at, must } from './test-support';
 
 registerDocxEditor();
 
@@ -36,7 +37,7 @@ describe('section editing in the editor', () => {
 	it('makes page setup undoable, including the first change to a new document', () => {
 		const editor = mount(createDocument());
 		choose(editor, 'Orientation', 'landscape');
-		expect(editor.documentModel!.sections?.[0].orientation).toBe('landscape');
+		expect(editor.documentModel!.sections?.[0]?.orientation).toBe('landscape');
 		expect(editor.documentModel!.page.width).toBe(1056);
 		undo(view(editor).state, view(editor).dispatch);
 		expect(editor.documentModel!.sections).toBeUndefined();
@@ -59,7 +60,8 @@ describe('section editing in the editor', () => {
 		).toBe('Section Break (Next Page)');
 		pm.dispatch(pm.state.tr.setSelection(TextSelection.create(pm.state.doc, 18)));
 		choose(editor, 'Orientation', 'landscape');
-		const [first, second] = editor.documentModel!.sections!;
+		const sections = must(editor.documentModel!.sections, 'sections');
+		const [first, second] = [at(sections, 0), at(sections, 1)];
 		expect([first.orientation, second.orientation]).toEqual(['portrait', 'landscape']);
 		const zip = await JSZip.loadAsync(await editor.saveBytes());
 		const xml = await zip.file('word/document.xml')!.async('string');
@@ -85,24 +87,24 @@ describe('section editing in the editor', () => {
 			'[aria-label="Different first page"]',
 		)!;
 		toggle.click();
-		expect(editor.documentModel!.sections?.[0].titlePage).toBe(true);
+		expect(editor.documentModel!.sections?.[0]?.titlePage).toBe(true);
 		expect(toggle.getAttribute('aria-pressed')).toBe('true');
 		choose(editor, 'Page number format', 'lowerRoman');
 		choose(editor, 'Page numbering', 'restart');
-		expect(editor.documentModel!.sections?.[0].pageNumbering).toEqual({
+		expect(editor.documentModel!.sections?.[0]?.pageNumbering).toEqual({
 			format: 'lowerRoman',
 			start: 1,
 		});
 		choose(editor, 'Page number format', 'decimal');
-		expect(editor.documentModel!.sections?.[0].pageNumbering).toEqual({ start: 1 });
+		expect(editor.documentModel!.sections?.[0]?.pageNumbering).toEqual({ start: 1 });
 		undo(view(editor).state, view(editor).dispatch);
-		expect(editor.documentModel!.sections?.[0].pageNumbering?.format).toBe('lowerRoman');
+		expect(editor.documentModel!.sections?.[0]?.pageNumbering?.format).toBe('lowerRoman');
 	});
 
 	it('sets vertical alignment and the document-wide odd and even pages setting', async () => {
 		const editor = mount(twoParagraphs());
 		choose(editor, 'Vertical alignment', 'center');
-		expect(editor.documentModel!.sections?.[0].verticalAlign).toBe('center');
+		expect(editor.documentModel!.sections?.[0]?.verticalAlign).toBe('center');
 		const toggle = editor.shadowRoot!.querySelector<HTMLButtonElement>(
 			'[aria-label="Different odd and even pages"]',
 		)!;

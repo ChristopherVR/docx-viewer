@@ -5,6 +5,7 @@ import { DocxEditorElement, registerDocxEditor } from './index';
 import { DOCX_EDITOR_EVENTS, emit, on, type DocxEditorEventMap } from './events';
 import type { FileCommandDetail } from './file-commands';
 import type { RibbonAction } from './ribbon';
+import { at } from './test-support';
 
 registerDocxEditor();
 afterEach(() => document.body.replaceChildren());
@@ -17,9 +18,10 @@ describe('typed event contract', () => {
 		document.addEventListener('document-warning', (event) => seen.push(event as CustomEvent));
 		expect(emit(target, 'document-warning', 'careful')).toBe(true);
 		expect(seen).toHaveLength(1);
-		expect(seen[0]).toBeInstanceOf(CustomEvent);
-		expect(seen[0].detail).toBe('careful');
-		expect(seen[0].bubbles && seen[0].composed && !seen[0].cancelable).toBe(true);
+		const event = at(seen, 0);
+		expect(event).toBeInstanceOf(CustomEvent);
+		expect(event.detail).toBe('careful');
+		expect(event.bubbles && event.composed && !event.cancelable).toBe(true);
 	});
 
 	it('emit reports cancellation only for cancelable events', () => {

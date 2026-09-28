@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
-import { loadDocx, type Paragraph } from '@christophervr/docx-core';
+import { loadDocx } from '@christophervr/docx-core';
 import { NodeSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { DocxEditorElement, registerDocxEditor } from './index';
+import { at, paragraphAt } from './test-support';
 
 registerDocxEditor();
 
@@ -57,7 +58,7 @@ describe('Format picture', () => {
 		expect(height.value).toBe('100');
 		dialog.querySelector<HTMLTextAreaElement>('[aria-label="Alt text"]')!.value = 'Company logo';
 		[...dialog.querySelectorAll('button')].find((button) => button.textContent === 'OK')!.click();
-		const image = (editor.documentModel!.blocks[0] as Paragraph).runs[1].image;
+		const image = at(paragraphAt(editor.documentModel!.blocks, 0).runs, 1).image;
 		expect(image).toMatchObject({ widthPx: 200, heightPx: 100, altText: 'Company logo' });
 		const saved = await editor.saveBytes();
 		const xml = await (await JSZip.loadAsync(saved)).file('word/document.xml')!.async('string');

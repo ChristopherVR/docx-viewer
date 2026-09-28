@@ -10,6 +10,7 @@ import {
 } from './ribbon-action-ids';
 import { createRibbon } from './ribbon';
 import { ribbonControlId } from './ribbon-visibility';
+import { paragraphAt } from './test-support';
 
 registerDocxEditor();
 
@@ -88,10 +89,8 @@ describe('dirty tracking and save API', () => {
 			'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 		);
 		const parsed = await loadDocx(await blobBytes(blob));
-		const first = parsed.model.blocks[0];
-		expect(first.type === 'paragraph' && first.runs.map((run) => run.text).join('')).toContain(
-			'Edited: Paragraph number 0',
-		);
+		const first = paragraphAt(parsed.model.blocks, 0);
+		expect(first.runs.map((run) => run.text).join('')).toContain('Edited: Paragraph number 0');
 		// Saving does not claim the host persisted it.
 		expect(editor.dirty).toBe(true);
 	});

@@ -80,14 +80,17 @@ export function sameRuns(left: TextRun[], right: TextRun[]) {
 		x?.kind === y?.kind && x?.id === y?.id;
 	return (
 		a.length === b.length &&
-		a.every(
-			(run, index) =>
-				run.text === b[index].text &&
-				fields.every((field) => run[field] === b[index][field]) &&
-				sameNoteReference(run.noteReference, b[index].noteReference) &&
-				sameJson(run.link, b[index].link) &&
-				sameJson(run.image, b[index].image) &&
-				sameRevisionMeta(run, b[index]),
-		)
+		a.every((run, index) => {
+			const other = b[index];
+			return (
+				other !== undefined &&
+				run.text === other.text &&
+				fields.every((field) => run[field] === other[field]) &&
+				sameNoteReference(run.noteReference, other.noteReference) &&
+				sameJson(run.link, other.link) &&
+				sameJson(run.image, other.image) &&
+				sameRevisionMeta(run, other)
+			);
+		})
 	);
 }

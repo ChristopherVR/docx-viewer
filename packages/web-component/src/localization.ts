@@ -43,18 +43,21 @@ function translateDynamic(locale: EditorLocale, text: string): string {
 	const line = /^(\d+(?:\.\d+)?) lines$/.exec(text);
 	if (line)
 		return translateTemplate(locale, Number(line[1]) === 1 ? 'dyn.line' : 'dyn.lines', {
-			n: line[1],
+			n: line[1] ?? '',
 		});
 	const automatic = /^Automatic (.+) lines \((.+)\)$/.exec(text);
 	if (automatic)
-		return translateTemplate(locale, 'dyn.automatic', { n: automatic[1], ratio: automatic[2] });
+		return translateTemplate(locale, 'dyn.automatic', {
+			n: automatic[1] ?? '',
+			ratio: automatic[2] ?? '',
+		});
 	const ruleOnly = /^(Exact|At least) rule \(no amount\)$/.exec(text);
 	if (ruleOnly)
 		return translate(locale, ruleOnly[1] === 'Exact' ? 'dyn.exactRule' : 'dyn.atLeastRule');
 	const points = /^(Exact|At least) (.+) pt$/.exec(text);
 	if (points)
 		return translateTemplate(locale, points[1] === 'Exact' ? 'dyn.exact' : 'dyn.atLeast', {
-			n: points[2],
+			n: points[2] ?? '',
 		});
 	return text in strings.en ? translate(locale, text as LocalizationKey) : text;
 }

@@ -96,6 +96,7 @@ test('inserts a table of contents from the References tab and saves it as a TOC 
 		.poll(() =>
 			body.evaluate((root) => {
 				const paragraph = root.querySelectorAll('p')[1];
+				if (!paragraph) throw new Error('The second paragraph is missing.');
 				const range = document.createRange();
 				range.selectNodeContents(paragraph);
 				return Math.round(root.getBoundingClientRect().right - range.getBoundingClientRect().right);

@@ -264,7 +264,9 @@ export class PageNavigator {
 		if (next < 0) return;
 		event.preventDefault();
 		this.setStop(next);
-		this.thumbs[next].option.focus({ preventScroll: true });
-		this.reveal(this.thumbs[next].option);
+		const thumb = this.thumbs[next];
+		if (!thumb) return;
+		thumb.option.focus({ preventScroll: true });
+		this.reveal(thumb.option);
 	}
 }

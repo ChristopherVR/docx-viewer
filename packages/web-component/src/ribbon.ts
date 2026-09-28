@@ -59,8 +59,10 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 								: -1;
 			if (next < 0) return;
 			event.preventDefault();
-			tabsList[next].focus();
-			tabsList[next].click();
+			const target = tabsList[next];
+			if (!target) return;
+			target.focus();
+			target.click();
 		});
 		tabs.append(tab);
 		panels.set(name, panel);

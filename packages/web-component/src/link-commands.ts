@@ -25,12 +25,15 @@ export function linkRangeAt(
 	let index = items.findIndex((item) => item.link && item.from <= pos && pos < item.to);
 	if (index < 0) index = items.findIndex((item) => item.link && item.from < pos && pos <= item.to);
 	if (index < 0) return undefined;
-	const mark = items[index].link!;
+	const mark = items[index]?.link;
+	if (!mark) return undefined;
 	let start = index;
 	let end = index;
-	while (start > 0 && items[start - 1].link?.eq(mark)) start--;
-	while (end < items.length - 1 && items[end + 1].link?.eq(mark)) end++;
-	return { from: items[start].from, to: items[end].to, mark };
+	while (start > 0 && items[start - 1]?.link?.eq(mark)) start--;
+	while (end < items.length - 1 && items[end + 1]?.link?.eq(mark)) end++;
+	const first = items[start];
+	const last = items[end];
+	return first && last ? { from: first.from, to: last.to, mark } : undefined;
 }
 
 /** The link under the selection start, used to prefill the link dialog. */

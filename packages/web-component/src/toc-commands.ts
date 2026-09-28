@@ -28,9 +28,11 @@ export function blockPageNumbers(
 	const numbers = pageNumbers(model, pages);
 	const result = new Map<string, string>();
 	pages.forEach((page, index) => {
+		const number = numbers[index];
+		if (number === undefined) return;
 		for (const column of page.columns)
 			for (const block of column.blocks)
-				if (!result.has(block.blockId)) result.set(block.blockId, numbers[index]);
+				if (!result.has(block.blockId)) result.set(block.blockId, number);
 	});
 	return result;
 }
@@ -119,8 +121,11 @@ export function updateTableOfContents(
 	const found = findTableOfContents(model.blocks);
 	if (!found) return false;
 	const toc = tocParagraphs(model, found.start, found.end, found.instruction, measurer);
-	toc.paragraphs[0].runs.unshift(...found.before);
-	toc.paragraphs.at(-1)!.runs.push(...found.after);
+	const firstParagraph = toc.paragraphs[0];
+	const lastParagraph = toc.paragraphs.at(-1);
+	if (!firstParagraph || !lastParagraph) return false;
+	firstParagraph.runs.unshift(...found.before);
+	lastParagraph.runs.push(...found.after);
 	replaceBlocks(view, model, found.start, found.end, toc);
 	return true;
 }

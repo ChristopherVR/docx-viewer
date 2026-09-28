@@ -6,6 +6,7 @@ import { EditorState, TextSelection } from 'prosemirror-state';
 import { docToModel, modelToDoc } from './model-adapter';
 import { schema } from './schema';
 import { trackChangesPlugin } from './track-changes-mode';
+import { at } from './test-support';
 
 function start(text: string, second = 'Second') {
 	const model = createDocument();
@@ -52,8 +53,9 @@ describe('recording moves under Track Changes', () => {
 			['me ', 'moveFrom'],
 			['me ', 'moveTo'],
 		]);
-		expect(moves[0].move).toMatch(/^move\d+$/);
-		expect(moves[1].move).toBe(moves[0].move);
+		const [firstMove, secondMove] = [at(moves, 0), at(moves, 1)];
+		expect(firstMove.move).toMatch(/^move\d+$/);
+		expect(secondMove.move).toBe(firstMove.move);
 	});
 
 	it('records a drag-and-drop move in one transaction', () => {
@@ -68,7 +70,7 @@ describe('recording moves under Track Changes', () => {
 			['this ', 'moveFrom'],
 			['this ', 'moveTo'],
 		]);
-		expect(moves[0].move).toBe(moves[1].move);
+		expect(at(moves, 0).move).toBe(at(moves, 1).move);
 		expect(state.doc.child(1).textContent).toBe('Targetthis ');
 	});
 

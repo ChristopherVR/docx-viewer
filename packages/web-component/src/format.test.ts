@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createDocument, isWordHighlightToken } from '@christophervr/docx-core';
 import { modelToDoc, docToModel } from './model-adapter';
 import { schema, wordHighlightColors } from './schema';
+import { paragraphAt } from './test-support';
 
 describe('Word inline formatting', () => {
 	it('preserves strike, named highlight, and vertical alignment through the editor adapter', () => {
@@ -19,7 +20,7 @@ describe('Word inline formatting', () => {
 
 		const editorDoc = modelToDoc(model);
 		const updated = docToModel(editorDoc, model);
-		const runs = updated.blocks[0].type === 'paragraph' ? updated.blocks[0].runs : [];
+		const runs = paragraphAt(updated.blocks, 0).runs;
 		expect(runs).toEqual([
 			{ text: 'marked', strike: true, highlight: 'yellow', verticalAlign: 'superscript' },
 			{ text: 'sub', verticalAlign: 'subscript' },

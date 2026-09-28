@@ -2,6 +2,7 @@ import { closeHistory } from 'prosemirror-history';
 import { Fragment, type Mark, type Node as ProseMirrorNode } from 'prosemirror-model';
 import { TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
+import { expectDefined } from './defined';
 
 export interface SearchMatch {
 	from: number;
@@ -31,7 +32,7 @@ function graphemeBoundaries(value: string): Set<number> {
 	for (let index = 0; index < value.length;) {
 		const point = value.codePointAt(index)!;
 		index += point > 0xffff ? 2 : 1;
-		while (index < value.length && /\p{Mark}/u.test(value[index])) index++;
+		while (index < value.length && /\p{Mark}/u.test(value.charAt(index))) index++;
 		boundaries.add(index);
 	}
 	return boundaries;
@@ -144,7 +145,8 @@ export class SearchController {
 			const cursor = view.state.selection.from;
 			previous = -1;
 			for (let index = this.matches.length - 1; index >= 0; index--) {
-				if (this.matches[index].from < cursor) {
+				const match = this.matches[index];
+				if (match && match.from < cursor) {
 					previous = index;
 					break;
 				}
@@ -190,7 +192,7 @@ export class SearchController {
 
 	private select(index: number): SearchMatch {
 		const view = this.getView()!;
-		const match = this.matches[index];
+		const match = expectDefined(this.matches[index], 'search match');
 		this.activeIndex = index;
 		view.dispatch(
 			view.state.tr
@@ -209,6 +211,7 @@ export class SearchController {
 			transaction = transaction.replaceWith(match.from, match.to, content);
 		}
 		const last = matches[0];
+		if (!last) return;
 		const cursor =
 			last.from +
 			replacementFragment(state.schema, replacement, marksAt(state.doc, last.from)).size;
@@ -228,7 +231,10 @@ function replacementFragment(
 	const content: ProseMirrorNode[] = [];
 	lines.forEach((line, index) => {
 		if (line) content.push(schema.text(line, marks));
-		if (index < lines.length - 1) content.push(schema.nodes.hardBreak.create(null, null, marks));
+		if (index < lines.length - 1)
+			content.push(
+				expectDefined(schema.nodes.hardBreak, 'hardBreak node type').create(null, null, marks),
+			);
 	});
 	return Fragment.fromArray(content);
 }

@@ -4,6 +4,7 @@ import JSZip from 'jszip';
 import { createDocument, loadDocx, type DocumentModel, type Table } from '@christophervr/docx-core';
 import { EditorState } from 'prosemirror-state';
 import { docToModel, modelToDoc } from './model-adapter';
+import { at } from './test-support';
 
 function mergedTableModel(): DocumentModel {
 	const model = createDocument();
@@ -72,10 +73,11 @@ describe('merged table rendering and structure-preserving edits', () => {
 		const next = docToModel(tr.doc, model);
 		const table = next.blocks[0] as Table;
 		expect(table.rows).toHaveLength(2);
-		expect(table.rows[0][0]).toMatchObject({ verticalMerge: 'restart', shadingFill: '#ABCDEF' });
-		expect(table.rows[1][0]).toMatchObject({ verticalMerge: 'continue' });
-		expect(table.rows[0][1].nestedTables).toEqual([{ rows: [[{ text: 'Nested' }]] }]);
-		expect(table.rows[1][1].paragraphs[0].runs[0].text).toBe('D-edited');
+		const cellAt = (row: number, column: number) => at(at(table.rows, row), column);
+		expect(cellAt(0, 0)).toMatchObject({ verticalMerge: 'restart', shadingFill: '#ABCDEF' });
+		expect(cellAt(1, 0)).toMatchObject({ verticalMerge: 'continue' });
+		expect(cellAt(0, 1).nestedTables).toEqual([{ rows: [[{ text: 'Nested' }]] }]);
+		expect(at(at(cellAt(1, 1).paragraphs, 0).runs, 0).text).toBe('D-edited');
 	});
 
 	it('round-trips a real merged-table DOCX package end to end through save', async () => {

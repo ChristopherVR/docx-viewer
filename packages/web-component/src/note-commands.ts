@@ -82,7 +82,8 @@ export function noteNumberingPlugin(): Plugin {
 			state.doc.descendants((node, pos) => {
 				if (node.type !== schema.nodes.noteReference) return true;
 				const kind = node.attrs.kind as NoteKind;
-				const number = ++counters[kind];
+				const number = (counters[kind] ?? 0) + 1;
+				counters[kind] = number;
 				const label = formatNoteNumber(number, formats[kind]);
 				if (node.attrs.number !== number || node.attrs.label !== label)
 					tr.setNodeMarkup(pos, undefined, { ...node.attrs, number, label });

@@ -88,11 +88,12 @@ export function createMultilingualControls(locale = 'en'): HTMLElement {
 	group.className = 'ribbon-group multilingual-controls';
 	const direction = document.createElement('select');
 	direction.setAttribute('aria-label', 'Paragraph direction');
-	for (const [value, label] of [
+	const directionOptions: [string, string][] = [
 		['inherit', 'Direction: inherit'],
 		['ltr', 'Left to right'],
 		['rtl', 'Right to left'],
-	]) {
+	];
+	for (const [value, label] of directionOptions) {
 		const option = document.createElement('option');
 		option.value = value;
 		option.textContent = label;
@@ -106,11 +107,12 @@ export function createMultilingualControls(locale = 'en'): HTMLElement {
 	);
 	const runDirection = document.createElement('select');
 	runDirection.setAttribute('aria-label', 'Run direction');
-	for (const [value, label] of [
+	const runDirectionOptions: [string, string][] = [
 		['inherit', 'Run direction: inherit'],
 		['on', 'Run right to left'],
 		['off', 'Run explicit non-RTL'],
-	]) {
+	];
+	for (const [value, label] of runDirectionOptions) {
 		const option = document.createElement('option');
 		option.value = value;
 		option.textContent = label;
@@ -145,7 +147,7 @@ function selectedTextMarks(state: EditorState): Array<readonly Mark[]> {
 
 function commonValue(values: Array<string | null>): string | null | 'mixed' {
 	const distinct = [...new Set(values)];
-	return distinct.length === 1 ? distinct[0] : 'mixed';
+	return distinct.length === 1 ? (distinct[0] ?? null) : 'mixed';
 }
 
 function setSelectValue(select: HTMLSelectElement | null, value: string): void {

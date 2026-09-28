@@ -186,7 +186,9 @@ test('formats text and inserts a picture inside a header from the ribbon', async
 			canvas.width = 24;
 			canvas.height = 12;
 			canvas.getContext('2d')!.fillRect(0, 0, 24, 12);
-			return canvas.toDataURL('image/png').split(',')[1];
+			const data = canvas.toDataURL('image/png').split(',')[1];
+			if (!data) throw new Error('The canvas produced no PNG data.');
+			return data;
 		}),
 		'base64',
 	);

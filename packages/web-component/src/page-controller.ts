@@ -41,6 +41,7 @@ export class PageController {
 		const model = this.host.model();
 		const index = currentSectionIndex(view, model);
 		const section = sectionsOf(model)[index];
+		if (!section) return;
 		const next =
 			key === 'margin'
 				? setMargins(model, index, value)
@@ -73,6 +74,7 @@ export class PageController {
 		if (!view || !toolbar) return;
 		const model = this.host.model();
 		const section = sectionsOf(model)[currentSectionIndex(view, model)];
+		if (!section) return;
 		const setSelect = (label: string, value: string) => {
 			const select = findLocalizedControl<HTMLSelectElement>(toolbar, label);
 			if (select) select.value = value;
@@ -138,7 +140,7 @@ export class PageController {
 		const model = this.host.model();
 		applyPageStyles(paper, model, this.zoom);
 		const sections = model.sections ?? [];
-		const columns = sections.length === 1 ? sections[0].columns : undefined;
+		const columns = sections.length === 1 ? sections[0]?.columns : undefined;
 		const multiple = columns && columns.count > 1;
 		paper.style.columnCount = multiple ? String(columns.count) : '';
 		paper.style.columnGap = multiple ? `${((columns.spacingTwips ?? 720) / 15) * this.zoom}px` : '';

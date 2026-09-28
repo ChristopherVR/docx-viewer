@@ -5,6 +5,7 @@ import { EditorView } from 'prosemirror-view';
 import type { DocumentModel, ParagraphStyleCatalog } from '@christophervr/docx-core';
 import { syncStylePicker, paragraphStylesPlugin } from './paragraph-styles';
 import { schema } from './schema';
+import { paragraphAt } from './test-support';
 
 const catalog: ParagraphStyleCatalog = {
 	docDefaults: {},
@@ -62,9 +63,7 @@ describe('paragraph style editor integration', () => {
 		select.value = 'Centered';
 		select.dispatchEvent(new Event('change', { bubbles: true }));
 		expect(view.state.doc.firstChild?.attrs.style).toBe('Centered');
-		expect(documentModel.blocks[0].type === 'paragraph' && documentModel.blocks[0].style).toBe(
-			'Centered',
-		);
+		expect(paragraphAt(documentModel.blocks, 0).style).toBe('Centered');
 		expect(view.dom.querySelector('p')?.style.textAlign).toBe('center');
 		view.destroy();
 		host.remove();

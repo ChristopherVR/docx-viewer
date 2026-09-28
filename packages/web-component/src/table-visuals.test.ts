@@ -13,6 +13,7 @@ import type { EditorView } from 'prosemirror-view';
 import { DocxEditorElement, registerDocxEditor } from './index';
 import { insertTable } from './ribbon-commands';
 import { tableCellStyle, tableStyle } from './table-render';
+import { at } from './test-support';
 
 registerDocxEditor();
 
@@ -61,7 +62,8 @@ describe('table rendering', () => {
 				],
 			},
 		];
-		const [a, , c] = cells(mount(model));
+		const rendered = cells(mount(model));
+		const [a, c] = [at(rendered, 0), at(rendered, 2)];
 		expect(a.style.backgroundColor).toBe('rgb(31, 78, 121)');
 		expect(c.style.backgroundColor).toBe('');
 		expect(a.style.borderTop).toContain('solid');
@@ -77,7 +79,7 @@ describe('table rendering', () => {
 	it('shows dashed gridlines only for tables without any border information', () => {
 		const model = createDocument();
 		model.blocks = [{ type: 'table', id: 't1', rows: [[cell('a')]] }];
-		const [only] = cells(mount(model));
+		const only = at(cells(mount(model)), 0);
 		expect(only.getAttribute('style') ?? '').not.toContain('border-top');
 	});
 
@@ -117,7 +119,8 @@ describe('table rendering', () => {
 				rows: [[cell('head', 'Heading')], [cell('body', 'Body text')]],
 			},
 		];
-		const [header, body] = cells(mount(model));
+		const rendered = cells(mount(model));
+		const [header, body] = [at(rendered, 0), at(rendered, 1)];
 		const headerText = header.querySelector<HTMLElement>('[style*="font-weight"]');
 		expect(headerText?.textContent).toBe('Heading');
 		expect(headerText?.style.fontWeight).toBe('700');

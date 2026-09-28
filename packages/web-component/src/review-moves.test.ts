@@ -5,6 +5,7 @@ import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { docToModel, modelToDoc } from './model-adapter';
 import { acceptRevisionRange, collectRevisionRanges, rejectRevisionRange } from './review-commands';
+import { at, paragraphAt } from './test-support';
 
 function movedModel(): DocumentModel {
 	const model = createDocument();
@@ -52,21 +53,21 @@ describe('tracked moves in the editor', () => {
 		]);
 		expect(editor.dom.querySelectorAll('.dve-revision-move')).toHaveLength(2);
 		const round = docToModel(editor.state.doc, model);
-		expect((round.blocks[1] as Paragraph).runs[0].revision).toEqual(
-			(model.blocks[1] as Paragraph).runs[0].revision,
+		expect(at(paragraphAt(round.blocks, 1).runs, 0).revision).toEqual(
+			at(paragraphAt(model.blocks, 1).runs, 0).revision,
 		);
 	});
 
 	it('accepts or rejects both sides of a move together, leaving other changes', () => {
 		const model = movedModel();
 		const accepting = view(model);
-		acceptRevisionRange(accepting, collectRevisionRanges(accepting.state.doc)[1]);
+		acceptRevisionRange(accepting, at(collectRevisionRanges(accepting.state.doc), 1));
 		const accepted = docToModel(accepting.state.doc, model);
 		expect(texts(accepted)).toEqual(['Keep ', 'moved here new']);
 		expect(collectRevisionRanges(accepting.state.doc).map((range) => range.id)).toEqual(['3']);
 
 		const rejecting = view(model);
-		rejectRevisionRange(rejecting, collectRevisionRanges(rejecting.state.doc)[0]);
+		rejectRevisionRange(rejecting, at(collectRevisionRanges(rejecting.state.doc), 0));
 		expect(texts(docToModel(rejecting.state.doc, model))).toEqual(['Keep moved', ' here new']);
 	});
 });

@@ -90,12 +90,13 @@ export function createBackstage(handlers: BackstageHandlers): Backstage {
 		const { paragraphs, tables } = countBlocks(model);
 		const facts = document.createElement('dl');
 		facts.className = 'dve-backstage-facts';
-		for (const [label, value] of [
+		const rows: [string, string][] = [
 			['File name', fileName],
 			['Words', String(words)],
 			['Paragraphs', String(paragraphs)],
 			['Tables', String(tables)],
-		]) {
+		];
+		for (const [label, value] of rows) {
 			const term = document.createElement('dt');
 			term.textContent = t(label);
 			const detail = document.createElement('dd');

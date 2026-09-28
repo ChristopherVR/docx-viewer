@@ -135,7 +135,8 @@ export function attachEditorInteractions(core: EditorCore, frame: HTMLElement): 
 		print: () => void shell.chrome?.run('print'),
 		moveRegion: (direction) => {
 			const next = (REGIONS.indexOf(currentRegion()) + direction + REGIONS.length) % REGIONS.length;
-			focusRegion(REGIONS[next]);
+			const region = REGIONS[next];
+			if (region) focusRegion(region);
 		},
 		focusRibbon: () => focusRegion('ribbon'),
 		contextMenu: () => {

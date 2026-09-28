@@ -5,6 +5,7 @@ import { EditorState, TextSelection } from 'prosemirror-state';
 import { docToModel, modelToDoc } from './model-adapter';
 import { runStylesPlugin } from './run-styles';
 import { toggleFormat } from './toggle-commands';
+import { at, paragraphAt } from './test-support';
 
 function setup(runs: Paragraph['runs'], style?: string) {
 	const model = createDocument();
@@ -23,7 +24,7 @@ const apply = (state: EditorState, key: 'bold' | 'italic') => {
 	return next;
 };
 const runOf = (state: EditorState, model: ReturnType<typeof createDocument>) =>
-	(docToModel(state.doc, model).blocks[0] as Paragraph).runs[0];
+	at(paragraphAt(docToModel(state.doc, model).blocks, 0).runs, 0);
 
 describe('style-aware Bold', () => {
 	it('un-bolds heading text with an explicit off, and bolds it again', () => {

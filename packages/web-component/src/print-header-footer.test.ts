@@ -10,6 +10,7 @@ import {
 } from '@christophervr/docx-core';
 import type { LayoutPageBox } from '@christophervr/docx-layout';
 import { decoratePages, headerFooterForPage, pageNumbers } from './print-header-footer';
+import { at, must, paragraphAt } from './test-support';
 
 const page = (index: number, sectionIndex: number, pageInSection: number): LayoutPageBox => ({
 	index,
@@ -74,7 +75,7 @@ describe('Print Layout headers, footers and page fields', () => {
 			],
 		};
 		const text = (p: LayoutPageBox, n: number) =>
-			(headerFooterForPage(model, p, n, 'headers')?.blocks[0] as Paragraph).runs[1].text;
+			at(paragraphAt(must(headerFooterForPage(model, p, n, 'headers')).blocks, 0).runs, 1).text;
 		expect(text(page(0, 0, 0), 1)).toBe('first');
 		expect(text(page(1, 0, 1), 2)).toBe('even');
 		expect(text(page(2, 0, 2), 3)).toBe('odd');
@@ -86,7 +87,8 @@ describe('Print Layout headers, footers and page fields', () => {
 			...createDocument(),
 			sections: [section({ footers: { default: content('1', 'PAGE') } })],
 		};
-		model.sections![0].footers!.default!.blocks[0] = {
+		const footerBlocks = must(at(must(model.sections), 0).footers?.default).blocks;
+		footerBlocks[0] = {
 			type: 'paragraph',
 			id: 'f1',
 			runs: [
@@ -103,7 +105,9 @@ describe('Print Layout headers, footers and page fields', () => {
 			'2 of 3',
 			'3 of 3',
 		]);
-		expect(sheets[0].querySelector<HTMLElement>('.dve-print-footer')!.style.bottom).toBe('48px');
+		expect(at(sheets, 0).querySelector<HTMLElement>('.dve-print-footer')!.style.bottom).toBe(
+			'48px',
+		);
 	});
 
 	it('tags complex field results with their field code when parsing', async () => {
@@ -143,7 +147,7 @@ describe('Print Layout headers, footers and page fields', () => {
 		};
 		const sheets = [document.createElement('div')];
 		decoratePages(model, [page(0, 0, 0)], sheets, new Date(2026, 8, 7));
-		expect(sheets[0].querySelector('.dve-print-header')?.textContent).toBe('2026-09-07');
+		expect(at(sheets, 0).querySelector('.dve-print-header')?.textContent).toBe('2026-09-07');
 	});
 });
 
@@ -194,14 +198,14 @@ describe('Print Layout header and footer pictures', () => {
 		};
 		const sheets = [document.createElement('div')];
 		decoratePages(model, [page(0, 0, 0)], sheets, new Date(), (partName) => `blob:${partName}`);
-		const header = sheets[0].querySelector('.dve-print-header')!;
+		const header = at(sheets, 0).querySelector('.dve-print-header')!;
 		expect(header.textContent).toBe(' Company');
 		const inline = header.querySelector('img')!;
 		expect([inline.getAttribute('src'), inline.style.width]).toEqual([
 			'blob:word/media/logo.png',
 			'80px',
 		]);
-		const float = sheets[0].querySelector<HTMLElement>(':scope > .dve-print-float')!;
+		const float = at(sheets, 0).querySelector<HTMLElement>(':scope > .dve-print-float')!;
 		expect([float.style.left, float.style.top]).toEqual(['736px', '10px']);
 	});
 });

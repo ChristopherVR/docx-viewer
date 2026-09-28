@@ -28,7 +28,7 @@ function pastedFontFamily(value: string): string | null {
 /** A pasted CSS color as `#rrggbb`, the only form Word's `w:color` accepts; others are dropped. */
 function pastedColor(value: string): string | null {
 	const hex = /^#([0-9a-f]{6})$/i.exec(value.trim());
-	if (hex) return `#${hex[1].toLowerCase()}`;
+	if (hex?.[1]) return `#${hex[1].toLowerCase()}`;
 	const short = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(value.trim());
 	if (short)
 		return `#${short[1]}${short[1]}${short[2]}${short[2]}${short[3]}${short[3]}`.toLowerCase();
@@ -68,7 +68,7 @@ export const wordHighlightColors = {
 } satisfies Record<Exclude<WordHighlightToken, 'none'>, string>;
 
 /** Run formatting marks; key order sets ProseMirror mark precedence. */
-export const markSpecs: Record<string, MarkSpec> = {
+export const markSpecs = {
 	bold: { parseDOM: [{ tag: 'strong' }, { tag: 'b' }], toDOM: () => ['strong', 0] },
 	italic: { parseDOM: [{ tag: 'em' }, { tag: 'i' }], toDOM: () => ['em', 0] },
 	underline: { parseDOM: [{ tag: 'u' }], toDOM: () => ['u', 0] },
@@ -214,4 +214,4 @@ export const markSpecs: Record<string, MarkSpec> = {
 			0,
 		],
 	},
-};
+} satisfies Record<string, MarkSpec>;

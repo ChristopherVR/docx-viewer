@@ -14,7 +14,7 @@ const REVIEW_AUTHOR_PALETTE = [
 export function authorColor(author: string): string {
 	let hash = 0;
 	for (let i = 0; i < author.length; i++) hash = (hash * 31 + author.charCodeAt(i)) >>> 0;
-	return REVIEW_AUTHOR_PALETTE[hash % REVIEW_AUTHOR_PALETTE.length];
+	return REVIEW_AUTHOR_PALETTE[hash % REVIEW_AUTHOR_PALETTE.length] ?? '#c2431f';
 }
 
 /** The move name from a revision mark's `move` attr (JSON), for display and linkage. */
@@ -29,7 +29,7 @@ export function moveName(value: unknown): string | undefined {
 }
 
 /** Marks for tracked-change insertions/deletions and comment-range anchors; merged into schema.ts. */
-export const reviewMarks: Record<string, MarkSpec> = {
+export const reviewMarks = {
 	insertion: {
 		// `move`: JSON `{ name, rangeId? }` when this is one side of a tracked move (moveTo/moveFrom).
 		attrs: {
@@ -110,4 +110,4 @@ export const reviewMarks: Record<string, MarkSpec> = {
 			0,
 		],
 	},
-};
+} satisfies Record<string, MarkSpec>;

@@ -129,6 +129,7 @@ function navigate(view: EditorView, direction: 'next' | 'previous'): boolean {
 		direction === 'next'
 			? (ranges.find((range) => range.from > to) ?? ranges[0])
 			: ([...ranges].reverse().find((range) => range.to < from) ?? ranges.at(-1)!);
+	if (!target) return false;
 	view.dispatch(
 		view.state.tr
 			.setSelection(TextSelection.create(view.state.doc, target.from, target.to))

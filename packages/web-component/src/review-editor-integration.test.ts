@@ -4,6 +4,7 @@ import { createDocument, type DocumentModel, type Paragraph } from '@christopher
 import { TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { DocxEditorElement, registerDocxEditor } from './index';
+import { must } from './test-support';
 
 registerDocxEditor();
 
@@ -89,9 +90,10 @@ describe('review editing end to end', () => {
 		submit?.click();
 		const comments = editor.documentModel!.comments ?? [];
 		expect(comments).toHaveLength(1);
-		expect(comments[0].text).toBe('Please check');
+		const [comment] = comments;
+		expect(must(comment).text).toBe('Please check');
 		const anchored = firstParagraph(editor).runs.find((run) =>
-			run.commentIds?.includes(comments[0].id),
+			run.commentIds?.includes(must(comment).id),
 		);
 		expect(anchored?.text).toBe('Review');
 	});

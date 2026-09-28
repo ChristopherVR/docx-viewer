@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, type Paragraph, type Table } from '@christophervr/docx-core';
 import { docToModel, modelToDoc } from './model-adapter';
+import { at, paragraphAt, tableAt } from './test-support';
 
 const ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
@@ -35,8 +36,8 @@ describe('run properties survive the editor round trip', () => {
 		);
 		const roundTripped = throughEditor(loaded.model);
 		const edited = structuredClone(roundTripped);
-		(edited.blocks[0] as Paragraph).runs[1].text = ' edited';
-		const styled = (edited.blocks[0] as Paragraph).runs[0];
+		at(paragraphAt(edited.blocks, 0).runs, 1).text = ' edited';
+		const styled = at(paragraphAt(edited.blocks, 0).runs, 0);
 		expect(styled).toMatchObject({ style: 'Emph', caps: true, colorTheme: { token: 'accent1' } });
 		const saved = await loaded.save(Object.assign(loaded.model, { blocks: edited.blocks }));
 		const xml = await (await JSZip.loadAsync(saved)).file('word/document.xml')!.async('string');
@@ -66,9 +67,9 @@ describe('run properties survive the editor round trip', () => {
 			),
 		);
 		const edited = throughEditor(loaded.model);
-		const cell = (edited.blocks[0] as Table).rows[0][0];
+		const cell = at(at(tableAt(edited.blocks, 0).rows, 0), 0);
 		expect(cell).toMatchObject({ widthTwips: 2000, shadingFill: expect.stringMatching(/ffff00/i) });
-		cell.paragraphs[0].runs[0].text = 'Edited cell';
+		at(at(cell.paragraphs, 0).runs, 0).text = 'Edited cell';
 		const saved = await loaded.save(Object.assign(loaded.model, { blocks: edited.blocks }));
 		const xml = await (await JSZip.loadAsync(saved)).file('word/document.xml')!.async('string');
 		expect(xml).toContain('Edited cell');

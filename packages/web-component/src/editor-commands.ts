@@ -2,6 +2,7 @@ import type { Command } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { undo, redo } from 'prosemirror-history';
 import { baseKeymap, chainCommands } from 'prosemirror-commands';
+import { expectDefined } from './defined';
 import { toggleFormat } from './toggle-commands';
 import { keymap } from 'prosemirror-keymap';
 import type { RibbonAction } from './ribbon';
@@ -33,7 +34,10 @@ export const editorBindings: Record<string, Command> = {
 	'Mod-i': marks.italic,
 	'Mod-u': marks.underline,
 	'Shift-Enter': insertHardBreak,
-	Enter: chainCommands(exitListOnEmptyEnter, baseKeymap.Enter),
+	Enter: chainCommands(
+		exitListOnEmptyEnter,
+		expectDefined(baseKeymap.Enter, 'the base Enter command'),
+	),
 	Tab: indentListItem,
 	'Shift-Tab': outdentListItem,
 	'Mod-Enter': insertPageBreak,

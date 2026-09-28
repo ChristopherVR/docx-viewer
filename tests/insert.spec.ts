@@ -15,7 +15,9 @@ test('inserts a picture and a hyperlink from the ribbon and saves both to DOCX',
 			canvas.width = 40;
 			canvas.height = 20;
 			canvas.getContext('2d')!.fillRect(0, 0, 40, 20);
-			return canvas.toDataURL('image/png').split(',')[1];
+			const data = canvas.toDataURL('image/png').split(',')[1];
+			if (!data) throw new Error('The canvas produced no PNG data.');
+			return data;
 		}),
 		'base64',
 	);
@@ -56,10 +58,12 @@ test('inserts a picture and a hyperlink from the ribbon and saves both to DOCX',
 	expect(rels).toContain('Target="https://example.com/guide"');
 	expect(rels).toMatch(/Target="media\/dve-picture-[^"]+\.png"/);
 	const media = Object.keys(zip.files).filter(
-		(name) => name.startsWith('word/media/') && !zip.files[name].dir,
+		(name) => name.startsWith('word/media/') && !zip.files[name]?.dir,
 	);
 	expect(media).toHaveLength(1);
-	expect(await zip.file(media[0])!.async('nodebuffer')).toEqual(PNG);
+	const [mediaName] = media;
+	if (!mediaName) throw new Error('The saved document has no media part.');
+	expect(await zip.file(mediaName)!.async('nodebuffer')).toEqual(PNG);
 	expect(errors).toEqual([]);
 });
 
@@ -94,7 +98,7 @@ test('inserts an SVG picture with a PNG fallback', async ({ page }) => {
 	await saveButton(page).click();
 	const zip = await JSZip.loadAsync(await readFile((await (await pending).path())!));
 	const media = Object.keys(zip.files).filter(
-		(name) => name.startsWith('word/media/') && !zip.files[name].dir,
+		(name) => name.startsWith('word/media/') && !zip.files[name]?.dir,
 	);
 	expect(media.map((name) => name.split('.').pop()).sort()).toEqual(['png', 'svg']);
 	const png = await zip.file(media.find((name) => name.endsWith('.png'))!)!.async('uint8array');

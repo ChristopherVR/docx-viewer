@@ -5,6 +5,7 @@ import { schema } from './schema';
 import { createRibbon, setRibbonLocale } from './ribbon';
 import { createSearchPanel } from './search-panel';
 import { normalizeEditorLocale, translate } from './localization';
+import { at } from './test-support';
 
 describe('shared editor localization', () => {
 	it('normalizes display locale with English fallback and dictionary coverage', () => {
@@ -29,7 +30,7 @@ describe('shared editor localization', () => {
 		);
 		expect(JSON.parse(format.dataset.action!).key).toBe('bold');
 		expect(highlight.value).toBe('cyan');
-		expect(highlight.options[0].textContent).toBe('Sans surlignage');
+		expect(at(highlight.options, 0).textContent).toBe('Sans surlignage');
 		setRibbonLocale(ribbon, 'en');
 		expect(format.getAttribute('aria-label')).toBe('Bold');
 		expect(ribbon.querySelector<HTMLElement>('[data-label="Font"]')?.dataset.caption).toBe('Font');

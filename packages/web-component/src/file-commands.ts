@@ -15,15 +15,16 @@ export function announceFileCommand(host: HTMLElement, command: FileCommand): bo
 	return emit(host, 'file-command', { command }, { cancelable: true });
 }
 
+const DOCX_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const WORD_TYPES: Record<string, string> = {
 	doc: 'application/msword',
-	docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+	docx: DOCX_TYPE,
 };
 
 /** Wraps saved bytes in a Blob typed from the file name's extension (docx unless `.doc`). */
 export function wordBlob(bytes: Uint8Array, fileName: string): Blob {
 	const extension = fileName.split('.').pop()?.toLowerCase() ?? 'docx';
-	return new Blob([new Uint8Array(bytes)], { type: WORD_TYPES[extension] ?? WORD_TYPES.docx });
+	return new Blob([new Uint8Array(bytes)], { type: WORD_TYPES[extension] ?? DOCX_TYPE });
 }
 
 /** Starts a browser download of `bytes` named `fileName`. */

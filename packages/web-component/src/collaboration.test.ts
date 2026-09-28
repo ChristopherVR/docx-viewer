@@ -5,6 +5,7 @@ import { EditorState, TextSelection, type Transaction } from 'prosemirror-state'
 import { EditorView } from 'prosemirror-view';
 import { CollaborationAuthority, CollaborationClient, type StepBatch } from './collaboration';
 import { schema } from './schema';
+import { at } from './test-support';
 
 function documentWithText(text = 'abcdef') {
 	return schema.nodes.doc.create(null, [
@@ -142,7 +143,7 @@ describe('ProseMirror collaboration protocol', () => {
 			batchId: 'server:1',
 			version: 0,
 			clientId: 'remote',
-			steps: [state.tr.insertText('R', 2).steps[0].toJSON()],
+			steps: [at(state.tr.insertText('R', 2).steps, 0).toJSON()],
 		};
 		const first = client.receive(state, valid);
 		expect(first.status).toBe('applied');
@@ -199,7 +200,7 @@ describe('ProseMirror collaboration protocol', () => {
 		const wrong = {
 			...pending,
 			version: 0,
-			steps: [state.tr.insertText('X', 3).steps[0].toJSON()],
+			steps: [at(state.tr.insertText('X', 3).steps, 0).toJSON()],
 		};
 		expect(client.receive(state, wrong)).toMatchObject({ status: 'invalid' });
 		expect(client.hasPendingAck).toBe(true);

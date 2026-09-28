@@ -1,5 +1,6 @@
 import type { Node as ProseMirrorNode, Schema } from 'prosemirror-model';
 import { Step, Transform } from 'prosemirror-transform';
+import { expectDefined } from './defined';
 import { freezeBatch, parseBatch, validId, type StepBatch } from './collaboration-protocol';
 
 export interface CollaborationAuthorityConfig {
@@ -88,7 +89,10 @@ export class CollaborationAuthority {
 
 			transform = new Transform(local.doc);
 			for (let index = steps.length - 1; index >= 0; index--) {
-				const result = transform.maybeStep(steps[index].invert(local.docs[index]));
+				const step = expectDefined(steps[index], 'local step');
+				const result = transform.maybeStep(
+					step.invert(expectDefined(local.docs[index], 'document before local step')),
+				);
 				if (result.failed) return { status: 'rejected', reason: 'could-not-rebase-local-steps' };
 			}
 			for (const record of this.records.filter((item) => item.version >= batch.version)) {
@@ -126,7 +130,9 @@ export class CollaborationAuthority {
 			this.records.push({ version: this.version, clientId: batch.clientId, step });
 			this.version++;
 			const doc =
-				index === committed.length - 1 ? transform.doc : transform.docs[committedStart + index + 1];
+				index === committed.length - 1
+					? transform.doc
+					: expectDefined(transform.docs[committedStart + index + 1], 'committed document');
 			this.documents.set(this.version, doc);
 		}
 		this.requests.set(key, { fingerprint, batch: committedBatch });

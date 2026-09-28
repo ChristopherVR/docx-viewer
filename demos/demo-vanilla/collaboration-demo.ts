@@ -114,12 +114,16 @@ peers.forEach((peer, index) => {
 			name: nameValue,
 			color: (color as HTMLSelectElement).value,
 		};
-		peer.publishPresence(profiles[index]);
+		const profile = profiles[index];
+		if (profile) peer.publishPresence(profile);
 	};
 	name.addEventListener('input', updateProfile);
 	color.addEventListener('change', updateProfile);
 });
-peers.forEach((peer, index) => peer.publishPresence(profiles[index]));
+peers.forEach((peer, index) => {
+	const profile = profiles[index];
+	if (profile) peer.publishPresence(profile);
+});
 pause.addEventListener('click', () => {
 	paused = !paused;
 	pause.textContent = paused ? 'Resume delivery' : 'Pause delivery';
@@ -128,6 +132,7 @@ pause.addEventListener('click', () => {
 	else drain();
 });
 document.getElementById('peer-readonly')!.addEventListener('change', (event) => {
-	peers[1].readOnly = (event.target as HTMLInputElement).checked;
+	const second = peers[1];
+	if (second) second.readOnly = (event.target as HTMLInputElement).checked;
 });
 renderStatus();

@@ -1,3 +1,4 @@
+import { expectDefined } from './defined';
 import { Plugin, PluginKey, type Transaction } from 'prosemirror-state';
 import { Mapping, ReplaceStep, Transform } from 'prosemirror-transform';
 import { Fragment, Slice, type Mark, type Node as ProseMirrorNode } from 'prosemirror-model';
@@ -79,8 +80,7 @@ function applyTrackedReplace(
 	for (const segment of segments)
 		if (!segment.ownInsertion)
 			change.deletedText += transform.doc.textBetween(segment.from, segment.to, '\n');
-	for (let i = segments.length - 1; i >= 0; i--) {
-		const segment = segments[i];
+	for (const segment of [...segments].reverse()) {
 		if (segment.ownInsertion) transform.delete(segment.from, segment.to);
 		else {
 			const id = nextRevisionId();
@@ -193,10 +193,12 @@ export function trackChangesPlugin(getAuthor: () => string, isEnabled: () => boo
 			// computed against oldState.doc, apply to the document they were derived from.
 			const result = newState.tr;
 			const applied = relevant.flatMap((tr) =>
-				tr.steps.map((step, index) => ({ step, doc: tr.docs[index] })),
+				tr.steps.map((step, index) => ({
+					step,
+					doc: expectDefined(tr.docs[index], 'document before step'),
+				})),
 			);
-			for (let index = applied.length - 1; index >= 0; index--)
-				result.step(applied[index].step.invert(applied[index].doc));
+			for (const { step, doc } of [...applied].reverse()) result.step(step.invert(doc));
 			for (const step of transform.steps) result.step(step);
 			const meta: TrackMeta = { tracked: true };
 			const events = new Set(relevant.map((tr) => tr.getMeta('uiEvent')));

@@ -191,15 +191,16 @@ export function decoratePages(
 	pages.forEach((page, index) => {
 		const sheet = sheets[index];
 		if (!sheet) return;
+		const label = numbers[index] ?? String(index + 1);
 		const values: PageFieldValues = {
-			page: numbers[index],
+			page: label,
 			numPages: String(pages.length),
 			sectionPages: String(sectionPageCounts.get(page.sectionIndex) ?? 1),
 			now,
 			...(pictureUrl ? { pictureUrl } : {}),
 		};
 		const section = model.sections?.[page.sectionIndex];
-		const pageNumber = Number.parseInt(numbers[index], 10) || index + 1;
+		const pageNumber = Number.parseInt(label, 10) || index + 1;
 		for (const kind of ['header', 'footer'] as const) {
 			const content = headerFooterForPage(model, page, pageNumber, `${kind}s`);
 			if (!content) continue;

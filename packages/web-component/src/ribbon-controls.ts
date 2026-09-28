@@ -37,6 +37,7 @@ export function syncFontControls(toolbar: HTMLElement, state: EditorState) {
 			continue;
 		}
 		const value = distinct[0];
+		if (value === undefined) continue;
 		if (![...select.options].some((option) => option.value === value)) {
 			const option = document.createElement('option');
 			option.value = value;
@@ -105,7 +106,9 @@ export function syncFormatControls(toolbar: HTMLElement, state: EditorState) {
 	superButton?.setAttribute('aria-pressed', String(aligns.size === 1 && aligns.has('superscript')));
 	subButton?.setAttribute('aria-pressed', String(aligns.size === 1 && aligns.has('subscript')));
 	const highlight = findLocalizedControl<HTMLSelectElement>(toolbar, 'Text highlight');
-	if (highlight && highlights.size === 1) highlight.value = [...highlights][0];
+	const onlyHighlight = [...highlights][0];
+	if (highlight && highlights.size === 1 && onlyHighlight !== undefined)
+		highlight.value = onlyHighlight;
 	else if (highlight) highlight.selectedIndex = -1;
 }
 
@@ -155,6 +158,7 @@ export function syncParagraphControls(toolbar: HTMLElement, state: EditorState) 
 			continue;
 		}
 		const value = distinct[0];
+		if (value === undefined) continue;
 		if (label === 'Line spacing') {
 			let option = [...control.options].find((item) => item.value === value);
 			if (!option) {

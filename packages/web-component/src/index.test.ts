@@ -4,6 +4,7 @@ import { createDocument } from '@christophervr/docx-core';
 import { TextSelection } from 'prosemirror-state';
 import { loadDocument } from '@christophervr/docx-document';
 import { DocxEditorElement, registerDocxEditor } from './index';
+import { at, paragraphAt } from './test-support';
 
 vi.mock('@christophervr/docx-document', () => ({ loadDocument: vi.fn() }));
 const loadMock = vi.mocked(loadDocument);
@@ -28,8 +29,7 @@ describe('DocxEditorElement', () => {
 		registerDocxEditor();
 		const editor = document.createElement('docx-editor') as DocxEditorElement;
 		const model = createDocument();
-		model.blocks[0].type === 'paragraph' &&
-			(model.blocks[0].runs[0].text = 'A considered first draft.');
+		at(paragraphAt(model.blocks, 0).runs, 0).text = 'A considered first draft.';
 		editor.documentModel = model;
 		document.body.append(editor);
 		expect(
@@ -71,7 +71,7 @@ describe('DocxEditorElement', () => {
 			runs: [{ text: 'New words' }],
 		});
 		expect(changed).toHaveBeenCalledTimes(1);
-		expect(changed.mock.calls[0][0].detail).toBe(editor.documentModel);
+		expect(at(at(changed.mock.calls, 0), 0).detail).toBe(editor.documentModel);
 		editor.remove();
 	});
 
@@ -172,7 +172,7 @@ describe('DocxEditorElement', () => {
 		expect(new Set(ids).size).toBe(ids.length);
 		expect(
 			editor.documentModel.blocks.some(
-				(block) => block.type === 'table' && block.rows.length === 2 && block.rows[0].length === 2,
+				(block) => block.type === 'table' && block.rows.length === 2 && block.rows[0]?.length === 2,
 			),
 		).toBe(true);
 		const orientation = root.querySelector<HTMLSelectElement>('[aria-label="Orientation"]')!;
@@ -275,7 +275,7 @@ describe('DocxEditorElement', () => {
 	it('survives disconnect and reconnect without losing the model', () => {
 		const editor = document.createElement('docx-editor') as DocxEditorElement;
 		const model = createDocument();
-		if (model.blocks[0].type === 'paragraph') model.blocks[0].runs[0].text = 'Keep this text';
+		at(paragraphAt(model.blocks, 0).runs, 0).text = 'Keep this text';
 		editor.documentModel = model;
 		document.body.append(editor);
 		editor.remove();
@@ -292,14 +292,14 @@ describe('DocxEditorElement', () => {
 			resolveOld = resolve;
 		});
 		const current = createDocument();
-		if (current.blocks[0].type === 'paragraph') current.blocks[0].runs[0].text = 'current';
+		at(paragraphAt(current.blocks, 0).runs, 0).text = 'current';
 		const bytes = new Uint8Array([9, 8, 7]);
 		const save = vi.fn().mockResolvedValue(bytes);
 		loadMock.mockReturnValueOnce(oldLoad).mockResolvedValueOnce({ model: current, save });
 		const first = editor.load(new Uint8Array([1]));
 		await editor.load(new Uint8Array([2]));
 		const stale = createDocument();
-		if (stale.blocks[0].type === 'paragraph') stale.blocks[0].runs[0].text = 'stale';
+		at(paragraphAt(stale.blocks, 0).runs, 0).text = 'stale';
 		resolveOld({ model: stale, save: vi.fn() });
 		await first;
 		expect(editor.documentModel?.blocks[0]).toMatchObject({ runs: [{ text: 'current' }] });
@@ -315,7 +315,7 @@ describe('DocxEditorElement', () => {
 		editor.addEventListener('document-error', handler);
 		await expect(editor.load(new Uint8Array())).rejects.toBeTruthy();
 		expect(handler).toHaveBeenCalledTimes(1);
-		expect(handler.mock.calls[0][0].detail).toBeInstanceOf(Error);
-		expect(handler.mock.calls[0][0].detail).toBe(error);
+		expect(at(at(handler.mock.calls, 0), 0).detail).toBeInstanceOf(Error);
+		expect(at(at(handler.mock.calls, 0), 0).detail).toBe(error);
 	});
 });

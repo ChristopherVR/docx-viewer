@@ -97,6 +97,7 @@ function sameBoxes(set: DecorationSet, boxes: TabBox[], state: EditorState): boo
 		current.length === boxes.length &&
 		current.every((decoration, index) => {
 			const box = boxes[index];
+			if (!box) return false;
 			const spec = decoration.spec as { widthPx: number; leader?: string };
 			return (
 				decoration.from === box.pos && spec.widthPx === box.widthPx && spec.leader === box.leader

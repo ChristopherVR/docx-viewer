@@ -150,8 +150,8 @@ export function printLayoutResult(
 	result: LayoutResult | null,
 	note: (message: string) => void,
 ): void {
-	if (!result || !result.pages.length) return;
-	const first = result.pages[0];
+	const first = result?.pages[0];
+	if (!result || !first) return;
 	if (
 		result.pages.some((page) => page.widthPx !== first.widthPx || page.heightPx !== first.heightPx)
 	)

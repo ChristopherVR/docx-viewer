@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDocument } from '@christophervr/docx-core';
 import { DocxEditorElement, registerDocxEditor } from './index';
 import { placementClass } from './inline-content-schema';
+import { at } from './test-support';
 
 registerDocxEditor();
 
@@ -74,7 +75,7 @@ describe('hyperlink rendering', () => {
 		const links = [...editor.shadowRoot!.querySelectorAll<HTMLAnchorElement>('a[data-docx-link]')];
 		expect(links.map((link) => link.getAttribute('href'))).toEqual(['https://example.com/', '']);
 		const runs = (editor.documentModel!.blocks[0] as { runs: { link?: { href?: string } }[] }).runs;
-		expect(runs[1].link?.href).toBe('javascript:alert(1)');
+		expect(at(runs, 1).link?.href).toBe('javascript:alert(1)');
 	});
 });
 
