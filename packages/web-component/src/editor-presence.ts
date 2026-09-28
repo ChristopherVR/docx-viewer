@@ -4,6 +4,7 @@ import type { EditorView } from 'prosemirror-view';
 import { sendableSteps } from 'prosemirror-collab';
 import {
 	PresenceClient,
+	refreshPresenceLabels,
 	validatePresenceProfile,
 	type PresenceConfig,
 	type PresenceMessage,
@@ -52,6 +53,11 @@ export class EditorPresence {
 		const message = this.client.leave(state);
 		this.emit(message);
 		return message;
+	}
+	/** Re-renders peer labels after a display-locale change. */
+	relocalize() {
+		const view = this.view();
+		if (view) view.dispatch(refreshPresenceLabels(view.state));
 	}
 	schedule() {
 		if (this.scheduled || !this.profile) return;

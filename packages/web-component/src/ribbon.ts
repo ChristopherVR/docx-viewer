@@ -21,6 +21,7 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 		const tab = document.createElement('button');
 		tab.type = 'button';
 		tab.id = id;
+		tab.dataset.tabKey = `tab.${name.toLowerCase()}`;
 		tab.textContent = name;
 		tab.setAttribute('role', 'tab');
 		tab.setAttribute('aria-selected', String(name === 'Home'));
@@ -79,12 +80,34 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 		if (!target) return;
 		emit(target, 'ribbon-action', JSON.parse(target.dataset.action!) as RibbonAction);
 	});
+	for (const type of ['pointerover', 'focusin', 'change'])
+		root.addEventListener(type, (event) => {
+			if (event.target instanceof HTMLSelectElement) syncSelectTitles(event.target.parentElement!);
+		});
 	setRibbonLocale(root, locale);
 	return root;
+}
+
+/** Gives every select the tooltip of its selected label so an ellipsized value stays readable. */
+export function syncSelectTitles(root: ParentNode): void {
+	for (const select of root.querySelectorAll('select')) {
+		const text = select.selectedOptions[0]?.textContent?.trim() ?? '';
+		if (text && select.title !== text) select.title = text;
+	}
+}
+
+/** Gives every text button its full label as a tooltip, for when a narrow slot truncates it. */
+function syncButtonTitles(root: ParentNode): void {
+	for (const button of root.querySelectorAll('button')) {
+		const label = button.getAttribute('aria-label');
+		if (label && button.textContent?.trim() && button.title !== label) button.title = label;
+	}
 }
 
 export function setRibbonLocale(root: HTMLElement, value: string): void {
 	const locale = normalizeEditorLocale(value);
 	root.dataset.editorLocale = locale;
 	localizeElement(root, locale);
+	syncSelectTitles(root);
+	syncButtonTitles(root);
 }

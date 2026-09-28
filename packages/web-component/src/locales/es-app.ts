@@ -75,7 +75,6 @@ export const esApp: AppStrings = {
 	'Lock aspect ratio': 'Bloquear relación de aspecto',
 	OK: 'Aceptar',
 	Footnotes: 'Notas al pie',
-	References: 'Referencias',
 	'Table of Contents': 'Tabla de contenido',
 	'Insert table of contents': 'Insertar tabla de contenido',
 	'Update table of contents': 'Actualizar tabla de contenido',

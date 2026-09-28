@@ -85,6 +85,7 @@ function createPresencePlugin(locale: () => EditorLocale): Plugin {
 				}
 				const update = transaction.getMeta(presenceKey) as
 					| { remove: string }
+					| { refresh: true }
 					| { peer: PeerPresence }
 					| undefined;
 				if (update && 'remove' in update) next.delete(update.remove);
@@ -98,6 +99,11 @@ function createPresencePlugin(locale: () => EditorLocale): Plugin {
 			},
 		},
 	});
+}
+
+/** A no-op transaction that makes the presence plugin recompute its localized labels. */
+export function refreshPresenceLabels(state: EditorState): Transaction {
+	return state.tr.setMeta(presenceKey, { refresh: true }).setMeta('addToHistory', false);
 }
 
 export function getPresenceDecorations(

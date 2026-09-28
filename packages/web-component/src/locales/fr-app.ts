@@ -67,7 +67,6 @@ export const frApp: AppStrings = {
 	Height: 'Hauteur',
 	'Lock aspect ratio': 'Conserver les proportions',
 	OK: 'OK',
-	References: 'Références',
 	'Table of Contents': 'Table des matières',
 	'Insert table of contents': 'Insérer une table des matières',
 	'Update table of contents': 'Mettre à jour la table des matières',

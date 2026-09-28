@@ -13,7 +13,7 @@ import {
 } from './localization';
 import { strings } from './localization-strings';
 import { RIBBON_ACTION_LABELS } from './ribbon-action-ids';
-import { createRibbon } from './ribbon';
+import { createRibbon, setRibbonLocale } from './ribbon';
 
 registerDocxEditor();
 
@@ -162,6 +162,28 @@ describe('localized rendering', () => {
 		expect(
 			zh.querySelector('[data-localearialabel="Text language"] option[value="de-DE"]')!.textContent,
 		).toBe('德语（德国）');
+	});
+
+	it('names ribbon tabs with tab-specific keys, distinct from dialog actions', () => {
+		const expected = {
+			en: ['Home', 'Insert', 'Layout', 'References', 'Review', 'View', 'Table'],
+			fr: ['Accueil', 'Insertion', 'Disposition', 'Références', 'Révision', 'Affichage', 'Tableau'],
+			de: ['Start', 'Einfügen', 'Layout', 'Verweise', 'Überprüfen', 'Ansicht', 'Tabelle'],
+			es: ['Inicio', 'Insertar', 'Diseño', 'Referencias', 'Revisar', 'Vista', 'Tabla'],
+			'zh-CN': ['开始', '插入', '布局', '引用', '审阅', '视图', '表格'],
+		} as const;
+		for (const locale of EDITOR_LOCALES) {
+			const ribbon = createRibbon(locale);
+			const names = [...ribbon.querySelectorAll('[role=tab]')].map((tab) => tab.textContent);
+			expect(names, locale).toEqual([...expected[locale]]);
+		}
+		expect(strings.fr['tab.insert']).toBe('Insertion');
+		expect(strings.fr.Insert).toBe('Insérer');
+		const french = createRibbon('en');
+		setRibbonLocale(french, 'fr');
+		expect(french.querySelector('#dve-tab-insert')?.textContent).toBe('Insertion');
+		setRibbonLocale(french, 'en');
+		expect(french.querySelector('#dve-tab-insert')?.textContent).toBe('Insert');
 	});
 
 	it('translates dynamic line-spacing labels and templates in every locale', () => {

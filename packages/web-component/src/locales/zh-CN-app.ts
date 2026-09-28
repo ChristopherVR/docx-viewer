@@ -72,7 +72,6 @@ export const zhCNApp: AppStrings = {
 	'Lock aspect ratio': '锁定纵横比',
 	OK: '确定',
 	Footnotes: '脚注',
-	References: '引用',
 	'Table of Contents': '目录',
 	'Insert table of contents': '插入目录',
 	'Update table of contents': '更新目录',

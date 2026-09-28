@@ -145,6 +145,7 @@ export class DocxEditorElement extends DocxEditorApi {
 		core.inserts.setLocale(core.locale);
 		applyShellLabels(this, paper, core.locale);
 		core.refreshControls();
+		core.collab.presence?.relocalize();
 		reflectAttribute(this, 'locale', core.locale);
 	}
 

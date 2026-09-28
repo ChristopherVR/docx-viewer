@@ -109,6 +109,10 @@ export function localizeElement(root: HTMLElement, locale: EditorLocale): void {
 				translateTemplate(locale, 'ribbon.groupControls', { group: translated }),
 			);
 		}
+		if (element.dataset.tabKey) {
+			element.textContent = translate(locale, element.dataset.tabKey as LocalizationKey);
+			continue;
+		}
 		if (element instanceof HTMLOptionElement && element.dataset.languageTag) {
 			element.dataset.englishName ??= element.textContent ?? '';
 			element.textContent = languageName(

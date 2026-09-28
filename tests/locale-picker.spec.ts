@@ -22,7 +22,7 @@ test.describe('demo interface language', () => {
 	const picked: Array<[string, string, string]> = [
 		['es', 'Negrita', 'Insertar'],
 		['zh-CN', '加粗', '插入'],
-		['fr', 'Gras', 'Insérer'],
+		['fr', 'Gras', 'Insertion'],
 	];
 	for (const [locale, bold, insert] of picked)
 		test(`the landing-page picker starts the editor in ${locale}`, async ({ page }) => {

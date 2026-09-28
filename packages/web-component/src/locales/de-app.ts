@@ -74,7 +74,6 @@ export const deApp: AppStrings = {
 	'Lock aspect ratio': 'Seitenverhältnis sperren',
 	OK: 'OK',
 	Footnotes: 'Fußnoten',
-	References: 'Verweise',
 	'Table of Contents': 'Inhaltsverzeichnis',
 	'Insert table of contents': 'Inhaltsverzeichnis einfügen',
 	'Update table of contents': 'Inhaltsverzeichnis aktualisieren',

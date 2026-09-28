@@ -113,6 +113,20 @@
 	width: 100%;
 	max-width: 100%;
 }
+.dve-ribbon[data-editor-locale='de']
+	.ribbon-panel[data-panel='Home']
+	.ribbon-group[data-label='Font'] {
+	width: 362px;
+	max-width: none;
+}
+.dve-ribbon[data-editor-locale='fr']
+	.ribbon-panel[data-panel='Home']
+	.ribbon-group[data-label='Editing'],
+.dve-ribbon[data-editor-locale='de']
+	.ribbon-panel[data-panel='Home']
+	.ribbon-group[data-label='Editing'] {
+	width: 176px;
+}
 .ribbon-group[aria-label='Language'] {
 	flex: 0 0 100%;
 }
@@ -135,6 +149,19 @@
 		sans-serif;
 	cursor: pointer;
 	padding: 0 4px;
+	/* A label wider than its slot ends in an ellipsis (the title tooltip has the full text). */
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.ribbon-row > button,
+.ribbon-row > select {
+	flex: 0 1 auto;
+	min-width: 0;
+}
+.ribbon-row > button {
+	min-width: 32px;
 }
 .ribbon-group button:hover:not(:disabled) {
 	background: var(--accent-soft);
@@ -166,6 +193,10 @@
 		12px 'Segoe UI',
 		Arial,
 		sans-serif;
+	/* Long localized labels end in an ellipsis; the full text is the title tooltip. */
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 .ribbon-group select option {
 	background: var(--surface);

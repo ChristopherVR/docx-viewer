@@ -66,7 +66,6 @@ export const enApp = {
 	'Lock aspect ratio': 'Lock aspect ratio',
 	OK: 'OK',
 	Footnotes: 'Footnotes',
-	References: 'References',
 	'Table of Contents': 'Table of Contents',
 	'Insert table of contents': 'Insert table of contents',
 	'Update table of contents': 'Update table of contents',

@@ -51,7 +51,7 @@ export function peerDecorations(
 		cursor.append(label);
 		decorations.push(
 			Decoration.widget(peer.head, cursor, {
-				key: `peer-${peer.clientId}-${peer.sequence}`,
+				key: `peer-${peer.clientId}-${peer.sequence}-${locale}`,
 				side: 1,
 			}),
 		);

@@ -7,9 +7,11 @@ import {
 	getPresenceDecorations,
 	PresenceClient,
 	PRESENCE_PALETTE,
+	refreshPresenceLabels,
 	type PresenceMessage,
 } from './presence';
 import { schema } from './schema';
+import type { EditorLocale } from './localization';
 
 function createDoc(text = 'abcdef') {
 	return schema.nodes.doc.create(null, [
@@ -132,5 +134,35 @@ describe('transport-neutral collaboration presence', () => {
 		expect(removed.status).toBe('applied');
 		if (removed.status === 'applied') state = state.apply(removed.transaction);
 		expect(recipient.receive(state, leave).status).toBe('duplicate');
+	});
+
+	it('re-renders peer cursor labels as soon as the display locale changes', () => {
+		const doc = createDoc();
+		let locale: EditorLocale = 'en';
+		const sender = new PresenceClient({ sessionId: 'doc', clientId: 'alice' });
+		const recipient = new PresenceClient({
+			sessionId: 'doc',
+			clientId: 'bob',
+			locale: () => locale,
+		});
+		const host = document.createElement('div');
+		const view = new EditorView(host, {
+			state: createState(doc, 'bob', [recipient.plugin]),
+		});
+		const message = sender.publish(createState(doc, 'alice'), {
+			name: 'Alice',
+			color: PRESENCE_PALETTE[0],
+		});
+		const received = recipient.receive(view.state, message);
+		if (received.status === 'applied') view.dispatch(received.transaction);
+		const label = () => host.querySelector('.dve-peer-cursor')?.getAttribute('aria-label');
+		const english = label();
+		expect(english).toContain('Alice');
+		locale = 'de';
+		expect(label()).toBe(english);
+		view.dispatch(refreshPresenceLabels(view.state));
+		expect(label()).not.toBe(english);
+		expect(label()).toContain('Alice');
+		view.destroy();
 	});
 });
