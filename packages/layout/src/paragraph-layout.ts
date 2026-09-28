@@ -1,4 +1,4 @@
-import type { LayoutFontSpec, TextMeasurer } from './measure.js';
+import { fontMetrics, type LayoutFontSpec, type TextMeasurer } from './measure.js';
 import { appendBreakMarker, tokenizeRun, type BreakToken } from './text-breaks.js';
 import type { LayoutFragment, LayoutLine } from './result.js';
 import type { LayoutParagraph, LayoutRun } from './input.js';
@@ -78,31 +78,60 @@ interface PlacedToken {
 	leader?: LayoutFragment['leader'];
 }
 
-function lineHeightForTokens(
+/** How far superscript text is raised and subscript lowered, as a share of the run's size. */
+const SUPER_RAISE = 0.33;
+const SUB_DROP = 0.14;
+
+/** Where a token's box sits relative to the baseline: its extent above and below it. */
+function tokenExtent(
+	token: BreakToken,
+	paragraph: LayoutParagraph,
+	fonts: LayoutFontSpec[],
+	measurer: TextMeasurer,
+): { above: number; below: number; ascent: number; descent: number } {
+	const run = paragraph.runs[token.runIndex];
+	if (token.kind === 'object' && run?.object)
+		return { above: run.object.heightPx, below: 0, ascent: run.object.heightPx, descent: 0 };
+	const { ascent, descent } = fontMetrics(measurer, fonts[token.runIndex] ?? fontOf({ text: '' }));
+	const size = ptToPx(run?.fontSizePt ?? DEFAULT_FONT_SIZE_PT);
+	const shift =
+		run?.script === 'super' ? SUPER_RAISE * size : run?.script === 'sub' ? -SUB_DROP * size : 0;
+	return { above: ascent + shift, below: descent - shift, ascent, descent };
+}
+
+/**
+ * A line's height and baseline: the tallest extent above and below the baseline over its tokens
+ * (inline pictures sit on the baseline), scaled by the paragraph's line spacing. Word adds extra
+ * spacing above the text, so the baseline sits one descent above the line's bottom.
+ */
+function lineMetrics(
 	placed: PlacedToken[],
 	fonts: LayoutFontSpec[],
 	paragraph: LayoutParagraph,
 	measurer: TextMeasurer,
-): number {
-	const usedFonts = placed.length
-		? [...new Set(placed.map((p) => p.token.runIndex))].map((i) => fonts[i])
-		: [fonts[0] ?? fontOf({ text: '' })];
-	const textHeight = Math.max(...usedFonts.map((font) => measurer.lineHeightOf(font)), 0);
-	// An inline picture raises its line to the picture's height (plus the text's descent share).
-	const objectHeight = Math.max(
-		0,
-		...placed
-			.filter((p) => p.token.kind === 'object')
-			.map((p) => paragraph.runs[p.token.runIndex]?.object?.heightPx ?? 0),
-	);
-	const natural = Math.max(textHeight, objectHeight ? objectHeight + textHeight * 0.2 : 0);
-	const rule = paragraph.lineSpacingRule ?? (paragraph.lineSpacingTwips != null ? 'auto' : 'auto');
+): { heightPx: number; baselinePx: number } {
+	const tokens = placed.length
+		? placed.map((p) => p.token)
+		: [{ kind: 'space', text: ' ', runIndex: 0, sourceStart: 0 } as BreakToken];
+	let above = 0;
+	let below = 0;
+	for (const token of tokens) {
+		const extent = tokenExtent(token, paragraph, fonts, measurer);
+		above = Math.max(above, extent.above);
+		below = Math.max(below, extent.below);
+	}
+	const natural = above + below;
+	const rule = paragraph.lineSpacingRule ?? 'auto';
 	const spacingTwips = paragraph.lineSpacingTwips;
-	if (rule === 'exact') return spacingTwips != null ? twipsToPx(spacingTwips) : natural;
-	if (rule === 'atLeast')
-		return Math.max(natural, spacingTwips != null ? twipsToPx(spacingTwips) : 0);
-	const multiple = (spacingTwips ?? 240) / 240;
-	return natural * multiple;
+	const heightPx =
+		rule === 'exact'
+			? spacingTwips != null
+				? twipsToPx(spacingTwips)
+				: natural
+			: rule === 'atLeast'
+				? Math.max(natural, spacingTwips != null ? twipsToPx(spacingTwips) : 0)
+				: natural * ((spacingTwips ?? 240) / 240);
+	return { heightPx, baselinePx: heightPx - below };
 }
 
 /**
@@ -274,10 +303,17 @@ export function layoutParagraph(
 			? globalOffset(last) + (last.kind === 'word' || last.kind === 'space' ? last.text.length : 1)
 			: start;
 		const gapBeforePx = boxFor(lineIndex).gapBeforePx;
-		const heightPx = lineHeightForTokens(placed, fonts, paragraph, measurer);
+		const { heightPx, baselinePx } = lineMetrics(placed, fonts, paragraph, measurer);
+		// Each fragment's box is placed so its baseline sits on the line's.
+		rendered.forEach(({ token }, index) => {
+			const extent = tokenExtent(token, paragraph, fonts, measurer);
+			fragments[index].topPx = baselinePx - extent.above;
+			if (token.kind !== 'object') fragments[index].boxHeightPx = extent.ascent + extent.descent;
+		});
 		lines.push({
 			yPx: 0,
 			heightPx,
+			baselinePx,
 			fragments,
 			sourceStart: start,
 			sourceEnd: end,

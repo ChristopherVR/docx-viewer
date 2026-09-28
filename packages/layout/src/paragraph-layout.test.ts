@@ -141,3 +141,58 @@ describe('layoutParagraph line spacing rules', () => {
 		expect(short.lines[0].heightPx).toBe(20);
 	});
 });
+
+describe('layoutParagraph baselines', () => {
+	// Ascent is 80% of a line height proportional to font size.
+	const sized: TextMeasurer = {
+		widthOf: (text) => text.length * 10,
+		lineHeightOf: (font) => font.sizePx * 1.25,
+	};
+
+	it('aligns fragments of different sizes on one baseline, with extra spacing above', () => {
+		const result = layoutParagraph(
+			paragraph(
+				[
+					{ text: 'Big ', fontSizePt: 24 },
+					{ text: 'small', fontSizePt: 12 },
+				],
+				{
+					lineSpacingTwips: 480,
+					lineSpacingRule: 'auto',
+				},
+			),
+			400,
+			sized,
+			noop,
+		);
+		const [line] = result.lines;
+		// 24pt = 32px → 40px natural (32 above, 8 below); double spacing doubles it to 80px.
+		expect(line.heightPx).toBe(80);
+		expect(line.baselinePx).toBe(72);
+		const [big, , small] = line.fragments;
+		expect(big.topPx! + big.boxHeightPx! * 0.8).toBe(72);
+		expect(small.topPx! + small.boxHeightPx! * 0.8).toBe(72);
+	});
+
+	it('raises superscripts and sits inline pictures on the baseline', () => {
+		const result = layoutParagraph(
+			paragraph([
+				{ text: 'x', fontSizePt: 12 },
+				{ text: '2', fontSizePt: 12, script: 'super' },
+				{
+					text: '',
+					object: { partName: 'p', contentType: 'image/png', widthPx: 10, heightPx: 30 },
+				},
+			]),
+			400,
+			sized,
+			noop,
+		);
+		const [line] = result.lines;
+		const [x, two, picture] = line.fragments;
+		const baseline = line.baselinePx!;
+		expect(x.topPx! + x.boxHeightPx! * 0.8).toBeCloseTo(baseline);
+		expect(two.topPx! + two.boxHeightPx! * 0.8).toBeCloseTo(baseline - 0.33 * 16);
+		expect(picture.topPx).toBeCloseTo(baseline - 30);
+	});
+});

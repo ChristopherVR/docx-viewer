@@ -678,3 +678,10 @@ a.dve-link[data-anchor^='_Toc'] {
 [data-print-view] .dve-notes-container {
 	display: none;
 }
+
+/* Word draws superscript and subscript at about two thirds size without growing the line. */
+.dve-paper sup,
+.dve-paper sub {
+	font-size: 0.65em;
+	line-height: 0;
+}

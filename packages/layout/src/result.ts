@@ -14,6 +14,10 @@ export interface LayoutFragment {
 	underline?: boolean;
 	strike?: boolean;
 	script?: 'super' | 'sub';
+	/** Top of the fragment's text box within the line, placing its baseline on the line's. */
+	topPx?: number;
+	/** Height of the fragment's font box (ascent + descent), used as its CSS line height. */
+	boxHeightPx?: number;
 	/** A tab's leader fill (dots, hyphens, a line…) drawn across its width. */
 	leader?: 'dot' | 'hyphen' | 'underscore' | 'heavy' | 'middleDot';
 }
@@ -23,6 +27,8 @@ export interface LayoutLine {
 	yPx: number;
 	heightPx: number;
 	fragments: LayoutFragment[];
+	/** Distance from the line's top to its baseline. */
+	baselinePx?: number;
 	/** Space skipped above this line to clear a picture wrapped top-and-bottom; `yPx` is below it. */
 	gapBeforePx?: number;
 	/** Character range within the paragraph's concatenated run text, for hit-testing. */

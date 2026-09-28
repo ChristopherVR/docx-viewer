@@ -13,6 +13,18 @@ export interface TextMeasurer {
 	widthOf(text: string, font: LayoutFontSpec): number;
 	/** Natural single-spaced line height for `font`, in CSS pixels (ascent + descent + leading). */
 	lineHeightOf(font: LayoutFontSpec): number;
+	/** Height above the baseline within that line height; about 80% when not provided. */
+	ascentOf?(font: LayoutFontSpec): number;
+}
+
+/** A font's ascent and descent (together its single line height), for baseline alignment. */
+export function fontMetrics(
+	measurer: TextMeasurer,
+	font: LayoutFontSpec,
+): { ascent: number; descent: number } {
+	const height = measurer.lineHeightOf(font);
+	const ascent = Math.min(height, measurer.ascentOf?.(font) ?? height * 0.8);
+	return { ascent, descent: height - ascent };
 }
 
 /**
@@ -73,6 +85,12 @@ export function createCanvasMeasurer(): TextMeasurer {
 			if (widthCache.size > 20000) widthCache.clear();
 			widthCache.set(key, width);
 			return width;
+		},
+		ascentOf(font) {
+			const c = ctx();
+			if (!c) return fallback.lineHeightOf(font) * 0.8;
+			c.font = fontString(font);
+			return c.measureText('Mg').fontBoundingBoxAscent ?? font.sizePx * 0.95;
 		},
 		lineHeightOf(font) {
 			const c = ctx();

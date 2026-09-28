@@ -81,9 +81,10 @@ function styleFragment(el: HTMLSpanElement, fragment: LayoutLine['fragments'][nu
 	if (fragment.italic) el.style.fontStyle = 'italic';
 	// The same metric-compatible stack the measurer used, so rendered text matches its line breaks.
 	el.style.fontFamily = cssFontStack(fragment.fontFamily);
-	// Superscripts sit at the top of the line already; subscripts drop toward the baseline.
 	el.style.fontSize = `${(fragment.fontSizePt ?? DEFAULT_FONT_SIZE_PT) * (fragment.script ? 0.65 : 1)}pt`;
-	if (fragment.script === 'sub') el.style.top = '0.6em';
+	// The layout places each fragment's box so its baseline sits on the line's baseline.
+	if (fragment.topPx !== undefined) el.style.top = `${fragment.topPx}px`;
+	if (fragment.boxHeightPx !== undefined) el.style.lineHeight = `${fragment.boxHeightPx}px`;
 	if (fragment.color) el.style.color = fragment.color;
 	const lines = [fragment.underline && 'underline', fragment.strike && 'line-through'].filter(
 		Boolean,
@@ -106,7 +107,7 @@ function renderLine(
 		if (fragment.object) {
 			const picture = pictureElement(fragment.object, pictureUrl);
 			picture.style.left = `${fragment.xPx}px`;
-			picture.style.top = '0';
+			picture.style.top = `${fragment.topPx ?? 0}px`;
 			lineEl.append(picture);
 			continue;
 		}
