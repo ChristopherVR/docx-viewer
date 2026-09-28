@@ -15,6 +15,7 @@ import {
 	type XmlElement,
 } from './xml.js';
 import { parseRunProperties } from './run-properties.js';
+import { parseOnOff } from './simple-types.js';
 import { parseShadingFill, parseShadingThemeFill, parseTableBorders } from './table-borders.js';
 
 const REGIONS: TableConditionalRegion[] = [
@@ -59,11 +60,7 @@ export function parseTableStyleCatalog(xml: string): TableStyleCatalog {
 		const id = getW(element, 'styleId');
 		if (!id) continue;
 		const basedOn = getW(first(element, 'basedOn'), 'val');
-		const defaultValue = getW(element, 'default');
-		const isDefault =
-			defaultValue === undefined
-				? undefined
-				: !['0', 'false', 'off', 'no', 'none'].includes(defaultValue.toLowerCase());
+		const isDefault = parseOnOff(getW(element, 'default'));
 		const name = getW(first(element, 'name'), 'val');
 		const tblPr = first(element, 'tblPr');
 		const borders = parseTableBorders(first(tblPr, 'tblBorders'));

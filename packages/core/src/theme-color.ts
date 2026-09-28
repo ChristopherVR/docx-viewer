@@ -5,27 +5,11 @@ import type {
 	ThemeColorSlot,
 	ThemeColorToken,
 } from './theme-model.js';
+import { isStThemeColor, ST_ThemeColor } from './generated/wml-simple-types.js';
 
-export const THEME_COLOR_TOKENS = [
-	'dark1',
-	'light1',
-	'dark2',
-	'light2',
-	'accent1',
-	'accent2',
-	'accent3',
-	'accent4',
-	'accent5',
-	'accent6',
-	'hyperlink',
-	'followedHyperlink',
-	'background1',
-	'text1',
-	'background2',
-	'text2',
-] as const satisfies readonly ThemeColorToken[];
+export const THEME_COLOR_TOKENS = ST_ThemeColor;
 export function isThemeColorToken(value: string): value is ThemeColorToken {
-	return (THEME_COLOR_TOKENS as readonly string[]).includes(value);
+	return isStThemeColor(value);
 }
 
 const TOKEN_TO_SLOT: Partial<Record<ThemeColorToken, ThemeColorSlot>> = {

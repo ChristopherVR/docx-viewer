@@ -4,6 +4,7 @@ import { isWordHighlightToken } from './highlight.js';
 import { isValidLanguageTag } from './language.js';
 import { isWordUnderlineStyle } from './underline.js';
 import { isThemeColorToken } from './theme-color.js';
+import { parseHalfPoints, parseHexColor, parseSignedTwips } from './simple-types.js';
 
 const modeledRunProperties = new Set([
 	'b',
@@ -91,13 +92,14 @@ export function runHasUnknownProperties(run: XmlElement): boolean {
 			return true;
 		if (property.localName === 'u') {
 			const color = getW(property, 'color');
-			if (color && color !== 'auto' && !/^[0-9a-f]{6}$/i.test(color)) return true;
+			if (color && parseHexColor(color) === undefined) return true;
 		}
-		if (property.localName === 'sz' && value && !/^\d+$/.test(value)) return true;
-		if (property.localName === 'spacing' && value && !/^-?\d+$/.test(value)) return true;
+		if (property.localName === 'sz' && value && parseHalfPoints(value) === undefined) return true;
+		if (property.localName === 'spacing' && value && parseSignedTwips(value) === undefined)
+			return true;
 		if (property.localName === 'color' || property.localName === 'shd') {
 			const fillValue = property.localName === 'shd' ? getW(property, 'fill') : value;
-			if (fillValue && fillValue !== 'auto' && !/^[0-9a-f]{6}$/i.test(fillValue)) return true;
+			if (fillValue && parseHexColor(fillValue) === undefined) return true;
 			const themeValue = getW(property, property.localName === 'shd' ? 'themeFill' : 'themeColor');
 			if (themeValue && !isThemeColorToken(themeValue)) return true;
 		}

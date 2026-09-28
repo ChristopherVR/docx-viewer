@@ -2,6 +2,7 @@
 import type { CharacterStyleDefinition, RunStyleCatalog } from './run-style-model.js';
 import { first, getW, named, parseXml, type XmlDocument, type XmlElement } from './xml.js';
 import { parseRunProperties } from './run-properties.js';
+import { parseOnOff } from './simple-types.js';
 
 function styleElements(document: XmlDocument): XmlElement[] {
 	return Array.from(document.getElementsByTagName('*')).filter(
@@ -22,11 +23,7 @@ export function parseRunStyleCatalog(xml: string): RunStyleCatalog {
 		const type = getW(element, 'type') === 'character' ? 'character' : 'paragraph';
 		const basedOn = getW(first(element, 'basedOn'), 'val');
 		const linkedStyle = getW(first(element, 'link'), 'val');
-		const defaultValue = getW(element, 'default');
-		const isDefault =
-			defaultValue === undefined
-				? undefined
-				: !['0', 'false', 'off', 'no', 'none'].includes(defaultValue.toLowerCase());
+		const isDefault = parseOnOff(getW(element, 'default'));
 		const name = getW(first(element, 'name'), 'val');
 		styles[id] = {
 			id,

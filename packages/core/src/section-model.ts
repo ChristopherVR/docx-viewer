@@ -1,6 +1,7 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 // Sections, headers/footers and footnotes/endnotes.
 import type { Block } from './model.js';
+import type { StNumberFormat, StSectionMark, StVerticalJc } from './generated/wml-simple-types.js';
 
 /** Header/footer content, parsed with the same paragraph/table parser as the body. */
 export interface HeaderFooterContent {
@@ -30,7 +31,7 @@ export interface SectionColumns {
 export interface SectionPageNumbering {
 	start?: number;
 	/** Raw `w:pgNumType/@w:fmt` token, e.g. `decimal`, `upperRoman`. */
-	format?: string;
+	format?: StNumberFormat;
 }
 /**
  * One `w:sectPr` (paragraph-level section break or the final body section), in native Word
@@ -39,7 +40,7 @@ export interface SectionPageNumbering {
 export interface SectionProperties {
 	/** Id of the last block (paragraph or table) this section covers. */
 	endsAtBlockId: string;
-	type: 'nextPage' | 'continuous' | 'evenPage' | 'oddPage' | 'nextColumn';
+	type: StSectionMark;
 	pageWidthTwips: number;
 	pageHeightTwips: number;
 	orientation: 'portrait' | 'landscape';
@@ -53,7 +54,7 @@ export interface SectionProperties {
 	columns: SectionColumns;
 	/** `w:titlePg`: the section's first page uses distinct first-page headers/footers. */
 	titlePage?: boolean;
-	verticalAlign?: 'top' | 'center' | 'both' | 'bottom';
+	verticalAlign?: StVerticalJc;
 	pageNumbering?: SectionPageNumbering;
 	/** `w:lnNumType` presence; line numbering values themselves are not modeled. */
 	lineNumbering?: boolean;

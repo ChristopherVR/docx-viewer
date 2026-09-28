@@ -1,5 +1,6 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 // Inline pictures and hyperlink targets carried by text runs.
+import type { StRelFromH, StRelFromV } from './generated/wml-simple-types.js';
 
 /** An inline drawing (`w:drawing` or legacy `w:pict`) modeled at run granularity. */
 export interface InlineImage {
@@ -32,13 +33,13 @@ export interface PicturePlacement {
 	align?: 'left' | 'center' | 'right' | 'inside' | 'outside';
 	/** `wp:positionH/wp:posOffset` in CSS pixels, relative to `relativeFrom`. */
 	offsetXPx?: number;
-	relativeFrom?: string;
+	relativeFrom?: StRelFromH;
 	/** `wp:positionV/wp:align`, when the picture is aligned vertically rather than offset. */
 	alignV?: 'top' | 'center' | 'bottom' | 'inside' | 'outside';
 	/** `wp:positionV/wp:posOffset` in CSS pixels, relative to `relativeFromV`. */
 	offsetYPx?: number;
 	/** `wp:positionV/@relativeFrom`, e.g. `paragraph`, `page` or `margin`. */
-	relativeFromV?: string;
+	relativeFromV?: StRelFromV;
 }
 /** A `w:hyperlink` target, resolved from its relationship (external) or `w:anchor` (internal). */
 export interface HyperlinkInfo {

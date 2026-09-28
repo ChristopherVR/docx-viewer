@@ -17,7 +17,7 @@ function model(table: Table): DocumentModel {
 }
 
 // Parsed documents store colors with their `#`.
-const single = { style: 'single', sizeEighthPoints: 8, color: '#FF0000' };
+const single = { style: 'single', sizeEighthPoints: 8, color: '#FF0000' } as const;
 const table: Table = {
 	type: 'table',
 	id: 't',

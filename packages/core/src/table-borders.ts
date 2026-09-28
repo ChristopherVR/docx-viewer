@@ -1,6 +1,14 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import type { ParagraphBorders, TableBorderSide, TableBorders } from './table-model.js';
 import type { ThemeColorToken } from './theme-model.js';
+import { isStBorder, isStThemeColor } from './generated/wml-simple-types.js';
+import { enumValue } from './parse-diagnostics.js';
+import {
+	parseEighthPoints,
+	parseRgbColor,
+	parseTintShade,
+	parseUnsignedInteger,
+} from './simple-types.js';
 import { first, getW, type XmlElement } from './xml.js';
 
 const SIDES = [
@@ -14,16 +22,16 @@ const SIDES = [
 
 export function borderSide(element: XmlElement | undefined): TableBorderSide | undefined {
 	if (!element) return undefined;
-	const style = getW(element, 'val');
-	const size = getW(element, 'sz');
-	const color = getW(element, 'color');
-	const themeColor = getW(element, 'themeColor');
-	if (!style && !size && !color && !themeColor) return undefined;
+	const style = enumValue(isStBorder, getW(element, 'val'), 'w:val (border style)');
+	const size = parseEighthPoints(getW(element, 'sz'));
+	const color = parseRgbColor(getW(element, 'color'));
+	const themeColor = enumValue(isStThemeColor, getW(element, 'themeColor'), 'w:themeColor');
+	if (!style && size === undefined && !color && !themeColor) return undefined;
 	const side: TableBorderSide = {};
 	if (style) side.style = style;
-	if (size !== undefined && /^\d+$/.test(size)) side.sizeEighthPoints = Number(size);
-	if (color && /^[0-9a-f]{6}$/i.test(color)) side.color = `#${color}`;
-	if (themeColor) side.themeColor = themeColor as ThemeColorToken;
+	if (size !== undefined) side.sizeEighthPoints = size;
+	if (color) side.color = color;
+	if (themeColor) side.themeColor = themeColor;
 	return side;
 }
 
@@ -46,19 +54,16 @@ export function parseTableBorders(
 }
 
 export function parseShadingFill(shd: XmlElement | undefined): string | undefined {
-	const fill = getW(shd, 'fill');
-	return fill && /^[0-9a-f]{6}$/i.test(fill) ? `#${fill}` : undefined;
+	return parseRgbColor(getW(shd, 'fill'));
 }
 export function parseShadingThemeFill(shd: XmlElement | undefined) {
-	const theme = getW(shd, 'themeFill');
+	const theme = enumValue(isStThemeColor, getW(shd, 'themeFill'), 'w:themeFill');
 	if (!theme) return undefined;
-	const ref: { token: ThemeColorToken; tint?: number; shade?: number } = {
-		token: theme as ThemeColorToken,
-	};
-	const tint = getW(shd, 'themeFillTint');
-	const shade = getW(shd, 'themeFillShade');
-	if (tint && /^[0-9a-fA-F]{2}$/.test(tint)) ref.tint = Number.parseInt(tint, 16) / 255;
-	if (shade && /^[0-9a-fA-F]{2}$/.test(shade)) ref.shade = Number.parseInt(shade, 16) / 255;
+	const ref: { token: ThemeColorToken; tint?: number; shade?: number } = { token: theme };
+	const tint = parseTintShade(getW(shd, 'themeFillTint'));
+	const shade = parseTintShade(getW(shd, 'themeFillShade'));
+	if (tint !== undefined) ref.tint = tint;
+	if (shade !== undefined) ref.shade = shade;
 	return ref;
 }
 
@@ -72,8 +77,8 @@ export function parseParagraphBorders(pBdr: XmlElement | undefined): ParagraphBo
 			(side === 'left' ? first(pBdr, 'start') : side === 'right' ? first(pBdr, 'end') : undefined);
 		const value = borderSide(element);
 		if (!value) continue;
-		const space = getW(element, 'space');
-		if (space !== undefined && /^\d+$/.test(space)) value.spacePoints = Number(space);
+		const space = parseUnsignedInteger(getW(element, 'space'));
+		if (space !== undefined) value.spacePoints = space;
 		result[side] = value;
 	}
 	return Object.keys(result).length ? result : undefined;

@@ -2,9 +2,10 @@
 import type { Paragraph } from './model.js';
 import type { RunFormatting } from './run-style-model.js';
 import type { ThemeColorReference, ThemeColorToken } from './theme-model.js';
+import type { StBorder, StVerticalJc } from './generated/wml-simple-types.js';
 
 export interface TableBorderSide {
-	style?: string;
+	style?: StBorder;
 	sizeEighthPoints?: number;
 	color?: string;
 	themeColor?: ThemeColorToken;
@@ -54,7 +55,7 @@ export interface TableCell {
 	/** `w:vMerge`; `restart` begins a vertical merge, `continue` extends the cell above. */
 	verticalMerge?: 'restart' | 'continue';
 	widthTwips?: number;
-	verticalAlign?: 'top' | 'center' | 'bottom';
+	verticalAlign?: StVerticalJc;
 	shadingFill?: string;
 	shadingThemeFill?: ThemeColorReference;
 	borders?: TableBorders;

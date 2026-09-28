@@ -1,21 +1,16 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import type { RunFormatting } from './run-style-model.js';
-import type { ThemeColorToken } from './theme-model.js';
+import { isStHighlightColor, isStThemeColor } from './generated/wml-simple-types.js';
+import { enumValue } from './parse-diagnostics.js';
+import {
+	onOffElement,
+	parseHalfPoints,
+	parseRgbColor,
+	parseSignedTwips,
+	parseTintShade,
+} from './simple-types.js';
 import { first, getW, type XmlElement } from './xml.js';
 import { isWordUnderlineStyle } from './underline.js';
-
-const on = (element: XmlElement | undefined): boolean => {
-	if (!element) return false;
-	const value = getW(element, 'val')?.toLowerCase();
-	return !['0', 'false', 'off', 'no', 'none'].includes(value ?? '');
-};
-const points = (halfPoints: string | undefined): number | undefined =>
-	halfPoints === undefined ? undefined : Number(halfPoints) / 2;
-const twips = (value: string | undefined): number | undefined => {
-	if (value === undefined || !/^-?\d+$/.test(value)) return undefined;
-	const parsed = Number(value);
-	return Number.isSafeInteger(parsed) ? parsed : undefined;
-};
 
 /** Shared `w:rPr` -> `RunFormatting` parsing, used for direct runs, docDefaults and style catalogs. */
 export function parseRunProperties(props: XmlElement | undefined): RunFormatting {
@@ -23,8 +18,7 @@ export function parseRunProperties(props: XmlElement | undefined): RunFormatting
 	if (!props) return result;
 	// Toggles are kept when explicitly off too (`w:val="0"`): that cancels a style's value.
 	const toggle = (local: string): boolean | undefined => {
-		const element = first(props, local);
-		return element ? on(element) : undefined;
+		return onOffElement(first(props, local));
 	};
 	for (const [local, key] of [
 		['b', 'bold'],
@@ -39,22 +33,34 @@ export function parseRunProperties(props: XmlElement | undefined): RunFormatting
 		if (value !== undefined) result[key] = value;
 	}
 	const underline = first(props, 'u');
-	if (underline && !on(underline)) result.underline = false;
-	if (underline && on(underline)) {
+	// `w:u` carries an underline style (`ST_Underline`) in `w:val`, not an on/off value.
+	const underlineValue = getW(underline, 'val')?.toLowerCase();
+	if (
+		underline &&
+		(underlineValue === 'none' ||
+			underlineValue === '0' ||
+			underlineValue === 'false' ||
+			underlineValue === 'off')
+	)
+		result.underline = false;
+	else if (underline) {
 		result.underline = true;
-		const value = getW(underline, 'val')?.toLowerCase();
-		if (value && isWordUnderlineStyle(value) && value !== 'single' && value !== 'none')
-			result.underlineStyle = value;
-		const color = getW(underline, 'color');
-		if (color && /^[0-9a-f]{6}$/i.test(color)) result.underlineColor = `#${color}`;
+		if (underlineValue && isWordUnderlineStyle(underlineValue) && underlineValue !== 'single')
+			result.underlineStyle = underlineValue;
+		const color = parseRgbColor(getW(underline, 'color'));
+		if (color) result.underlineColor = color;
 	}
-	const highlight = getW(first(props, 'highlight'), 'val');
+	const highlight = enumValue(
+		isStHighlightColor,
+		getW(first(props, 'highlight'), 'val'),
+		'w:highlight',
+	);
 	if (highlight) result.highlight = highlight;
 	const verticalAlign = getW(first(props, 'vertAlign'), 'val');
 	if (verticalAlign === 'superscript' || verticalAlign === 'subscript')
 		result.verticalAlign = verticalAlign;
-	const size = points(getW(first(props, 'sz'), 'val'));
-	if (size !== undefined) result.fontSize = size;
+	const size = parseHalfPoints(getW(first(props, 'sz'), 'val'));
+	if (size !== undefined) result.fontSize = size / 2;
 	const fonts = first(props, 'rFonts');
 	const family = getW(fonts, 'ascii') ?? getW(fonts, 'hAnsi');
 	if (family) result.fontFamily = family;
@@ -83,32 +89,28 @@ export function parseRunProperties(props: XmlElement | undefined): RunFormatting
 	}
 	if (Object.keys(fontTheme).length) result.fontTheme = fontTheme;
 	const color = first(props, 'color');
-	const hex = getW(color, 'val');
-	if (hex && /^[0-9a-f]{6}$/i.test(hex)) result.color = `#${hex}`;
-	const themeColor = getW(color, 'themeColor');
+	const hex = parseRgbColor(getW(color, 'val'));
+	if (hex) result.color = hex;
+	const themeColor = enumValue(isStThemeColor, getW(color, 'themeColor'), 'w:themeColor');
 	if (themeColor) {
-		result.colorTheme = { token: themeColor as ThemeColorToken };
-		const tint = getW(color, 'themeTint');
-		const shade = getW(color, 'themeShade');
-		if (tint && /^[0-9a-fA-F]{2}$/.test(tint))
-			result.colorTheme.tint = Number.parseInt(tint, 16) / 255;
-		if (shade && /^[0-9a-fA-F]{2}$/.test(shade))
-			result.colorTheme.shade = Number.parseInt(shade, 16) / 255;
+		result.colorTheme = { token: themeColor };
+		const tint = parseTintShade(getW(color, 'themeTint'));
+		const shade = parseTintShade(getW(color, 'themeShade'));
+		if (tint !== undefined) result.colorTheme.tint = tint;
+		if (shade !== undefined) result.colorTheme.shade = shade;
 	}
-	const spacing = twips(getW(first(props, 'spacing'), 'val'));
+	const spacing = parseSignedTwips(getW(first(props, 'spacing'), 'val'));
 	if (spacing !== undefined) result.characterSpacingTwips = spacing;
 	const shd = first(props, 'shd');
-	const fill = getW(shd, 'fill');
-	if (fill && /^[0-9a-f]{6}$/i.test(fill)) result.shadingFill = `#${fill}`;
-	const shdTheme = getW(shd, 'themeFill');
+	const fill = parseRgbColor(getW(shd, 'fill'));
+	if (fill) result.shadingFill = fill;
+	const shdTheme = enumValue(isStThemeColor, getW(shd, 'themeFill'), 'w:themeFill');
 	if (shdTheme) {
-		result.shadingThemeFill = { token: shdTheme as ThemeColorToken };
-		const tint = getW(shd, 'themeFillTint');
-		const shade = getW(shd, 'themeFillShade');
-		if (tint && /^[0-9a-fA-F]{2}$/.test(tint))
-			result.shadingThemeFill.tint = Number.parseInt(tint, 16) / 255;
-		if (shade && /^[0-9a-fA-F]{2}$/.test(shade))
-			result.shadingThemeFill.shade = Number.parseInt(shade, 16) / 255;
+		result.shadingThemeFill = { token: shdTheme };
+		const tint = parseTintShade(getW(shd, 'themeFillTint'));
+		const shade = parseTintShade(getW(shd, 'themeFillShade'));
+		if (tint !== undefined) result.shadingThemeFill.tint = tint;
+		if (shade !== undefined) result.shadingThemeFill.shade = shade;
 	}
 	return result;
 }

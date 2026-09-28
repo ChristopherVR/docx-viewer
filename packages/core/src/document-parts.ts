@@ -4,6 +4,8 @@
 import type JSZip from 'jszip';
 import type { Block, HeaderFooterSlots, Note, SectionProperties } from './model.js';
 import { first, getW, parseXml, type XmlElement } from './xml.js';
+import { isStNumberFormat, type StNumberFormat } from './generated/wml-simple-types.js';
+import { enumValue, withParseWarnings } from './parse-diagnostics.js';
 import { parseRelationships, resolvePartPath, type Relationship } from './relationships.js';
 import { parseRawSections, type RawHeaderFooterRef } from './sections.js';
 import { parseNotesPart } from './notes.js';
@@ -31,14 +33,22 @@ async function readPart(zip: JSZip, path: string): Promise<string | undefined> {
 
 interface SettingsInfo {
 	evenAndOddHeaders: boolean;
-	footnoteNumFmt?: string;
-	endnoteNumFmt?: string;
+	footnoteNumFmt?: StNumberFormat;
+	endnoteNumFmt?: StNumberFormat;
 }
 function parseSettings(xml: string | undefined): SettingsInfo {
 	if (!xml) return { evenAndOddHeaders: false };
 	const root = parseXml(xml).documentElement;
-	const footnoteNumFmt = getW(first(first(root, 'footnotePr'), 'numFmt'), 'val');
-	const endnoteNumFmt = getW(first(first(root, 'endnotePr'), 'numFmt'), 'val');
+	const footnoteNumFmt = enumValue(
+		isStNumberFormat,
+		getW(first(first(root, 'footnotePr'), 'numFmt'), 'val'),
+		'w:footnotePr/w:numFmt',
+	);
+	const endnoteNumFmt = enumValue(
+		isStNumberFormat,
+		getW(first(first(root, 'endnotePr'), 'numFmt'), 'val'),
+		'w:endnotePr/w:numFmt',
+	);
 	return {
 		evenAndOddHeaders: Boolean(first(root, 'evenAndOddHeaders')),
 		...(footnoteNumFmt ? { footnoteNumFmt } : {}),
@@ -52,7 +62,8 @@ async function resolveSlots(
 	refs: RawHeaderFooterRef[],
 	cache: Map<string, Block[]>,
 	fieldMarkup: { seen: boolean },
-	drawings?: DrawingContext,
+	drawings: DrawingContext | undefined,
+	sink: string[],
 ): Promise<HeaderFooterSlots | undefined> {
 	if (!refs.length) return undefined;
 	const slots: HeaderFooterSlots = {};
@@ -65,10 +76,10 @@ async function resolveSlots(
 			const xml = await readPart(zip, path);
 			if (xml === undefined) continue;
 			if (FIELD_MARKUP.test(xml)) fieldMarkup.seen = true;
-			blocks = parseBlocksFromContainer(
-				parseXml(xml).documentElement,
-				`${path.replace(/[^a-z0-9]+/gi, '')}-`,
-				await partContext(zip, path, drawings),
+			const context = await partContext(zip, path, drawings);
+			const root = parseXml(xml).documentElement;
+			blocks = withParseWarnings(sink, () =>
+				parseBlocksFromContainer(root, `${path.replace(/[^a-z0-9]+/gi, '')}-`, context),
 			);
 			cache.set(path, blocks);
 		}
@@ -81,8 +92,8 @@ export interface DocumentPartsResult {
 	sections: SectionProperties[];
 	footnotes?: Note[];
 	endnotes?: Note[];
-	footnoteNumFmt?: string;
-	endnoteNumFmt?: string;
+	footnoteNumFmt?: StNumberFormat;
+	endnoteNumFmt?: StNumberFormat;
 	evenAndOddHeaders?: boolean;
 	warnings: string[];
 }
@@ -94,9 +105,11 @@ export async function parseDocumentParts(
 	blocks: Block[],
 	drawings?: DrawingContext,
 ): Promise<DocumentPartsResult> {
-	const raw = parseRawSections(body, blocks);
+	const warnings: string[] = [];
+	const raw = withParseWarnings(warnings, () => parseRawSections(body, blocks));
 	const relationships = parseRelationships(await readPart(zip, 'word/_rels/document.xml.rels'));
-	const settings = parseSettings(await readPart(zip, 'word/settings.xml'));
+	const settingsXml = await readPart(zip, 'word/settings.xml');
+	const settings = withParseWarnings(warnings, () => parseSettings(settingsXml));
 	const cache = new Map<string, Block[]>();
 	const fieldMarkup = { seen: false };
 	const sections: SectionProperties[] = [];
@@ -108,6 +121,7 @@ export async function parseDocumentParts(
 			cache,
 			fieldMarkup,
 			drawings,
+			warnings,
 		);
 		const footers = await resolveSlots(
 			zip,
@@ -116,6 +130,7 @@ export async function parseDocumentParts(
 			cache,
 			fieldMarkup,
 			drawings,
+			warnings,
 		);
 		sections.push({ ...rest, ...(headers ? { headers } : {}), ...(footers ? { footers } : {}) });
 	}
@@ -124,7 +139,7 @@ export async function parseDocumentParts(
 	const notesParser = async (path: string) => {
 		const context = await partContext(zip, path, drawings);
 		return (container: XmlElement, prefix: string) =>
-			parseBlocksFromContainer(container, prefix, context);
+			withParseWarnings(warnings, () => parseBlocksFromContainer(container, prefix, context));
 	};
 	const footnotes = footnotesXml
 		? parseNotesPart(footnotesXml, 'footnote', await notesParser('word/footnotes.xml'))
@@ -133,7 +148,6 @@ export async function parseDocumentParts(
 		? parseNotesPart(endnotesXml, 'endnote', await notesParser('word/endnotes.xml'))
 		: undefined;
 
-	const warnings: string[] = [];
 	if (sections.some((section) => section.columns.count > 1))
 		warnings.push(
 			'Columns render in Print Layout and, for single-section documents, on the editing surface; column breaks balance approximately.',

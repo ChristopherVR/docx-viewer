@@ -28,6 +28,9 @@
 			"import": "./dist/embedded.js"
 		}
 	},
+	"scripts": {
+		"gen:schema-types": "bun scripts/gen-schema-types.ts"
+	},
 	"dependencies": {
 		"@xmldom/xmldom": "^0.9.12",
 		"jszip": "^3.10.2"

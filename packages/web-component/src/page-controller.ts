@@ -1,4 +1,4 @@
-import type { DocumentModel } from '@christophervr/docx-core';
+import { ST_NumberFormat, type DocumentModel } from '@christophervr/docx-core';
 import type { EditorHost } from './editor-host';
 import { findLocalizedControl } from './localization';
 import type { PrintLayoutController } from './print-layout-view';
@@ -48,7 +48,9 @@ export class PageController {
 					: key === 'columns'
 						? setColumns(model, index, Math.max(1, Number(value) || 1))
 						: key === 'numberFormat'
-							? setPageNumbering(model, index, { format: value })
+							? setPageNumbering(model, index, {
+									format: ST_NumberFormat.find((item) => item === value) ?? 'decimal',
+								})
 							: key === 'numberStart'
 								? setPageNumbering(model, index, { restart: value === 'restart' })
 								: key === 'verticalAlign'

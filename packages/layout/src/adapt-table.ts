@@ -140,7 +140,10 @@ export function adaptTable(
 					padding,
 					...(Object.keys(borders).length ? { borders } : {}),
 					...(fill ? { shading: fill } : {}),
-					...(cell.verticalAlign ? { verticalAlign: cell.verticalAlign } : {}),
+					// `both` (vertically justified) has no layout support yet and renders as top, as before.
+					...(cell.verticalAlign
+						? { verticalAlign: cell.verticalAlign === 'both' ? 'top' : cell.verticalAlign }
+						: {}),
 				};
 			}),
 		})),

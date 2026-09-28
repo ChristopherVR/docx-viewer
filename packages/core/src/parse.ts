@@ -26,6 +26,7 @@ const px = (twips: string | undefined, fallback: number): number =>
 
 import { type DrawingContext } from './drawing.js';
 import { parseContentTypes, parseRelationships } from './package-parts.js';
+import { withParseWarnings } from './parse-diagnostics.js';
 import { warningsFor, imageAndBookmarkWarnings, forEachParagraph } from './parse-warnings.js';
 
 export interface PackageContext {
@@ -70,7 +71,10 @@ export async function readPackage(input: Uint8Array | ArrayBuffer): Promise<{
 		),
 		mediaParts,
 	};
-	const blocks: Block[] = parseBlocksFromContainer(body, '', drawings);
+	const schemaWarnings: string[] = [];
+	const blocks: Block[] = withParseWarnings(schemaWarnings, () =>
+		parseBlocksFromContainer(body, '', drawings),
+	);
 	const section = children(body, 'sectPr').at(-1);
 	const size = first(section, 'pgSz');
 	const margins = first(section, 'pgMar');
@@ -89,9 +93,14 @@ export async function readPackage(input: Uint8Array | ArrayBuffer): Promise<{
 	const stylesFile = zip.file('word/styles.xml');
 	if (stylesFile) {
 		const stylesXml = await stylesFile.async('string');
-		model.paragraphStyles = parseParagraphStyleCatalog(stylesXml);
-		model.characterStyles = parseRunStyleCatalog(stylesXml);
-		model.tableStyles = parseTableStyleCatalog(stylesXml);
+		const catalogs = withParseWarnings(schemaWarnings, () => ({
+			paragraph: parseParagraphStyleCatalog(stylesXml),
+			character: parseRunStyleCatalog(stylesXml),
+			table: parseTableStyleCatalog(stylesXml),
+		}));
+		model.paragraphStyles = catalogs.paragraph;
+		model.characterStyles = catalogs.character;
+		model.tableStyles = catalogs.table;
 		model.warnings.push(
 			'Paragraph style, character style and docDefaults inheritance resolve for rendering, including toggle-property XOR semantics and basedOn chains. Linked styles beyond a basedOn chain, numbering-derived formatting and font metric substitution are not modeled; display can still differ from Word.',
 			...model.paragraphStyles.warnings,
@@ -103,15 +112,22 @@ export async function readPackage(input: Uint8Array | ArrayBuffer): Promise<{
 	const settingsFile = zip.file('word/settings.xml');
 	if (themeFile) {
 		model.theme = parseTheme(await themeFile.async('string'));
-		if (settingsFile)
-			model.theme.colorMapping = parseColorSchemeMapping(await settingsFile.async('string'));
+		if (settingsFile) {
+			const settingsXml = await settingsFile.async('string');
+			model.theme.colorMapping = withParseWarnings(schemaWarnings, () =>
+				parseColorSchemeMapping(settingsXml),
+			);
+		}
 		model.warnings.push(
 			'Theme colors and fonts resolve for rendering through a separate layer; direct theme references are preserved and never flattened onto runs.',
 		);
 	}
 	const numberingFile = zip.file('word/numbering.xml');
 	if (numberingFile) {
-		model.numberingCatalog = parseNumberingCatalog(await numberingFile.async('string'));
+		const numberingXml = await numberingFile.async('string');
+		model.numberingCatalog = withParseWarnings(schemaWarnings, () =>
+			parseNumberingCatalog(numberingXml),
+		);
 		model.warnings.push(
 			'Numbering is resolved for decimal, Roman numeral, letter, ordinal, cardinal/ordinal text and bullet formats, including multilevel lvlText and legal numbering. Picture bullets, style-linked numbering and other custom formats fall back to Decimal Number and are not rendered as Word would.',
 			...model.numberingCatalog.warnings,
@@ -161,6 +177,8 @@ export async function readPackage(input: Uint8Array | ArrayBuffer): Promise<{
 			'Nested tables render as a read-only text preview; edit their content from the original document.',
 		);
 	model.warnings.push(...imageAndBookmarkWarnings(blocks));
+	for (const warning of schemaWarnings)
+		if (!model.warnings.includes(warning)) model.warnings.push(warning);
 	// Pictures anywhere in the document: body, headers, footers, footnotes and endnotes.
 	const imagePartNames = new Set<string>();
 	const pictureBlocks = [

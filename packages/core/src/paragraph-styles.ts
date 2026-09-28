@@ -6,16 +6,11 @@ import type {
 } from './model.js';
 import { first, getW, named, parseXml, type XmlDocument, type XmlElement } from './xml.js';
 import { parseParagraphBorders, parseShadingFill } from './table-borders.js';
+import { alignFromJustification, parseJustification } from './paragraph-alignment.js';
+import { onOffElement, parseInteger, parseOnOff, parseSignedTwips } from './simple-types.js';
 
-const integer = (value: string | undefined): number | undefined => {
-	if (value === undefined || !/^-?\d+$/.test(value)) return undefined;
-	const number = Number(value);
-	return Number.isSafeInteger(number) ? number : undefined;
-};
-const enabled = (element: XmlElement | undefined): boolean | undefined => {
-	if (!element) return undefined;
-	return !['0', 'false', 'off', 'no', 'none'].includes((getW(element, 'val') ?? '').toLowerCase());
-};
+const integer = parseSignedTwips;
+const enabled = onOffElement;
 
 /** Pagination toggles whose element names match their model keys. */
 export const PAGINATION_KEYS = [
@@ -28,10 +23,9 @@ export const PAGINATION_KEYS = [
 /** Parses `w:pPr` formatting (shared by styles, docDefaults and direct paragraph properties). */
 export function parseFormatting(pPr: XmlElement | undefined): ParagraphFormatting {
 	const result: ParagraphFormatting = {};
-	const alignment = getW(first(pPr, 'jc'), 'val');
-	if (alignment === 'left' || alignment === 'center' || alignment === 'right')
-		result.align = alignment;
-	if (alignment === 'both' || alignment === 'distribute') result.align = 'justify';
+	const { align, justification } = parseJustification(pPr);
+	if (justification) result.justification = justification;
+	if (align) result.align = align;
 	const bidi = enabled(first(pPr, 'bidi'));
 	if (bidi !== undefined) result.direction = bidi ? 'rtl' : 'ltr';
 	for (const key of PAGINATION_KEYS) {
@@ -72,9 +66,9 @@ function parseStyleNumbering(
 ): { numId: number; level: number } | undefined {
 	const numPr = first(pPr, 'numPr');
 	if (!numPr) return undefined;
-	const numId = integer(getW(first(numPr, 'numId'), 'val'));
+	const numId = parseInteger(getW(first(numPr, 'numId'), 'val'));
 	if (numId === undefined) return undefined;
-	return { numId, level: integer(getW(first(numPr, 'ilvl'), 'val')) ?? 0 };
+	return { numId, level: parseInteger(getW(first(numPr, 'ilvl'), 'val')) ?? 0 };
 }
 
 function styleElements(document: XmlDocument): XmlElement[] {
@@ -93,11 +87,7 @@ export function parseParagraphStyleCatalog(xml: string): ParagraphStyleCatalog {
 		const id = getW(element, 'styleId');
 		if (!id) continue;
 		const basedOn = getW(first(element, 'basedOn'), 'val');
-		const defaultValue = getW(element, 'default');
-		const isDefault =
-			defaultValue === undefined
-				? undefined
-				: !['0', 'false', 'off', 'no', 'none'].includes(defaultValue.toLowerCase());
+		const isDefault = parseOnOff(getW(element, 'default'));
 		const name = getW(first(element, 'name'), 'val');
 		const numbering = parseStyleNumbering(first(element, 'pPr'));
 		styles[id] = {
@@ -158,6 +148,7 @@ export function resolveParagraphFormatting(
 	const direct: ParagraphFormatting = {};
 	const keys: (keyof ParagraphFormatting)[] = [
 		'align',
+		'justification',
 		'direction',
 		'spacingBeforeTwips',
 		'spacingAfterTwips',
@@ -177,7 +168,19 @@ export function resolveParagraphFormatting(
 		const value = paragraph[key];
 		if (value !== undefined) Object.assign(direct, { [key]: value });
 	}
-	return Object.assign(result, direct);
+	Object.assign(result, direct);
+	// A direct alignment without its own `w:jc` value supersedes any inherited exact value.
+	if (paragraph.align !== undefined && paragraph.justification === undefined)
+		delete result.justification;
+	// `start`/`end` follow the resolved direction, which may be inherited from a style.
+	if (
+		(result.justification === 'start' || result.justification === 'end') &&
+		result.direction === 'rtl' &&
+		(paragraph.align === undefined || paragraph.justification !== undefined) &&
+		result.align === alignFromJustification(result.justification, false)
+	)
+		result.align = alignFromJustification(result.justification, true);
+	return result;
 }
 
 /** Resolves numbering inherited through `pStyle` when a paragraph has no direct `w:numPr`. */

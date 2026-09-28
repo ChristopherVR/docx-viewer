@@ -7,17 +7,13 @@ import type {
 	NumLevelOverride,
 } from './numbering-model.js';
 import { children, first, getW, named, parseXml, type XmlElement } from './xml.js';
+import { isStNumberFormat } from './generated/wml-simple-types.js';
+import { enumValue } from './parse-diagnostics.js';
+import { onOffElement, parseInteger } from './simple-types.js';
 
-function integer(value: string | undefined, fallback: number): number {
-	if (value === undefined || !/^-?\d+$/.test(value)) return fallback;
-	const parsed = Number(value);
-	return Number.isSafeInteger(parsed) ? parsed : fallback;
-}
-function flag(element: XmlElement | undefined): boolean {
-	if (!element) return false;
-	const value = getW(element, 'val')?.toLowerCase();
-	return value === undefined || !['0', 'false', 'off', 'no', 'none'].includes(value);
-}
+const integer = (value: string | undefined, fallback: number): number =>
+	parseInteger(value) ?? fallback;
+const flag = (element: XmlElement | undefined): boolean => onOffElement(element) === true;
 function byName(root: XmlElement, local: string): XmlElement[] {
 	return Array.from(root.getElementsByTagName('*')).filter(
 		(node): node is XmlElement => node.nodeType === 1 && named(node as XmlElement, local),
@@ -27,7 +23,8 @@ function byName(root: XmlElement, local: string): XmlElement[] {
 export function parseNumberingLevel(lvl: XmlElement): NumberingLevelDefinition {
 	const level = integer(getW(lvl, 'ilvl'), 0);
 	const start = integer(getW(first(lvl, 'start'), 'val'), 1);
-	const numFmt = getW(first(lvl, 'numFmt'), 'val') ?? 'decimal';
+	const numFmt =
+		enumValue(isStNumberFormat, getW(first(lvl, 'numFmt'), 'val'), 'w:numFmt') ?? 'decimal';
 	const lvlText = getW(first(lvl, 'lvlText'), 'val') ?? '';
 	const jc = getW(first(lvl, 'lvlJc'), 'val');
 	const ind = first(first(lvl, 'pPr'), 'ind');

@@ -17,6 +17,7 @@
 		"demo": "vite demos/demo-vanilla --config vite.config.ts --host 127.0.0.1",
 		"test:browser": "playwright test",
 		"check:shared": "node scripts/check-shared.mjs",
+		"gen:schema-types": "bun packages/core/scripts/gen-schema-types.ts",
 		"fmt": "oxfmt",
 		"fmt:check": "oxfmt --check"
 	},

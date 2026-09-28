@@ -44,18 +44,24 @@ describe('Word highlight tokens', () => {
 		expect(await loaded.save()).toEqual(original);
 		const paragraph = loaded.model.blocks[0];
 		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
-		expect(paragraph.runs[0].highlight).toBe('gray25');
+		// `gray25` is not an ST_HighlightColor value: it is dropped from the model with a warning.
+		expect(paragraph.runs[0].highlight).toBeUndefined();
+		expect(loaded.model.warnings.join('\n')).toContain(
+			'Ignored invalid w:highlight value “gray25”',
+		);
 		paragraph.runs[0].text = 'Edited';
 		const preserved = await JSZip.loadAsync(await loaded.save());
 		expect(await preserved.file('word/document.xml')?.async('string')).toContain('w:val="gray25"');
-		paragraph.runs[0].highlight = 'brightGreen';
+		paragraph.runs[0].highlight = 'brightGreen' as never;
 		await expect(loaded.save()).rejects.toThrow('Unsupported Word highlight token: brightGreen');
 	});
 
 	it('rejects invalid highlight tokens in new documents', async () => {
 		await expect(
 			saveDocx({
-				blocks: [{ type: 'paragraph', id: 'p', runs: [{ text: 'New', highlight: 'gray25' }] }],
+				blocks: [
+					{ type: 'paragraph', id: 'p', runs: [{ text: 'New', highlight: 'gray25' as never }] },
+				],
 				page: {
 					width: 816,
 					height: 1056,

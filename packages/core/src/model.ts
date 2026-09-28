@@ -1,5 +1,13 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import { defaultStyleCatalogs } from './default-styles.js';
+import type {
+	StHighlightColor,
+	StJc,
+	StJcTable,
+	StNumberFormat,
+	StTabJc,
+	StTabTlc,
+} from './generated/wml-simple-types.js';
 import type { NumberingCatalog } from './numbering-model.js';
 import type { HyperlinkInfo, InlineImage } from './inline-model.js';
 export type { HyperlinkInfo, InlineImage, PicturePlacement } from './inline-model.js';
@@ -80,7 +88,7 @@ export interface TextRun {
 	underline?: boolean;
 	strike?: boolean;
 	/** Word named highlight color, such as `yellow` or `lightGray`. */
-	highlight?: string;
+	highlight?: StHighlightColor;
 	verticalAlign?: 'superscript' | 'subscript';
 	/** Direct Word run language tag (`w:lang/@w:val`), without automatic detection. */
 	language?: string;
@@ -151,8 +159,8 @@ export interface TextRun {
 /** A paragraph tab stop (`w:tab`): position from the text margin, alignment and leader fill. */
 export interface TabStop {
 	posTwips: number;
-	align: 'left' | 'center' | 'right' | 'decimal' | 'bar' | 'clear' | 'start' | 'end' | 'num';
-	leader?: 'none' | 'dot' | 'hyphen' | 'underscore' | 'heavy' | 'middleDot';
+	align: StTabJc;
+	leader?: StTabTlc;
 }
 export interface Paragraph {
 	type: 'paragraph';
@@ -160,6 +168,12 @@ export interface Paragraph {
 	id: string;
 	runs: TextRun[];
 	align?: 'left' | 'center' | 'right' | 'justify';
+	/**
+	 * The exact `w:jc` value read from the file (`start`, `end`, `distribute`, kashida variants...).
+	 * `align` is derived from it for rendering; it is only authoritative while `align` still equals
+	 * `alignFromJustification(justification, rtl)`, since editors change `align` alone.
+	 */
+	justification?: StJc;
 	/** Paragraph base direction from direct `w:bidi`; undefined inherits. */
 	direction?: 'ltr' | 'rtl';
 	style?: string;
@@ -208,6 +222,7 @@ export interface Paragraph {
 export type ParagraphFormatting = Pick<
 	Paragraph,
 	| 'align'
+	| 'justification'
 	| 'direction'
 	| 'spacingBeforeTwips'
 	| 'spacingAfterTwips'
@@ -252,6 +267,8 @@ export interface Table {
 	grid?: number[];
 	widthTwips?: number;
 	alignment?: 'left' | 'center' | 'right';
+	/** The exact `w:tblPr/w:jc` value (`ST_JcTable`, including `start`/`end`); `alignment` is derived from it. */
+	justification?: StJcTable;
 	indentTwips?: number;
 	borders?: import('./table-model.js').TableBorders;
 	/** `w:tblStyle/@w:val`; conditional formatting resolves through `tableStyles` without flattening. */
@@ -289,9 +306,9 @@ export interface DocumentModel {
 	footnotes?: Note[];
 	endnotes?: Note[];
 	/** Raw `w:footnotePr/w:numFmt` token from settings.xml; defaults to `decimal`. */
-	footnoteNumFmt?: string;
+	footnoteNumFmt?: StNumberFormat;
 	/** Raw `w:endnotePr/w:numFmt` token from settings.xml; defaults to `lowerRoman`. */
-	endnoteNumFmt?: string;
+	endnoteNumFmt?: StNumberFormat;
 	/** Comment threads parsed from comments.xml / commentsExtended.xml. */
 	comments?: Comment[];
 	/** settings.xml `w:trackRevisions`; toggling this changes how the editor records new edits. */

@@ -20,6 +20,8 @@ import { parseDrawing, type DrawingContext } from './drawing.js';
 import { resolveHyperlink, parseSimpleHyperlinkField } from './hyperlink.js';
 import { paragraphBookmarkNames } from './bookmarks.js';
 import { parseTabStops } from './tab-stops.js';
+import { parseJustification } from './paragraph-alignment.js';
+import { onOffElement, parseInteger, parseSignedTwips } from './simple-types.js';
 import { PAGINATION_KEYS } from './paragraph-styles.js';
 import { parseParagraphBorders, parseShadingFill } from './table-borders.js';
 import { createFieldTracker } from './field-runs.js';
@@ -31,18 +33,7 @@ import {
 	runFormatRevision,
 } from './parse-revisions.js';
 
-const points = (halfPoints: string | undefined): number | undefined =>
-	halfPoints === undefined ? undefined : Number(halfPoints) / 2;
-const twipValue = (value: string | undefined): number | undefined => {
-	if (value === undefined || !/^-?\d+$/.test(value)) return undefined;
-	const parsed = Number(value);
-	return Number.isSafeInteger(parsed) ? parsed : undefined;
-};
-const on = (element: XmlElement | undefined): boolean => {
-	if (!element) return false;
-	const value = getW(element, 'val')?.toLowerCase();
-	return !['0', 'false', 'off', 'no', 'none'].includes(value ?? '');
-};
+const twipValue = parseSignedTwips;
 
 const FIELD_PLACEHOLDERS: Record<string, string> = {
 	PAGE: '[Page #]',
@@ -136,8 +127,8 @@ function parseRun(node: XmlElement, revision?: Revision): TextRun {
 	if (languageValue !== undefined) run.language = languageValue;
 	if (eastAsiaLanguage !== undefined) run.eastAsiaLanguage = eastAsiaLanguage;
 	if (bidiLanguage !== undefined) run.bidiLanguage = bidiLanguage;
-	const rtl = first(props, 'rtl');
-	if (rtl) run.rtl = on(rtl);
+	const rtl = onOffElement(first(props, 'rtl'));
+	if (rtl !== undefined) run.rtl = rtl;
 	const styleRef = getW(first(props, 'rStyle'), 'val');
 	if (styleRef) run.style = styleRef;
 	return run;
@@ -145,7 +136,6 @@ function parseRun(node: XmlElement, revision?: Revision): TextRun {
 
 function parseParagraph(node: XmlElement, id: string): Paragraph {
 	const props = first(node, 'pPr');
-	const alignment = getW(first(props, 'jc'), 'val');
 	const trackField = createFieldTracker();
 	const { runs } = collectParagraphRuns(
 		node,
@@ -177,21 +167,17 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 	if (markRevision) paragraph.markRevision = markRevision;
 	const formatRevision = paragraphFormatRevision(props);
 	if (formatRevision) paragraph.formatRevision = formatRevision;
-	const bidi = first(props, 'bidi');
-	if (bidi) paragraph.direction = on(bidi) ? 'rtl' : 'ltr';
-	if (
-		alignment === 'left' ||
-		alignment === 'center' ||
-		alignment === 'right' ||
-		alignment === 'both'
-	)
-		paragraph.align = alignment === 'both' ? 'justify' : alignment;
+	const bidi = onOffElement(first(props, 'bidi'));
+	if (bidi !== undefined) paragraph.direction = bidi ? 'rtl' : 'ltr';
+	const { align, justification } = parseJustification(props);
+	if (align) paragraph.align = align;
+	if (justification) paragraph.justification = justification;
 	const style = getW(first(props, 'pStyle'), 'val');
 	if (style) paragraph.style = style;
-	if (on(first(props, 'pageBreakBefore'))) paragraph.pageBreakBefore = true;
+	if (onOffElement(first(props, 'pageBreakBefore'))) paragraph.pageBreakBefore = true;
 	for (const key of PAGINATION_KEYS) {
-		const element = first(props, key);
-		if (element) paragraph[key] = on(element);
+		const value = onOffElement(first(props, key));
+		if (value !== undefined) paragraph[key] = value;
 	}
 	const borders = parseParagraphBorders(first(props, 'pBdr'));
 	if (borders) paragraph.borders = borders;
@@ -225,11 +211,11 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 	if (firstLine !== undefined) paragraph.firstLineTwips = firstLine;
 	if (hanging !== undefined) paragraph.hangingTwips = hanging;
 	const numPr = first(props, 'numPr');
-	const numId = twipValue(getW(first(numPr, 'numId'), 'val'));
+	const numId = parseInteger(getW(first(numPr, 'numId'), 'val'));
 	if (numPr && numId !== undefined && numId >= 0)
 		paragraph.numbering = {
 			numId,
-			level: twipValue(getW(first(numPr, 'ilvl'), 'val')) ?? 0,
+			level: parseInteger(getW(first(numPr, 'ilvl'), 'val')) ?? 0,
 		};
 	return paragraph;
 }

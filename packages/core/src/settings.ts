@@ -1,4 +1,5 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
+import { onOffElement } from './simple-types.js';
 import type JSZip from 'jszip';
 import { buildXml, children, getW, makeW, parseXml, type XmlElement, WORD_NS } from './xml.js';
 import { ensureContentTypeOverride, ensureDocumentRelationship } from './zip-parts.js';
@@ -111,17 +112,13 @@ const SETTINGS_ORDER = [
 	'listSeparator',
 ];
 
-function on(element: XmlElement | undefined): boolean {
-	if (!element) return false;
-	const value = getW(element, 'val')?.toLowerCase();
-	return !['0', 'false', 'off', 'no', 'none'].includes(value ?? '');
-}
-
 /** Reads Word's Track Changes toggle (`w:trackRevisions`; `w:trackChanges` is accepted too). */
 export function parseTrackChangesSetting(xml: string): boolean {
 	const root = parseXml(xml).documentElement as XmlElement | null;
 	if (!root) return false;
-	return on(children(root, 'trackRevisions')[0] ?? children(root, 'trackChanges')[0]);
+	return (
+		onOffElement(children(root, 'trackRevisions')[0] ?? children(root, 'trackChanges')[0]) === true
+	);
 }
 
 /**

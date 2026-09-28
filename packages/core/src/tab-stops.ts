@@ -2,6 +2,9 @@
 // Paragraph tab stops (`w:pPr/w:tabs`) and the canonical `w:pPr` child order Word requires.
 import type { Paragraph, TabStop } from './model.js';
 import { orderChildren } from './element-order.js';
+import { isStTabJc, isStTabTlc } from './generated/wml-simple-types.js';
+import { enumValue } from './parse-diagnostics.js';
+import { parseSignedTwips } from './simple-types.js';
 import {
 	children,
 	getW,
@@ -12,34 +15,14 @@ import {
 	type XmlElement,
 } from './xml.js';
 
-const ALIGNS = new Set<TabStop['align']>([
-	'left',
-	'center',
-	'right',
-	'decimal',
-	'bar',
-	'clear',
-	'start',
-	'end',
-	'num',
-]);
-const LEADERS = new Set<NonNullable<TabStop['leader']>>([
-	'none',
-	'dot',
-	'hyphen',
-	'underscore',
-	'heavy',
-	'middleDot',
-]);
-
 export function parseTabStops(tabs: XmlElement | undefined): TabStop[] {
 	const stops: TabStop[] = [];
 	for (const tab of tabs ? children(tabs, 'tab') : []) {
-		const align = getW(tab, 'val') as TabStop['align'] | undefined;
-		const pos = Number(getW(tab, 'pos'));
-		if (!align || !ALIGNS.has(align) || !Number.isSafeInteger(pos)) continue;
-		const leader = getW(tab, 'leader') as TabStop['leader'];
-		stops.push({ posTwips: pos, align, ...(leader && LEADERS.has(leader) ? { leader } : {}) });
+		const align = enumValue(isStTabJc, getW(tab, 'val'), 'w:tab/@w:val');
+		const pos = parseSignedTwips(getW(tab, 'pos'));
+		if (!align || pos === undefined) continue;
+		const leader = enumValue(isStTabTlc, getW(tab, 'leader'), 'w:tab/@w:leader');
+		stops.push({ posTwips: pos, align, ...(leader ? { leader } : {}) });
 	}
 	return stops;
 }

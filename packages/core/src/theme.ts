@@ -1,6 +1,11 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import { parseXml, WORD_NS, getW, type XmlElement } from './xml.js';
 import type { ThemeCatalog, ThemeColorSlot, ThemeFontSet } from './theme-model.js';
+import {
+	isStWmlColorSchemeIndex,
+	type StWmlColorSchemeIndex,
+} from './generated/wml-simple-types.js';
+import { enumValue } from './parse-diagnostics.js';
 
 const DRAWING_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
 const SCHEME_ORDER: ThemeColorSlot[] = [
@@ -74,11 +79,19 @@ export function parseTheme(xml: string): ThemeCatalog {
 }
 
 const MAPPING_KEYS = ['bg1', 'tx1', 'bg2', 'tx2'] as const;
-const TOKEN_TO_SLOT: Record<string, ThemeColorSlot> = {
+const TOKEN_TO_SLOT: Record<StWmlColorSchemeIndex, ThemeColorSlot> = {
 	dark1: 'dk1',
 	light1: 'lt1',
 	dark2: 'dk2',
 	light2: 'lt2',
+	accent1: 'accent1',
+	accent2: 'accent2',
+	accent3: 'accent3',
+	accent4: 'accent4',
+	accent5: 'accent5',
+	accent6: 'accent6',
+	hyperlink: 'hlink',
+	followedHyperlink: 'folHlink',
 };
 
 /** Parses `word/settings.xml`'s `w:clrSchemeMapping`, mapping logical bg/tx slots to scheme slots. */
@@ -90,9 +103,12 @@ export function parseColorSchemeMapping(xml: string): ThemeCatalog['colorMapping
 	const result: ThemeCatalog['colorMapping'] = {};
 	if (!mapping) return result;
 	for (const key of MAPPING_KEYS) {
-		const value = getW(mapping, key);
-		if (!value) continue;
-		result[key] = TOKEN_TO_SLOT[value] ?? (value as ThemeColorSlot);
+		const value = enumValue(
+			isStWmlColorSchemeIndex,
+			getW(mapping, key),
+			`w:clrSchemeMapping/@w:${key}`,
+		);
+		if (value) result[key] = TOKEN_TO_SLOT[value];
 	}
 	return result;
 }

@@ -131,7 +131,7 @@ export function setTitlePage(
 export function setPageNumbering(
 	model: DocumentModel,
 	index: number,
-	change: { format?: string; restart?: boolean },
+	change: { format?: NonNullable<SectionProperties['pageNumbering']>['format']; restart?: boolean },
 ): DocumentModel {
 	return withSection(model, index, (section) => {
 		const numbering = { ...section.pageNumbering };

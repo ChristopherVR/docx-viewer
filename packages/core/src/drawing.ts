@@ -10,6 +10,8 @@ import {
 	type Relationship,
 } from './package-parts.js';
 import { getR, isElement, type XmlElement } from './xml.js';
+import { isStRelFromH, isStRelFromV } from './generated/wml-simple-types.js';
+import { enumValue } from './parse-diagnostics.js';
 
 const WP_NS = 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing';
 const A_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
@@ -155,7 +157,11 @@ function parsePlacement(anchor: XmlElement): PicturePlacement {
 	const placement: PicturePlacement = { wrap };
 	if (anchor.getAttribute('behindDoc') === '1') placement.behindText = true;
 	const positionH = firstNS(anchor, WP_NS, 'positionH');
-	const relativeFrom = positionH?.getAttribute('relativeFrom');
+	const relativeFrom = enumValue(
+		isStRelFromH,
+		positionH?.getAttribute('relativeFrom'),
+		'wp:positionH/@relativeFrom',
+	);
 	if (relativeFrom) placement.relativeFrom = relativeFrom;
 	const align = firstNS(positionH, WP_NS, 'align')?.textContent?.trim();
 	if (
@@ -169,7 +175,11 @@ function parsePlacement(anchor: XmlElement): PicturePlacement {
 	const offset = firstNS(positionH, WP_NS, 'posOffset')?.textContent?.trim();
 	if (offset && /^-?\d+$/.test(offset)) placement.offsetXPx = emuToPx(offset);
 	const positionV = firstNS(anchor, WP_NS, 'positionV');
-	const relativeFromV = positionV?.getAttribute('relativeFrom');
+	const relativeFromV = enumValue(
+		isStRelFromV,
+		positionV?.getAttribute('relativeFrom'),
+		'wp:positionV/@relativeFrom',
+	);
 	if (relativeFromV) placement.relativeFromV = relativeFromV;
 	const alignV = firstNS(positionV, WP_NS, 'align')?.textContent?.trim();
 	if (

@@ -1,0 +1,21 @@
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+import { generate, OUTPUT_PATH } from '../../scripts/gen-schema-types.js';
+import { isStJc, isStJcTable, isStRelFromV, ST_Jc, ST_RelFromH } from './wml-simple-types.js';
+
+describe('generated schema simple types', () => {
+	it('is identical to a fresh generation from the checked-in XSDs (drift check)', () => {
+		expect(readFileSync(OUTPUT_PATH, 'utf8')).toBe(generate());
+	});
+
+	it('exposes enumerations, guards and provenance from the schemas', () => {
+		expect(ST_Jc).toContain('distribute');
+		expect(ST_RelFromH).toContain('leftMargin');
+		expect(isStJc('start')).toBe(true);
+		expect(isStJc('justify')).toBe(false);
+		expect(isStJc(undefined)).toBe(false);
+		expect(isStJcTable('both')).toBe(false);
+		expect(isStRelFromV('topMargin')).toBe(true);
+		expect(readFileSync(OUTPUT_PATH, 'utf8')).toMatch(/wml\.xsd sha256:[0-9a-f]{64}/);
+	});
+});

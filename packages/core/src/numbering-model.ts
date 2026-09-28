@@ -1,11 +1,12 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
+import type { StNumberFormat } from './generated/wml-simple-types.js';
 /** A single `w:lvl` definition, fully resolved from an abstractNum (and any lvlOverride). */
 export interface NumberingLevelDefinition {
 	/** 0-based `w:ilvl`. */
 	level: number;
 	start: number;
-	/** Raw `w:numFmt/@w:val`, such as `decimal`, `bullet`, `lowerRoman`. Unknown formats are kept literally. */
-	numFmt: string;
+	/** `w:numFmt/@w:val` (`ST_NumberFormat`), such as `decimal`, `bullet`, `lowerRoman`. Invalid values fall back to `decimal` with a parse warning. */
+	numFmt: StNumberFormat;
 	/** Raw `w:lvlText/@w:val`, with `%1`..`%9` placeholders (1-based ancestor levels) or a bullet glyph. */
 	lvlText: string;
 	lvlJc?: 'left' | 'center' | 'right';

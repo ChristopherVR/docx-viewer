@@ -112,7 +112,7 @@ describe('numbering package surgery', () => {
 					...catalog.abstractNums['0'],
 					levels: {
 						...catalog.abstractNums['0'].levels,
-						0: { ...catalog.abstractNums['0'].levels[0], numFmt: 'upperRoman' },
+						0: { ...catalog.abstractNums['0'].levels[0], numFmt: 'upperRoman' as const },
 					},
 				},
 			},

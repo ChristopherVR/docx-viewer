@@ -1,4 +1,5 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
+import type { StThemeColor } from './generated/wml-simple-types.js';
 /** Word theme color scheme slots (`a:clrScheme` children), in schema order. */
 export type ThemeColorSlot =
 	| 'dk1'
@@ -13,24 +14,8 @@ export type ThemeColorSlot =
 	| 'accent6'
 	| 'hlink'
 	| 'folHlink';
-/** WordprocessingML `ST_ThemeColor` tokens referenced from `w:themeColor`/`w:themeFill`. */
-export type ThemeColorToken =
-	| 'dark1'
-	| 'light1'
-	| 'dark2'
-	| 'light2'
-	| 'accent1'
-	| 'accent2'
-	| 'accent3'
-	| 'accent4'
-	| 'accent5'
-	| 'accent6'
-	| 'hyperlink'
-	| 'followedHyperlink'
-	| 'background1'
-	| 'text1'
-	| 'background2'
-	| 'text2';
+/** WordprocessingML `ST_ThemeColor` tokens (generated from the schema) referenced from `w:themeColor`/`w:themeFill`. */
+export type ThemeColorToken = StThemeColor;
 export interface ThemeFontSet {
 	latin?: string;
 	eastAsia?: string;

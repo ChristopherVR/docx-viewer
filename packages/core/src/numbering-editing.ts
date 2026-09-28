@@ -9,7 +9,7 @@ import type {
 export type ListKind = 'bullet' | 'decimal';
 
 const BULLET_GLYPHS = ['•', '◦', '▪'];
-const DECIMAL_FORMATS = ['decimal', 'lowerLetter', 'lowerRoman'];
+const DECIMAL_FORMATS = ['decimal', 'lowerLetter', 'lowerRoman'] as const;
 
 function nextId(ids: string[], floor: number): string {
 	const max = ids.reduce((max, id) => {

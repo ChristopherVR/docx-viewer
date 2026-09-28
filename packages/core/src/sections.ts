@@ -2,14 +2,11 @@
 import type { Block, SectionColumns, SectionProperties } from './model.js';
 import { children, first, getW, isElement, named, type XmlElement } from './xml.js';
 import { getRelationshipId } from './relationships.js';
+import { isStNumberFormat, isStSectionMark, isStVerticalJc } from './generated/wml-simple-types.js';
+import { enumValue } from './parse-diagnostics.js';
+import { parseOnOff, parseSignedTwips, parseUnsignedInteger } from './simple-types.js';
 
-const twipInt = (value: string | undefined): number | undefined => {
-	if (value === undefined || !/^-?\d+$/.test(value)) return undefined;
-	const parsed = Number(value);
-	return Number.isSafeInteger(parsed) ? parsed : undefined;
-};
-const flag = (value: string | undefined): boolean =>
-	value !== undefined && !['0', 'false', 'off', 'no', 'none'].includes(value.toLowerCase());
+const twipInt = parseSignedTwips;
 
 export interface RawHeaderFooterRef {
 	slot: 'default' | 'even' | 'first';
@@ -24,11 +21,11 @@ export interface RawSection extends Omit<SectionProperties, 'headers' | 'footers
 function parseColumns(section: XmlElement): SectionColumns {
 	const cols = first(section, 'cols');
 	if (!cols) return { count: 1, equalWidth: true };
-	const count = twipInt(getW(cols, 'num')) ?? 1;
+	const count = parseUnsignedInteger(getW(cols, 'num')) ?? 1;
 	const spacingTwips = twipInt(getW(cols, 'space'));
 	const equalWidthValue = getW(cols, 'equalWidth');
-	const equalWidth = equalWidthValue === undefined || flag(equalWidthValue);
-	const separator = flag(getW(cols, 'sep'));
+	const equalWidth = equalWidthValue === undefined || parseOnOff(equalWidthValue) !== false;
+	const separator = parseOnOff(getW(cols, 'sep')) === true;
 	const colChildren = children(cols, 'col');
 	const widths = colChildren.length
 		? colChildren.map((column) => ({
@@ -59,25 +56,20 @@ function parseHeaderFooterRefs(section: XmlElement, localName: string): RawHeade
 	return refs;
 }
 
-const SECTION_TYPES = new Set(['nextPage', 'continuous', 'evenPage', 'oddPage', 'nextColumn']);
-const VALIGN_VALUES = new Set(['top', 'center', 'both', 'bottom']);
-
 function parseOneSection(section: XmlElement, endsAtBlockId: string): RawSection {
 	const size = first(section, 'pgSz');
 	const margins = first(section, 'pgMar');
-	const typeValue = getW(first(section, 'type'), 'val');
+	const typeValue = enumValue(isStSectionMark, getW(first(section, 'type'), 'val'), 'w:type');
 	const pgNum = first(section, 'pgNumType');
-	const vAlignValue = getW(first(section, 'vAlign'), 'val');
+	const vAlignValue = enumValue(isStVerticalJc, getW(first(section, 'vAlign'), 'val'), 'w:vAlign');
 	const headerDistance = twipInt(getW(margins, 'header'));
 	const footerDistance = twipInt(getW(margins, 'footer'));
 	const gutter = twipInt(getW(margins, 'gutter'));
-	const pageNumberingStart = twipInt(getW(pgNum, 'start'));
-	const pageNumberingFormat = getW(pgNum, 'fmt');
+	const pageNumberingStart = parseUnsignedInteger(getW(pgNum, 'start'));
+	const pageNumberingFormat = enumValue(isStNumberFormat, getW(pgNum, 'fmt'), 'w:pgNumType/@w:fmt');
 	return {
 		endsAtBlockId,
-		type: (typeValue && SECTION_TYPES.has(typeValue)
-			? typeValue
-			: 'nextPage') as SectionProperties['type'],
+		type: typeValue ?? 'nextPage',
 		pageWidthTwips: twipInt(getW(size, 'w')) ?? 12240,
 		pageHeightTwips: twipInt(getW(size, 'h')) ?? 15840,
 		orientation: getW(size, 'orient') === 'landscape' ? 'landscape' : 'portrait',
@@ -90,9 +82,7 @@ function parseOneSection(section: XmlElement, endsAtBlockId: string): RawSection
 		...(gutter !== undefined ? { gutterTwips: gutter } : {}),
 		columns: parseColumns(section),
 		...(first(section, 'titlePg') ? { titlePage: true } : {}),
-		...(vAlignValue && VALIGN_VALUES.has(vAlignValue)
-			? { verticalAlign: vAlignValue as SectionProperties['verticalAlign'] }
-			: {}),
+		...(vAlignValue ? { verticalAlign: vAlignValue } : {}),
 		...(pgNum
 			? {
 					pageNumbering: {

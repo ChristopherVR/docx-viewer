@@ -9,12 +9,12 @@ import type {
 import type { Paragraph, Table } from './model.js';
 import { children, first, getW, type XmlElement, WORD_NS } from './xml.js';
 import { canEditTableStructure } from './write-table.js';
+import { isStJcTable, isStVerticalJc } from './generated/wml-simple-types.js';
+import { enumValue } from './parse-diagnostics.js';
+import { onOffAttribute, onOffElement, parseTwips, parseUnsignedInteger } from './simple-types.js';
 import { parseShadingFill, parseShadingThemeFill, parseTableBorders } from './table-borders.js';
 
-const dxa = (value: string | undefined): number | undefined => {
-	if (value === undefined || !/^\d+$/.test(value)) return undefined;
-	return Number(value);
-};
+const dxa = parseTwips;
 
 function nestedPreview(node: XmlElement): NestedTablePreview {
 	return {
@@ -37,8 +37,8 @@ function parseCell(
 	const result: TableCell = {
 		paragraphs: children(cell, 'p').map((p, pi) => parseParagraph(p, `${id}p${pi}`)),
 	};
-	const gridSpan = getW(first(props, 'gridSpan'), 'val');
-	if (gridSpan && /^\d+$/.test(gridSpan)) result.gridSpan = Number(gridSpan);
+	const gridSpan = parseUnsignedInteger(getW(first(props, 'gridSpan'), 'val'));
+	if (gridSpan !== undefined) result.gridSpan = gridSpan;
 	const vMerge = first(props, 'vMerge');
 	if (vMerge) result.verticalMerge = getW(vMerge, 'val') === 'restart' ? 'restart' : 'continue';
 	const tcW = first(props, 'tcW');
@@ -46,8 +46,8 @@ function parseCell(
 		const width = dxa(getW(tcW, 'w'));
 		if (width !== undefined) result.widthTwips = width;
 	}
-	const vAlign = getW(first(props, 'vAlign'), 'val');
-	if (vAlign === 'top' || vAlign === 'center' || vAlign === 'bottom') result.verticalAlign = vAlign;
+	const vAlign = enumValue(isStVerticalJc, getW(first(props, 'vAlign'), 'val'), 'w:tcPr/w:vAlign');
+	if (vAlign) result.verticalAlign = vAlign;
 	const shd = first(props, 'shd');
 	const fill = parseShadingFill(shd);
 	if (fill) result.shadingFill = fill;
@@ -62,15 +62,9 @@ function parseCell(
 	return result;
 }
 
-function attrBoolean(element: XmlElement, name: string): boolean | undefined {
-	const value = getW(element, name);
-	if (value === undefined) return undefined;
-	return !['0', 'false', 'off', 'no', 'none'].includes(value.toLowerCase());
-}
-
 function parseLook(element: XmlElement | undefined): TableLook | undefined {
 	if (!element) return undefined;
-	const flag = (name: string) => attrBoolean(element, name);
+	const flag = (name: string) => onOffAttribute(element, name);
 	const look: TableLook = {};
 	const firstRow = flag('firstRow');
 	const lastRow = flag('lastRow');
@@ -113,10 +107,8 @@ function parseRowProperties(row: XmlElement): TableRowProperties {
 		result.heightTwips = heightTwips;
 		result.heightRule = getW(height, 'hRule') === 'exact' ? 'exact' : 'atLeast';
 	}
-	const on = (element: XmlElement | undefined) =>
-		Boolean(element) && !['0', 'false', 'off'].includes(getW(element, 'val') ?? '');
-	if (on(first(trPr, 'cantSplit'))) result.cantSplit = true;
-	if (on(first(trPr, 'tblHeader'))) result.header = true;
+	if (onOffElement(first(trPr, 'cantSplit'))) result.cantSplit = true;
+	if (onOffElement(first(trPr, 'tblHeader'))) result.header = true;
 	return result;
 }
 
@@ -132,17 +124,30 @@ export function parseTable(
 	const table: Table = { type: 'table', id, rows, structureEditable: canEditTableStructure(node) };
 	const gridElement = first(node, 'tblGrid');
 	const grid = gridElement
-		? children(gridElement, 'gridCol')
-				.map((column) => dxa(getW(column, 'w')))
-				.filter((value): value is number => value !== undefined)
+		? children(gridElement, 'gridCol').flatMap((column): number[] => {
+				const width = dxa(getW(column, 'w'));
+				return width === undefined ? [] : [width];
+			})
 		: [];
 	if (grid.length) table.grid = grid;
 	const tblPr = first(node, 'tblPr');
 	const width = dxa(getW(first(tblPr, 'tblW'), 'w'));
 	if (width !== undefined) table.widthTwips = width;
-	const alignment = getW(first(tblPr, 'jc'), 'val');
-	if (alignment === 'left' || alignment === 'center' || alignment === 'right')
-		table.alignment = alignment;
+	const justification = enumValue(isStJcTable, getW(first(tblPr, 'jc'), 'val'), 'w:tblPr/w:jc');
+	if (justification) {
+		table.justification = justification;
+		const rtl = onOffElement(first(tblPr, 'bidiVisual')) === true;
+		table.alignment =
+			justification === 'start'
+				? rtl
+					? 'right'
+					: 'left'
+				: justification === 'end'
+					? rtl
+						? 'left'
+						: 'right'
+					: justification;
+	}
 	const indent = dxa(getW(first(tblPr, 'tblInd'), 'w'));
 	if (indent !== undefined) table.indentTwips = indent;
 	const borders = parseTableBorders(first(tblPr, 'tblBorders'));
