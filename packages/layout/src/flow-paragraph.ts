@@ -57,7 +57,10 @@ export function placeParagraph(
 		let end = lineCursor;
 		let forced: 'page' | 'column' | undefined;
 		for (let i = lineCursor; i < layout.lines.length; i++) {
-			const height = layout.lines[i].heightPx;
+			// A line's gap (clearing a wrapped picture) moves with it, except when a later segment
+			// starts it at the top of a new column or page.
+			const gap = i === lineCursor && !firstSegment ? 0 : (layout.lines[i].gapBeforePx ?? 0);
+			const height = layout.lines[i].heightPx + gap;
 			if (cumulative + height > budget && end > lineCursor) break;
 			cumulative += height;
 			end = i + 1;
@@ -83,14 +86,14 @@ export function placeParagraph(
 			);
 			placedCount = Math.max(1, end - lineCursor);
 		}
+		const first = layout.lines[lineCursor];
+		const origin = first.yPx - (firstSegment ? (first.gapBeforePx ?? 0) : 0);
 		const segmentLines = layout.lines
 			.slice(lineCursor, lineCursor + placedCount)
-			.map((line, index) => ({
-				...line,
-				yPx: index === 0 ? 0 : line.yPx - layout.lines[lineCursor].yPx,
-			}));
+			.map((line) => ({ ...line, yPx: line.yPx - origin }));
 		const isFinal = lineCursor + placedCount >= layout.lines.length;
-		const segmentHeight = segmentLines.reduce((sum, line) => sum + line.heightPx, 0);
+		const lastLine = segmentLines.at(-1);
+		const segmentHeight = lastLine ? lastLine.yPx + lastLine.heightPx : 0;
 		const box: LayoutParagraphBox = {
 			kind: 'paragraph',
 			blockId: paragraph.id,

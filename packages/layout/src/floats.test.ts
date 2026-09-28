@@ -106,3 +106,66 @@ describe('pictures in pagination', () => {
 		expect(result.pages[1].floats?.[0]).toMatchObject({ blockId: 'late', yPx: 200 });
 	});
 });
+
+describe('text wrapping around floats', () => {
+	const words = Array.from({ length: 120 }, () => 'word').join(' ');
+	const lineRights = (result: ReturnType<typeof layoutDocument>) => {
+		const block = result.pages[0].columns[0].blocks[0] as {
+			lines: { yPx: number; fragments: { xPx: number; widthPx: number }[] }[];
+		};
+		return block.lines.map((line) => ({
+			y: line.yPx,
+			right: Math.max(...line.fragments.map((f) => f.xPx + f.widthPx)),
+			left: Math.min(...line.fragments.map((f) => f.xPx)),
+		}));
+	};
+
+	it('narrows lines beside a square-wrapped picture to its wider side', () => {
+		// A 100×50 picture at the right margin, 0–50px below the paragraph top.
+		const paragraph = anchoredIn('p', {
+			wrap: 'square',
+			relativeFromH: 'margin',
+			alignH: 'right',
+			offsetYPx: 0,
+		});
+		paragraph.runs = [{ text: words }];
+		const lines = lineRights(layoutDocument(input([paragraph]), measurer));
+		// Beside the picture (lines at y 0 and 20, overlapping its 50px): text stops before 600 - 100 - 12.
+		expect(lines[0].right).toBeLessThanOrEqual(488);
+		expect(lines[2].right).toBeLessThanOrEqual(488);
+		// Below it (y ≥ 50): full width again.
+		expect(lines[3].right).toBeGreaterThan(488);
+	});
+
+	it('puts text on the right when the picture sits at the left', () => {
+		const paragraph = anchoredIn('p', {
+			wrap: 'tight',
+			relativeFromH: 'margin',
+			alignH: 'left',
+			offsetYPx: 0,
+		});
+		paragraph.runs = [{ text: words }];
+		const lines = lineRights(layoutDocument(input([paragraph]), measurer));
+		expect(lines[0].left).toBeGreaterThanOrEqual(112);
+		expect(lines[3].left).toBe(0);
+	});
+
+	it('moves text below a top-and-bottom picture, pushing later paragraphs down', () => {
+		const anchor = anchoredIn('a', {
+			wrap: 'topAndBottom',
+			relativeFromH: 'margin',
+			alignH: 'center',
+			offsetYPx: 0,
+		});
+		const after: LayoutParagraph = { kind: 'paragraph', id: 'b', runs: [{ text: 'next' }] };
+		const result = layoutDocument(input([anchor, after]), measurer);
+		const [first, second] = result.pages[0].columns[0].blocks;
+		// The anchor paragraph's only line starts below the 50px picture.
+		expect((first as { lines: { yPx: number; gapBeforePx?: number }[] }).lines[0]).toMatchObject({
+			yPx: 50,
+			gapBeforePx: 50,
+		});
+		expect(second.yPx).toBe(70);
+		expect(result.pages[0].floats?.[0]).toMatchObject({ yPx: 100 });
+	});
+});

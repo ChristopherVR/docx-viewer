@@ -2,7 +2,7 @@ import type { LayoutDocumentInput, LayoutFloat } from './input.js';
 import type { LayoutColumnBox, LayoutFloatBox, LayoutPageBox } from './result.js';
 
 export const FLOAT_WRAP_NOTE =
-	'Floating pictures are drawn at their anchored positions, but body text does not wrap around them in Print Layout.';
+	'Text wraps around floating pictures on their largest side (square, tight and through wrapping use the picture’s rectangle, not its outline); lines continuing onto a later page keep their wrapped widths.';
 
 interface Span {
 	start: number;
@@ -122,6 +122,7 @@ export function positionFloats(input: LayoutDocumentInput, pages: LayoutPageBox[
 						partName: float.partName,
 						contentType: float.contentType,
 						behindText: Boolean(float.behindText),
+						...(float.wrap ? { wrap: float.wrap } : {}),
 					});
 				}
 			}

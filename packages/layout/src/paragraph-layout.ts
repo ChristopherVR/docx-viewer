@@ -109,11 +109,22 @@ function lineHeightForTokens(
  * stage decides what to do with them (start a new page/column) since only it
  * knows the current page/column state.
  */
+/**
+ * Space taken from one line by wrapped floating pictures: insets from the line's left and right
+ * (beyond the paragraph indents) and a gap to skip first (text below a picture). `yPx` is the
+ * line's top relative to the paragraph's first line.
+ */
+export type LineBoxFn = (
+	yPx: number,
+	heightPx: number,
+) => { leftInsetPx: number; rightInsetPx: number; gapBeforePx: number };
+
 export function layoutParagraph(
 	paragraph: LayoutParagraph,
 	contentWidthPx: number,
 	measurer: TextMeasurer,
 	note: (message: string) => void,
+	lineBox?: LineBoxFn,
 ): ParagraphLayoutResult {
 	const { leftPx, rightPx, firstLineExtraPx } = resolveIndents(paragraph);
 	const bodyWidth = Math.max(1, contentWidthPx - leftPx - rightPx);
@@ -130,10 +141,37 @@ export function layoutParagraph(
 	let placed: PlacedToken[] = [];
 	let lineWidthPx = 0;
 
-	const availableWidth = (lineIndex: number) =>
-		Math.max(1, bodyWidth - (lineIndex === 0 ? firstLineExtraPx : 0));
+	// Per-line boxes around wrapped floats, computed when each line starts (its top is then known).
+	const boxes: { leftInsetPx: number; rightInsetPx: number; gapBeforePx: number }[] = [];
+	let runningY = 0;
+	const guessHeight = measurer.lineHeightOf(fonts[0] ?? fontOf({ text: '' }));
+	const boxFor = (lineIndex: number) => {
+		if (!boxes[lineIndex]) {
+			let gap = 0;
+			let box = lineBox?.(runningY, guessHeight);
+			// Skipping below one picture can reach another; settle within a few steps.
+			for (let step = 0; box && box.gapBeforePx > 0 && step < 8; step++) {
+				gap += box.gapBeforePx;
+				box = lineBox!(runningY + gap, guessHeight);
+			}
+			boxes[lineIndex] = {
+				leftInsetPx: box?.leftInsetPx ?? 0,
+				rightInsetPx: box?.rightInsetPx ?? 0,
+				gapBeforePx: gap,
+			};
+		}
+		return boxes[lineIndex];
+	};
+	const availableWidth = (lineIndex: number) => {
+		const box = boxFor(lineIndex);
+		return Math.max(
+			1,
+			bodyWidth - (lineIndex === 0 ? firstLineExtraPx : 0) - box.leftInsetPx - box.rightInsetPx,
+		);
+	};
 	/** Where a line's text starts, from the paragraph's text margin (indent plus first-line offset). */
-	const lineStart = (lineIndex: number) => leftPx + (lineIndex === 0 ? firstLineExtraPx : 0);
+	const lineStart = (lineIndex: number) =>
+		leftPx + (lineIndex === 0 ? firstLineExtraPx : 0) + boxFor(lineIndex).leftInsetPx;
 	const tokenWidth = (token: BreakToken): number =>
 		token.kind === 'word' || token.kind === 'space'
 			? measurer.widthOf(token.text, fonts[token.runIndex])
@@ -231,13 +269,17 @@ export function layoutParagraph(
 		const end = last
 			? globalOffset(last) + (last.kind === 'word' || last.kind === 'space' ? last.text.length : 1)
 			: start;
+		const gapBeforePx = boxFor(lineIndex).gapBeforePx;
+		const heightPx = lineHeightForTokens(placed, fonts, paragraph, measurer);
 		lines.push({
 			yPx: 0,
-			heightPx: lineHeightForTokens(placed, fonts, paragraph, measurer),
+			heightPx,
 			fragments,
 			sourceStart: start,
 			sourceEnd: end,
+			...(gapBeforePx ? { gapBeforePx } : {}),
 		});
+		runningY += gapBeforePx + heightPx;
 		if (forcedByBreak === 'page') pageBreakAfterLine.add(lineIndex);
 		if (forcedByBreak === 'column') columnBreakAfterLine.add(lineIndex);
 		placed = [];
@@ -303,6 +345,7 @@ export function layoutParagraph(
 
 	let y = 0;
 	for (const line of lines) {
+		y += line.gapBeforePx ?? 0;
 		line.yPx = y;
 		y += line.heightPx;
 	}

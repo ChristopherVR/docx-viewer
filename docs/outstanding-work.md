@@ -65,8 +65,10 @@ Still missing:
   cross-references and other fields show Word's saved result. Field results are editable; the
   begin/code/separate/end structure is preserved and guarded against partial deletion.
 - Picture crop and effects. Print Layout draws inline pictures on their lines and floating pictures
-  at their `wp:positionH`/`wp:positionV` positions, in front of or behind text. Body text does not
-  wrap around them yet, and `character`/`line` frames approximate to the column/paragraph. Pictures
+  at their `wp:positionH`/`wp:positionV` positions, in front of or behind text. Body text wraps
+  around square, tight and through pictures on their larger side (using the picture's rectangle,
+  not its outline) and below top-and-bottom pictures; `character`/`line` frames approximate to
+  the column/paragraph, and wrap distances use Word's defaults. Pictures
   in table cells paginate inline; header and footer pictures (inline and floating) are drawn on
   every page; floats inside table cells are not positioned. The editing surface still approximates
   floats with CSS floats.

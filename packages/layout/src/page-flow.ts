@@ -7,6 +7,7 @@ import { suppressesSpacing } from './keep-rules.js';
 import type { TextMeasurer } from './measure.js';
 import type { LayoutBlock, LayoutDocumentInput, LayoutSection } from './input.js';
 import type { LayoutPageBox, LayoutResult } from './result.js';
+import { lineBoxesFor, type Exclusion } from './wrap.js';
 
 /**
  * Section-break approximation: every section here starts a fresh page, even
@@ -31,6 +32,7 @@ class SectionFlow {
 		measurer: TextMeasurer,
 		note: (m: string) => void,
 		sectionIndex = 0,
+		private readonly exclusions?: ReadonlyMap<number, Exclusion[]>,
 	) {
 		this.blocks = section.blocks;
 		this.measurer = measurer;
@@ -94,6 +96,33 @@ class SectionFlow {
 		return block.keepNext ? own + this.requiredKeepHeight(index + 1, depth + 1) : own;
 	}
 
+	/**
+	 * The paragraph laid out around wrapped pictures on the current page, when any of them reaches
+	 * the paragraph's lines; lines continuing onto a later page keep these widths.
+	 */
+	private wrappedLayout(index: number, spacingBeforePx: number): ParagraphLayoutResult | undefined {
+		const page = this.cursor.page;
+		const exclusions = this.exclusions?.get(page.index);
+		if (!exclusions) return undefined;
+		const plain = this.paragraphLayout(index);
+		const topPx = page.marginTopPx + this.cursor.y + spacingBeforePx;
+		const bottomPx = topPx + plain.contentHeightPx;
+		if (!exclusions.some((item) => item.yPx < bottomPx && item.yPx + item.heightPx > topPx))
+			return undefined;
+		return layoutParagraph(
+			this.blocks[index] as Extract<LayoutBlock, { kind: 'paragraph' }>,
+			this.cursor.columnWidthPx,
+			this.measurer,
+			this.note,
+			lineBoxesFor(
+				exclusions,
+				topPx,
+				page.marginLeftPx + this.cursor.column.xPx,
+				this.cursor.columnWidthPx,
+			),
+		);
+	}
+
 	run(): void {
 		for (let index = 0; index < this.blocks.length; index++) {
 			const block = this.blocks[index];
@@ -101,8 +130,8 @@ class SectionFlow {
 				placeTable(this.cursor, block, this.measurer, this.note);
 				continue;
 			}
-			const layout = this.paragraphLayout(index);
 			const spacingBeforePx = this.spacingBeforeFor(index);
+			const layout = this.wrappedLayout(index, spacingBeforePx) ?? this.paragraphLayout(index);
 			const requiredTogetherPx = block.keepNext
 				? this.requiredKeepHeight(index)
 				: block.keepLines
@@ -160,14 +189,18 @@ function alignVertically(
 }
 
 /** Paginates an already-adapted engine input. See `layout.ts` for the DocumentModel-facing entry point. */
-export function layoutSections(input: LayoutDocumentInput, measurer: TextMeasurer): LayoutResult {
+export function layoutSections(
+	input: LayoutDocumentInput,
+	measurer: TextMeasurer,
+	exclusions?: ReadonlyMap<number, Exclusion[]>,
+): LayoutResult {
 	const approximations = new Set<string>();
 	const note = (message: string) => approximations.add(message);
 	const pages: LayoutPageBox[] = [];
 	input.sections.forEach((section, index) => {
 		insertParityBlank(pages, section);
 		const first = pages.length;
-		new SectionFlow(section, pages, measurer, note, index).run();
+		new SectionFlow(section, pages, measurer, note, index, exclusions).run();
 		alignVertically(pages.slice(first), section, note);
 	});
 	return { pages, approximations: [...approximations] };

@@ -22,6 +22,8 @@ export interface LayoutLine {
 	yPx: number;
 	heightPx: number;
 	fragments: LayoutFragment[];
+	/** Space skipped above this line to clear a picture wrapped top-and-bottom; `yPx` is below it. */
+	gapBeforePx?: number;
 	/** Character range within the paragraph's concatenated run text, for hit-testing. */
 	sourceStart: number;
 	sourceEnd: number;
@@ -85,6 +87,8 @@ export interface LayoutFloatBox {
 	partName: string;
 	contentType: string;
 	behindText: boolean;
+	/** `wp:wrapSquare`, `wrapTopAndBottom`… (`none` floats over or behind the text). */
+	wrap?: string;
 }
 
 export interface LayoutResult {
