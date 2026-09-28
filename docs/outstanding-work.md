@@ -49,10 +49,9 @@ Still missing:
   shows all); vertically justified sections lay out top-aligned.
 - Ctrl+Alt+F / Ctrl+Alt+D (insert footnote/endnote) are bound, but Windows browsers can report
   Ctrl+Alt as AltGr and not deliver them; the References ribbon buttons always work.
-- Table of contents entries are plain text with a dot-leader tab. They are not `\h` hyperlinks with
-  `_Toc` bookmarks and `PAGEREF` fields, as Word writes them; Word rebuilds those when the field
-  updates. Tab stops are saved but the editing surface shows tabs at default widths, not at their
-  stops. TC fields and custom style mappings (`\t`) are not collected.
+- Table of contents entries link to `_Toc` bookmarks on their headings with `PAGEREF` page numbers,
+  as Word writes them. TC fields and custom style mappings (`\t`) are not collected. Tab stops
+  are saved and honored in Print Layout, but the editing surface shows tabs at default widths.
 - Pictures and links in headers, footers and notes are resolved, shown and saved with each part's own
   relationships; while a header, footer or note is being edited, the ribbon (formatting, Insert
   Picture, Link) targets it.

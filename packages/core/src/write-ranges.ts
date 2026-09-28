@@ -22,32 +22,51 @@ export interface CommentSpans {
 	original: Map<string, CommentContinuation>;
 	/** Fresh `w:id`s for move ranges created in the editor (their runs carry no range id yet). */
 	rangeIds: Map<string, string>;
+	/** Allocates `w:id`s for new annotations such as bookmarks. */
+	nextId: () => string;
 }
 
-/** Numbers new move ranges after the largest `w:id` in the part or among the model's revisions. */
-export function newMoveRangeIds(doc: XmlDocument, blocks: Block[]): Map<string, string> {
-	const missing = new Set<string>();
-	let next = 0;
-	const reserve = (id: string | undefined) => {
-		const value = Number(id);
-		if (id && Number.isSafeInteger(value) && value >= next) next = value + 1;
-	};
-	const visit = (paragraph: Paragraph) => {
-		reserve(paragraph.markRevision?.id);
-		for (const run of paragraph.runs) {
-			reserve(run.revision?.id);
-			const move = run.revision?.move;
-			if (move && !move.rangeId) missing.add(`${run.revision!.kind}:${move.name}`);
+/**
+ * Hands out annotation `w:id`s (bookmarks, move ranges) after the largest id already in the part
+ * or among the model's revisions, so new markers never collide with existing ones.
+ */
+export function annotationIdAllocator(doc: XmlDocument, blocks: Block[]): () => string {
+	let next: number | undefined;
+	return () => {
+		if (next === undefined) {
+			let max = -1;
+			const reserve = (id: string | undefined) => {
+				const value = Number(id);
+				if (id && Number.isSafeInteger(value) && value > max) max = value;
+			};
+			forEachParagraph(blocks, (paragraph) => {
+				reserve(paragraph.markRevision?.id);
+				for (const run of paragraph.runs) reserve(run.revision?.id);
+			});
+			for (const element of Array.from(doc.getElementsByTagNameNS(WORD_NS, '*')))
+				reserve(getW(element, 'id'));
+			next = max + 1;
 		}
+		return String(next++);
 	};
+}
+
+function forEachParagraph(blocks: Block[], visit: (paragraph: Paragraph) => void): void {
 	for (const block of blocks)
 		if (block.type === 'paragraph') visit(block);
 		else for (const row of block.rows) for (const cell of row) cell.paragraphs.forEach(visit);
+}
+
+/** `w:id`s for move ranges created in the editor, whose runs carry no range id yet. */
+export function newMoveRangeIds(blocks: Block[], nextId: () => string): Map<string, string> {
 	const ids = new Map<string, string>();
-	if (!missing.size) return ids;
-	for (const element of Array.from(doc.getElementsByTagNameNS(WORD_NS, '*')))
-		reserve(getW(element, 'id'));
-	for (const key of missing) ids.set(key, String(next++));
+	forEachParagraph(blocks, (paragraph) => {
+		for (const run of paragraph.runs) {
+			const move = run.revision?.move;
+			const key = move && `${run.revision!.kind}:${move.name}`;
+			if (key && !move.rangeId && !ids.has(key)) ids.set(key, nextId());
+		}
+	});
 	return ids;
 }
 

@@ -184,7 +184,11 @@ export interface Paragraph {
 	formatRevision?: Revision;
 	/** Custom tab stops (`w:tabs`), in document order. */
 	tabStops?: TabStop[];
-	/** Read-only bookmark names starting in this paragraph (`w:bookmarkStart/@w:name`); bookmarks cannot be created or moved through the model. */
+	/**
+	 * Bookmark names starting in this paragraph (`w:bookmarkStart/@w:name`). Added names are
+	 * written around the whole paragraph; removed names lose their markers here. Exact character
+	 * ranges are not modeled.
+	 */
 	bookmarks?: string[];
 }
 /** Direct paragraph properties supported by the editor, in native Word units. */

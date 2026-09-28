@@ -4,7 +4,7 @@
 import { fieldName } from './field-runs.js';
 import type { Block, DocumentModel, Paragraph, ParagraphStyleCatalog, TextRun } from './model.js';
 
-export const DEFAULT_TOC_INSTRUCTION = ' TOC \\o "1-3" \\u ';
+export const DEFAULT_TOC_INSTRUCTION = ' TOC \\o "1-3" \\h \\z \\u ';
 /** Word's result text when a TOC has no entries. */
 export const EMPTY_TOC_TEXT = 'No table of contents entries found.';
 
@@ -70,6 +70,92 @@ export interface TocOptions {
 	contentWidthTwips?: number;
 	/** Creates unique paragraph ids. */
 	newId: () => string;
+	/**
+	 * `_Toc` bookmark per heading block id. With it, entries link to their heading and number
+	 * their page with a `PAGEREF` field, as Word writes a TOC with the `\h` switch.
+	 */
+	bookmarks?: ReadonlyMap<string, string>;
+}
+
+/** An entry as Word writes it: a hyperlink to the heading's bookmark holding text, tab and PAGEREF. */
+function linkedEntry(text: string, bookmark: string, page: string | undefined): TextRun[] {
+	const link = { anchor: bookmark };
+	const runs: TextRun[] = [{ text: page === undefined ? text : `${text}\t`, link }];
+	if (page === undefined) return runs;
+	const instr = `PAGEREF ${bookmark} \\h`;
+	return [
+		...runs,
+		{ text: '', fieldChar: 'begin', link },
+		{ text: '', fieldCode: ` ${instr} `, link },
+		{ text: '', fieldChar: 'separate', link },
+		{ text: page, field: { instr }, link },
+		{ text: '', fieldChar: 'end', link },
+	];
+}
+
+/**
+ * The `_Toc` bookmark each entry links to: the heading's existing one, or a new unique name.
+ * Returns only headings that need a new bookmark added in `added`.
+ */
+export function tocBookmarks(
+	model: DocumentModel,
+	entries: TocEntry[],
+): { bookmarks: Map<string, string>; added: Map<string, string> } {
+	const used = new Set<string>();
+	const paragraphs = new Map<string, Paragraph>();
+	for (const block of model.blocks)
+		for (const paragraph of block.type === 'paragraph'
+			? [block]
+			: block.rows.flatMap((row) => row.flatMap((cell) => cell.paragraphs))) {
+			paragraphs.set(paragraph.id, paragraph);
+			for (const name of paragraph.bookmarks ?? []) used.add(name);
+		}
+	const bookmarks = new Map<string, string>();
+	const added = new Map<string, string>();
+	let seed = 100000000;
+	for (const entry of entries) {
+		const existing = paragraphs
+			.get(entry.blockId)
+			?.bookmarks?.find((name) => name.startsWith('_Toc'));
+		if (existing) {
+			bookmarks.set(entry.blockId, existing);
+			continue;
+		}
+		while (used.has(`_Toc${seed}`)) seed++;
+		const name = `_Toc${seed++}`;
+		used.add(name);
+		bookmarks.set(entry.blockId, name);
+		added.set(entry.blockId, name);
+	}
+	return { bookmarks, added };
+}
+
+/** Whether a TOC instruction asks for hyperlinked entries (`\h`). */
+export const tocHyperlinks = (instruction: string): boolean => /\\h\b/.test(instruction);
+
+/** `model` with new `_Toc` bookmarks added to the heading paragraphs named in `added`. */
+export function withTocBookmarks(
+	model: DocumentModel,
+	added: ReadonlyMap<string, string>,
+): DocumentModel {
+	if (!added.size) return model;
+	const mark = (paragraph: Paragraph): Paragraph => {
+		const name = added.get(paragraph.id);
+		return name ? { ...paragraph, bookmarks: [...(paragraph.bookmarks ?? []), name] } : paragraph;
+	};
+	return {
+		...model,
+		blocks: model.blocks.map((block) =>
+			block.type === 'paragraph'
+				? mark(block)
+				: {
+						...block,
+						rows: block.rows.map((row) =>
+							row.map((cell) => ({ ...cell, paragraphs: cell.paragraphs.map(mark) })),
+						),
+					},
+		),
+	};
 }
 
 /**
@@ -87,9 +173,12 @@ export function buildTableOfContents(model: DocumentModel, options: TocOptions):
 		const level = entry?.level ?? 1;
 		const style = `TOC${level}`;
 		const page = entry ? options.pageNumbers?.get(entry.blockId) : undefined;
-		const runs: TextRun[] = entry
-			? [{ text: page ? `${entry.text}\t${page}` : entry.text, field }]
-			: [{ text: EMPTY_TOC_TEXT, bold: true, field }];
+		const bookmark = entry ? options.bookmarks?.get(entry.blockId) : undefined;
+		const runs: TextRun[] = !entry
+			? [{ text: EMPTY_TOC_TEXT, bold: true, field }]
+			: bookmark
+				? linkedEntry(entry.text, bookmark, page)
+				: [{ text: page ? `${entry.text}\t${page}` : entry.text, field }];
 		return {
 			type: 'paragraph',
 			id: options.newId(),
@@ -153,10 +242,17 @@ export function updateTableOfContents(
 ): DocumentModel | undefined {
 	const found = findTableOfContents(model.blocks);
 	if (!found) return undefined;
-	const rebuilt = buildTableOfContents(model, { ...options, instruction: found.instruction });
+	const linked = tocHyperlinks(found.instruction)
+		? tocBookmarks(model, tocEntries(model, found.instruction))
+		: undefined;
+	const rebuilt = buildTableOfContents(model, {
+		...options,
+		instruction: found.instruction,
+		...(linked ? { bookmarks: linked.bookmarks } : {}),
+	});
 	rebuilt[0].runs.unshift(...found.before);
 	rebuilt.at(-1)!.runs.push(...found.after);
-	const blocks = [...model.blocks];
+	const blocks = [...withTocBookmarks(model, linked?.added ?? new Map()).blocks];
 	blocks.splice(found.start, found.end - found.start + 1, ...rebuilt);
 	return { ...model, blocks };
 }

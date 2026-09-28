@@ -96,6 +96,10 @@ test('inserts a table of contents from the References tab and saves it as a TOC 
 	const xml = await zip.file('word/document.xml')!.async('string');
 	expect(xml).toMatch(/<w:instrText xml:space="preserve"> TOC [^<]*<\/w:instrText>/);
 	expect(xml).toContain('<w:tab w:val="right" w:leader="dot" w:pos="9360"/>');
-	expect(xml).toMatch(/<w:t>Details<\/w:t><w:tab\/><w:t>2<\/w:t>/);
+	// Entries are hyperlinks to _Toc bookmarks on the headings, with PAGEREF page numbers.
+	expect(xml).toMatch(
+		/<w:hyperlink w:anchor="(_Toc\d+)"[^>]*><w:r><w:t>Details<\/w:t><w:tab\/><\/w:r>.*?PAGEREF \1 .*?<w:t>2<\/w:t>/,
+	);
+	expect(xml).toMatch(/<w:bookmarkStart w:id="\d+" w:name="_Toc\d+"\/><w:r><w:t>Details<\/w:t>/);
 	expect(errors).toEqual([]);
 });

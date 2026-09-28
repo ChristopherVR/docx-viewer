@@ -4,7 +4,8 @@ import { children, first, getW, makeW, type XmlDocument, type XmlElement, WORD_N
 import { writeParagraphProperties } from './write-paragraph-properties.js';
 import { orderParagraphProperties, writeTabStops } from './tab-stops.js';
 import { commentContinuations, continuationKey } from './comment-spans.js';
-import { newMoveRangeIds, type CommentSpans } from './write-ranges.js';
+import { annotationIdAllocator, newMoveRangeIds, type CommentSpans } from './write-ranges.js';
+import { reconcileBookmarks } from './bookmarks.js';
 import { writeNumberingProperties } from './numbering-write.js';
 import { writeTable as writeTableContent } from './write-table.js';
 import { buildNewTableProperties } from './table-defaults.js';
@@ -103,9 +104,16 @@ function writeParagraphImpl(
 	// Bookmarks are preserved but not repositioned precisely: an edited paragraph's bookmarks move
 	// to its boundaries (starts right after pPr, ends at the close) instead of their exact original
 	// run offsets, which this run-level model does not track.
-	const bookmarkStarts = children(node, 'bookmarkStart');
-	const bookmarkEnds = children(node, 'bookmarkEnd');
-	for (const bookmark of [...bookmarkStarts, ...bookmarkEnds]) node.removeChild(bookmark);
+	const { starts: bookmarkStarts, ends: bookmarkEnds } = reconcileBookmarks(
+		doc,
+		children(node, 'bookmarkStart'),
+		children(node, 'bookmarkEnd'),
+		paragraph.bookmarks ?? [],
+		base?.bookmarks ?? [],
+		() => spans?.nextId() ?? '0',
+	);
+	for (const bookmark of [...children(node, 'bookmarkStart'), ...children(node, 'bookmarkEnd')])
+		node.removeChild(bookmark);
 	for (const oldNode of replaceableInlineChildren(node)) node.removeChild(oldNode);
 	const newNodes = buildInlineContent(doc, paragraph.runs, base?.runs, slots, allocator, ranges);
 	let anchor: XmlElement = pPr;
@@ -205,10 +213,12 @@ export function applyBlocks(
 	contentWidthTwips: number,
 	anchor: XmlElement | null = null,
 ): void {
+	const nextId = annotationIdAllocator(doc, blocks);
 	const spans: CommentSpans = {
 		next: commentContinuations(blocks),
 		original: commentContinuations(original),
-		rangeIds: newMoveRangeIds(doc, blocks),
+		rangeIds: newMoveRangeIds(blocks, nextId),
+		nextId,
 	};
 	const boundWriteParagraph = (
 		writeDoc: XmlDocument,

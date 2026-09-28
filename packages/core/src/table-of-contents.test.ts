@@ -8,6 +8,10 @@ import {
 	loadDocx,
 	tocLevels,
 	updateTableOfContents,
+	tocBookmarks,
+	tocEntries,
+	withTocBookmarks,
+	saveDocx,
 	type DocumentModel,
 	type Paragraph,
 } from './index.js';
@@ -57,7 +61,7 @@ describe('table of contents', () => {
 		expect(toc.map(text)).toEqual(['Introduction\t1', 'Scope and aims\t2']);
 		expect(toc[0].runs.slice(0, 3)).toEqual([
 			{ text: '', fieldChar: 'begin' },
-			{ text: '', fieldCode: ' TOC \\o "1-3" \\u ' },
+			{ text: '', fieldCode: ' TOC \\o "1-3" \\h \\z \\u ' },
 			{ text: '', fieldChar: 'separate' },
 		]);
 		expect(toc[1].runs.at(-1)).toEqual({ text: '', fieldChar: 'end' });
@@ -102,7 +106,9 @@ describe('table of contents', () => {
 		const { saveDocx } = await import('./index.js');
 		const saved = await saveDocx(model);
 		const xml = await (await JSZip.loadAsync(saved)).file('word/document.xml')!.async('string');
-		expect(xml).toContain('<w:instrText xml:space="preserve"> TOC \\o "1-3" \\u </w:instrText>');
+		expect(xml).toContain(
+			'<w:instrText xml:space="preserve"> TOC \\o "1-3" \\h \\z \\u </w:instrText>',
+		);
 		expect(xml).toMatch(
 			/<w:pPr><w:tabs><w:tab w:val="right" w:leader="dot" w:pos="9360"\/><\/w:tabs><w:spacing w:after="100"\/><\/w:pPr>/,
 		);
@@ -111,5 +117,48 @@ describe('table of contents', () => {
 		const first = reloaded.model.blocks[0] as Paragraph;
 		expect(first.tabStops).toEqual([{ posTwips: 9360, align: 'right', leader: 'dot' }]);
 		expect(findTableOfContents(reloaded.model.blocks)).toMatchObject({ start: 0, end: 1 });
+	});
+
+	it('links entries to _Toc bookmarks on the headings with PAGEREF page numbers', async () => {
+		const model = sample();
+		const entries = tocEntries(model);
+		const { bookmarks, added } = tocBookmarks(model, entries);
+		expect([...added.keys()]).toEqual(['h1', 'h2']);
+		const toc = buildTableOfContents(model, {
+			newId,
+			bookmarks,
+			pageNumbers: new Map([['h1', '1']]),
+		});
+		const name = bookmarks.get('h1')!;
+		expect(toc[0].runs.slice(3)).toEqual([
+			{ text: 'Introduction\t', link: { anchor: name } },
+			{ text: '', fieldChar: 'begin', link: { anchor: name } },
+			{ text: '', fieldCode: ` PAGEREF ${name} \\h `, link: { anchor: name } },
+			{ text: '', fieldChar: 'separate', link: { anchor: name } },
+			{ text: '1', field: { instr: `PAGEREF ${name} \\h` }, link: { anchor: name } },
+			{ text: '', fieldChar: 'end', link: { anchor: name } },
+		]);
+		const marked = withTocBookmarks(model, added);
+		marked.blocks.unshift(...toc);
+		const xml = await (
+			await JSZip.loadAsync(await saveDocx(marked))
+		)
+			.file('word/document.xml')!
+			.async('string');
+		expect(xml).toMatch(
+			new RegExp(
+				`<w:bookmarkStart w:id="(\\d+)" w:name="${name}"/><w:r><w:t>Introduction</w:t></w:r><w:bookmarkEnd w:id="\\1"/>`,
+			),
+		);
+		expect(xml).toContain(`<w:hyperlink w:anchor="${name}" w:history="1">`);
+		// Updating keeps the existing bookmarks rather than adding new ones.
+		const reloaded = await loadDocx(await saveDocx(marked));
+		const again = tocBookmarks(reloaded.model, tocEntries(reloaded.model));
+		expect(again.added.size).toBe(0);
+		expect(
+			again.bookmarks.get(
+				reloaded.model.blocks.find((b) => (b as Paragraph).style === 'Heading1')!.id,
+			),
+		).toBe(name);
 	});
 });

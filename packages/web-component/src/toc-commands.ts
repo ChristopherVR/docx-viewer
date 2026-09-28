@@ -1,6 +1,10 @@
 import {
 	buildTableOfContents,
+	DEFAULT_TOC_INSTRUCTION,
 	findTableOfContents,
+	tocBookmarks,
+	tocEntries,
+	tocHyperlinks,
 	type Block,
 	type DocumentModel,
 	type Paragraph,
@@ -44,19 +48,25 @@ function tocParagraphs(
 	end: number,
 	instruction: string | undefined,
 	measurer?: TextMeasurer,
-): Paragraph[] {
+): { paragraphs: Paragraph[]; added: Map<string, string> } {
 	let counter = 0;
+	const code = instruction ?? DEFAULT_TOC_INSTRUCTION;
+	const linked = tocHyperlinks(code) ? tocBookmarks(model, tocEntries(model, code)) : undefined;
 	const options = {
-		instruction,
+		instruction: code,
 		contentWidthTwips: contentWidthTwips(model),
 		newId: () => `dve-toc-draft-${++counter}`,
+		...(linked ? { bookmarks: linked.bookmarks } : {}),
 	};
 	const draft = buildTableOfContents(model, options);
 	const blocks: Block[] = [...model.blocks];
 	blocks.splice(start, end - start + 1, ...draft);
 	const numbers = blockPageNumbers({ ...model, blocks }, measurer);
 	// Empty ids are assigned by the editor's id repair (or collaboration ids) when inserted.
-	return buildTableOfContents(model, { ...options, pageNumbers: numbers, newId: () => '' });
+	return {
+		paragraphs: buildTableOfContents(model, { ...options, pageNumbers: numbers, newId: () => '' }),
+		added: linked?.added ?? new Map(),
+	};
 }
 
 function replaceBlocks(
@@ -64,7 +74,7 @@ function replaceBlocks(
 	model: DocumentModel,
 	start: number,
 	end: number,
-	paragraphs: Paragraph[],
+	{ paragraphs, added }: { paragraphs: Paragraph[]; added: Map<string, string> },
 ) {
 	const { doc } = view.state;
 	let from = 0;
@@ -72,7 +82,18 @@ function replaceBlocks(
 	let to = from;
 	for (let index = start; index <= end; index++) to += doc.child(index).nodeSize;
 	const content = modelToDoc({ ...model, blocks: paragraphs }).content;
-	view.dispatch(closeHistory(view.state.tr.replaceWith(from, to, content)).scrollIntoView());
+	const tr = view.state.tr.replaceWith(from, to, content);
+	// Headings get the `_Toc` bookmarks their entries link to, in the same undoable step.
+	tr.doc.descendants((node, pos) => {
+		const name = node.type.name === 'paragraph' ? added.get(String(node.attrs.id)) : undefined;
+		if (name)
+			tr.setNodeMarkup(pos, undefined, {
+				...node.attrs,
+				bookmarks: [...((node.attrs.bookmarks as string[]) ?? []), name],
+			});
+		return node.type.name !== 'paragraph';
+	});
+	view.dispatch(closeHistory(tr).scrollIntoView());
 }
 
 /** Inserts a TOC before the block holding the caret, replacing it when it is an empty paragraph. */
@@ -97,9 +118,9 @@ export function updateTableOfContents(
 ): boolean {
 	const found = findTableOfContents(model.blocks);
 	if (!found) return false;
-	const paragraphs = tocParagraphs(model, found.start, found.end, found.instruction, measurer);
-	paragraphs[0].runs.unshift(...found.before);
-	paragraphs.at(-1)!.runs.push(...found.after);
-	replaceBlocks(view, model, found.start, found.end, paragraphs);
+	const toc = tocParagraphs(model, found.start, found.end, found.instruction, measurer);
+	toc.paragraphs[0].runs.unshift(...found.before);
+	toc.paragraphs.at(-1)!.runs.push(...found.after);
+	replaceBlocks(view, model, found.start, found.end, toc);
 	return true;
 }

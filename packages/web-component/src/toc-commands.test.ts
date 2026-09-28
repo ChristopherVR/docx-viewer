@@ -52,6 +52,13 @@ describe('table of contents commands', () => {
 		expect(entryText(next)).toEqual(['Overview\t1', 'Details\t2']);
 		expect(next.blocks).toHaveLength(5);
 		expect(fieldsBalanced(view.state.doc)).toBe(true);
+		// Entries link to `_Toc` bookmarks added to their headings.
+		const heading = next.blocks.find((block) => block.id === 'h2') as Paragraph;
+		const name = heading.bookmarks?.find((bookmark) => bookmark.startsWith('_Toc'));
+		expect(name).toBeTruthy();
+		expect((next.blocks[1] as Paragraph).runs.find((run) => run.text)?.link).toEqual({
+			anchor: name,
+		});
 		expect((next.blocks[0] as Paragraph).tabStops?.[0]).toMatchObject({
 			align: 'right',
 			leader: 'dot',
