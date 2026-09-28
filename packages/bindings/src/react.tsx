@@ -32,6 +32,16 @@ export const WordEditor = forwardRef<EditorHandle, WordEditorProps>(
 					if (!binding.current) throw new Error('Editor is not mounted');
 					return binding.current.save();
 				},
+				async download(fileName) {
+					if (!binding.current) throw new Error('Editor is not mounted');
+					await binding.current.download(fileName);
+				},
+				markClean() {
+					binding.current?.markClean();
+				},
+				get dirty() {
+					return binding.current?.dirty ?? false;
+				},
 			}),
 			[],
 		);

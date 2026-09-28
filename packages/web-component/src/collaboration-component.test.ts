@@ -88,7 +88,7 @@ describe('collaboration component lifecycle', () => {
 		expect(b.receiveCollaboration(accepted.batch)).toBe('applied');
 		expect(viewOf(b).state.doc.textContent).toBe('مرحبا coauthors');
 		expect(b.readOnly).toBe(true);
-		const saved = await JSZip.loadAsync(await b.save());
+		const saved = await JSZip.loadAsync(await b.saveBytes());
 		expect(await saved.file('custom/preserved.txt')!.async('string')).toBe(
 			'untouched package payload',
 		);

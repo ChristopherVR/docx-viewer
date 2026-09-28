@@ -13,13 +13,15 @@ import { EditorChrome } from './editor-chrome';
 import { dispatchDocumentError } from './editor-host';
 import { routeRibbonAction } from './ribbon-router';
 import { countWords } from './word-count';
+import { PageNavigator } from './page-navigator';
+import { applyViewOptions } from './view-options';
 
 /** Element-level operations the chrome needs; they stay on the element because they are public API. */
 export interface ShellApi {
 	setReadOnly(readOnly: boolean): void;
 	setDocumentModel(model: DocumentModel): void;
 	load(bytes: Uint8Array | ArrayBuffer): Promise<void>;
-	save(): Promise<Uint8Array>;
+	saveBytes(): Promise<Uint8Array>;
 }
 
 function createChrome(core: EditorCore, api: ShellApi): EditorChrome {
@@ -42,7 +44,10 @@ function createChrome(core: EditorCore, api: ShellApi): EditorChrome {
 		},
 		newDocument: () => api.setDocumentModel(createDocument()),
 		load: (bytes) => api.load(bytes),
-		save: () => api.save(),
+		save: () => api.saveBytes(),
+		saveStateChanged: (state) => {
+			if (state !== 'saving') core.dirtyState.set(state === 'dirty');
+		},
 		print: () => core.pages.print(),
 		history: (key) => {
 			if (!core.view) return;
@@ -81,6 +86,7 @@ export function buildShell(core: EditorCore, api: ShellApi): void {
 			if (core.view) moveCursorToBlock(core.view, blockId, offset);
 		},
 		(partName, contentType) => core.imageMedia.urlFor(partName, contentType),
+		() => core.refreshControls(),
 	);
 	canvas.append(printLayout.element);
 	canvas.addEventListener('scroll', () => {
@@ -90,6 +96,15 @@ export function buildShell(core: EditorCore, api: ShellApi): void {
 		}
 	});
 	shell.printLayout = printLayout;
+	shell.navigator = new PageNavigator({
+		pages: () => printLayout.pageElements(),
+		version: () => printLayout.layoutVersion(),
+		goTo: (page) => {
+			printLayout.scrollToPage(page);
+			core.refreshControls();
+		},
+		close: () => element.toggleAttribute('show-thumbnails', false),
+	});
 	shell.searchPanel = createSearchPanel({
 		getView: () => core.view,
 		onClose: () => core.view?.focus(),
@@ -111,7 +126,7 @@ export function buildShell(core: EditorCore, api: ShellApi): void {
 	core.inserts.setLocale(core.locale);
 	const body = document.createElement('div');
 	body.className = 'dve-body';
-	body.append(canvas, review.commentsPanel.element);
+	body.append(shell.navigator.element, canvas, review.commentsPanel.element);
 	frame.append(toolbar, shell.searchPanel.element, body);
 	const chrome = createChrome(core, api);
 	shell.chrome = chrome;
@@ -125,6 +140,7 @@ export function buildShell(core: EditorCore, api: ShellApi): void {
 	chrome.setLocale(core.locale);
 	root.append(style, frame);
 	Object.assign(shell, { toolbar, canvas, paper });
+	applyViewOptions(core);
 	element.setAttribute('role', 'region');
 	element.setAttribute('aria-label', 'Document editor');
 }

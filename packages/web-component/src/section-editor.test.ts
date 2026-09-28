@@ -61,7 +61,7 @@ describe('section editing in the editor', () => {
 		choose(editor, 'Orientation', 'landscape');
 		const [first, second] = editor.documentModel!.sections!;
 		expect([first.orientation, second.orientation]).toEqual(['portrait', 'landscape']);
-		const zip = await JSZip.loadAsync(await editor.save());
+		const zip = await JSZip.loadAsync(await editor.saveBytes());
 		const xml = await zip.file('word/document.xml')!.async('string');
 		expect(xml).toMatch(/Portrait part.*<\/w:p>.*w:orient="landscape"/);
 		expect(xml).toMatch(/<w:pPr><w:sectPr>/);
@@ -109,7 +109,7 @@ describe('section editing in the editor', () => {
 		toggle.click();
 		expect(editor.documentModel!.evenAndOddHeaders).toBe(true);
 		expect(toggle.getAttribute('aria-pressed')).toBe('true');
-		const zip = await JSZip.loadAsync(await editor.save());
+		const zip = await JSZip.loadAsync(await editor.saveBytes());
 		expect(await zip.file('word/settings.xml')!.async('string')).toContain(
 			'<w:evenAndOddHeaders/>',
 		);

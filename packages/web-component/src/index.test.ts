@@ -303,7 +303,7 @@ describe('DocxEditorElement', () => {
 		resolveOld({ model: stale, save: vi.fn() });
 		await first;
 		expect(editor.documentModel?.blocks[0]).toMatchObject({ runs: [{ text: 'current' }] });
-		await expect(editor.save()).resolves.toBe(bytes);
+		await expect(editor.saveBytes()).resolves.toBe(bytes);
 		expect(save).toHaveBeenCalledWith(current);
 	});
 

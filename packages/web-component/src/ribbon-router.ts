@@ -10,6 +10,8 @@ export function routeRibbonAction(core: EditorCore, action: RibbonAction): void 
 	if (inserts.handle(action)) return;
 	const target = core.targetView();
 	if (action.type === 'search') shell.searchPanel?.open();
+	else if (action.type === 'thumbnails')
+		core.element.toggleAttribute('show-thumbnails', !core.viewOptions.showThumbnails);
 	else if (action.type === 'zoom') pages.setZoom(action.value);
 	else if (action.type === 'list' && target) {
 		runListAction(target, action.key, core.model);

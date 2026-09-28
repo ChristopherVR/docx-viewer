@@ -57,5 +57,6 @@ export type RibbonAction =
 	| { type: 'link' }
 	| { type: 'characterStyle'; value: string }
 	| { type: 'showHidden' }
+	| { type: 'thumbnails' }
 	| { type: 'insertNote'; kind: 'footnote' | 'endnote' }
 	| { type: 'toc'; key: 'insert' | 'update' };

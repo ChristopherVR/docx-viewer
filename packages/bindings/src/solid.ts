@@ -16,6 +16,8 @@ export function WordEditor(props: WordEditorProps) {
 		...eventOptions({
 			'document-change': props.onDocumentChange,
 			'document-error': props.onDocumentError,
+			'page-change': props.onPageChange,
+			'dirty-change': props.onDirtyChange,
 		}),
 	});
 	onMount(() => {
@@ -27,6 +29,11 @@ export function WordEditor(props: WordEditorProps) {
 			},
 			load: (input) => mounted.load(input),
 			save: () => mounted.save(),
+			download: (fileName) => mounted.download(fileName),
+			markClean: () => mounted.markClean(),
+			get dirty() {
+				return mounted.dirty;
+			},
 		});
 	});
 	createEffect(() => {

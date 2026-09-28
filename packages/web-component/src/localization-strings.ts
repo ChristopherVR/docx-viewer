@@ -1,6 +1,7 @@
 /** English and French display strings for the shared editor UI (not DOCX language metadata). */
 import { chromeStrings } from './localization-chrome-strings';
 import { commandStrings } from './localization-command-strings';
+import { navigationStrings } from './localization-navigation-strings';
 
 const baseStrings = {
 	en: {
@@ -330,6 +331,6 @@ const baseStrings = {
 } as const;
 
 export const strings = {
-	en: { ...baseStrings.en, ...chromeStrings.en, ...commandStrings.en },
-	fr: { ...baseStrings.fr, ...chromeStrings.fr, ...commandStrings.fr },
+	en: { ...baseStrings.en, ...chromeStrings.en, ...commandStrings.en, ...navigationStrings.en },
+	fr: { ...baseStrings.fr, ...chromeStrings.fr, ...commandStrings.fr, ...navigationStrings.fr },
 } as const;

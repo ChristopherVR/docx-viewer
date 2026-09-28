@@ -54,7 +54,7 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		);
 		expect(new Set(ids).size).toBe(ids.length);
 		const bytes = await b.evaluate(async (element) =>
-			Array.from(await (element as DocxEditorElement).save()),
+			Array.from(await (element as DocxEditorElement).saveBytes()),
 		);
 		const zip = await JSZip.loadAsync(new Uint8Array(bytes));
 		const xml = await zip.file('word/document.xml')!.async('string');

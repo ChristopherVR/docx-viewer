@@ -10,7 +10,11 @@ import {
 	type OnDestroy,
 } from '@angular/core';
 import type { DocumentModel } from '@christophervr/docx-core';
-import type { EditorThemeMode } from '@christophervr/docx-web-component';
+import type {
+	EditorThemeMode,
+	PageChangeDetail,
+	RibbonActionId,
+} from '@christophervr/docx-web-component';
 import { eventOptions, mountEditor, pickEditorProps, type EditorBinding } from './index';
 @Component({ selector: 'word-editor', standalone: true, template: '' })
 export class WordEditorComponent implements AfterViewInit, OnChanges, OnDestroy {
@@ -18,8 +22,13 @@ export class WordEditorComponent implements AfterViewInit, OnChanges, OnDestroy 
 	@Input() readOnly = false;
 	@Input() locale = 'en';
 	@Input() theme: EditorThemeMode = 'auto';
+	@Input() showThumbnails = false;
+	@Input() showToolbar = true;
+	@Input() hiddenActions: readonly RibbonActionId[] = [];
 	@Output() documentChange = new EventEmitter<DocumentModel>();
 	@Output() documentError = new EventEmitter<Error>();
+	@Output() pageChange = new EventEmitter<PageChangeDetail>();
+	@Output() dirtyChange = new EventEmitter<boolean>();
 	private host = inject<ElementRef<HTMLElement>>(ElementRef);
 	private binding?: EditorBinding;
 	private options() {
@@ -28,6 +37,8 @@ export class WordEditorComponent implements AfterViewInit, OnChanges, OnDestroy 
 			...eventOptions({
 				'document-change': (model) => this.documentChange.emit(model),
 				'document-error': (error) => this.documentError.emit(error),
+				'page-change': (detail) => this.pageChange.emit(detail),
+				'dirty-change': (dirty) => this.dirtyChange.emit(dirty),
 			}),
 		};
 	}
@@ -50,5 +61,15 @@ export class WordEditorComponent implements AfterViewInit, OnChanges, OnDestroy 
 	async save() {
 		if (!this.binding) throw new Error('Editor is not mounted');
 		return this.binding.save();
+	}
+	async download(fileName?: string) {
+		if (!this.binding) throw new Error('Editor is not mounted');
+		await this.binding.download(fileName);
+	}
+	markClean() {
+		this.binding?.markClean();
+	}
+	get dirty() {
+		return this.binding?.dirty ?? false;
 	}
 }

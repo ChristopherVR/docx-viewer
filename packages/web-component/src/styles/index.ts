@@ -10,6 +10,7 @@ import titlebar from './chrome-titlebar.css?inline';
 import backstage from './backstage.css?inline';
 import statusDialogs from './status-dialogs.css?inline';
 import chromeDocument from './chrome-document.css?inline';
+import pageNavigator from './page-navigator.css?inline';
 
 const declarations = (theme: EditorTheme, scheme: 'light' | 'dark') =>
 	Object.entries(themeToCssVars(theme))
@@ -36,4 +37,5 @@ export const editorStyleText = [
 	backstage,
 	statusDialogs,
 	chromeDocument,
+	pageNavigator,
 ].join('\n');

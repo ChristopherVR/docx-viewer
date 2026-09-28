@@ -105,5 +105,14 @@ export async function mountFramework(
 		}, 10000);
 		observer.observe(host, { childList: true, subtree: true });
 	});
-	return { element, load: (input) => element.load(input), save: () => element.save() };
+	return {
+		element,
+		load: (input) => element.load(input),
+		save: () => element.save(),
+		download: (fileName) => element.download(fileName),
+		markClean: () => element.markClean(),
+		get dirty() {
+			return element.dirty;
+		},
+	};
 }

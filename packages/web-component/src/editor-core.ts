@@ -21,6 +21,10 @@ import { PartsController } from './parts-controller';
 import { PageController } from './page-controller';
 import { InsertController } from './insert-controller';
 import { emit } from './events';
+import { DirtyState } from './dirty-state';
+import { PageTracker, syncPageState } from './page-sync';
+import type { PageNavigator } from './page-navigator';
+import { ViewOptions } from './view-options';
 
 export type LoadedDocument = Awaited<ReturnType<typeof loadDocument>>;
 
@@ -33,6 +37,7 @@ export interface ShellParts {
 	review?: ReviewController;
 	chrome?: EditorChrome;
 	printLayout?: PrintLayoutController;
+	navigator?: PageNavigator;
 }
 
 /**
@@ -61,8 +66,13 @@ export class EditorCore {
 	readonly host: EditorHost;
 	readonly parts: PartsController;
 	readonly pages: PageController;
+	readonly viewOptions = new ViewOptions();
+	readonly dirtyState: DirtyState;
+	readonly pageTracker: PageTracker;
 
 	constructor(readonly element: HTMLElement) {
+		this.dirtyState = new DirtyState((dirty) => emit(element, 'dirty-change', dirty));
+		this.pageTracker = new PageTracker(element);
 		this.collab = new CollaborationSession(element, () => this.view);
 		this.inserts = new InsertController({
 			view: () => this.targetView(),
@@ -117,6 +127,7 @@ export class EditorCore {
 	}
 
 	notifyChange(): void {
+		this.dirtyState.set(true);
 		emit(this.element, 'document-change', this.model);
 	}
 
@@ -176,6 +187,7 @@ export class EditorCore {
 		);
 		if (status) chrome?.refresh(status.pageText, status.wordText);
 		this.pages.syncControls();
+		syncPageState(this);
 		chrome?.titleBar.setCommentsOpen(Boolean(review?.commentsOpen));
 	}
 }

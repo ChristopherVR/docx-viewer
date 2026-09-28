@@ -1,6 +1,7 @@
 import type { DocumentModel } from '@christophervr/docx-core';
 import type { StepBatch } from './collaboration';
 import type { FileCommandDetail } from './file-commands';
+import type { PageChangeDetail } from './page-sync';
 import type { PresenceMessage } from './presence';
 import type { RibbonAction } from './ribbon';
 
@@ -18,6 +19,10 @@ export interface DocxEditorEventMap {
 	'ribbon-action': CustomEvent<RibbonAction>;
 	/** Cancelable: call `preventDefault()` to handle a File command (open/save/…) yourself. */
 	'file-command': CustomEvent<FileCommandDetail>;
+	/** Print Layout's current page or page count changed (approximate pagination, not Word's). */
+	'page-change': CustomEvent<PageChangeDetail>;
+	/** Unsaved-changes state flipped: true after an edit, false after save, load or `markClean()`. */
+	'dirty-change': CustomEvent<boolean>;
 	/** Local presence changed; transport it to other clients. */
 	'presence-send': CustomEvent<PresenceMessage>;
 	/** Local steps are pending; transport the batch to the collaboration authority. */
@@ -37,6 +42,8 @@ export const DOCX_EDITOR_EVENTS = [
 	'readonly-change',
 	'ribbon-action',
 	'file-command',
+	'page-change',
+	'dirty-change',
 	'presence-send',
 	'collaboration-send',
 ] as const satisfies readonly DocxEditorEventName[];

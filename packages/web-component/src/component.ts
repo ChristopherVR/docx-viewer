@@ -1,6 +1,6 @@
 import { EditorState } from 'prosemirror-state';
 import type { DocumentModel } from '@christophervr/docx-core';
-import { createDocument, saveDocx } from '@christophervr/docx-core';
+import { createDocument } from '@christophervr/docx-core';
 import { loadDocument } from '@christophervr/docx-document';
 import { setRibbonLocale } from './ribbon';
 import type { CollaborationConfig, ClientReceiveResult, StepBatch } from './collaboration';
@@ -14,6 +14,7 @@ import {
 import { EditorCore, type LoadedDocument } from './editor-core';
 import { buildShell, type ShellApi } from './editor-shell';
 import { renderDocument } from './editor-render';
+import { DocxEditorApi } from './element-api';
 import { emit, type DocxEditorEventMap } from './events';
 import {
 	DEFAULT_FILE_NAME,
@@ -23,9 +24,6 @@ import {
 	isDocxEditorAttribute,
 	reflectAttribute,
 } from './editor-attributes';
-
-const HTMLElementBase: typeof HTMLElement =
-	typeof HTMLElement === 'undefined' ? (class {} as typeof HTMLElement) : HTMLElement;
 
 /**
  * Typed event overloads. Redeclaring the methods hides the inherited ones, so the standard DOM
@@ -64,13 +62,13 @@ export interface DocxEditorElement {
 	): void;
 }
 
-export class DocxEditorElement extends HTMLElementBase {
+export class DocxEditorElement extends DocxEditorApi {
 	/** Attributes mirrored to the `locale`, `readOnly`, `fileName`, `reviewAuthor` and `theme` properties. */
 	static get observedAttributes(): string[] {
 		return [...DOCX_EDITOR_ATTRIBUTES];
 	}
 
-	private readonly core = new EditorCore(this);
+	protected readonly core = new EditorCore(this);
 	private readonly shellApi: ShellApi = {
 		setReadOnly: (readOnly) => {
 			this.readOnly = readOnly;
@@ -79,7 +77,7 @@ export class DocxEditorElement extends HTMLElementBase {
 			this.documentModel = model;
 		},
 		load: (bytes) => this.load(bytes),
-		save: () => this.save(),
+		saveBytes: () => this.saveBytes(),
 	};
 
 	/** Internal seams that in-repo tests reach for; not public API. */
@@ -221,15 +219,6 @@ export class DocxEditorElement extends HTMLElementBase {
 		if (this.isConnected) renderDocument(this.core);
 	}
 
-	async save(): Promise<Uint8Array> {
-		const { core } = this;
-		// Only pass staged pictures when there are any: legacy DOC sessions take the model alone.
-		const media = core.inserts.pendingMedia.size ? core.inserts.pendingMedia : undefined;
-		if (core.loaded)
-			return media ? core.loaded.save(core.model, media) : core.loaded.save(core.model);
-		return saveDocx(core.model, media);
-	}
-
 	/** Join only after loading the authority's matching document snapshot and version. */
 	startCollaboration(config: CollaborationConfig): void {
 		const { core } = this;
@@ -279,6 +268,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		core.loaded = session;
 		core.model = model;
 		core.inserts.reset();
+		core.dirtyState.set(false);
 	}
 }
 

@@ -14,6 +14,8 @@ describe('attribute reflection', () => {
 			'file-name',
 			'review-author',
 			'theme',
+			'show-thumbnails',
+			'show-toolbar',
 		]);
 	});
 

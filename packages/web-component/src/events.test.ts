@@ -51,6 +51,8 @@ describe('typed event contract', () => {
 			'readonly-change': true,
 			'ribbon-action': true,
 			'file-command': true,
+			'page-change': true,
+			'dirty-change': true,
 			'presence-send': true,
 			'collaboration-send': true,
 		};

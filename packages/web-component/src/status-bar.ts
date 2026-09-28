@@ -72,6 +72,8 @@ export function createStatusBar(handlers: StatusBarHandlers): StatusBar {
 		element,
 		setPageAndWords(pageText, wordText) {
 			page.textContent = pageText;
+			// Pagination comes from this editor's own layout engine, so say it is not Word's.
+			page.title = translateUiText(element, 'nav.approximate');
 			words.textContent = wordText;
 		},
 		setLanguage(value) {

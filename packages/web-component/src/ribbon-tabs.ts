@@ -121,7 +121,11 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 		),
 	);
 	panels.get('View')!.append(
-		group('Show', button('Show hidden text', 'Hidden text', { type: 'showHidden' })),
+		group(
+			'Show',
+			button('Show hidden text', 'Hidden text', { type: 'showHidden' }),
+			button('Page thumbnails', 'Thumbnails', { type: 'thumbnails' }),
+		),
 		group(
 			'Zoom',
 			select(

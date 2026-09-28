@@ -13,6 +13,8 @@ export const DOCX_EDITOR_ATTRIBUTES = [
 	'file-name',
 	'review-author',
 	'theme',
+	'show-thumbnails',
+	'show-toolbar',
 ] as const;
 export type DocxEditorAttribute = (typeof DOCX_EDITOR_ATTRIBUTES)[number];
 
@@ -26,6 +28,8 @@ export interface AttributeProperties {
 	fileName: string;
 	reviewAuthor: string;
 	theme: EditorThemeMode;
+	showThumbnails: boolean;
+	showToolbar: boolean;
 }
 
 export function isDocxEditorAttribute(name: string): name is DocxEditorAttribute {
@@ -48,6 +52,12 @@ export function applyAttribute(
 	} else if (name === 'theme') {
 		const next = normalizeThemeMode(value);
 		if (next !== target.theme) target.theme = next;
+	} else if (name === 'show-thumbnails') {
+		const next = value !== null && value !== 'false';
+		if (next !== target.showThumbnails) target.showThumbnails = next;
+	} else if (name === 'show-toolbar') {
+		const next = value !== 'false';
+		if (next !== target.showToolbar) target.showToolbar = next;
 	} else {
 		const next = value || DEFAULT_REVIEW_AUTHOR;
 		if (next !== target.reviewAuthor) target.reviewAuthor = next;
@@ -61,6 +71,12 @@ export function reflectAttribute(
 	value: string | boolean,
 ): void {
 	if (typeof element.setAttribute !== 'function') return;
+	if (name === 'show-toolbar' && typeof value === 'boolean') {
+		// Default true: the attribute only appears to opt out.
+		if (element.getAttribute(name) !== (value ? null : 'false'))
+			value ? element.removeAttribute(name) : element.setAttribute(name, 'false');
+		return;
+	}
 	if (typeof value === 'boolean') {
 		if (element.hasAttribute(name) !== value) element.toggleAttribute(name, value);
 		return;

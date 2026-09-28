@@ -28,6 +28,8 @@ export interface ChromeHost {
 	setViewMode(mode: 'draft' | 'print'): void;
 	setZoom(percent: number): void;
 	reportError(error: Error): void;
+	/** Mirrors the title bar's save state into `element.dirty`. */
+	saveStateChanged?(state: SaveState): void;
 }
 
 export const DEFAULT_FILE_NAME = 'Document1.docx';
@@ -99,6 +101,7 @@ export class EditorChrome {
 
 	setSaveState(state: SaveState): void {
 		this.state = state;
+		this.host.saveStateChanged?.(state);
 		this.titleBar.setSaveState(state);
 	}
 

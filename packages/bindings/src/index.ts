@@ -4,6 +4,8 @@ import {
 	type DocxEditorEventDetail,
 	type DocxEditorEventName,
 	type EditorThemeMode,
+	type PageChangeDetail,
+	type RibbonActionId,
 } from '@christophervr/docx-web-component';
 import type { DocumentModel } from '@christophervr/docx-core';
 
@@ -14,11 +16,19 @@ export interface EditorProps {
 	locale?: string;
 	/** `light`, `dark`, or `auto` (default) to follow the OS color scheme. */
 	theme?: EditorThemeMode;
+	/** Left rail of page thumbnails (needs Print Layout). Default false. */
+	showThumbnails?: boolean;
+	/** Ribbon visibility. Default true. */
+	showToolbar?: boolean;
+	/** Ribbon controls to hide, by id. */
+	hiddenActions?: readonly RibbonActionId[];
 }
 /** Editor callbacks; each is the framework-neutral form of one entry in `EDITOR_EVENT_NAMES`. */
 export interface EditorEventOptions {
 	onDocumentChange?: (model: DocumentModel) => void;
 	onDocumentError?: (error: Error) => void;
+	onPageChange?: (detail: PageChangeDetail) => void;
+	onDirtyChange?: (dirty: boolean) => void;
 }
 export interface EditorOptions extends EditorProps, EditorEventOptions {}
 
@@ -28,6 +38,9 @@ export const EDITOR_PROP_KEYS = [
 	'readOnly',
 	'locale',
 	'theme',
+	'showThumbnails',
+	'showToolbar',
+	'hiddenActions',
 ] as const satisfies readonly (keyof EditorProps)[];
 export type EditorPropKey = (typeof EDITOR_PROP_KEYS)[number];
 // Compile-time guard: adding a key to EditorProps without listing it above is an error.
@@ -39,6 +52,8 @@ void propKeysAreComplete;
 export const EDITOR_EVENT_NAMES = [
 	'document-change',
 	'document-error',
+	'page-change',
+	'dirty-change',
 ] as const satisfies readonly DocxEditorEventName[];
 export type EditorEventName = (typeof EDITOR_EVENT_NAMES)[number];
 /** One handler per bound event; a missing key is a compile error in every adapter. */
@@ -46,6 +61,9 @@ export type EditorEventHandlers = {
 	[K in EditorEventName]: ((detail: DocxEditorEventDetail<K>) => void) | undefined;
 };
 
+function sameList(a: readonly string[], b: readonly string[]): boolean {
+	return a.length === b.length && a.every((item, index) => item === b[index]);
+}
 function copyProp<K extends EditorPropKey>(to: EditorProps, from: EditorProps, key: K): void {
 	to[key] = from[key];
 }
@@ -60,13 +78,20 @@ export function eventOptions(handlers: EditorEventHandlers): EditorEventOptions 
 	return {
 		onDocumentChange: handlers['document-change'],
 		onDocumentError: handlers['document-error'],
+		onPageChange: handlers['page-change'],
+		onDirtyChange: handlers['dirty-change'],
 	};
 }
 
 export interface EditorHandle {
 	readonly element: DocxEditorElement;
 	load(input: Uint8Array | ArrayBuffer): Promise<void>;
-	save(): Promise<Uint8Array>;
+	/** The saved document as a Blob. Does not clear `dirty`; call `markClean()` after persisting it. */
+	save(): Promise<Blob>;
+	/** Saves and downloads in the browser, then marks the document clean. */
+	download(fileName?: string): Promise<void>;
+	markClean(): void;
+	readonly dirty: boolean;
 }
 export interface EditorBinding extends EditorHandle {
 	update(options: EditorOptions): void;
@@ -85,8 +110,12 @@ export function mountEditor(host: HTMLElement, initial: EditorOptions = {}): Edi
 		options.onDocumentChange?.(lastEmitted);
 	};
 	const failed = (event: CustomEvent<Error>) => options.onDocumentError?.(event.detail);
+	const paged = (event: CustomEvent<PageChangeDetail>) => options.onPageChange?.(event.detail);
+	const dirtied = (event: CustomEvent<boolean>) => options.onDirtyChange?.(event.detail);
 	element.addEventListener('document-change', changed);
 	element.addEventListener('document-error', failed);
+	element.addEventListener('page-change', paged);
+	element.addEventListener('dirty-change', dirtied);
 	const binding: EditorBinding = {
 		element,
 		update(next) {
@@ -95,6 +124,10 @@ export function mountEditor(host: HTMLElement, initial: EditorOptions = {}): Edi
 			element.locale = next.locale ?? 'en';
 			element.readOnly = next.readOnly ?? false;
 			element.theme = next.theme ?? 'auto';
+			element.showThumbnails = next.showThumbnails ?? false;
+			element.showToolbar = next.showToolbar ?? true;
+			if (!sameList(element.hiddenActions, next.hiddenActions ?? []))
+				element.hiddenActions = next.hiddenActions ?? [];
 			if (
 				next.documentModel &&
 				next.documentModel !== lastInput &&
@@ -106,11 +139,18 @@ export function mountEditor(host: HTMLElement, initial: EditorOptions = {}): Edi
 		},
 		load: (input) => element.load(input),
 		save: () => element.save(),
+		download: (fileName) => element.download(fileName),
+		markClean: () => element.markClean(),
+		get dirty() {
+			return element.dirty;
+		},
 		destroy() {
 			if (destroyed) return;
 			destroyed = true;
 			element.removeEventListener('document-change', changed);
 			element.removeEventListener('document-error', failed);
+			element.removeEventListener('page-change', paged);
+			element.removeEventListener('dirty-change', dirtied);
 			element.remove();
 		},
 	};

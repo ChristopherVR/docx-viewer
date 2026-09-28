@@ -31,9 +31,14 @@ export function refreshEditorControls(
 			const label = control.dataset.localearialabel ?? control.getAttribute('aria-label');
 			control.disabled =
 				readOnly &&
-				!['Find and replace', 'Zoom', 'Show hidden text', 'Layout view', 'Print'].includes(
-					label ?? '',
-				);
+				![
+					'Find and replace',
+					'Zoom',
+					'Show hidden text',
+					'Page thumbnails',
+					'Layout view',
+					'Print',
+				].includes(label ?? '');
 		});
 	if (!view) return undefined;
 	const { state } = view;

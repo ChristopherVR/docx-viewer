@@ -106,3 +106,23 @@ editor.addEventListener('file-command', (event) => {
 	}
 });
 ```
+
+## Saving, dirty state and UI options
+
+`save()` resolves to a `Blob` of the serialized document (`saveBytes()` returns the raw
+`Uint8Array`), `download(fileName?)` saves and starts a browser download, and `dirty` /
+`dirty-change` report unsaved edits. `dirty` becomes true on `document-change` and false after
+File > Save, `download()`, loading a document or `markClean()`; `save()` alone does not clear it
+because only the host knows whether the Blob was persisted. Every adapter exposes
+`save`, `download`, `markClean` and `dirty` on its handle and `onDirtyChange` / `onPageChange`
+(or the framework's event equivalent).
+
+| Property (attribute)                 | Default | Effect                                                                                                                                                    |
+| ------------------------------------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `showThumbnails` (`show-thumbnails`) | `false` | Left rail of page thumbnails. Thumbnails need Print Layout; in Draft view the rail says so instead of listing pages.                                      |
+| `showToolbar` (`show-toolbar`)       | `true`  | `show-toolbar="false"` hides the ribbon; the title bar and status bar remain.                                                                             |
+| `hiddenActions`                      | `[]`    | Ribbon controls to hide by id (`RIBBON_ACTION_IDS`, the English control label such as `'Bold'`); empty groups and tabs hide too. Unknown ids are ignored. |
+
+`page-change` (`{ page, pageCount }`) fires from Print Layout only. Pagination comes from this
+editor's own layout engine and is an approximation, not Word's pagination; the status bar and
+rail tooltips say so.

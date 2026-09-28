@@ -20,12 +20,15 @@ const WORD_TYPES: Record<string, string> = {
 	docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
 
+/** Wraps saved bytes in a Blob typed from the file name's extension (docx unless `.doc`). */
+export function wordBlob(bytes: Uint8Array, fileName: string): Blob {
+	const extension = fileName.split('.').pop()?.toLowerCase() ?? 'docx';
+	return new Blob([new Uint8Array(bytes)], { type: WORD_TYPES[extension] ?? WORD_TYPES.docx });
+}
+
 /** Starts a browser download of `bytes` named `fileName`. */
 export function downloadBytes(bytes: Uint8Array, fileName: string): void {
-	const extension = fileName.split('.').pop()?.toLowerCase() ?? 'docx';
-	const url = URL.createObjectURL(
-		new Blob([new Uint8Array(bytes)], { type: WORD_TYPES[extension] ?? WORD_TYPES.docx }),
-	);
+	const url = URL.createObjectURL(wordBlob(bytes, fileName));
 	const anchor = document.createElement('a');
 	anchor.href = url;
 	anchor.download = fileName;

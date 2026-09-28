@@ -26,6 +26,12 @@ export interface PrintLayoutController {
 	/** Recomputes which page is most visible; call on the scroll container's `scroll` event. */
 	refreshCurrentPage(): void;
 	pageStatus(): { current: number; total: number } | null;
+	/** The laid-out page sheets currently in the DOM, in order. */
+	pageElements(): HTMLElement[];
+	/** Increments on every layout pass so dependants (the page navigator) know when to rebuild. */
+	layoutVersion(): number;
+	/** Scrolls the given 1-based page to the top of the scroll container. */
+	scrollToPage(page: number): void;
 	/** Approximations collected by the last layout pass (see `LayoutResult.approximations`). */
 	approximations(): string[];
 	/** Lays out immediately (no debounce) and opens the browser print dialog for the paginated render. */
@@ -37,6 +43,7 @@ export function createPrintLayoutController(
 	scrollContainer: HTMLElement,
 	onRequestCursor: (blockId: string, offset: number) => void,
 	pictureUrl?: PictureUrl,
+	onLayout?: () => void,
 ): PrintLayoutController {
 	let measurer = createCanvasMeasurer();
 	let lastModel: DocumentModel | null = null;
@@ -54,6 +61,7 @@ export function createPrintLayoutController(
 	let handle: PrintLayoutHandle | null = null;
 	let result: LayoutResult | null = null;
 	let currentPage = 1;
+	let version = 0;
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
 	function relayout(model: DocumentModel) {
@@ -68,7 +76,9 @@ export function createPrintLayoutController(
 			pictureUrl,
 		);
 		element.replaceChildren(handle.element);
+		version++;
 		refreshCurrentPage();
+		onLayout?.();
 	}
 
 	function onClick(event: MouseEvent) {
@@ -109,6 +119,14 @@ export function createPrintLayoutController(
 		refreshCurrentPage,
 		pageStatus() {
 			return result ? { current: currentPage, total: result.pages.length } : null;
+		},
+		pageElements: () => [...element.querySelectorAll<HTMLElement>('.dve-print-page')],
+		layoutVersion: () => version,
+		scrollToPage(page) {
+			const target = element.querySelectorAll<HTMLElement>('.dve-print-page')[page - 1];
+			if (!target) return;
+			currentPage = page;
+			target.scrollIntoView?.({ block: 'start' });
 		},
 		approximations() {
 			return result?.approximations ?? [];

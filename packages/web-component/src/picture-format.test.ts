@@ -59,7 +59,7 @@ describe('Format picture', () => {
 		[...dialog.querySelectorAll('button')].find((button) => button.textContent === 'OK')!.click();
 		const image = (editor.documentModel!.blocks[0] as Paragraph).runs[1].image;
 		expect(image).toMatchObject({ widthPx: 200, heightPx: 100, altText: 'Company logo' });
-		const saved = await editor.save();
+		const saved = await editor.saveBytes();
 		const xml = await (await JSZip.loadAsync(saved)).file('word/document.xml')!.async('string');
 		expect(xml).toContain('cx="1905000" cy="952500"');
 		expect(xml).toContain('descr="Company logo"');

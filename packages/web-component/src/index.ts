@@ -1,6 +1,9 @@
 export { DocxEditorElement, registerDocxEditor } from './component';
 export { DOCX_EDITOR_EVENTS } from './events';
 export type { RibbonAction } from './ribbon';
+export { RIBBON_ACTION_IDS } from './ribbon-action-ids';
+export type { RibbonActionId } from './ribbon-action-ids';
+export type { PageChangeDetail } from './page-sync';
 export type { FileCommand, FileCommandDetail } from './file-commands';
 export type { DocxEditorEventMap, DocxEditorEventName, DocxEditorEventDetail } from './events';
 export { DOCX_EDITOR_ATTRIBUTES } from './editor-attributes';

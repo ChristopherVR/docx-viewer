@@ -59,7 +59,7 @@ describe('editor insert and formatting commands', () => {
 		select(editor, 7, 7);
 		insertPicture(view(editor), staged.image);
 		expect(firstParagraph(editor).runs.at(-1)?.image?.partName).toBe(staged.image.partName);
-		const saved = await editor.save();
+		const saved = await editor.saveBytes();
 		const zip = await JSZip.loadAsync(saved);
 		expect(await zip.file(staged.image.partName)!.async('uint8array')).toEqual(PNG);
 		const rels = await zip.file('word/_rels/document.xml.rels')!.async('string');

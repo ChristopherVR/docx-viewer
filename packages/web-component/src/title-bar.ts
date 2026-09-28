@@ -33,7 +33,7 @@ function ribbonCommands(ribbon: HTMLElement): { label: string; control: HTMLElem
 	const seen = new Set<string>();
 	const commands: { label: string; control: HTMLElement }[] = [];
 	for (const control of ribbon.querySelectorAll<HTMLElement>(
-		'.ribbon-panel button[aria-label], .ribbon-panel select[aria-label]',
+		'.ribbon-panel button[aria-label]:not([data-dve-hidden]), .ribbon-panel select[aria-label]:not([data-dve-hidden])',
 	)) {
 		const label = control.getAttribute('aria-label')!;
 		if (seen.has(label)) continue;

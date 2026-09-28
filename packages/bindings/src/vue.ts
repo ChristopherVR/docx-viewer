@@ -1,6 +1,6 @@
 import { defineComponent, h, onBeforeUnmount, onMounted, ref, watch, type PropType } from 'vue';
 import type { DocumentModel } from '@christophervr/docx-core';
-import type { EditorThemeMode } from '@christophervr/docx-web-component';
+import type { EditorThemeMode, RibbonActionId } from '@christophervr/docx-web-component';
 import {
 	EDITOR_EVENT_NAMES,
 	EDITOR_PROP_KEYS,
@@ -17,6 +17,9 @@ export const WordEditor = defineComponent({
 		readOnly: Boolean,
 		locale: String,
 		theme: String as PropType<EditorThemeMode>,
+		showThumbnails: Boolean,
+		showToolbar: { type: Boolean, default: true },
+		hiddenActions: Array as PropType<readonly RibbonActionId[]>,
 	} satisfies Record<EditorPropKey, unknown>,
 	emits: [...EDITOR_EVENT_NAMES],
 	setup(props, { emit, expose }) {
@@ -27,6 +30,8 @@ export const WordEditor = defineComponent({
 			...eventOptions({
 				'document-change': (model) => emit('document-change', model),
 				'document-error': (error) => emit('document-error', error),
+				'page-change': (detail) => emit('page-change', detail),
+				'dirty-change': (dirty) => emit('dirty-change', dirty),
 			}),
 		});
 		onMounted(() => {
@@ -48,6 +53,16 @@ export const WordEditor = defineComponent({
 			async save() {
 				if (!binding) throw new Error('Editor is not mounted');
 				return binding.save();
+			},
+			async download(fileName?: string) {
+				if (!binding) throw new Error('Editor is not mounted');
+				await binding.download(fileName);
+			},
+			markClean() {
+				binding?.markClean();
+			},
+			get dirty() {
+				return binding?.dirty ?? false;
 			},
 		});
 		return () => h('div', { ref: host });
