@@ -1,9 +1,12 @@
-import { fontMetrics, type LayoutFontSpec, type TextMeasurer } from './measure.js';
-import { appendBreakMarker, tokenizeRun, type BreakToken } from './text-breaks.js';
+import type { TextMeasurer } from './measure.js';
+import type { BreakToken } from './text-breaks.js';
 import type { LayoutFragment, LayoutLine, LayoutParagraphFrame } from './result.js';
-import type { LayoutParagraph, LayoutRun } from './input.js';
-import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE_PT, ptToPx, twipsToPx } from './units.js';
+import type { LayoutParagraph } from './input.js';
+import { twipsToPx } from './units.js';
 import { placeTab } from './tab-stops.js';
+import { fontOf, resolveIndents, tokenizeParagraph, type PlacedToken } from './paragraph-tokens.js';
+import { lineMetrics, tokenExtent } from './line-metrics.js';
+import { alignFragments, buildFragments } from './paragraph-fragments.js';
 
 export interface ParagraphLayoutResult {
 	/** Lines with `yPx` relative to the paragraph box's own top (0 for the first line). */
@@ -19,123 +22,6 @@ export interface ParagraphLayoutResult {
 	insetTopPx: number;
 	insetBottomPx: number;
 	frame?: LayoutParagraphFrame;
-}
-
-/** Word draws superscript and subscript text at about two thirds of the run's size. */
-const SCRIPT_SCALE = 0.65;
-
-function fontOf(run: LayoutRun): LayoutFontSpec {
-	return {
-		family: run.fontFamily || DEFAULT_FONT_FAMILY,
-		sizePx: ptToPx(run.fontSizePt ?? DEFAULT_FONT_SIZE_PT) * (run.script ? SCRIPT_SCALE : 1),
-		bold: run.bold,
-		italic: run.italic,
-	};
-}
-
-function resolveIndents(paragraph: LayoutParagraph): {
-	leftPx: number;
-	rightPx: number;
-	firstLineExtraPx: number;
-} {
-	const rtl = paragraph.direction === 'rtl';
-	const startTwips =
-		paragraph.indentStartTwips ??
-		(rtl ? paragraph.indentRightTwips : paragraph.indentLeftTwips) ??
-		0;
-	const endTwips =
-		paragraph.indentEndTwips ?? (rtl ? paragraph.indentLeftTwips : paragraph.indentRightTwips) ?? 0;
-	const leftTwips = rtl ? endTwips : startTwips;
-	const rightTwips = rtl ? startTwips : endTwips;
-	const firstLineExtra =
-		paragraph.hangingTwips != null ? -paragraph.hangingTwips : (paragraph.firstLineTwips ?? 0);
-	return {
-		leftPx: twipsToPx(leftTwips),
-		rightPx: twipsToPx(rightTwips),
-		firstLineExtraPx: twipsToPx(firstLineExtra),
-	};
-}
-
-function tokenizeParagraph(paragraph: LayoutParagraph): {
-	tokens: BreakToken[];
-	runOffsets: number[];
-} {
-	const tokens: BreakToken[] = [];
-	const runOffsets: number[] = [];
-	let cursor = 0;
-	paragraph.runs.forEach((run, runIndex) => {
-		runOffsets.push(cursor);
-		if (run.object) tokens.push({ kind: 'object', runIndex, sourceStart: 0 });
-		else tokens.push(...tokenizeRun(run.text, runIndex));
-		if (run.breakAfter) appendBreakMarker(tokens, runIndex, run.text.length, run.breakAfter);
-		// A list label maps to the start of the paragraph's text for click-to-cursor.
-		if (run.synthetic) {
-			for (const token of tokens) if (token.runIndex === runIndex) token.sourceStart = 0;
-		} else cursor += run.text.length;
-	});
-	return { tokens, runOffsets };
-}
-
-interface PlacedToken {
-	token: BreakToken;
-	widthPx: number;
-	leader?: LayoutFragment['leader'];
-}
-
-/** How far superscript text is raised and subscript lowered, as a share of the run's size. */
-const SUPER_RAISE = 0.33;
-const SUB_DROP = 0.14;
-
-/** Where a token's box sits relative to the baseline: its extent above and below it. */
-function tokenExtent(
-	token: BreakToken,
-	paragraph: LayoutParagraph,
-	fonts: LayoutFontSpec[],
-	measurer: TextMeasurer,
-): { above: number; below: number; ascent: number; descent: number } {
-	const run = paragraph.runs[token.runIndex];
-	if (token.kind === 'object' && run?.object)
-		return { above: run.object.heightPx, below: 0, ascent: run.object.heightPx, descent: 0 };
-	const { ascent, descent } = fontMetrics(measurer, fonts[token.runIndex] ?? fontOf({ text: '' }));
-	const size = ptToPx(run?.fontSizePt ?? DEFAULT_FONT_SIZE_PT);
-	const shift =
-		run?.script === 'super' ? SUPER_RAISE * size : run?.script === 'sub' ? -SUB_DROP * size : 0;
-	return { above: ascent + shift, below: descent - shift, ascent, descent };
-}
-
-/**
- * A line's height and baseline: the tallest extent above and below the baseline over its tokens
- * (inline pictures sit on the baseline), scaled by the paragraph's line spacing. Word adds extra
- * spacing above the text, so the baseline sits one descent above the line's bottom.
- */
-function lineMetrics(
-	placed: PlacedToken[],
-	fonts: LayoutFontSpec[],
-	paragraph: LayoutParagraph,
-	measurer: TextMeasurer,
-): { heightPx: number; baselinePx: number } {
-	const tokens = placed.length
-		? placed.map((p) => p.token)
-		: [{ kind: 'space', text: ' ', runIndex: 0, sourceStart: 0 } as BreakToken];
-	let above = 0;
-	let below = 0;
-	for (const token of tokens) {
-		const extent = tokenExtent(token, paragraph, fonts, measurer);
-		above = Math.max(above, extent.above);
-		below = Math.max(below, extent.below);
-	}
-	const natural = above + below;
-	const rule = paragraph.lineSpacingRule ?? 'auto';
-	const spacingTwips = paragraph.lineSpacingTwips;
-	const heightPx =
-		rule === 'exact'
-			? spacingTwips != null
-				? twipsToPx(spacingTwips)
-				: natural
-			: rule === 'atLeast'
-				? Math.max(natural, spacingTwips != null ? twipsToPx(spacingTwips) : 0)
-				: natural * ((spacingTwips ?? 240) / 240);
-	return { heightPx, baselinePx: heightPx - below };
 }
 
 /**
@@ -232,67 +118,6 @@ export function layoutParagraph(
 	}
 	const hangingStopPx = firstLineExtraPx < 0 ? leftPx : undefined;
 
-	function buildFragments(tokensOnLine: PlacedToken[]): LayoutFragment[] {
-		const fragments: LayoutFragment[] = [];
-		let x = 0;
-		for (const { token, widthPx, leader } of tokensOnLine) {
-			const run = paragraph.runs[token.runIndex];
-			const text = token.kind === 'word' || token.kind === 'space' ? token.text : '';
-			fragments.push({
-				text,
-				xPx: x,
-				widthPx,
-				runIndex: token.runIndex,
-				bold: run?.bold,
-				italic: run?.italic,
-				fontFamily: run?.fontFamily,
-				fontSizePt: run?.fontSizePt,
-				...(leader ? { leader } : {}),
-				...(run?.script ? { script: run.script } : {}),
-				...(run?.color ? { color: run.color } : {}),
-				...(run?.underline ? { underline: true } : {}),
-				...(run?.strike ? { strike: true } : {}),
-				...(token.kind === 'object' && run?.object ? { object: run.object } : {}),
-			});
-			x += widthPx;
-		}
-		return fragments;
-	}
-
-	function justify(fragments: LayoutFragment[], width: number): LayoutFragment[] {
-		const spaceIndices = fragments.map((f, i) => (f.text === ' ' ? i : -1)).filter((i) => i >= 0);
-		if (!spaceIndices.length || !fragments.length) return fragments;
-		const natural = fragments.at(-1)!.xPx + fragments.at(-1)!.widthPx;
-		const extra = Math.max(0, width - natural) / spaceIndices.length;
-		if (extra <= 0) return fragments;
-		let shift = 0;
-		return fragments.map((fragment, index) => {
-			const placedFragment = { ...fragment, xPx: fragment.xPx + shift };
-			if (spaceIndices.includes(index)) {
-				placedFragment.widthPx += extra;
-				shift += extra;
-			}
-			return placedFragment;
-		});
-	}
-
-	function alignFragments(
-		fragments: LayoutFragment[],
-		width: number,
-		isLastLine: boolean,
-	): LayoutFragment[] {
-		if (!fragments.length) return fragments;
-		if (effectiveAlign === 'justify' && !isLastLine) return justify(fragments, width);
-		const natural = fragments.at(-1)!.xPx + fragments.at(-1)!.widthPx;
-		const offset =
-			effectiveAlign === 'center'
-				? Math.max(0, width - natural) / 2
-				: effectiveAlign === 'right'
-					? Math.max(0, width - natural)
-					: 0;
-		return offset === 0 ? fragments : fragments.map((f) => ({ ...f, xPx: f.xPx + offset }));
-	}
-
 	function flushLine(forceEmpty: boolean, forcedByBreak: 'page' | 'column' | undefined) {
 		if (!placed.length && !forceEmpty) return;
 		const lineIndex = lines.length;
@@ -300,7 +125,7 @@ export function layoutParagraph(
 		// but never rendered or measured, so it cannot skew alignment/justification.
 		const rendered = [...placed];
 		while (rendered.length && rendered.at(-1)!.token.kind === 'space') rendered.pop();
-		const fragments = buildFragments(rendered);
+		const fragments = buildFragments(rendered, paragraph);
 		const start = placed.length ? globalOffset(placed[0].token) : 0;
 		const last = placed.at(-1)?.token;
 		const end = last
@@ -383,6 +208,7 @@ export function layoutParagraph(
 				lines[index].fragments,
 				availableWidth(index),
 				index === lastIndex,
+				effectiveAlign,
 			).map((fragment) => ({ ...fragment, xPx: fragment.xPx + lineStart(index) })),
 		};
 	}
