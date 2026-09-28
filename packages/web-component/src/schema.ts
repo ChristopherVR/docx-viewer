@@ -93,6 +93,11 @@ export const schema = new Schema({
 				listHangingTwips: { default: null },
 				listFirstLineTwips: { default: null },
 				pageBreakBefore: { default: false },
+				/** Pagination toggles (true, false = explicitly off, null = unset); no editor controls yet. */
+				keepNext: { default: null },
+				keepLines: { default: null },
+				widowControl: { default: null },
+				contextualSpacing: { default: null },
 				/** Custom tab stops (`w:tabs`) as an array; kept for saving, not rendered at their positions. */
 				tabStops: { default: null },
 				/** Read-only bookmark names starting in this paragraph; not user-editable. */

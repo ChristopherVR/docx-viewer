@@ -44,11 +44,18 @@ function paragraphNode(paragraph: Paragraph, labels: ListLabels, noteNumber?: No
 			listFirstLineTwips: label?.firstLineTwips ?? null,
 			pageBreakBefore: paragraph.pageBreakBefore ?? false,
 			tabStops: paragraph.tabStops?.length ? paragraph.tabStops : null,
+			keepNext: paragraph.keepNext ?? null,
+			keepLines: paragraph.keepLines ?? null,
+			widowControl: paragraph.widowControl ?? null,
+			contextualSpacing: paragraph.contextualSpacing ?? null,
 			bookmarks: paragraph.bookmarks ?? [],
 		},
 		children,
 	);
 }
+
+/** Paragraph pagination toggles carried through the editor as node attributes. */
+const KEEP_KEYS = ['keepNext', 'keepLines', 'widowControl', 'contextualSpacing'] as const;
 
 export function modelToDoc(model: DocumentModel) {
 	const labels = computeListLabels(model);
@@ -135,6 +142,7 @@ export function docToModel(
 			(previous.numbering ? previous.numbering.level : null) === (node.attrs.ilvl ?? null) &&
 			Boolean(previous.pageBreakBefore) === Boolean(node.attrs.pageBreakBefore) &&
 			sameJson(previous.tabStops ?? null, node.attrs.tabStops ?? null) &&
+			KEEP_KEYS.every((key) => (previous[key] ?? null) === (node.attrs[key] ?? null)) &&
 			sameJson(previous.bookmarks ?? [], node.attrs.bookmarks ?? [])
 		)
 			return previous;
@@ -174,6 +182,9 @@ export function docToModel(
 				: {}),
 			...(node.attrs.pageBreakBefore ? { pageBreakBefore: true } : {}),
 			...(node.attrs.tabStops?.length ? { tabStops: structuredClone(node.attrs.tabStops) } : {}),
+			...Object.fromEntries(
+				KEEP_KEYS.filter((key) => node.attrs[key] != null).map((key) => [key, node.attrs[key]]),
+			),
 			...(node.attrs.bookmarks?.length ? { bookmarks: [...node.attrs.bookmarks] } : {}),
 		};
 	};

@@ -20,6 +20,7 @@ import { parseDrawing, type DrawingContext } from './drawing.js';
 import { resolveHyperlink, parseSimpleHyperlinkField } from './hyperlink.js';
 import { paragraphBookmarkNames } from './bookmarks.js';
 import { parseTabStops } from './tab-stops.js';
+import { PAGINATION_KEYS } from './paragraph-styles.js';
 import { createFieldTracker } from './field-runs.js';
 import {
 	collectParagraphRuns,
@@ -187,6 +188,10 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 	const style = getW(first(props, 'pStyle'), 'val');
 	if (style) paragraph.style = style;
 	if (on(first(props, 'pageBreakBefore'))) paragraph.pageBreakBefore = true;
+	for (const key of PAGINATION_KEYS) {
+		const element = first(props, key);
+		if (element) paragraph[key] = on(element);
+	}
 	const tabStops = parseTabStops(first(props, 'tabs'));
 	if (tabStops.length) paragraph.tabStops = tabStops;
 	const spacing = first(props, 'spacing');

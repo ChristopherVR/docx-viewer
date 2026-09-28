@@ -185,6 +185,14 @@ export interface Paragraph {
 	formatRevision?: Revision;
 	/** Custom tab stops (`w:tabs`), in document order. */
 	tabStops?: TabStop[];
+	/** `w:keepNext`: keep this paragraph on the same page as the next. `false` cancels a style. */
+	keepNext?: boolean;
+	/** `w:keepLines`: never split this paragraph across pages. */
+	keepLines?: boolean;
+	/** `w:widowControl`: avoid single lines at a page's top or bottom (on unless turned off). */
+	widowControl?: boolean;
+	/** `w:contextualSpacing`: no spacing between paragraphs of the same style. */
+	contextualSpacing?: boolean;
 	/**
 	 * Bookmark names starting in this paragraph (`w:bookmarkStart/@w:name`). Added names are
 	 * written around the whole paragraph; removed names lose their markers here. Exact character
@@ -207,6 +215,10 @@ export type ParagraphFormatting = Pick<
 	| 'indentEndTwips'
 	| 'firstLineTwips'
 	| 'hangingTwips'
+	| 'keepNext'
+	| 'keepLines'
+	| 'widowControl'
+	| 'contextualSpacing'
 >;
 export interface ParagraphStyleDefinition {
 	id: string;

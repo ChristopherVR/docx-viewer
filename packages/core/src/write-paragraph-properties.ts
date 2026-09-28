@@ -100,6 +100,24 @@ function updatePageBreakBefore(
 	if (paragraph.pageBreakBefore) props.appendChild(makeW(doc, 'pageBreakBefore'));
 }
 
+/** Pagination toggles: on, explicitly off (cancelling a style), or absent. */
+function updateKeepOptions(
+	doc: XmlDocument,
+	props: XmlElement,
+	paragraph: Paragraph,
+	base?: Paragraph,
+): void {
+	for (const key of ['keepNext', 'keepLines', 'widowControl', 'contextualSpacing'] as const) {
+		if (base && paragraph[key] === base[key]) continue;
+		for (const element of children(props, key)) props.removeChild(element);
+		const value = paragraph[key];
+		if (value === undefined) continue;
+		const element = makeW(doc, key);
+		if (!value) setAttribute(element, 'val', '0');
+		props.appendChild(element);
+	}
+}
+
 export function writeParagraphProperties(
 	doc: XmlDocument,
 	props: XmlElement,
@@ -107,6 +125,7 @@ export function writeParagraphProperties(
 	base?: Paragraph,
 ): void {
 	updatePageBreakBefore(doc, props, paragraph, base);
+	updateKeepOptions(doc, props, paragraph, base);
 	updateDirection(doc, props, paragraph, base);
 	const spacingKeys = [
 		'spacingBeforeTwips',

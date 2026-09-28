@@ -28,8 +28,6 @@ import type {
 	LayoutTable,
 } from './input.js';
 
-const KEEP_TOGETHER_NOTE =
-	'Paragraph keepNext/keepLines/widowControl overrides and contextualSpacing are not yet represented in the document model; Word’s defaults (widow/orphan control on, no forced keep-together) are used for every paragraph.';
 const TABLE_ROW_NOTE =
 	'Table rows with an exact height clip content that does not fit; text in them is not shrunk.';
 const VERTICAL_MERGE_NOTE =
@@ -178,7 +176,6 @@ export function adaptDocumentModel(
 	}
 	function adaptParagraph(paragraph: Paragraph, markLabel?: string): LayoutParagraph {
 		const resolved = catalog ? resolveParagraphFormatting(paragraph, catalog) : paragraph;
-		reportOnce(KEEP_TOGETHER_NOTE);
 		const label = labels.get(paragraph.id);
 		// Numbering level indents apply unless the paragraph or its style sets its own.
 		const ownFirstLine =
@@ -214,6 +211,10 @@ export function adaptDocumentModel(
 			hangingTwips: ownFirstLine ? resolved.hangingTwips : label?.hangingTwips,
 			styleId: paragraph.style,
 			...(paragraph.pageBreakBefore ? { pageBreakBefore: true } : {}),
+			...(resolved.keepNext ? { keepNext: true } : {}),
+			...(resolved.keepLines ? { keepLines: true } : {}),
+			...(resolved.widowControl === false ? { widowControl: false } : {}),
+			...(resolved.contextualSpacing ? { contextualSpacing: true } : {}),
 		};
 	}
 	function adaptBlock(block: Block): LayoutBlock {

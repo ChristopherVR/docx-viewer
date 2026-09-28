@@ -54,12 +54,30 @@ describe('adaptDocumentModel', () => {
 			expect(table.rows[0].cells[0].paragraphs[0].runs[0].text).toBe('Cell');
 	});
 
-	it('reports honest approximations for features the model does not yet expose', () => {
-		const notes: string[] = [];
-		adaptDocumentModel(baseModel(), (message) => notes.push(message));
-		expect(notes.some((n) => n.includes('keepNext'))).toBe(true);
-		// Deduplicated even though only one paragraph triggered it.
-		expect(notes.filter((n) => n.includes('keepNext'))).toHaveLength(1);
+	it('passes keep-with-next, keep-lines and widow control from styles and direct formatting', () => {
+		const catalog: ParagraphStyleCatalog = {
+			docDefaults: {},
+			styles: { Heading: { id: 'Heading', formatting: { keepNext: true, keepLines: true } } },
+			warnings: [],
+		};
+		const model = baseModel({
+			blocks: [
+				{ type: 'paragraph', id: 'h', runs: [{ text: 'x' }], style: 'Heading' },
+				{
+					type: 'paragraph',
+					id: 'k',
+					runs: [{ text: 'y' }],
+					style: 'Heading',
+					keepNext: false,
+					widowControl: false,
+				},
+			],
+			paragraphStyles: catalog,
+		});
+		const [heading, cancelled] = adaptDocumentModel(model).sections[0].blocks;
+		expect(heading).toMatchObject({ keepNext: true, keepLines: true });
+		expect(cancelled).toMatchObject({ keepLines: true, widowControl: false });
+		expect((cancelled as { keepNext?: boolean }).keepNext).toBeUndefined();
 	});
 
 	it('resolves style-based formatting through resolveParagraphFormatting when a catalog is present', () => {

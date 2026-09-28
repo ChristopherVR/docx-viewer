@@ -16,7 +16,16 @@ const enabled = (element: XmlElement | undefined): boolean | undefined => {
 	return !['0', 'false', 'off', 'no', 'none'].includes((getW(element, 'val') ?? '').toLowerCase());
 };
 
-function parseFormatting(pPr: XmlElement | undefined): ParagraphFormatting {
+/** Pagination toggles whose element names match their model keys. */
+export const PAGINATION_KEYS = [
+	'keepNext',
+	'keepLines',
+	'widowControl',
+	'contextualSpacing',
+] as const;
+
+/** Parses `w:pPr` formatting (shared by styles, docDefaults and direct paragraph properties). */
+export function parseFormatting(pPr: XmlElement | undefined): ParagraphFormatting {
 	const result: ParagraphFormatting = {};
 	const alignment = getW(first(pPr, 'jc'), 'val');
 	if (alignment === 'left' || alignment === 'center' || alignment === 'right')
@@ -24,6 +33,10 @@ function parseFormatting(pPr: XmlElement | undefined): ParagraphFormatting {
 	if (alignment === 'both' || alignment === 'distribute') result.align = 'justify';
 	const bidi = enabled(first(pPr, 'bidi'));
 	if (bidi !== undefined) result.direction = bidi ? 'rtl' : 'ltr';
+	for (const key of PAGINATION_KEYS) {
+		const value = enabled(first(pPr, key));
+		if (value !== undefined) result[key] = value;
+	}
 	const spacing = first(pPr, 'spacing');
 	const before = integer(getW(spacing, 'before'));
 	const after = integer(getW(spacing, 'after'));
@@ -151,6 +164,7 @@ export function resolveParagraphFormatting(
 		'indentEndTwips',
 		'firstLineTwips',
 		'hangingTwips',
+		...PAGINATION_KEYS,
 	];
 	for (const key of keys) {
 		const value = paragraph[key];
