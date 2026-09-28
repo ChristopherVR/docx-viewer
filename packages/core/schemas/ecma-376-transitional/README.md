@@ -12,16 +12,26 @@ schemas' `xml.xsd` imports at the local copy.
 
 ## Licence and provenance
 
-- **ECMA-376 schemas** (every `*.xsd` except `xml.xsd`): copyright Ecma International. They are
-  distributed by Ecma under the copyright notice that accompanies ECMA-376, which permits copying
-  and redistributing the specification and its schema files, including for use in implementing the
-  standard, provided the Ecma copyright notice is kept and the files are not misrepresented.
-  The files are vendored here unmodified, solely as test fixtures for schema validation; they are
-  not shipped in the published packages. The authoritative terms are those in the original
-  download above; consult them before redistributing these files for any other purpose.
-- **`xml.xsd`**: from the W3C (https://www.w3.org/2001/xml.xsd), distributed under the W3C
-  Software and Document Notice and License (https://www.w3.org/copyright/software-license/).
-  Copyright W3C (MIT, ERCIM, Keio, Beihang).
+Licence text is **not reproduced here**. When this section was written (2026-09-28) the licence
+pages could not be retrieved (the network egress proxy blocked www.w3.org and
+ecma-international.org), so nothing below is quoted from them. Consult the original sources.
+
+- **Header notices in the files.** None of the vendored `*.xsd` files, including `xml.xsd`,
+  contains a copyright or licence notice in its own text (checked by searching for "copyright",
+  "licen" and "ecma"). The notices therefore live only in the sources named below.
+- **ECMA-376 schemas** (every `*.xsd` except `xml.xsd`): copyright Ecma International. The terms
+  are those of the Ecma copyright notice that accompanies the ECMA-376 download above and of the
+  Ecma text copyright policy (https://ecma-international.org/policies/by-ipr/ecma-text-copyright-policy/).
+  Not retrieved; the exact wording has not been verified here. The files are vendored unmodified
+  solely as test fixtures for schema validation and are not shipped in the published packages.
+  Read the original terms before redistributing them for any other purpose.
+- **`xml.xsd`**: from the W3C (https://www.w3.org/2001/xml.xsd). W3C publishes its documents and
+  software under the W3C Software and Document Notice and License
+  (https://www.w3.org/copyright/software-license/). Not retrieved; the exact wording, and which
+  version applies to this file, has not been verified here.
+
+TODO: fetch the exact licence texts from the URLs above and quote them, with URL and retrieval
+date, in place of these references.
 
 No file was edited after download. If a file must change, record it here and update its checksum.
 

@@ -43,6 +43,8 @@ bun install --cwd docs
 bun run --cwd docs docs:build
 ```
 
+Browser test environment variables: `PLAYWRIGHT_CHROMIUM_EXECUTABLE` uses an explicit Chromium executable. If Playwright's pinned Chromium build is not installed, the config falls back to the newest `chromium_headless_shell-*` or `chromium-*` build under `PLAYWRIGHT_BROWSERS_PATH`. `PLAYWRIGHT_PORT` (default 4180) selects the preview-server port, which avoids reusing a stale server from another checkout.
+
 The Pages workflow builds VitePress documentation and all six demos using the PowerPoint site's route structure. Deployment is enabled for public repositories. For a private repository, a GitHub plan supporting private-repository Pages and the `ENABLE_PRIVATE_PAGES=true` repository variable are required. Publishing instructions are in [the release guide](docs/releasing.md).
 
 ## Support today

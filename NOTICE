@@ -1,1 +1,3 @@
 The OLE2 parser/writer and Word 97-2003 binary document modules in this package were adapted from ChristopherVR/pptx-viewer, Copyright ChristopherVR, licensed under the Apache License, Version 2.0. The Apache License text is included in LICENSE.
+
+The XML schemas vendored in packages/core/schemas/ecma-376-transitional/ (used only as test fixtures) are copyright Ecma International (ECMA-376) and the W3C (xml.xsd). They are not covered by this project's licence; see the README in that directory for provenance and licence references.
