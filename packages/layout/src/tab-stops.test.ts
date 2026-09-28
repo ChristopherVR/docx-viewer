@@ -5,6 +5,7 @@ import type { LayoutParagraph } from './input.js';
 import type { TextMeasurer } from './measure.js';
 import { layoutParagraph } from './paragraph-layout.js';
 import { placeTab } from './tab-stops.js';
+import { at } from './__tests__/helpers.js';
 
 // 10px per character, 20px lines.
 const measurer: TextMeasurer = { widthOf: (text) => text.length * 10, lineHeightOf: () => 20 };
@@ -16,7 +17,7 @@ const paragraph = (text: string, extra: Partial<LayoutParagraph> = {}): LayoutPa
 	...extra,
 });
 const fragmentsOf = (result: ReturnType<typeof layoutParagraph>) =>
-	result.lines[0].fragments.map(({ text, xPx, widthPx, leader }) => ({
+	at(result.lines, 0).fragments.map(({ text, xPx, widthPx, leader }) => ({
 		text,
 		xPx,
 		widthPx,
@@ -56,14 +57,14 @@ describe('tab stops', () => {
 			measurer,
 			noop,
 		);
-		expect(centered.lines[0].fragments[1].xPx).toBe(80);
+		expect(at(at(centered.lines, 0).fragments, 1).xPx).toBe(80);
 		const decimal = layoutParagraph(
 			paragraph('\t123.45', { tabStops: [{ posPx: 100, align: 'decimal' }] }),
 			200,
 			measurer,
 			noop,
 		);
-		expect(decimal.lines[0].fragments[1].xPx).toBe(70);
+		expect(at(at(decimal.lines, 0).fragments, 1).xPx).toBe(70);
 	});
 
 	it('lays out list labels in the hanging indent from the numbering definition', () => {
@@ -99,8 +100,8 @@ describe('tab stops', () => {
 				nums: { '1': { id: '1', abstractNumId: '0', overrides: {} } },
 			} as never,
 		};
-		const [adapted] = adaptDocumentModel(model).sections[0].blocks as LayoutParagraph[];
-		expect(adapted.runs[0]).toMatchObject({ text: '•\t', synthetic: true });
+		const adapted = at(at(adaptDocumentModel(model).sections, 0).blocks as LayoutParagraph[], 0);
+		expect(at(adapted.runs, 0)).toMatchObject({ text: '•\t', synthetic: true });
 		expect(adapted).toMatchObject({ indentLeftTwips: 720, hangingTwips: 360 });
 		const result = layoutParagraph(adapted, 600, measurer, noop);
 		// The bullet starts at 24px (720 - 360 twips); its tab reaches the 48px indent.
@@ -109,6 +110,6 @@ describe('tab stops', () => {
 			{ text: '', xPx: 34, widthPx: 14 },
 			{ text: 'Item', xPx: 48, widthPx: 40 },
 		]);
-		expect(result.lines[0].sourceStart).toBe(0);
+		expect(at(result.lines, 0).sourceStart).toBe(0);
 	});
 });

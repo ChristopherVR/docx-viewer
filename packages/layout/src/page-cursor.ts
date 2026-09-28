@@ -1,4 +1,5 @@
 import type { LayoutColumns, LayoutPageGeometry } from './input.js';
+import { expectDefined } from './expect-defined.js';
 import type {
 	LayoutBlockBox,
 	LayoutColumnBox,
@@ -81,7 +82,7 @@ export class PageCursor {
 		return this.pages.at(-1)!;
 	}
 	get column(): LayoutColumnBox {
-		return this.page.columns[this.columnIndex];
+		return expectDefined(this.page.columns[this.columnIndex], 'current page column');
 	}
 	get y(): number {
 		return this.yPx;

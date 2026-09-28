@@ -7,6 +7,7 @@ import { placeTab } from './tab-stops.js';
 import { fontOf, resolveIndents, tokenizeParagraph, type PlacedToken } from './paragraph-tokens.js';
 import { lineMetrics, tokenExtent } from './line-metrics.js';
 import { alignFragments, buildFragments } from './paragraph-fragments.js';
+import { expectDefined } from './expect-defined.js';
 
 export interface ParagraphLayoutResult {
 	/** Lines with `yPx` relative to the paragraph box's own top (0 for the first line). */
@@ -51,8 +52,10 @@ export function layoutParagraph(
 	const { leftPx, rightPx, firstLineExtraPx } = resolveIndents(paragraph);
 	const bodyWidth = Math.max(1, contentWidthPx - leftPx - rightPx);
 	const fonts = paragraph.runs.map(fontOf);
+	const fontAt = (runIndex: number) => expectDefined(fonts[runIndex], 'run font index');
 	const { tokens, runOffsets } = tokenizeParagraph(paragraph);
-	const globalOffset = (token: BreakToken) => runOffsets[token.runIndex] + token.sourceStart;
+	const globalOffset = (token: BreakToken) =>
+		expectDefined(runOffsets[token.runIndex], 'run offset index') + token.sourceStart;
 	const effectiveAlign = paragraph.align ?? (paragraph.direction === 'rtl' ? 'right' : 'left');
 
 	const lines: LayoutLine[] = [];
@@ -82,7 +85,7 @@ export function layoutParagraph(
 				gapBeforePx: gap,
 			};
 		}
-		return boxes[lineIndex];
+		return expectDefined(boxes[lineIndex], 'line box');
 	};
 	const availableWidth = (lineIndex: number) => {
 		const box = boxFor(lineIndex);
@@ -96,7 +99,7 @@ export function layoutParagraph(
 		leftPx + (lineIndex === 0 ? firstLineExtraPx : 0) + boxFor(lineIndex).leftInsetPx;
 	const tokenWidth = (token: BreakToken): number =>
 		token.kind === 'word' || token.kind === 'space'
-			? measurer.widthOf(token.text, fonts[token.runIndex])
+			? measurer.widthOf(token.text, fontAt(token.runIndex))
 			: token.kind === 'object'
 				? (paragraph.runs[token.runIndex]?.object?.widthPx ?? 0)
 				: 0;
@@ -106,13 +109,14 @@ export function layoutParagraph(
 	function segmentAfter(index: number): { followingPx: number; beforeDecimalPx: number } {
 		let followingPx = 0;
 		let beforeDecimalPx: number | undefined;
-		for (let next = index + 1; next < tokens.length && !ends.has(tokens[next].kind); next++) {
-			const token = tokens[next];
+		for (let next = index + 1; next < tokens.length; next++) {
+			const token = expectDefined(tokens[next], 'token index');
+			if (ends.has(token.kind)) break;
 			if (beforeDecimalPx === undefined && token.kind === 'word' && /[.,]/.test(token.text)) {
 				const prefix = token.text.slice(0, token.text.search(/[.,]/));
-				beforeDecimalPx = followingPx + measurer.widthOf(prefix, fonts[token.runIndex]);
+				beforeDecimalPx = followingPx + measurer.widthOf(prefix, fontAt(token.runIndex));
 			}
-			followingPx += widths[next];
+			followingPx += widths[next] ?? 0;
 		}
 		return { followingPx, beforeDecimalPx: beforeDecimalPx ?? followingPx };
 	}
@@ -126,7 +130,8 @@ export function layoutParagraph(
 		const rendered = [...placed];
 		while (rendered.length && rendered.at(-1)!.token.kind === 'space') rendered.pop();
 		const fragments = buildFragments(rendered, paragraph);
-		const start = placed.length ? globalOffset(placed[0].token) : 0;
+		const [firstPlaced] = placed;
+		const start = firstPlaced ? globalOffset(firstPlaced.token) : 0;
 		const last = placed.at(-1)?.token;
 		const end = last
 			? globalOffset(last) + (last.kind === 'word' || last.kind === 'space' ? last.text.length : 1)
@@ -136,8 +141,9 @@ export function layoutParagraph(
 		// Each fragment's box is placed so its baseline sits on the line's.
 		rendered.forEach(({ token }, index) => {
 			const extent = tokenExtent(token, paragraph, fonts, measurer);
-			fragments[index].topPx = baselinePx - extent.above;
-			if (token.kind !== 'object') fragments[index].boxHeightPx = extent.ascent + extent.descent;
+			const fragment = expectDefined(fragments[index], 'fragment for rendered token');
+			fragment.topPx = baselinePx - extent.above;
+			if (token.kind !== 'object') fragment.boxHeightPx = extent.ascent + extent.descent;
 		});
 		lines.push({
 			yPx: 0,
@@ -165,7 +171,7 @@ export function layoutParagraph(
 			continue;
 		}
 		let leader: LayoutFragment['leader'];
-		let width = widths[tokenIndex];
+		let width = expectDefined(widths[tokenIndex], 'token width');
 		if (token.kind === 'tab') {
 			const { followingPx, beforeDecimalPx } = segmentAfter(tokenIndex);
 			const tab = placeTab(
@@ -201,11 +207,11 @@ export function layoutParagraph(
 	flushLine(lines.length === 0, undefined);
 
 	const lastIndex = lines.length - 1;
-	for (let index = 0; index < lines.length; index++) {
+	for (const [index, line] of lines.entries()) {
 		lines[index] = {
-			...lines[index],
+			...line,
 			fragments: alignFragments(
-				lines[index].fragments,
+				line.fragments,
 				availableWidth(index),
 				index === lastIndex,
 				effectiveAlign,

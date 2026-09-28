@@ -5,6 +5,7 @@ import type {
 	SectionProperties,
 } from '@christophervr/docx-core';
 import { adaptDocumentModel } from './adapter.js';
+import { at } from './__tests__/helpers.js';
 
 function baseModel(overrides: Partial<DocumentModel> = {}): DocumentModel {
 	return {
@@ -26,7 +27,7 @@ describe('adaptDocumentModel', () => {
 	it('produces a single section from model.page when no sections hint is present', () => {
 		const input = adaptDocumentModel(baseModel());
 		expect(input.sections).toHaveLength(1);
-		expect(input.sections[0].page).toMatchObject({
+		expect(at(input.sections, 0).page).toMatchObject({
 			widthPx: 816,
 			heightPx: 1056,
 			marginTopPx: 96,
@@ -34,7 +35,7 @@ describe('adaptDocumentModel', () => {
 			marginBottomPx: 96,
 			marginLeftPx: 96,
 		});
-		expect(input.sections[0].blocks).toHaveLength(1);
+		expect(at(input.sections, 0).blocks).toHaveLength(1);
 	});
 
 	it('converts table blocks with their nested cell paragraphs', () => {
@@ -48,10 +49,10 @@ describe('adaptDocumentModel', () => {
 			],
 		});
 		const input = adaptDocumentModel(model);
-		const table = input.sections[0].blocks[0];
+		const table = at(at(input.sections, 0).blocks, 0);
 		expect(table.kind).toBe('table');
 		if (table.kind === 'table')
-			expect(table.rows[0].cells[0].paragraphs[0].runs[0].text).toBe('Cell');
+			expect(at(at(at(at(table.rows, 0).cells, 0).paragraphs, 0).runs, 0).text).toBe('Cell');
 	});
 
 	it('passes keep-with-next, keep-lines and widow control from styles and direct formatting', () => {
@@ -74,7 +75,7 @@ describe('adaptDocumentModel', () => {
 			],
 			paragraphStyles: catalog,
 		});
-		const [heading, cancelled] = adaptDocumentModel(model).sections[0].blocks;
+		const [heading, cancelled] = at(adaptDocumentModel(model).sections, 0).blocks;
 		expect(heading).toMatchObject({ keepNext: true, keepLines: true });
 		expect(cancelled).toMatchObject({ keepLines: true, widowControl: false });
 		expect((cancelled as { keepNext?: boolean }).keepNext).toBeUndefined();
@@ -91,7 +92,7 @@ describe('adaptDocumentModel', () => {
 			paragraphStyles: catalog,
 		});
 		const input = adaptDocumentModel(model);
-		const paragraph = input.sections[0].blocks[0];
+		const paragraph = at(at(input.sections, 0).blocks, 0);
 		expect(paragraph.kind).toBe('paragraph');
 		if (paragraph.kind === 'paragraph') expect(paragraph.align).toBe('center');
 	});
@@ -128,22 +129,22 @@ describe('adaptDocumentModel', () => {
 		};
 		const input = adaptDocumentModel(model);
 		expect(input.sections).toHaveLength(2);
-		expect(input.sections[0].page.widthPx).toBe(400);
-		expect(input.sections[0].page.marginTopPx).toBe(96);
-		expect(input.sections[0].blocks).toHaveLength(1);
-		expect(input.sections[0].break).toBeUndefined();
-		expect(input.sections[1].columns).toEqual({ count: 2, gapPx: 12 });
-		expect(input.sections[1].break).toBe('continuous');
-		const first = input.sections[0].blocks[0];
-		if (first.kind === 'paragraph') expect(first.runs[1].breakAfter).toBe('page');
-		const second = input.sections[1].blocks[0];
+		expect(at(input.sections, 0).page.widthPx).toBe(400);
+		expect(at(input.sections, 0).page.marginTopPx).toBe(96);
+		expect(at(input.sections, 0).blocks).toHaveLength(1);
+		expect(at(input.sections, 0).break).toBeUndefined();
+		expect(at(input.sections, 1).columns).toEqual({ count: 2, gapPx: 12 });
+		expect(at(input.sections, 1).break).toBe('continuous');
+		const first = at(at(input.sections, 0).blocks, 0);
+		if (first.kind === 'paragraph') expect(at(first.runs, 1).breakAfter).toBe('page');
+		const second = at(at(input.sections, 1).blocks, 0);
 		if (second.kind === 'paragraph') expect(second.pageBreakBefore).toBe(true);
 	});
 });
 
 describe('adaptDocumentModel key presence', () => {
 	it('omits unresolved run and paragraph properties instead of writing undefined keys', () => {
-		const paragraph = adaptDocumentModel(baseModel()).sections[0].blocks[0];
+		const paragraph = at(at(adaptDocumentModel(baseModel()).sections, 0).blocks, 0);
 		if (paragraph.kind !== 'paragraph') throw new Error('Expected a paragraph');
 		const undefinedKeys = [paragraph, ...paragraph.runs].flatMap((node) =>
 			Object.entries(node)

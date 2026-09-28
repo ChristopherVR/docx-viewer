@@ -6,6 +6,7 @@ import { layoutDocument } from './layout.js';
 import type { LayoutParagraph } from './input.js';
 import type { LayoutParagraphBox } from './result.js';
 import type { TextMeasurer } from './measure.js';
+import { at } from './__tests__/helpers.js';
 
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const measurer: TextMeasurer = { widthOf: (text) => text.length * 10, lineHeightOf: () => 20 };
@@ -37,16 +38,18 @@ describe('paragraph borders and shading', () => {
 
 	it('draws a group of identical bordered paragraphs as one box with the between line', async () => {
 		const { model } = await load();
-		const [one, two, after] = adaptDocumentModel(model).sections[0].blocks as LayoutParagraph[];
+		const one = at(at(adaptDocumentModel(model).sections, 0).blocks as LayoutParagraph[], 0);
+		const two = at(at(adaptDocumentModel(model).sections, 0).blocks as LayoutParagraph[], 1);
+		const after = at(at(adaptDocumentModel(model).sections, 0).blocks as LayoutParagraph[], 2);
 		expect(one.borders?.top?.color).toBe('#C00000');
 		expect(one.borders?.bottom).toBeUndefined();
 		expect(two.borders?.top).toMatchObject({ style: 'dotted' });
 		expect(two.borders?.bottom?.color).toBe('#C00000');
 		expect(after.borders).toBeUndefined();
 		const result = layoutDocument(adaptDocumentModel(model), measurer);
-		const [first] = result.pages[0].columns[0].blocks as LayoutParagraphBox[];
+		const first = at(at(at(result.pages, 0).columns, 0).blocks as LayoutParagraphBox[], 0);
 		// 12 eighths of a point = 2px line, plus 3pt = 4px of space above the text.
-		expect(first.lines[0].yPx).toBe(6);
+		expect(at(first.lines, 0).yPx).toBe(6);
 		expect(first.frame).toMatchObject({ shading: '#FFF2CC' });
 	});
 });

@@ -6,6 +6,7 @@ import {
 	type Table,
 	type TableBorderSide,
 } from '@christophervr/docx-core';
+import { expectDefined } from './expect-defined.js';
 import type {
 	LayoutBorder,
 	LayoutCellBorders,
@@ -90,7 +91,7 @@ export function adaptTable(
 	});
 	const cellAt = (rowIndex: number, gridIndex: number) => {
 		const position = gridIndexes[rowIndex]?.indexOf(gridIndex) ?? -1;
-		return position >= 0 ? table.rows[rowIndex][position] : undefined;
+		return position >= 0 ? table.rows[rowIndex]?.[position] : undefined;
 	};
 	return {
 		kind: 'table',
@@ -101,7 +102,7 @@ export function adaptTable(
 		rows: table.rows.map((row, rowIndex) => ({
 			...rowLayout(table.rowProperties?.[rowIndex]),
 			cells: row.map((cell, cellIndex): LayoutTableCell => {
-				const start = gridIndexes[rowIndex][cellIndex];
+				const start = expectDefined(gridIndexes[rowIndex]?.[cellIndex], 'table cell grid index');
 				const span = cell.gridSpan ?? 1;
 				const visuals = resolveCellVisuals(
 					table,

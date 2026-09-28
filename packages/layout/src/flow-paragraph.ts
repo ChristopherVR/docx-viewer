@@ -3,6 +3,7 @@ import { adjustForWidowOrphan, widowControlEnabled } from './keep-rules.js';
 import type { ParagraphLayoutResult } from './paragraph-layout.js';
 import type { LayoutParagraph } from './input.js';
 import type { LayoutParagraphBox } from './result.js';
+import { expectDefined } from './expect-defined.js';
 
 export interface ParagraphPlacement {
 	paragraph: LayoutParagraph;
@@ -59,8 +60,9 @@ export function placeParagraph(
 		for (let i = lineCursor; i < layout.lines.length; i++) {
 			// A line's gap (clearing a wrapped picture) moves with it, except when a later segment
 			// starts it at the top of a new column or page.
-			const gap = i === lineCursor && !firstSegment ? 0 : (layout.lines[i].gapBeforePx ?? 0);
-			const height = layout.lines[i].heightPx + gap;
+			const line = expectDefined(layout.lines[i], 'paragraph line index');
+			const gap = i === lineCursor && !firstSegment ? 0 : (line.gapBeforePx ?? 0);
+			const height = line.heightPx + gap;
 			// A line that does not fit waits for the next column, unless the column is empty.
 			if (cumulative + height > budget && (end > lineCursor || !cursor.atColumnTop)) break;
 			cumulative += height;
@@ -87,7 +89,7 @@ export function placeParagraph(
 			);
 			placedCount = Math.max(1, end - lineCursor);
 		}
-		const first = layout.lines[lineCursor];
+		const first = expectDefined(layout.lines[lineCursor], 'first line of paragraph segment');
 		const origin = first.yPx - (firstSegment ? (first.gapBeforePx ?? 0) + layout.insetTopPx : 0);
 		const segmentLines = layout.lines
 			.slice(lineCursor, lineCursor + placedCount)

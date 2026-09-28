@@ -2,6 +2,7 @@ import type { TextMeasurer } from './measure.js';
 import { layoutParagraph } from './paragraph-layout.js';
 import type { LayoutParagraph, LayoutTableCell, LayoutTableRow } from './input.js';
 import type { LayoutCellGeometry, LayoutParagraphBox } from './result.js';
+import { expectDefined } from './expect-defined.js';
 
 export interface RowLayout {
 	heightPx: number;
@@ -120,7 +121,7 @@ function splitCellAtHeight(boxes: LayoutParagraphBox[], cutHeightPx: number): Ce
 			beforeHeightPx = box.yPx + bottom;
 		}
 		if (afterLines.length) {
-			const shift = afterLines[0].yPx;
+			const shift = expectDefined(afterLines[0], 'first line after split').yPx;
 			afterOrigin = box.yPx + shift;
 			after.push({
 				...box,

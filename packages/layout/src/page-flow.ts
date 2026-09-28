@@ -8,6 +8,7 @@ import type { TextMeasurer } from './measure.js';
 import type { LayoutBlock, LayoutDocumentInput, LayoutSection } from './input.js';
 import type { LayoutPageBox, LayoutResult } from './result.js';
 import { lineBoxesFor, type Exclusion } from './wrap.js';
+import { expectDefined } from './expect-defined.js';
 
 /**
  * Section-break approximation: every section here starts a fresh page, even
@@ -64,8 +65,9 @@ class SectionFlow {
 		let cached = this.firstRowHeightCache.get(index);
 		if (cached === undefined) {
 			const table = this.blocks[index] as Extract<LayoutBlock, { kind: 'table' }>;
-			cached = table.rows.length
-				? layoutRow(table.rows[0], this.cursor.columnWidthPx, this.measurer, this.note).heightPx
+			const [firstRow] = table.rows;
+			cached = firstRow
+				? layoutRow(firstRow, this.cursor.columnWidthPx, this.measurer, this.note).heightPx
 				: 0;
 			this.firstRowHeightCache.set(index, cached);
 		}
@@ -74,7 +76,7 @@ class SectionFlow {
 
 	private spacingBeforeFor(index: number): number {
 		const block = this.blocks[index];
-		if (block.kind !== 'paragraph') return 0;
+		if (block?.kind !== 'paragraph') return 0;
 		const layout = this.paragraphLayout(index);
 		const previous = index > 0 ? this.blocks[index - 1] : undefined;
 		if (previous?.kind === 'paragraph' && suppressesSpacing(previous, block)) return 0;
@@ -84,7 +86,7 @@ class SectionFlow {
 	/** Minimum height that must fit before `index` may start, walking a `keepNext` chain. */
 	private requiredKeepHeight(index: number, depth = 0): number {
 		if (index >= this.blocks.length || depth > 64) return 0;
-		const block = this.blocks[index];
+		const block = expectDefined(this.blocks[index], 'keep-chain block index');
 		if (block.kind === 'table') return this.firstRowHeight(index);
 		const layout = this.paragraphLayout(index);
 		const before = this.spacingBeforeFor(index);
@@ -125,7 +127,7 @@ class SectionFlow {
 
 	run(): void {
 		for (let index = 0; index < this.blocks.length; index++) {
-			const block = this.blocks[index];
+			const block = expectDefined(this.blocks[index], 'flow block index');
 			if (block.kind === 'table') {
 				placeTable(this.cursor, block, this.measurer, this.note);
 				continue;

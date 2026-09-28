@@ -3,6 +3,7 @@ import { layoutDocument } from './layout.js';
 import { FLOAT_WRAP_NOTE } from './floats.js';
 import type { LayoutDocumentInput, LayoutFloat, LayoutParagraph } from './input.js';
 import type { TextMeasurer } from './measure.js';
+import { at } from './__tests__/helpers.js';
 
 const measurer: TextMeasurer = { widthOf: (text) => text.length * 10, lineHeightOf: () => 20 };
 const picture = {
@@ -45,14 +46,15 @@ describe('pictures in pagination', () => {
 			]),
 			measurer,
 		);
-		const line = (
-			result.pages[0].columns[0].blocks[0] as {
+		const lines = (
+			at(at(at(result.pages, 0).columns, 0).blocks, 0) as {
 				lines: {
 					heightPx: number;
 					fragments: { xPx: number; widthPx: number; object?: unknown }[];
 				}[];
 			}
-		).lines[0];
+		).lines;
+		const line = at(lines, 0);
 		const object = line.fragments.find((fragment) => fragment.object)!;
 		expect(object).toMatchObject({ xPx: 30, widthPx: 100 });
 		expect(line.heightPx).toBe(54);
@@ -83,7 +85,7 @@ describe('pictures in pagination', () => {
 			]),
 			measurer,
 		);
-		expect(result.pages[0].floats).toEqual([
+		expect(at(result.pages, 0).floats).toEqual([
 			expect.objectContaining({ blockId: 'a', xPx: 700, yPx: 950 }),
 			expect.objectContaining({ blockId: 'b', xPx: 350, yPx: 130 }),
 			// Column-relative X and paragraph-relative Y (the third paragraph starts at 100 + 2 × 20).
@@ -101,16 +103,16 @@ describe('pictures in pagination', () => {
 		};
 		const result = layoutDocument(input([filler, anchoredIn('late', { offsetYPx: 0 })]), measurer);
 		expect(result.pages).toHaveLength(2);
-		expect(result.pages[0].floats).toBeUndefined();
+		expect(at(result.pages, 0).floats).toBeUndefined();
 		// Five filler lines carry over, so the anchor paragraph starts at 100 + 5 × 20.
-		expect(result.pages[1].floats?.[0]).toMatchObject({ blockId: 'late', yPx: 200 });
+		expect(at(result.pages, 1).floats?.[0]).toMatchObject({ blockId: 'late', yPx: 200 });
 	});
 });
 
 describe('text wrapping around floats', () => {
 	const words = Array.from({ length: 120 }, () => 'word').join(' ');
 	const lineRights = (result: ReturnType<typeof layoutDocument>) => {
-		const block = result.pages[0].columns[0].blocks[0] as {
+		const block = at(at(at(result.pages, 0).columns, 0).blocks, 0) as {
 			lines: { yPx: number; fragments: { xPx: number; widthPx: number }[] }[];
 		};
 		return block.lines.map((line) => ({
@@ -131,10 +133,10 @@ describe('text wrapping around floats', () => {
 		paragraph.runs = [{ text: words }];
 		const lines = lineRights(layoutDocument(input([paragraph]), measurer));
 		// Beside the picture (lines at y 0 and 20, overlapping its 50px): text stops before 600 - 100 - 12.
-		expect(lines[0].right).toBeLessThanOrEqual(488);
-		expect(lines[2].right).toBeLessThanOrEqual(488);
+		expect(at(lines, 0).right).toBeLessThanOrEqual(488);
+		expect(at(lines, 2).right).toBeLessThanOrEqual(488);
 		// Below it (y ≥ 50): full width again.
-		expect(lines[3].right).toBeGreaterThan(488);
+		expect(at(lines, 3).right).toBeGreaterThan(488);
 	});
 
 	it('puts text on the right when the picture sits at the left', () => {
@@ -146,8 +148,8 @@ describe('text wrapping around floats', () => {
 		});
 		paragraph.runs = [{ text: words }];
 		const lines = lineRights(layoutDocument(input([paragraph]), measurer));
-		expect(lines[0].left).toBeGreaterThanOrEqual(112);
-		expect(lines[3].left).toBe(0);
+		expect(at(lines, 0).left).toBeGreaterThanOrEqual(112);
+		expect(at(lines, 3).left).toBe(0);
 	});
 
 	it('moves text below a top-and-bottom picture, pushing later paragraphs down', () => {
@@ -159,13 +161,14 @@ describe('text wrapping around floats', () => {
 		});
 		const after: LayoutParagraph = { kind: 'paragraph', id: 'b', runs: [{ text: 'next' }] };
 		const result = layoutDocument(input([anchor, after]), measurer);
-		const [first, second] = result.pages[0].columns[0].blocks;
+		const first = at(at(at(result.pages, 0).columns, 0).blocks, 0);
+		const second = at(at(at(result.pages, 0).columns, 0).blocks, 1);
 		// The anchor paragraph's only line starts below the 50px picture.
 		expect((first as { lines: { yPx: number; gapBeforePx?: number }[] }).lines[0]).toMatchObject({
 			yPx: 50,
 			gapBeforePx: 50,
 		});
 		expect(second.yPx).toBe(70);
-		expect(result.pages[0].floats?.[0]).toMatchObject({ yPx: 100 });
+		expect(at(result.pages, 0).floats?.[0]).toMatchObject({ yPx: 100 });
 	});
 });

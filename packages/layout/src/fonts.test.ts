@@ -3,6 +3,7 @@ import type { DocumentModel } from '@christophervr/docx-core';
 import { adaptDocumentModel } from './adapter.js';
 import { cssFontStack } from './fonts.js';
 import type { LayoutParagraph } from './input.js';
+import { at } from './__tests__/helpers.js';
 
 describe('font fidelity', () => {
 	it('adds metric-compatible substitutes and a generic family', () => {
@@ -66,8 +67,9 @@ describe('font fidelity', () => {
 				fonts: { major: { latin: 'Calibri Light' }, minor: { latin: 'Calibri' } },
 			} as never,
 		};
-		const [heading, body] = adaptDocumentModel(model).sections[0].blocks as LayoutParagraph[];
-		expect(heading.runs[0]).toMatchObject({
+		const heading = at(at(adaptDocumentModel(model).sections, 0).blocks as LayoutParagraph[], 0);
+		const body = at(at(adaptDocumentModel(model).sections, 0).blocks as LayoutParagraph[], 1);
+		expect(at(heading.runs, 0)).toMatchObject({
 			text: 'Title',
 			fontSizePt: 16,
 			bold: true,
@@ -75,8 +77,8 @@ describe('font fidelity', () => {
 			color: '#2F5496',
 		});
 		// Direct formatting is absolute: bold on a bold style stays bold (ECMA-376 §17.7.3).
-		expect(heading.runs[1].bold).toBe(true);
+		expect(at(heading.runs, 1).bold).toBe(true);
 		expect(body.runs.map((run) => run.text)).toEqual(['', 'CAPS']);
-		expect(body.runs[1]).toMatchObject({ fontFamily: 'Calibri', fontSizePt: 11 });
+		expect(at(body.runs, 1)).toMatchObject({ fontFamily: 'Calibri', fontSizePt: 11 });
 	});
 });

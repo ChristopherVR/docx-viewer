@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { alignFragments } from './paragraph-fragments.js';
 import type { LayoutFragment } from './result.js';
+import { at } from './__tests__/helpers.js';
 
 const frag = (text: string, xPx: number, widthPx: number): LayoutFragment => ({
 	text,
@@ -15,13 +16,13 @@ describe('alignFragments', () => {
 		expect(alignFragments(line(), 100, false, 'left')).toEqual(line());
 	});
 	it('offsets right and center alignment by the free width', () => {
-		expect(alignFragments(line(), 100, false, 'right')[0].xPx).toBe(75);
-		expect(alignFragments(line(), 100, false, 'center')[0].xPx).toBe(37.5);
+		expect(at(alignFragments(line(), 100, false, 'right'), 0).xPx).toBe(75);
+		expect(at(alignFragments(line(), 100, false, 'center'), 0).xPx).toBe(37.5);
 	});
 	it('stretches spaces when justifying, except on the last line', () => {
 		const out = alignFragments(line(), 45, false, 'justify');
-		expect(out[1].widthPx).toBe(25);
-		expect(out[2].xPx).toBe(35);
+		expect(at(out, 1).widthPx).toBe(25);
+		expect(at(out, 2).xPx).toBe(35);
 		expect(alignFragments(line(), 45, true, 'justify')).toEqual(line());
 	});
 });

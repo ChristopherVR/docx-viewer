@@ -7,6 +7,7 @@ import type {
 	LayoutTable,
 } from './input.js';
 import type { TextMeasurer } from './measure.js';
+import { at } from './__tests__/helpers.js';
 
 // 10px/char, 20px lines: a 100px-tall, 0-margin page holds exactly 5 lines.
 const measurer: TextMeasurer = {
@@ -30,7 +31,7 @@ function para(id: string, lines: number, extra: Partial<LayoutParagraph> = {}): 
 	};
 }
 function linesOf(pageIndex: number, result: ReturnType<typeof layoutSections>) {
-	return result.pages[pageIndex].columns[0].blocks.flatMap((b) =>
+	return at(at(result.pages, pageIndex).columns, 0).blocks.flatMap((b) =>
 		b.kind === 'paragraph' ? b.lines.length : 0,
 	);
 }
@@ -68,8 +69,8 @@ describe('layoutSections: explicit page breaks', () => {
 		};
 		const result = layoutSections(input, measurer);
 		expect(result.pages).toHaveLength(2);
-		expect(result.pages[0].columns[0].blocks).toHaveLength(1);
-		expect(result.pages[1].columns[0].blocks).toHaveLength(1);
+		expect(at(at(result.pages, 0).columns, 0).blocks).toHaveLength(1);
+		expect(at(at(result.pages, 1).columns, 0).blocks).toHaveLength(1);
 	});
 });
 
@@ -149,13 +150,13 @@ describe('layoutSections: table row fragmentation', () => {
 		};
 		const result = layoutSections(input, measurer);
 		expect(result.pages.length).toBeGreaterThanOrEqual(2);
-		const page1 = result.pages[0].columns[0].blocks[0];
-		const page2 = result.pages[1].columns[0].blocks[0];
+		const page1 = at(at(at(result.pages, 0).columns, 0).blocks, 0);
+		const page2 = at(at(at(result.pages, 1).columns, 0).blocks, 0);
 		expect(page1.kind).toBe('table');
 		expect(page2.kind).toBe('table');
 		if (page1.kind === 'table' && page2.kind === 'table') {
-			expect(page1.rows[0].repeated).toBe(false);
-			expect(page2.rows[0].repeated).toBe(true);
+			expect(at(page1.rows, 0).repeated).toBe(false);
+			expect(at(page2.rows, 0).repeated).toBe(true);
 		}
 	});
 
@@ -171,11 +172,11 @@ describe('layoutSections: table row fragmentation', () => {
 		const input: LayoutDocumentInput = { sections: [{ page: geometry(200, 100), blocks: [tall] }] };
 		const result = layoutSections(input, measurer);
 		expect(result.pages).toHaveLength(2);
-		const page2 = result.pages[1].columns[0].blocks[0];
+		const page2 = at(at(at(result.pages, 1).columns, 0).blocks, 0);
 		expect(page2.kind).toBe('table');
 		if (page2.kind === 'table') {
 			expect(page2.rows).toHaveLength(1);
-			expect(page2.rows[0].cells[0][0].lines).toHaveLength(2); // whole row, not split
+			expect(at(at(at(page2.rows, 0).cells, 0), 0).lines).toHaveLength(2); // whole row, not split
 		}
 	});
 });
@@ -192,7 +193,7 @@ describe('layoutSections: odd/even section breaks and vertical alignment', () =>
 			measurer,
 		);
 		expect(result.pages).toHaveLength(3);
-		expect(result.pages[1].columns[0].blocks).toHaveLength(0);
+		expect(at(at(result.pages, 1).columns, 0).blocks).toHaveLength(0);
 		expect(result.pages[2]).toMatchObject({ index: 2, sectionIndex: 1, pageInSection: 0 });
 	});
 
@@ -211,10 +212,19 @@ describe('layoutSections: odd/even section breaks and vertical alignment', () =>
 
 	it('centers and bottom-aligns content on the page', () => {
 		const layout = (verticalAlign: 'center' | 'bottom') =>
-			layoutSections(
-				{ sections: [{ page: geometry(200, 100), blocks: [para('p1', 1)], verticalAlign }] },
-				measurer,
-			).pages[0].columns[0].blocks[0].yPx;
+			at(
+				at(
+					at(
+						layoutSections(
+							{ sections: [{ page: geometry(200, 100), blocks: [para('p1', 1)], verticalAlign }] },
+							measurer,
+						).pages,
+						0,
+					).columns,
+					0,
+				).blocks,
+				0,
+			).yPx;
 		expect(layout('center')).toBe(40);
 		expect(layout('bottom')).toBe(80);
 	});
@@ -228,6 +238,6 @@ describe('layoutSections: page bottom', () => {
 		};
 		const result = layoutSections(input, measurer);
 		expect(result.pages).toHaveLength(2);
-		expect(result.pages[1].columns[0].blocks[0].blockId).toBe('next');
+		expect(at(at(at(result.pages, 1).columns, 0).blocks, 0).blockId).toBe('next');
 	});
 });
