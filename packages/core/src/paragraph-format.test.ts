@@ -50,14 +50,15 @@ describe('DOCX paragraph formatting', () => {
 			throw new Error('Expected paragraph fixtures');
 		expect(auto).toMatchObject({ align: 'left', lineSpacingTwips: 276, lineSpacingRule: 'auto' });
 		expect(auto.runs[0]).toMatchObject({ italic: true });
-		expect(auto.runs[0].bold).toBeUndefined();
-		expect(auto.runs[0].underline).toBeUndefined();
+		// Explicit offs (`w:val="0"`, `w:u w:val="none"`) are kept: they cancel style values.
+		expect(auto.runs[0].bold).toBe(false);
+		expect(auto.runs[0].underline).toBe(false);
 		expect(exact).toMatchObject({
 			lineSpacingTwips: 360,
 			lineSpacingRule: 'exact',
 			indentLeftTwips: 0,
 		});
-		expect(exact.runs[0].strike).toBeUndefined();
+		expect(exact.runs[0].strike).toBe(false);
 		expect(atLeast).toMatchObject({ lineSpacingTwips: 240, lineSpacingRule: 'atLeast' });
 		expect(inherit.lineSpacingTwips).toBeUndefined();
 		expect(inherit.lineSpacingRule).toBeUndefined();

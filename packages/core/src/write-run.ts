@@ -1,4 +1,5 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
+import { orderChildren, RPR_ORDER } from './element-order.js';
 import type { TextRun } from './model.js';
 import { children, first, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
 import { isWordHighlightToken } from './highlight.js';
@@ -14,9 +15,18 @@ function setAttribute(element: XmlElement, local: string, value: string): void {
 function removeChildren(element: XmlElement, local: string): void {
 	for (const child of children(element, local)) element.removeChild(child);
 }
-function setToggle(doc: XmlDocument, props: XmlElement, local: string, enabled: boolean): void {
+/** Writes a toggle property: on, explicitly off (`w:val="0"`, which cancels a style), or absent. */
+export function setToggle(
+	doc: XmlDocument,
+	props: XmlElement,
+	local: string,
+	value: boolean | undefined,
+): void {
 	removeChildren(props, local);
-	if (enabled) props.appendChild(makeW(doc, local));
+	if (value === undefined) return;
+	const element = makeW(doc, local);
+	if (!value) setAttribute(element, 'val', '0');
+	props.appendChild(element);
 }
 
 function setBooleanAttribute(
@@ -70,10 +80,16 @@ function setRunProperties(
 	const changed = (key: keyof TextRun): boolean => !base || run[key] !== base[key];
 	if (
 		!props &&
-		(run.bold ||
-			run.italic ||
-			run.underline ||
-			run.strike ||
+		([
+			run.bold,
+			run.italic,
+			run.underline,
+			run.strike,
+			run.caps,
+			run.smallCaps,
+			run.doubleStrike,
+			run.vanish,
+		].some((value) => value !== undefined) ||
 			run.highlight ||
 			run.verticalAlign ||
 			run.language !== undefined ||
@@ -102,15 +118,20 @@ function setRunProperties(
 	// A rewritten run drops any recorded formatting-change snapshot; reconstructing historical
 	// rPrChange diffs is not supported (see model.ts Revision / parse-revisions.ts).
 	removeChildren(props, 'rPrChange');
-	if (changed('bold')) setToggle(doc, props, 'b', run.bold === true);
-	if (changed('italic')) setToggle(doc, props, 'i', run.italic === true);
+	if (changed('bold')) setToggle(doc, props, 'b', run.bold);
+	if (changed('italic')) setToggle(doc, props, 'i', run.italic);
 	if (changed('strike')) {
-		setToggle(doc, props, 'strike', run.strike === true);
-		removeChildren(props, 'dstrike');
+		setToggle(doc, props, 'strike', run.strike);
+		// Single and double strikethrough are exclusive in Word's UI.
+		if (run.strike && !run.doubleStrike) removeChildren(props, 'dstrike');
 	}
 	if (changed('underline') || changed('underlineStyle') || changed('underlineColor')) {
 		removeChildren(props, 'u');
-		if (run.underline) {
+		if (run.underline === false) {
+			const none = makeW(doc, 'u');
+			setAttribute(none, 'val', 'none');
+			props.appendChild(none);
+		} else if (run.underline) {
 			const underline = makeW(doc, 'u');
 			setAttribute(underline, 'val', run.underlineStyle ?? 'single');
 			if (run.underlineColor)
@@ -189,6 +210,7 @@ function setRunProperties(
 		}
 	}
 	setExtendedRunProperties(doc, props, run, base);
+	orderChildren(props, RPR_ORDER);
 	if (!props.childNodes.length) runNode.removeChild(props);
 }
 

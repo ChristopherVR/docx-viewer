@@ -9,9 +9,18 @@ function setAttribute(element: XmlElement, local: string, value: string): void {
 function removeChildren(element: XmlElement, local: string): void {
 	for (const child of children(element, local)) element.removeChild(child);
 }
-function setToggle(doc: XmlDocument, props: XmlElement, local: string, enabled: boolean): void {
+/** On, explicitly off (`w:val="0"`, cancelling a style), or absent. */
+function setToggle(
+	doc: XmlDocument,
+	props: XmlElement,
+	local: string,
+	value: boolean | undefined,
+): void {
 	removeChildren(props, local);
-	if (enabled) props.appendChild(makeW(doc, local));
+	if (value === undefined) return;
+	const element = makeW(doc, local);
+	if (!value) setAttribute(element, 'val', '0');
+	props.appendChild(element);
 }
 
 /** Writes the run properties added for character styles, theming and table fidelity. */
@@ -30,10 +39,10 @@ export function setExtendedRunProperties(
 			props.insertBefore(style, props.firstChild);
 		}
 	}
-	if (changed('caps')) setToggle(doc, props, 'caps', run.caps === true);
-	if (changed('smallCaps')) setToggle(doc, props, 'smallCaps', run.smallCaps === true);
-	if (changed('doubleStrike')) setToggle(doc, props, 'dstrike', run.doubleStrike === true);
-	if (changed('vanish')) setToggle(doc, props, 'vanish', run.vanish === true);
+	if (changed('caps')) setToggle(doc, props, 'caps', run.caps);
+	if (changed('smallCaps')) setToggle(doc, props, 'smallCaps', run.smallCaps);
+	if (changed('doubleStrike')) setToggle(doc, props, 'dstrike', run.doubleStrike);
+	if (changed('vanish')) setToggle(doc, props, 'vanish', run.vanish);
 	if (changed('characterSpacingTwips')) {
 		removeChildren(props, 'spacing');
 		if (run.characterSpacingTwips !== undefined) {

@@ -1,4 +1,4 @@
-import { Plugin } from 'prosemirror-state';
+import { Plugin, PluginKey, type EditorState } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import {
@@ -68,8 +68,19 @@ function runAt(node: ProseMirrorNode): TextRun | undefined {
  * (e.g. a bold header row), its character style and the theme. It is display-only: decorations
  * never enter the model or collaboration steps.
  */
+export const runStylesKey = new PluginKey('dve-run-styles');
+
+/** The document model the editor's run-style decorations resolve against, if the plugin is on. */
+export function styleModelOf(state: EditorState): DocumentModel | undefined {
+	return (
+		runStylesKey.get(state)?.spec as { getModel?: () => DocumentModel } | undefined
+	)?.getModel?.();
+}
+
 export function runStylesPlugin(getModel: () => DocumentModel) {
 	return new Plugin({
+		key: runStylesKey,
+		getModel,
 		props: {
 			decorations(state) {
 				const model = getModel();

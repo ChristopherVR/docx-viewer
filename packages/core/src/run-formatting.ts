@@ -84,21 +84,38 @@ export function resolveRunFormatting(
 	run: TextRun,
 	context: RunFormattingContext = {},
 ): RunFormatting {
+	const docDefaults = context.runCatalog?.docDefaults ?? {};
+	const paragraphChain = paragraphStyleRunChain(
+		context.paragraphStyleId,
+		context.paragraphCatalog,
+		context.runCatalog,
+	);
+	const characterChain = characterStyleChain(run.style, context.runCatalog);
+	const tableLevels = context.tableStyleRun ? [context.tableStyleRun] : [];
 	const levels: RunFormatting[] = [
-		context.runCatalog?.docDefaults ?? {},
-		...paragraphStyleRunChain(
-			context.paragraphStyleId,
-			context.paragraphCatalog,
-			context.runCatalog,
-		),
-		...(context.tableStyleRun ? [context.tableStyleRun] : []),
-		...characterStyleChain(run.style, context.runCatalog),
+		docDefaults,
+		...paragraphChain,
+		...tableLevels,
+		...characterChain,
 		run,
 	];
 	const result: RunFormatting = {};
+	// Toggle properties (ECMA-376 §17.7.3): each style type (paragraph, table, character) resolves
+	// its value through its own basedOn chain; the types then combine by XOR with the document
+	// default. Direct formatting on the run sets the value outright, including an explicit off.
+	const chainValue = (chain: RunFormatting[], key: (typeof TOGGLE_KEYS)[number]) => {
+		for (let index = chain.length - 1; index >= 0; index--)
+			if (chain[index][key] !== undefined) return Boolean(chain[index][key]);
+		return false;
+	};
 	for (const key of TOGGLE_KEYS) {
-		let state = false;
-		for (const level of levels) if (level[key] !== undefined) state = !state;
+		const direct = run[key];
+		const state =
+			direct !== undefined
+				? Boolean(direct)
+				: Boolean(docDefaults[key]) !==
+					(chainValue(paragraphChain, key) !==
+						(chainValue(tableLevels, key) !== chainValue(characterChain, key)));
 		if (state) result[key] = true;
 	}
 	for (const key of OVERRIDE_KEYS) {

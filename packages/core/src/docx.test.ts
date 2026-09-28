@@ -234,7 +234,8 @@ describe('DOCX core', () => {
 			throw new Error('Expected paragraph fixtures');
 		expect(first.runs[0].text).toBe('A\tB\nC');
 		first.runs[0].text = 'X\tY\nZ';
-		second.runs[0].bold = false;
+		// Removing the property drops `w:b`; `bold: false` would write an explicit off instead.
+		delete second.runs[0].bold;
 		const output = await JSZip.loadAsync(await loaded.save());
 		const xml = (await output.file('word/document.xml')?.async('string')) ?? '';
 		expect(xml).not.toMatch(/<w:b(?:\s|\/>|>)/);
@@ -259,7 +260,7 @@ describe('DOCX core', () => {
 			highlight: 'yellow',
 			verticalAlign: 'superscript',
 		});
-		paragraph.runs[0].strike = false;
+		delete paragraph.runs[0].strike;
 		paragraph.runs[0].highlight = undefined;
 		paragraph.runs[0].verticalAlign = 'subscript';
 		paragraph.runs[1].strike = true;

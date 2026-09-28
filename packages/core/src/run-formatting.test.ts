@@ -56,21 +56,26 @@ describe('character style catalog and run formatting resolution', () => {
 		expect(resolved.italic).toBe(true);
 	});
 
-	it('applies Word toggle-property XOR semantics across the style hierarchy', () => {
-		const cat = parseRunStyleCatalog(
-			`<w:styles xmlns:w="${ns}">
+	it('applies Word toggle-property semantics (ECMA-376 §17.7.3)', () => {
+		const styles = `<w:styles xmlns:w="${ns}">
+<w:style w:type="paragraph" w:styleId="Heading"><w:rPr><w:b/></w:rPr></w:style>
 <w:style w:type="character" w:styleId="A"><w:rPr><w:b/></w:rPr></w:style>
 <w:style w:type="character" w:styleId="B"><w:basedOn w:val="A"/><w:rPr><w:b/></w:rPr></w:style>
-</w:styles>`,
-		);
-		// Two ancestor levels both turn bold on: the double toggle cancels back to off.
-		expect(
-			resolveRunFormatting({ text: 'x', style: 'B' }, { runCatalog: cat }).bold,
-		).toBeUndefined();
-		// Direct run-level bold flips it back on a third time.
-		expect(
-			resolveRunFormatting({ text: 'x', style: 'B', bold: true }, { runCatalog: cat }).bold,
-		).toBe(true);
+<w:style w:type="character" w:styleId="C"><w:basedOn w:val="A"/><w:rPr><w:b w:val="0"/></w:rPr></w:style>
+</w:styles>`;
+		const runCatalog = parseRunStyleCatalog(styles);
+		const paragraphCatalog = parseParagraphStyleCatalog(styles);
+		const bold = (run: Parameters<typeof resolveRunFormatting>[0], paragraphStyleId?: string) =>
+			resolveRunFormatting(run, { runCatalog, paragraphCatalog, paragraphStyleId }).bold;
+		// Within one style's basedOn chain values inherit: B and A both bold is still bold, and C
+		// turning it off wins over A.
+		expect(bold({ text: 'x', style: 'B' })).toBe(true);
+		expect(bold({ text: 'x', style: 'C' })).toBeUndefined();
+		// Across style types values XOR: a bold character style in a bold paragraph style is plain.
+		expect(bold({ text: 'x', style: 'B' }, 'Heading')).toBeUndefined();
+		// Direct formatting is absolute: on stays on, and an explicit off cancels the styles.
+		expect(bold({ text: 'x', style: 'B', bold: true }, 'Heading')).toBe(true);
+		expect(bold({ text: 'x', bold: false }, 'Heading')).toBeUndefined();
 	});
 
 	it('detects character style inheritance cycles without recursing forever', () => {

@@ -174,12 +174,15 @@ describe('editor insert and formatting commands', () => {
 describe('toggle property display', () => {
 	afterEach(() => document.body.replaceChildren());
 
-	it('cancels direct bold on a run whose character style is also bold, as Word does', () => {
+	it('keeps direct bold absolute and lets an explicit off cancel a bold style, as Word does', () => {
 		const model = createDocument();
 		model.blocks[0] = {
 			type: 'paragraph',
 			id: 'p1',
-			runs: [{ text: 'Plain again', bold: true, style: 'Strong' }],
+			runs: [
+				{ text: 'Still bold', bold: true, style: 'Strong' },
+				{ text: 'Plain again', bold: false, style: 'Strong' },
+			],
 		};
 		model.characterStyles = {
 			docDefaults: {},
@@ -187,10 +190,15 @@ describe('toggle property display', () => {
 			warnings: [],
 		};
 		const editor = mount(model);
-		const decorated = shadow(editor).querySelector<HTMLElement>(
-			'.dve-paper strong [style*="font-weight"]',
-		);
-		expect(decorated?.style.fontWeight).toBe('400');
+		const paper = shadow(editor).querySelector<HTMLElement>('.dve-paper')!;
+		const weightOf = (text: string) => {
+			const span = [...paper.querySelectorAll<HTMLElement>('span, strong')].find(
+				(element) => element.textContent === text && !element.querySelector('span, strong'),
+			)!;
+			return span.closest('strong') || span.style.fontWeight === '700' ? 'bold' : 'normal';
+		};
+		expect(weightOf('Still bold')).toBe('bold');
+		expect(weightOf('Plain again')).toBe('normal');
 	});
 });
 

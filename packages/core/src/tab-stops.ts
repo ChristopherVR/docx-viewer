@@ -1,6 +1,7 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 // Paragraph tab stops (`w:pPr/w:tabs`) and the canonical `w:pPr` child order Word requires.
 import type { Paragraph, TabStop } from './model.js';
+import { orderChildren } from './element-order.js';
 import {
 	children,
 	getW,
@@ -105,19 +106,7 @@ const PPR_ORDER = [
 	'pPrChange',
 ];
 
-/**
- * Sorts `w:pPr` children into schema order. Elements outside the schema list (extensions) keep
- * their position relative to the known element before them.
- */
+/** Sorts `w:pPr` children into schema order. */
 export function orderParagraphProperties(props: XmlElement): void {
-	const elements = Array.from(props.childNodes).filter(isElement);
-	let previousRank = -1;
-	const ranked = elements.map((element, index) => {
-		const rank = element.namespaceURI === WORD_NS ? PPR_ORDER.indexOf(element.localName ?? '') : -1;
-		if (rank >= 0) previousRank = rank;
-		return { element, index, rank: rank >= 0 ? rank : previousRank + 0.5 };
-	});
-	const sorted = [...ranked].sort((a, b) => a.rank - b.rank || a.index - b.index);
-	if (sorted.every((entry, index) => entry.element === elements[index])) return;
-	for (const { element } of sorted) props.appendChild(element);
+	orderChildren(props, PPR_ORDER);
 }

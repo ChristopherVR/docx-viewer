@@ -21,14 +21,25 @@ const twips = (value: string | undefined): number | undefined => {
 export function parseRunProperties(props: XmlElement | undefined): RunFormatting {
 	const result: RunFormatting = {};
 	if (!props) return result;
-	if (on(first(props, 'b'))) result.bold = true;
-	if (on(first(props, 'i'))) result.italic = true;
-	if (on(first(props, 'caps'))) result.caps = true;
-	if (on(first(props, 'smallCaps'))) result.smallCaps = true;
-	if (on(first(props, 'vanish'))) result.vanish = true;
-	if (on(first(props, 'strike'))) result.strike = true;
-	if (on(first(props, 'dstrike'))) result.doubleStrike = true;
+	// Toggles are kept when explicitly off too (`w:val="0"`): that cancels a style's value.
+	const toggle = (local: string): boolean | undefined => {
+		const element = first(props, local);
+		return element ? on(element) : undefined;
+	};
+	for (const [local, key] of [
+		['b', 'bold'],
+		['i', 'italic'],
+		['caps', 'caps'],
+		['smallCaps', 'smallCaps'],
+		['vanish', 'vanish'],
+		['strike', 'strike'],
+		['dstrike', 'doubleStrike'],
+	] as const) {
+		const value = toggle(local);
+		if (value !== undefined) result[key] = value;
+	}
 	const underline = first(props, 'u');
+	if (underline && !on(underline)) result.underline = false;
 	if (underline && on(underline)) {
 		result.underline = true;
 		const value = getW(underline, 'val')?.toLowerCase();

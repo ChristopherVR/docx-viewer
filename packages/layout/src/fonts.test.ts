@@ -74,8 +74,8 @@ describe('font fidelity', () => {
 			fontFamily: 'Calibri Light',
 			color: '#2F5496',
 		});
-		// Direct bold on top of a bold style toggles it off, as in Word.
-		expect(heading.runs[1].bold).toBeFalsy();
+		// Direct formatting is absolute: bold on a bold style stays bold (ECMA-376 §17.7.3).
+		expect(heading.runs[1].bold).toBe(true);
 		expect(body.runs.map((run) => run.text)).toEqual(['', 'CAPS']);
 		expect(body.runs[1]).toMatchObject({ fontFamily: 'Calibri', fontSizePt: 11 });
 	});

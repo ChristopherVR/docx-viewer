@@ -19,13 +19,8 @@ function sameRevisionMeta(left: TextRun, right: TextRun): boolean {
 export function sameRuns(left: TextRun[], right: TextRun[]) {
 	const compact = (runs: TextRun[]) =>
 		runs.reduce<TextRun[]>((result, run) => {
-			const normalized = {
-				...run,
-				bold: run.bold || undefined,
-				italic: run.italic || undefined,
-				underline: run.underline || undefined,
-				strike: run.strike || undefined,
-			};
+			// An explicit off (`false`) differs from unset: it cancels a style's value.
+			const normalized = { ...run };
 			const previous = result.at(-1);
 			const fields: (keyof TextRun)[] = [
 				'bold',

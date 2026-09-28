@@ -1,10 +1,10 @@
 import type { Command } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { undo, redo } from 'prosemirror-history';
-import { baseKeymap, chainCommands, toggleMark } from 'prosemirror-commands';
+import { baseKeymap, chainCommands } from 'prosemirror-commands';
+import { toggleFormat } from './toggle-commands';
 import { keymap } from 'prosemirror-keymap';
 import type { RibbonAction } from './ribbon';
-import { schema } from './schema';
 import { applyFont, clearFormatting, insertTable, updateParagraphs } from './ribbon-commands';
 import { applyHighlight, toggleVerticalAlign } from './inline-commands';
 import { executeTableCommand } from './table-commands';
@@ -14,10 +14,10 @@ import { applyMultilingualAction } from './multilingual-ribbon';
 import { exitListOnEmptyEnter, indentListItem, outdentListItem } from './list-commands';
 
 const marks = {
-	bold: toggleMark(schema.marks.bold),
-	italic: toggleMark(schema.marks.italic),
-	underline: toggleMark(schema.marks.underline),
-	strike: toggleMark(schema.marks.strike),
+	bold: toggleFormat('bold'),
+	italic: toggleFormat('italic'),
+	underline: toggleFormat('underline'),
+	strike: toggleFormat('strike'),
 };
 const editable =
 	(command: Command): Command =>

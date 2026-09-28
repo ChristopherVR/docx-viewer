@@ -1,7 +1,7 @@
 import type { TextRun } from '@christophervr/docx-core';
 import type { Node as ProseMirrorNode, Mark } from 'prosemirror-model';
 import { schema } from './schema';
-import { extraRunProperties } from './run-extra-mark';
+import { explicitOffFields, extraRunProperties } from './run-extra-mark';
 
 function marksForRun(run: TextRun): Mark[] {
 	const marks: Mark[] = [];
@@ -209,7 +209,14 @@ function applyMarkFormatting(run: TextRun, child: ProseMirrorNode): void {
 	const characterStyle = propertyOfMark(child, 'characterStyle');
 	if (characterStyle?.attrs.id) run.style = String(characterStyle.attrs.id);
 	const extra = propertyOfMark(child, 'runProperties');
-	if (extra?.attrs.props) Object.assign(run, structuredClone(extra.attrs.props));
+	if (extra?.attrs.props)
+		for (const [key, value] of Object.entries(structuredClone(extra.attrs.props) as TextRun)) {
+			// An explicit off never overrides a mark the user applied (bold on text that was unbolded).
+			const field = key as keyof TextRun;
+			if ((explicitOffFields as readonly string[]).includes(key) && run[field] !== undefined)
+				continue;
+			(run as unknown as Record<string, unknown>)[field] = value;
+		}
 }
 
 export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void {

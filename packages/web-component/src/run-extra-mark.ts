@@ -20,11 +20,21 @@ export const extraRunFields = [
 	'fontTheme',
 ] as const satisfies readonly (keyof TextRun)[];
 
-export type ExtraRunProperties = Pick<TextRun, (typeof extraRunFields)[number]>;
+/**
+ * Toggles that have their own editor marks, carried here only when explicitly off
+ * (`w:val="0"`, which cancels a style's bold, italic, strikethrough or underline).
+ */
+export const explicitOffFields = ['bold', 'italic', 'strike', 'underline'] as const;
+
+export type ExtraRunProperties = Pick<
+	TextRun,
+	(typeof extraRunFields)[number] | (typeof explicitOffFields)[number]
+>;
 
 export function extraRunProperties(run: TextRun): ExtraRunProperties | undefined {
 	const extra: Record<string, unknown> = {};
 	for (const field of extraRunFields) if (run[field] !== undefined) extra[field] = run[field];
+	for (const field of explicitOffFields) if (run[field] === false) extra[field] = false;
 	return Object.keys(extra).length ? (extra as ExtraRunProperties) : undefined;
 }
 
