@@ -68,7 +68,7 @@ test.describe('save API and dirty tracking', () => {
 		await openSample(page);
 		const editor = page.locator('docx-editor');
 		await editor.evaluate((element) => {
-			(element as DocxEditorElement).hiddenActions = ['Bold', 'Print'];
+			(element as DocxEditorElement).hiddenActions = ['bold', 'print'];
 		});
 		await expect(editor.getByRole('button', { name: 'Bold', exact: true })).toBeHidden();
 		await expect(editor.getByRole('button', { name: 'Italic', exact: true })).toBeVisible();

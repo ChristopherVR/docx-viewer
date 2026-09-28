@@ -1,11 +1,13 @@
-import type { RibbonActionId } from './ribbon-action-ids';
+import { ribbonActionIdForLabel, type RibbonActionId } from './ribbon-action-ids';
 
 const HIDDEN = 'data-dve-hidden';
 const CONTROLS = 'button[aria-label], select[aria-label], input[aria-label]';
 
-/** English label of a ribbon control, stable across locales. */
-export function ribbonControlId(control: HTMLElement): string | null {
-	return control.dataset.localearialabel ?? control.getAttribute('aria-label');
+/** Stable action id of a ribbon control (looked up from its English label, whatever the locale). */
+export function ribbonControlId(control: HTMLElement): RibbonActionId | null {
+	return ribbonActionIdForLabel(
+		control.dataset.localearialabel ?? control.getAttribute('aria-label'),
+	);
 }
 
 /**

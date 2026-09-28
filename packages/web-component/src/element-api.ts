@@ -2,7 +2,12 @@ import { saveDocx } from '@christophervr/docx-core';
 import type { EditorCore } from './editor-core';
 import { reflectAttribute } from './editor-attributes';
 import { downloadBytes, wordBlob } from './file-commands';
-import type { RibbonActionId } from './ribbon-action-ids';
+import {
+	normalizeRibbonActions,
+	type RibbonActionId,
+	type RibbonActionInput,
+} from './ribbon-action-ids';
+import { emit } from './events';
 import { applyViewOptions } from './view-options';
 
 const HTMLElementBase: typeof HTMLElement =
@@ -42,12 +47,22 @@ export abstract class DocxEditorApi extends HTMLElementBase {
 		reflectAttribute(this, 'show-toolbar', this.showToolbar);
 	}
 
-	/** Ribbon controls to hide, by id (their English label). Unknown ids are ignored. */
+	/**
+	 * Ribbon controls to hide, by stable id (`RIBBON_ACTION_IDS`, e.g. `'bold'`). Unknown ids are
+	 * ignored. The old English labels (`'Bold'`) are still accepted for one release: they are mapped
+	 * to ids and reported through a `document-warning` event. Reading returns ids only.
+	 */
 	get hiddenActions(): readonly RibbonActionId[] {
 		return this.core.viewOptions.hiddenActions;
 	}
-	set hiddenActions(value: readonly RibbonActionId[]) {
-		const next = Array.isArray(value) ? [...value] : [];
+	set hiddenActions(value: readonly RibbonActionInput[]) {
+		const { ids: next, legacy } = normalizeRibbonActions(Array.isArray(value) ? value : []);
+		if (legacy.length > 0)
+			emit(
+				this,
+				'document-warning',
+				`hiddenActions: English labels (${legacy.map((label) => `'${label}'`).join(', ')}) are deprecated and will be removed in the next release; use the stable ids from RIBBON_ACTION_IDS.`,
+			);
 		const current = this.core.viewOptions.hiddenActions;
 		if (next.length === current.length && next.every((id, index) => id === current[index])) return;
 		this.core.viewOptions.hiddenActions = next;

@@ -1,8 +1,13 @@
 export { DocxEditorElement, registerDocxEditor } from './component';
 export { DOCX_EDITOR_EVENTS } from './events';
 export type { RibbonAction } from './ribbon';
-export { RIBBON_ACTION_IDS } from './ribbon-action-ids';
-export type { RibbonActionId } from './ribbon-action-ids';
+export {
+	RIBBON_ACTION_IDS,
+	RIBBON_ACTION_LABELS,
+	normalizeRibbonActions,
+	isRibbonActionId,
+} from './ribbon-action-ids';
+export type { LegacyRibbonLabel, RibbonActionId, RibbonActionInput } from './ribbon-action-ids';
 export type { PageChangeDetail } from './page-sync';
 export type { FileCommand, FileCommandDetail } from './file-commands';
 export type { DocxEditorEventMap, DocxEditorEventName, DocxEditorEventDetail } from './events';

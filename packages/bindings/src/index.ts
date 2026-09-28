@@ -5,7 +5,8 @@ import {
 	type DocxEditorEventName,
 	type EditorThemeMode,
 	type PageChangeDetail,
-	type RibbonActionId,
+	normalizeRibbonActions,
+	type RibbonActionInput,
 } from '@christophervr/docx-web-component';
 import type { DocumentModel } from '@christophervr/docx-core';
 
@@ -20,8 +21,8 @@ export interface EditorProps {
 	showThumbnails?: boolean;
 	/** Ribbon visibility. Default true. */
 	showToolbar?: boolean;
-	/** Ribbon controls to hide, by id. */
-	hiddenActions?: readonly RibbonActionId[];
+	/** Ribbon controls to hide, by stable id (`RIBBON_ACTION_IDS`). Old English labels still work but warn. */
+	hiddenActions?: readonly RibbonActionInput[];
 }
 /** Editor callbacks; each is the framework-neutral form of one entry in `EDITOR_EVENT_NAMES`. */
 export interface EditorEventOptions {
@@ -126,7 +127,7 @@ export function mountEditor(host: HTMLElement, initial: EditorOptions = {}): Edi
 			element.theme = next.theme ?? 'auto';
 			element.showThumbnails = next.showThumbnails ?? false;
 			element.showToolbar = next.showToolbar ?? true;
-			if (!sameList(element.hiddenActions, next.hiddenActions ?? []))
+			if (!sameList(element.hiddenActions, normalizeRibbonActions(next.hiddenActions ?? []).ids))
 				element.hiddenActions = next.hiddenActions ?? [];
 			if (
 				next.documentModel &&

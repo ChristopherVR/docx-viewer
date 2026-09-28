@@ -13,7 +13,7 @@ import type { DocumentModel } from '@christophervr/docx-core';
 import type {
 	EditorThemeMode,
 	PageChangeDetail,
-	RibbonActionId,
+	RibbonActionInput,
 } from '@christophervr/docx-web-component';
 import { eventOptions, mountEditor, pickEditorProps, type EditorBinding } from './index';
 @Component({ selector: 'word-editor', standalone: true, template: '' })
@@ -24,7 +24,7 @@ export class WordEditorComponent implements AfterViewInit, OnChanges, OnDestroy 
 	@Input() theme: EditorThemeMode = 'auto';
 	@Input() showThumbnails = false;
 	@Input() showToolbar = true;
-	@Input() hiddenActions: readonly RibbonActionId[] = [];
+	@Input() hiddenActions: readonly RibbonActionInput[] = [];
 	@Output() documentChange = new EventEmitter<DocumentModel>();
 	@Output() documentError = new EventEmitter<Error>();
 	@Output() pageChange = new EventEmitter<PageChangeDetail>();

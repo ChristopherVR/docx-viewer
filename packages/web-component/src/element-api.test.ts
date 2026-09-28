@@ -2,7 +2,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDocument, loadDocx, type DocumentModel } from '@christophervr/docx-core';
 import { DocxEditorElement, registerDocxEditor } from './index';
-import { RIBBON_ACTION_IDS } from './ribbon-action-ids';
+import {
+	RIBBON_ACTION_IDS,
+	RIBBON_ACTION_LABELS,
+	ribbonActionIdForLabel,
+	type LegacyRibbonLabel,
+} from './ribbon-action-ids';
 import { createRibbon } from './ribbon';
 import { ribbonControlId } from './ribbon-visibility';
 
@@ -133,12 +138,12 @@ describe('UI customisation', () => {
 	it('hiddenActions hides the named ribbon controls, empty groups and tabs', () => {
 		const editor = mount();
 		editor.hiddenActions = [
-			'Bold',
-			'Print',
-			'Show hidden text',
-			'Page thumbnails',
-			'Zoom',
-			'Layout view',
+			'bold',
+			'print',
+			'show-hidden-text',
+			'page-thumbnails',
+			'zoom',
+			'layout-view',
 		];
 		const hidden = (label: string) =>
 			shell(editor).querySelector(`[aria-label="${label}"]`)!.hasAttribute('data-dve-hidden');
@@ -159,7 +164,7 @@ describe('UI customisation', () => {
 
 	it('applies hiddenActions set before the element connects', () => {
 		const editor = document.createElement('docx-editor') as DocxEditorElement;
-		editor.hiddenActions = ['Italic'];
+		editor.hiddenActions = ['italic'];
 		document.body.append(editor);
 		expect(
 			shell(editor).querySelector('[aria-label="Italic"]')!.hasAttribute('data-dve-hidden'),
@@ -233,13 +238,40 @@ describe('page rail in Print Layout', () => {
 });
 
 describe('ribbon action ids', () => {
+	it('accepts deprecated English labels, maps them to ids and warns', () => {
+		const editor = mount();
+		const warnings: string[] = [];
+		editor.addEventListener('document-warning', (event) =>
+			warnings.push((event as CustomEvent<string>).detail),
+		);
+		editor.hiddenActions = ['Bold', 'italic', 'Not a control' as never];
+		expect(editor.hiddenActions).toEqual(['bold', 'italic']);
+		expect(warnings).toHaveLength(1);
+		expect(warnings[0]).toMatch(/'Bold'.*deprecated/);
+		expect(
+			shell(editor).querySelector('[aria-label="Bold"]')!.hasAttribute('data-dve-hidden'),
+		).toBe(true);
+		editor.hiddenActions = ['bold', 'italic'];
+		expect(warnings).toHaveLength(1);
+	});
+
+	it('uses kebab-case ids and a label for every id, all distinct', () => {
+		for (const id of RIBBON_ACTION_IDS) {
+			expect(id).toMatch(/^[a-z]+(?:-[a-z]+)*$/);
+			expect(RIBBON_ACTION_LABELS[id]).toBeTruthy();
+		}
+		expect(new Set(Object.values(RIBBON_ACTION_LABELS)).size).toBe(RIBBON_ACTION_IDS.length);
+		const legacy: LegacyRibbonLabel = 'Insert table';
+		expect(ribbonActionIdForLabel(legacy)).toBe('insert-table');
+	});
+
 	it('lists exactly the labelled ribbon controls', () => {
 		const ribbon = createRibbon('en');
 		const ids = new Set<string>();
 		for (const control of ribbon.querySelectorAll<HTMLElement>(
 			'.ribbon-panel button[aria-label], .ribbon-panel select[aria-label], .ribbon-panel input[aria-label]',
 		))
-			ids.add(ribbonControlId(control)!);
+			ids.add(ribbonControlId(control) ?? `unmapped:${control.getAttribute('aria-label')}`);
 		expect([...ids].sort()).toEqual([...RIBBON_ACTION_IDS].sort());
 	});
 });

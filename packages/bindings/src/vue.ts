@@ -1,6 +1,6 @@
 import { defineComponent, h, onBeforeUnmount, onMounted, ref, watch, type PropType } from 'vue';
 import type { DocumentModel } from '@christophervr/docx-core';
-import type { EditorThemeMode, RibbonActionId } from '@christophervr/docx-web-component';
+import type { EditorThemeMode, RibbonActionInput } from '@christophervr/docx-web-component';
 import {
 	EDITOR_EVENT_NAMES,
 	EDITOR_PROP_KEYS,
@@ -19,7 +19,7 @@ export const WordEditor = defineComponent({
 		theme: String as PropType<EditorThemeMode>,
 		showThumbnails: Boolean,
 		showToolbar: { type: Boolean, default: true },
-		hiddenActions: Array as PropType<readonly RibbonActionId[]>,
+		hiddenActions: Array as PropType<readonly RibbonActionInput[]>,
 	} satisfies Record<EditorPropKey, unknown>,
 	emits: [...EDITOR_EVENT_NAMES],
 	setup(props, { emit, expose }) {

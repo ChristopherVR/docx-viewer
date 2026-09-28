@@ -117,11 +117,17 @@ because only the host knows whether the Blob was persisted. Every adapter expose
 `save`, `download`, `markClean` and `dirty` on its handle and `onDirtyChange` / `onPageChange`
 (or the framework's event equivalent).
 
-| Property (attribute)                 | Default | Effect                                                                                                                                                    |
-| ------------------------------------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `showThumbnails` (`show-thumbnails`) | `false` | Left rail of page thumbnails. Thumbnails need Print Layout; in Draft view the rail says so instead of listing pages.                                      |
-| `showToolbar` (`show-toolbar`)       | `true`  | `show-toolbar="false"` hides the ribbon; the title bar and status bar remain.                                                                             |
-| `hiddenActions`                      | `[]`    | Ribbon controls to hide by id (`RIBBON_ACTION_IDS`, the English control label such as `'Bold'`); empty groups and tabs hide too. Unknown ids are ignored. |
+| Property (attribute)                 | Default | Effect                                                                                                                                                                                                               |
+| ------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `showThumbnails` (`show-thumbnails`) | `false` | Left rail of page thumbnails. Thumbnails need Print Layout; in Draft view the rail says so instead of listing pages.                                                                                                 |
+| `showToolbar` (`show-toolbar`)       | `true`  | `show-toolbar="false"` hides the ribbon; the title bar and status bar remain.                                                                                                                                        |
+| `hiddenActions`                      | `[]`    | Ribbon controls to hide by stable kebab-case id (`RIBBON_ACTION_IDS`, e.g. `'bold'`, `'insert-table'`, `'track-changes'`); empty groups and tabs hide too. Unknown ids are ignored. Ids do not change with `locale`. |
+
+**Deprecated:** before ids existed `hiddenActions` took the English control label (`'Bold'`,
+`'Insert table'`). Those `LegacyRibbonLabel` strings are still accepted for one more release: they
+are mapped to ids and the element dispatches one `document-warning` per assignment. Reading
+`hiddenActions` always returns ids. `ribbon-action` events never carried labels (their detail is
+keyed by command type), so they are unchanged.
 
 `page-change` (`{ page, pageCount }`) fires from Print Layout only. Pagination comes from this
 editor's own layout engine and is an approximation, not Word's pagination; the status bar and

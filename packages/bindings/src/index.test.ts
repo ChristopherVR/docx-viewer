@@ -100,16 +100,33 @@ describe('customisation, page and save bindings', () => {
 		const binding = mountEditor(host, {
 			showThumbnails: true,
 			showToolbar: false,
-			hiddenActions: ['Bold'],
+			hiddenActions: ['bold'],
 		});
 		expect(binding.element.showThumbnails).toBe(true);
 		expect(binding.element.showToolbar).toBe(false);
-		expect(binding.element.hiddenActions).toEqual(['Bold']);
+		expect(binding.element.hiddenActions).toEqual(['bold']);
 		expect(binding.element.hasAttribute('show-thumbnails')).toBe(true);
 		binding.update({});
 		expect(binding.element.showThumbnails).toBe(false);
 		expect(binding.element.showToolbar).toBe(true);
 		expect(binding.element.hiddenActions).toEqual([]);
+		binding.destroy();
+	});
+	it('maps deprecated English labels to ids and warns once, not on every update', () => {
+		const host = document.createElement('div');
+		document.body.append(host);
+		const binding = mountEditor(host, { hiddenActions: ['Bold', 'print'] });
+		const warnings: string[] = [];
+		binding.element.addEventListener('document-warning', (event) =>
+			warnings.push((event as CustomEvent<string>).detail),
+		);
+		binding.update({ hiddenActions: ['Bold', 'print'] });
+		expect(binding.element.hiddenActions).toEqual(['bold', 'print']);
+		expect(warnings).toEqual([]);
+		binding.update({ hiddenActions: ['Italic'] });
+		expect(binding.element.hiddenActions).toEqual(['italic']);
+		expect(warnings).toHaveLength(1);
+		expect(warnings[0]).toContain("'Italic'");
 		binding.destroy();
 	});
 	it('surfaces page-change and dirty-change and exposes save/download/markClean', async () => {
