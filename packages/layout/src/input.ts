@@ -18,6 +18,8 @@ export interface LayoutRun {
 	breakAfter?: 'page' | 'column';
 	/** An inline picture: occupies its size on the line (`text` is empty). */
 	object?: LayoutObject;
+	/** Generated text (a list label) that is not part of the paragraph's own characters. */
+	synthetic?: boolean;
 	/** `#rrggbb`, display only. */
 	color?: string;
 	underline?: boolean;
@@ -44,6 +46,13 @@ export interface LayoutFloat extends LayoutObject {
 	offsetYPx?: number;
 	behindText?: boolean;
 	wrap?: string;
+}
+
+/** A paragraph tab stop, positioned from the paragraph's text margin (not its indent). */
+export interface LayoutTabStop {
+	posPx: number;
+	align: 'left' | 'center' | 'right' | 'decimal' | 'bar' | 'clear' | 'start' | 'end' | 'num';
+	leader?: 'none' | 'dot' | 'hyphen' | 'underscore' | 'heavy' | 'middleDot';
 }
 
 export type ParagraphAlign = 'left' | 'center' | 'right' | 'justify';
@@ -78,6 +87,8 @@ export interface LayoutParagraph {
 	widowControl?: boolean;
 	/** Floating pictures anchored in this paragraph. */
 	floats?: LayoutFloat[];
+	/** Custom tab stops (`w:tabs`). */
+	tabStops?: LayoutTabStop[];
 }
 
 export interface LayoutTableCell {

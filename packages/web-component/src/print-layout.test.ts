@@ -128,3 +128,21 @@ describe('Print Layout pictures', () => {
 		expect(floats[1].classList.contains('dve-print-picture-missing')).toBe(true);
 	});
 });
+
+describe('Print Layout tab leaders', () => {
+	it('fills a tab with its leader across the tab width', () => {
+		const result = sampleResult();
+		const paragraph = result.pages[0].columns[0].blocks[0];
+		if (paragraph.kind === 'paragraph')
+			paragraph.lines[0].fragments.push(
+				{ text: '', xPx: 40, widthPx: 120, runIndex: 0, leader: 'dot' },
+				{ text: '', xPx: 160, widthPx: 30, runIndex: 0, leader: 'underscore' },
+			);
+		const { element } = renderPrintLayout(result);
+		const [dots, rule] = element.querySelectorAll<HTMLElement>('.dve-print-leader');
+		expect(dots.style.width).toBe('120px');
+		expect(dots.textContent).toMatch(/^\.{10,}$/);
+		expect(rule.textContent).toBe('');
+		expect(rule.style.borderBottom).toContain('solid');
+	});
+});

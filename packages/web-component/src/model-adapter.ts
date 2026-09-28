@@ -1,6 +1,11 @@
 import { EditorState, Transaction } from 'prosemirror-state';
 import type { DocumentModel, Block, Paragraph, Table, TextRun } from '@christophervr/docx-core';
-import { computeListLabels, formatNoteNumber, numberNotesInOrder } from '@christophervr/docx-core';
+import {
+	computeListLabels,
+	displayListLabel,
+	formatNoteNumber,
+	numberNotesInOrder,
+} from '@christophervr/docx-core';
 import { schema } from './schema';
 import { sameJson, sameRuns } from './run-compare';
 import { appendInlineNode, runToInlineNodes, type NoteNumberLookup } from './run-adapter';
@@ -32,7 +37,7 @@ function paragraphNode(paragraph: Paragraph, labels: ListLabels, noteNumber?: No
 			hangingTwips: paragraph.hangingTwips ?? null,
 			numId: paragraph.numbering?.numId ?? null,
 			ilvl: paragraph.numbering ? paragraph.numbering.level : null,
-			listLabelText: label?.text ?? null,
+			listLabelText: label ? displayListLabel(label.text) : null,
 			listSuffix: label?.suffix ?? null,
 			listIndentLeftTwips: label?.indentLeftTwips ?? null,
 			listHangingTwips: label?.hangingTwips ?? null,

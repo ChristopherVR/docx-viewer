@@ -13,6 +13,8 @@ export interface LayoutFragment {
 	color?: string;
 	underline?: boolean;
 	strike?: boolean;
+	/** A tab's leader fill (dots, hyphens, a line…) drawn across its width. */
+	leader?: 'dot' | 'hyphen' | 'underscore' | 'heavy' | 'middleDot';
 }
 
 /** One visual line of a paragraph, positioned within its block's box. */

@@ -49,6 +49,29 @@ function pictureElement(
 	return element;
 }
 
+const LEADER_CHARACTERS: Record<string, string> = { dot: '.', hyphen: '-', middleDot: '·' };
+
+/** A tab's leader: repeated characters (dots, hyphens) or a rule (underscore, heavy) across its width. */
+function leaderElement(fragment: LayoutLine['fragments'][number]): HTMLElement {
+	const el = document.createElement('span');
+	styleFragment(el, { ...fragment, text: '' });
+	el.classList.add('dve-print-leader');
+	el.style.width = `${fragment.widthPx}px`;
+	el.style.overflow = 'hidden';
+	el.style.textAlign = 'right';
+	const character = LEADER_CHARACTERS[fragment.leader!];
+	if (character) {
+		// Enough characters to fill the tab; the overflow is clipped on the left.
+		const sizePx = ((fragment.fontSizePt ?? DEFAULT_FONT_SIZE_PT) * 96) / 72;
+		el.textContent = character.repeat(Math.ceil(fragment.widthPx / (sizePx * 0.25)) + 1);
+		el.style.direction = 'rtl';
+	} else {
+		el.style.height = '1em';
+		el.style.borderBottom = `${fragment.leader === 'heavy' ? 2 : 1}px solid currentColor`;
+	}
+	return el;
+}
+
 function styleFragment(el: HTMLSpanElement, fragment: LayoutLine['fragments'][number]) {
 	el.style.position = 'absolute';
 	el.style.left = `${fragment.xPx}px`;
@@ -82,6 +105,10 @@ function renderLine(
 			picture.style.left = `${fragment.xPx}px`;
 			picture.style.top = '0';
 			lineEl.append(picture);
+			continue;
+		}
+		if (fragment.leader) {
+			lineEl.append(leaderElement(fragment));
 			continue;
 		}
 		if (!fragment.text && fragment.widthPx === 0) continue;

@@ -7,7 +7,10 @@ import type {
 	TextRun,
 } from '@christophervr/docx-core';
 import {
+	computeListLabels,
 	dateFieldResult,
+	displayListLabel,
+	type ParagraphListLabel,
 	fieldName,
 	resolveParagraphFormatting,
 	resolveRunFormatting,
@@ -131,13 +134,42 @@ export function adaptDocumentModel(
 			...(run.break ? { breakAfter: run.break } : {}),
 		};
 	}
+	const labels = computeListLabels(model);
+	/** The list label run (number or bullet plus its suffix), formatted like the paragraph's text. */
+	function labelRun(paragraph: Paragraph, label: ParagraphListLabel): LayoutRun {
+		const first = adaptRun(paragraph.runs[0] ?? { text: '' }, paragraph.style);
+		const suffix = label.suffix === 'tab' ? '\t' : label.suffix === 'space' ? ' ' : '';
+		return {
+			text: `${displayListLabel(label.text)}${suffix}`,
+			synthetic: true,
+			bold: first.bold,
+			italic: first.italic,
+			fontFamily: first.fontFamily,
+			fontSizePt: first.fontSizePt,
+			...(first.color ? { color: first.color } : {}),
+		};
+	}
 	function adaptParagraph(paragraph: Paragraph): LayoutParagraph {
 		const resolved = catalog ? resolveParagraphFormatting(paragraph, catalog) : paragraph;
 		reportOnce(KEEP_TOGETHER_NOTE);
+		const label = labels.get(paragraph.id);
+		// Numbering level indents apply unless the paragraph or its style sets its own.
+		const ownFirstLine =
+			resolved.firstLineTwips !== undefined || resolved.hangingTwips !== undefined;
+		const runs = paragraph.runs.map((run) => adaptRun(run, paragraph.style));
 		return {
 			kind: 'paragraph',
 			id: paragraph.id,
-			runs: paragraph.runs.map((run) => adaptRun(run, paragraph.style)),
+			runs: label ? [labelRun(paragraph, label), ...runs] : runs,
+			...(paragraph.tabStops?.length
+				? {
+						tabStops: paragraph.tabStops.map((stop) => ({
+							posPx: twipsToPx(stop.posTwips),
+							align: stop.align,
+							...(stop.leader ? { leader: stop.leader } : {}),
+						})),
+					}
+				: {}),
 			...floatsOf(paragraph),
 			align: resolved.align,
 			direction: resolved.direction,
@@ -145,12 +177,12 @@ export function adaptDocumentModel(
 			spacingAfterTwips: resolved.spacingAfterTwips,
 			lineSpacingTwips: resolved.lineSpacingTwips,
 			lineSpacingRule: resolved.lineSpacingRule,
-			indentLeftTwips: resolved.indentLeftTwips,
+			indentLeftTwips: resolved.indentLeftTwips ?? label?.indentLeftTwips,
 			indentRightTwips: resolved.indentRightTwips,
 			indentStartTwips: resolved.indentStartTwips,
 			indentEndTwips: resolved.indentEndTwips,
-			firstLineTwips: resolved.firstLineTwips,
-			hangingTwips: resolved.hangingTwips,
+			firstLineTwips: ownFirstLine ? resolved.firstLineTwips : label?.firstLineTwips,
+			hangingTwips: ownFirstLine ? resolved.hangingTwips : label?.hangingTwips,
 			styleId: paragraph.style,
 			...(paragraph.pageBreakBefore ? { pageBreakBefore: true } : {}),
 		};

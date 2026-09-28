@@ -26,6 +26,7 @@ export * from './numbering-model.js';
 export { parseNumberingCatalog, resolveNumberingLevel } from './numbering-parse.js';
 export {
 	computeListLabels,
+	displayListLabel,
 	formatListNumber,
 	resolveParagraphNumbering,
 } from './numbering-format.js';

@@ -74,7 +74,8 @@ describe('layoutParagraph alignment', () => {
 			measurer,
 			noop,
 		);
-		expect(result.lines[0].fragments[0].xPx).toBe(70); // (100-10) - 20
+		// The first line's box starts 10px in and still ends at the right edge: 10 + (90 - 20).
+		expect(result.lines[0].fragments[0].xPx).toBe(80);
 		expect(result.lines[1].fragments[0].xPx).toBe(80); // 100 - 20
 	});
 
@@ -85,8 +86,20 @@ describe('layoutParagraph alignment', () => {
 			measurer,
 			noop,
 		);
-		expect(result.lines[0].fragments[0].xPx).toBe(90); // (100+10) - 20
+		// The first line's box starts 10px out (-10) and still ends at the right edge: -10 + (110 - 20).
+		expect(result.lines[0].fragments[0].xPx).toBe(80);
 		expect(result.lines[1].fragments[0].xPx).toBe(80); // 100 - 20
+	});
+
+	it('offsets left-aligned lines by the left indent and first-line indent', () => {
+		const result = layoutParagraph(
+			paragraph([{ text: 'AB\nCD' }], { indentLeftTwips: 300, firstLineTwips: 150 }),
+			100,
+			measurer,
+			noop,
+		);
+		expect(result.lines[0].fragments[0].xPx).toBe(30); // 20 + 10
+		expect(result.lines[1].fragments[0].xPx).toBe(20);
 	});
 });
 

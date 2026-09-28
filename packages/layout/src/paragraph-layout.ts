@@ -2,13 +2,8 @@ import type { LayoutFontSpec, TextMeasurer } from './measure.js';
 import { appendBreakMarker, tokenizeRun, type BreakToken } from './text-breaks.js';
 import type { LayoutFragment, LayoutLine } from './result.js';
 import type { LayoutParagraph, LayoutRun } from './input.js';
-import {
-	DEFAULT_FONT_FAMILY,
-	DEFAULT_FONT_SIZE_PT,
-	DEFAULT_TAB_STOP_PX,
-	ptToPx,
-	twipsToPx,
-} from './units.js';
+import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE_PT, ptToPx, twipsToPx } from './units.js';
+import { placeTab } from './tab-stops.js';
 
 export interface ParagraphLayoutResult {
 	/** Lines with `yPx` relative to the paragraph box's own top (0 for the first line). */
@@ -66,7 +61,10 @@ function tokenizeParagraph(paragraph: LayoutParagraph): {
 		if (run.object) tokens.push({ kind: 'object', runIndex, sourceStart: 0 });
 		else tokens.push(...tokenizeRun(run.text, runIndex));
 		if (run.breakAfter) appendBreakMarker(tokens, runIndex, run.text.length, run.breakAfter);
-		cursor += run.text.length;
+		// A list label maps to the start of the paragraph's text for click-to-cursor.
+		if (run.synthetic) {
+			for (const token of tokens) if (token.runIndex === runIndex) token.sourceStart = 0;
+		} else cursor += run.text.length;
 	});
 	return { tokens, runOffsets };
 }
@@ -74,6 +72,7 @@ function tokenizeParagraph(paragraph: LayoutParagraph): {
 interface PlacedToken {
 	token: BreakToken;
 	widthPx: number;
+	leader?: LayoutFragment['leader'];
 }
 
 function lineHeightForTokens(
@@ -133,11 +132,36 @@ export function layoutParagraph(
 
 	const availableWidth = (lineIndex: number) =>
 		Math.max(1, bodyWidth - (lineIndex === 0 ? firstLineExtraPx : 0));
+	/** Where a line's text starts, from the paragraph's text margin (indent plus first-line offset). */
+	const lineStart = (lineIndex: number) => leftPx + (lineIndex === 0 ? firstLineExtraPx : 0);
+	const tokenWidth = (token: BreakToken): number =>
+		token.kind === 'word' || token.kind === 'space'
+			? measurer.widthOf(token.text, fonts[token.runIndex])
+			: token.kind === 'object'
+				? (paragraph.runs[token.runIndex]?.object?.widthPx ?? 0)
+				: 0;
+	const widths = tokens.map(tokenWidth);
+	const ends = new Set(['tab', 'lineBreak', 'pageBreak', 'columnBreak']);
+	/** Width of the text after the tab at `index`, whole and up to its first decimal separator. */
+	function segmentAfter(index: number): { followingPx: number; beforeDecimalPx: number } {
+		let followingPx = 0;
+		let beforeDecimalPx: number | undefined;
+		for (let next = index + 1; next < tokens.length && !ends.has(tokens[next].kind); next++) {
+			const token = tokens[next];
+			if (beforeDecimalPx === undefined && token.kind === 'word' && /[.,]/.test(token.text)) {
+				const prefix = token.text.slice(0, token.text.search(/[.,]/));
+				beforeDecimalPx = followingPx + measurer.widthOf(prefix, fonts[token.runIndex]);
+			}
+			followingPx += widths[next];
+		}
+		return { followingPx, beforeDecimalPx: beforeDecimalPx ?? followingPx };
+	}
+	const hangingStopPx = firstLineExtraPx < 0 ? leftPx : undefined;
 
 	function buildFragments(tokensOnLine: PlacedToken[]): LayoutFragment[] {
 		const fragments: LayoutFragment[] = [];
 		let x = 0;
-		for (const { token, widthPx } of tokensOnLine) {
+		for (const { token, widthPx, leader } of tokensOnLine) {
 			const run = paragraph.runs[token.runIndex];
 			const text = token.kind === 'word' || token.kind === 'space' ? token.text : '';
 			fragments.push({
@@ -149,6 +173,7 @@ export function layoutParagraph(
 				italic: run?.italic,
 				fontFamily: run?.fontFamily,
 				fontSizePt: run?.fontSizePt,
+				...(leader ? { leader } : {}),
 				...(run?.color ? { color: run.color } : {}),
 				...(run?.underline ? { underline: true } : {}),
 				...(run?.strike ? { strike: true } : {}),
@@ -219,7 +244,7 @@ export function layoutParagraph(
 		lineWidthPx = 0;
 	}
 
-	for (const token of tokens) {
+	for (const [tokenIndex, token] of tokens.entries()) {
 		if (token.kind === 'lineBreak') {
 			flushLine(true, undefined);
 			continue;
@@ -228,18 +253,20 @@ export function layoutParagraph(
 			flushLine(true, token.kind === 'pageBreak' ? 'page' : 'column');
 			continue;
 		}
-		const font = fonts[token.runIndex];
-		const width =
-			token.kind === 'tab'
-				? Math.max(
-						1,
-						DEFAULT_TAB_STOP_PX - (lineWidthPx % DEFAULT_TAB_STOP_PX || DEFAULT_TAB_STOP_PX),
-					)
-				: token.kind === 'word' || token.kind === 'space'
-					? measurer.widthOf(token.text, font)
-					: token.kind === 'object'
-						? (paragraph.runs[token.runIndex]?.object?.widthPx ?? 0)
-						: 0;
+		let leader: LayoutFragment['leader'];
+		let width = widths[tokenIndex];
+		if (token.kind === 'tab') {
+			const { followingPx, beforeDecimalPx } = segmentAfter(tokenIndex);
+			const tab = placeTab(
+				lineStart(lines.length) + lineWidthPx,
+				paragraph.tabStops ?? [],
+				hangingStopPx,
+				followingPx,
+				beforeDecimalPx,
+			);
+			width = tab.widthPx;
+			leader = tab.leader === 'none' ? undefined : tab.leader;
+		}
 		const lineIndex = lines.length;
 		const limit = availableWidth(lineIndex);
 		// A pending trailing space only ever gets counted once it turns out to be
@@ -257,7 +284,7 @@ export function layoutParagraph(
 			}
 		}
 		if (token.kind === 'space' && placed.length === 0) continue; // leading space at wrap point is dropped
-		placed.push({ token, widthPx: width });
+		placed.push({ token, widthPx: width, ...(leader ? { leader } : {}) });
 		lineWidthPx += width;
 	}
 	flushLine(lines.length === 0, undefined);
@@ -266,7 +293,11 @@ export function layoutParagraph(
 	for (let index = 0; index < lines.length; index++) {
 		lines[index] = {
 			...lines[index],
-			fragments: alignFragments(lines[index].fragments, availableWidth(index), index === lastIndex),
+			fragments: alignFragments(
+				lines[index].fragments,
+				availableWidth(index),
+				index === lastIndex,
+			).map((fragment) => ({ ...fragment, xPx: fragment.xPx + lineStart(index) })),
 		};
 	}
 

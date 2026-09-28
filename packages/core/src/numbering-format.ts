@@ -170,3 +170,22 @@ export function computeListLabels(model: DocumentModel): Map<string, ParagraphLi
 	}
 	return labels;
 }
+
+/**
+ * Bullets in Word's Symbol and Wingdings fonts use private-use code points (U+F0xx); without those
+ * fonts they render as missing glyphs, so labels are shown with their Unicode equivalents.
+ */
+const SYMBOL_BULLETS: Record<string, string> = {
+	'': '•',
+	'': '▪',
+	'': '➢',
+	'': '❖',
+	'': '✓',
+	'': '■',
+	'': '❑',
+	'': '➩',
+	'': '○',
+};
+export function displayListLabel(text: string): string {
+	return text.replace(/[-]/g, (char) => SYMBOL_BULLETS[char] ?? '•');
+}
