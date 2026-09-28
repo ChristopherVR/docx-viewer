@@ -1,4 +1,10 @@
 export { DocxEditorElement, registerDocxEditor } from './component';
+export { DOCX_EDITOR_EVENTS } from './events';
+export type { RibbonAction } from './ribbon';
+export type { FileCommand, FileCommandDetail } from './file-commands';
+export type { DocxEditorEventMap, DocxEditorEventName, DocxEditorEventDetail } from './events';
+export { DOCX_EDITOR_ATTRIBUTES } from './editor-attributes';
+export type { DocxEditorAttribute } from './editor-attributes';
 export { CollaborationClient, CollaborationAuthority } from './collaboration';
 export type {
 	CollaborationConfig,

@@ -1,3 +1,4 @@
+import { emit } from './events';
 import type { EditorView } from 'prosemirror-view';
 import { sendableSteps } from 'prosemirror-collab';
 import {
@@ -57,8 +58,6 @@ export class EditorPresence {
 		});
 	}
 	private emit(message: PresenceMessage) {
-		this.element.dispatchEvent(
-			new CustomEvent('presence-send', { detail: message, bubbles: true, composed: true }),
-		);
+		emit(this.element, 'presence-send', message);
 	}
 }

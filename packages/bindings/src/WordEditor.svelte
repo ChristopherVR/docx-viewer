@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { mountEditor, type EditorBinding } from './index';
-  import type { DocumentModel } from '@christophervr/docx-core';
-  interface Props { documentModel?: DocumentModel; readOnly?: boolean; locale?: string; theme?: 'light' | 'dark' | 'auto'; ondocumentchange?: (model: DocumentModel) => void; ondocumenterror?: (error: Error) => void; }
+  import { eventOptions, mountEditor, pickEditorProps, type EditorBinding, type EditorEventHandlers, type EditorProps } from './index';
+  type Props = EditorProps & { ondocumentchange?: EditorEventHandlers['document-change']; ondocumenterror?: EditorEventHandlers['document-error'] };
   let { documentModel, readOnly = false, locale = 'en', theme = 'auto', ondocumentchange, ondocumenterror }: Props = $props();
   let binding: EditorBinding | undefined;
   function attach(host: HTMLElement, options: Props) {
-    const normalized = (value: Props) => ({ documentModel: value.documentModel, readOnly: value.readOnly, locale: value.locale, theme: value.theme,
-      onDocumentChange: value.ondocumentchange, onDocumentError: value.ondocumenterror });
+    const normalized = (value: Props) => ({ ...pickEditorProps(value),
+      ...eventOptions({ 'document-change': value.ondocumentchange, 'document-error': value.ondocumenterror }) });
     binding = mountEditor(host, normalized(options));
     return { update(next: Props) { binding?.update(normalized(next)); }, destroy() { binding?.destroy(); binding = undefined; } };
   }

@@ -1,4 +1,5 @@
 import { ST_NumberFormat, type DocumentModel } from '@christophervr/docx-core';
+import { emit } from './events';
 import type { EditorHost } from './editor-host';
 import { findLocalizedControl } from './localization';
 import type { PrintLayoutController } from './print-layout-view';
@@ -178,10 +179,6 @@ export class PageController {
 	print(): void {
 		this.host
 			.printLayout()
-			?.print(this.host.model(), (message) =>
-				this.host.element.dispatchEvent(
-					new CustomEvent('document-warning', { detail: message, bubbles: true, composed: true }),
-				),
-			);
+			?.print(this.host.model(), (message) => emit(this.host.element, 'document-warning', message));
 	}
 }

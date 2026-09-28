@@ -16,12 +16,17 @@ export type AuthorityResult =
 type RecordStep = { version: number; clientId: string; step: Step };
 const MAX_CACHED_REQUESTS = 5_000;
 
+/** ProseMirror's own collab rebase uses this hook, but `prosemirror-transform` does not type it. */
+interface MirroringMapping {
+	setMirror(from: number, to: number): void;
+}
+function hasMirror(mapping: object): mapping is MirroringMapping {
+	return typeof (mapping as Partial<MirroringMapping>).setMirror === 'function';
+}
 function setMirror(transform: Transform, from: number, to: number) {
-	// ProseMirror uses this internal mapping hook in its own collab rebase algorithm.
-	(transform.mapping as unknown as { setMirror(from: number, to: number): void }).setMirror(
-		from,
-		to,
-	);
+	if (!hasMirror(transform.mapping))
+		throw new Error('prosemirror-transform Mapping.setMirror is unavailable.');
+	transform.mapping.setMirror(from, to);
 }
 
 /** Small in-memory reference authority. A host should replace it with its server and persistence. */

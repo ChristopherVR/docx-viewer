@@ -1,544 +1,290 @@
-import { refreshEditorControls } from './editor-controls';
-import { EditorState, Transaction } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { EditorState } from 'prosemirror-state';
 import type { DocumentModel } from '@christophervr/docx-core';
 import { createDocument, saveDocx } from '@christophervr/docx-core';
 import { loadDocument } from '@christophervr/docx-document';
-import { createRibbon, setRibbonLocale, type RibbonAction } from './ribbon';
-import { assignMissingParagraphIds, docToModel, modelToDoc } from './model-adapter';
-import { editorStyleText } from './styles';
+import { setRibbonLocale } from './ribbon';
+import type { CollaborationConfig, ClientReceiveResult, StepBatch } from './collaboration';
+import { normalizeEditorLocale } from './localization';
 import {
 	applyThemeColors,
 	normalizeThemeMode,
 	type EditorTheme,
 	type EditorThemeMode,
 } from './theme';
-import { runRibbonCommand } from './editor-commands';
-import { createSearchPanel, type SearchPanelHandle } from './search-panel';
+import { EditorCore, type LoadedDocument } from './editor-core';
+import { buildShell, type ShellApi } from './editor-shell';
+import { renderDocument } from './editor-render';
+import { emit, type DocxEditorEventMap } from './events';
 import {
-	type CollaborationConfig,
-	type ClientReceiveResult,
-	type StepBatch,
-} from './collaboration';
-import { repairCollaborativeDocumentIds } from './collaboration-identity';
-import { normalizeEditorLocale, type EditorLocale } from './localization';
-import { CollaborationSession } from './collaboration-session';
-import { resetStylePicker } from './paragraph-styles';
-import { bodyPlugins } from './editor-plugins';
-import { runListAction } from './list-commands';
-import { createPrintLayoutController, type PrintLayoutController } from './print-layout-view';
-import { moveCursorToBlock } from './print-layout-cursor';
-import { REMOTE_TRANSACTION_META } from './track-changes-mode';
-import type { ReviewDisplayMode } from './review-display';
-import { ReviewController } from './review-controller';
-import { ImageMediaCache, imageNodeView } from './image-media';
-import { EditorChrome } from './editor-chrome';
-import { dispatchDocumentError, type EditorHost } from './editor-host';
-import { PartsController } from './parts-controller';
-import { PageController } from './page-controller';
-import { focusView } from './focus-view';
-import { InsertController } from './insert-controller';
-import { countWords } from './word-count';
+	DEFAULT_FILE_NAME,
+	DEFAULT_REVIEW_AUTHOR,
+	DOCX_EDITOR_ATTRIBUTES,
+	applyAttribute,
+	isDocxEditorAttribute,
+	reflectAttribute,
+} from './editor-attributes';
 
 const HTMLElementBase: typeof HTMLElement =
 	typeof HTMLElement === 'undefined' ? (class {} as typeof HTMLElement) : HTMLElement;
+
+/**
+ * Typed event overloads. Redeclaring the methods hides the inherited ones, so the standard DOM
+ * event map and the string fallback are repeated here.
+ */
+export interface DocxEditorElement {
+	addEventListener<K extends keyof DocxEditorEventMap>(
+		type: K,
+		listener: (this: DocxEditorElement, event: DocxEditorEventMap[K]) => unknown,
+		options?: boolean | AddEventListenerOptions,
+	): void;
+	addEventListener<K extends keyof HTMLElementEventMap>(
+		type: K,
+		listener: (this: DocxEditorElement, event: HTMLElementEventMap[K]) => unknown,
+		options?: boolean | AddEventListenerOptions,
+	): void;
+	addEventListener(
+		type: string,
+		listener: EventListenerOrEventListenerObject,
+		options?: boolean | AddEventListenerOptions,
+	): void;
+	removeEventListener<K extends keyof DocxEditorEventMap>(
+		type: K,
+		listener: (this: DocxEditorElement, event: DocxEditorEventMap[K]) => unknown,
+		options?: boolean | EventListenerOptions,
+	): void;
+	removeEventListener<K extends keyof HTMLElementEventMap>(
+		type: K,
+		listener: (this: DocxEditorElement, event: HTMLElementEventMap[K]) => unknown,
+		options?: boolean | EventListenerOptions,
+	): void;
+	removeEventListener(
+		type: string,
+		listener: EventListenerOrEventListenerObject,
+		options?: boolean | EventListenerOptions,
+	): void;
+}
+
 export class DocxEditorElement extends HTMLElementBase {
-	private model: DocumentModel = createDocument();
-	private view?: EditorView;
-	private loaded?: Awaited<ReturnType<typeof loadDocument>>;
-	private loadGeneration = 0;
-	private _readOnly = false;
-	private toolbar?: HTMLElement;
-	private canvas?: HTMLElement;
-	private paper?: HTMLElement;
-	private searchPanel?: SearchPanelHandle;
-	private readonly collab = new CollaborationSession(this, () => this.view);
-	private detachedState?: EditorState;
-	private _locale: EditorLocale = 'en';
-	private _theme: EditorThemeMode = 'auto';
-	private _themeColors?: Partial<EditorTheme>;
-	private appliedThemeVars: string[] = [];
-	private printLayout?: PrintLayoutController;
-	private readonly inserts = new InsertController({
-		view: () => this.targetView(),
-		model: () => this.model,
-		contentWidth: () =>
-			this.model.page.width - this.model.page.marginLeft - this.model.page.marginRight,
-		paper: () => this.paper,
-		toolbar: () => this.toolbar,
-		reportError: (error) =>
-			this.dispatchEvent(
-				new CustomEvent('document-error', { detail: error, bubbles: true, composed: true }),
-			),
-	});
-	private readonly imageMedia = new ImageMediaCache((partName) =>
-		this.inserts.media(partName, this.loaded?.media),
-	);
-	private reviewDisplayMode: ReviewDisplayMode = 'all';
-	private review?: ReviewController;
-	private _reviewAuthor = 'Author';
-	private chrome?: EditorChrome;
-	private readonly host: EditorHost = {
-		element: this,
-		view: () => this.view,
-		model: () => this.model,
-		setModel: (model) => {
-			this.model = model;
+	/** Attributes mirrored to the `locale`, `readOnly`, `fileName`, `reviewAuthor` and `theme` properties. */
+	static get observedAttributes(): string[] {
+		return [...DOCX_EDITOR_ATTRIBUTES];
+	}
+
+	private readonly core = new EditorCore(this);
+	private readonly shellApi: ShellApi = {
+		setReadOnly: (readOnly) => {
+			this.readOnly = readOnly;
 		},
-		locale: () => this._locale,
-		canEditOutsideBody: () => !this._readOnly && !this.collab.client,
-		edited: () => this.markEditedOutsideBody(),
-		reportError: (cause) => dispatchDocumentError(this, cause),
+		setDocumentModel: (model) => {
+			this.documentModel = model;
+		},
+		load: (bytes) => this.load(bytes),
+		save: () => this.save(),
 	};
-	private readonly parts = new PartsController({
-		...this.host,
-		images: () => this.imageMedia,
-		plugins: () => this.inserts.plugins(),
-		keepOpenWithin: () => [
-			this.toolbar,
-			this.inserts.linkDialog.element,
-			this.inserts.pictureDialog.element,
-		],
-	});
-	private readonly pages = new PageController({
-		...this.host,
-		paper: () => this.paper,
-		toolbar: () => this.toolbar,
-		statusBar: () => this.chrome?.statusBar,
-		printLayout: () => this.printLayout,
-		refreshControls: () => this.refreshControls(),
-	});
-	private pendingFileName?: string;
+
+	/** Internal seams that in-repo tests reach for; not public API. */
+	private get view() {
+		return this.core.view;
+	}
+	private get inserts() {
+		return this.core.inserts;
+	}
+
+	attributeChangedCallback(name: string, _old: string | null, value: string | null) {
+		if (isDocxEditorAttribute(name)) applyAttribute(this, name, value);
+	}
 
 	get reviewAuthor(): string {
-		return this._reviewAuthor;
+		return this.core.reviewAuthor;
 	}
 	set reviewAuthor(value: string) {
-		this._reviewAuthor = value || 'Author';
+		this.core.reviewAuthor = value || DEFAULT_REVIEW_AUTHOR;
+		reflectAttribute(this, 'review-author', this.core.reviewAuthor);
 	}
 
 	/** File name shown in the title bar and used for downloads from the built-in File commands. */
 	get fileName(): string {
-		return this.chrome?.fileName ?? this.pendingFileName ?? 'Document1.docx';
+		const { chrome } = this.core.shell;
+		return chrome?.fileName ?? this.core.pendingFileName ?? DEFAULT_FILE_NAME;
 	}
 	set fileName(value: string) {
-		if (this.chrome) this.chrome.fileName = value;
-		else this.pendingFileName = value;
+		const { chrome } = this.core.shell;
+		if (chrome) chrome.fileName = value;
+		else this.core.pendingFileName = value;
+		reflectAttribute(this, 'file-name', this.fileName);
 	}
 
 	/** `light`, `dark`, or `auto` (default, follows the OS). Reflected to the `theme` attribute. */
 	get theme(): EditorThemeMode {
-		return this._theme;
+		return this.core.theme;
 	}
 	set theme(value: EditorThemeMode) {
-		const next = normalizeThemeMode(value);
-		this._theme = next;
-		if (this.getAttribute('theme') !== next) this.setAttribute('theme', next);
+		this.core.theme = normalizeThemeMode(value);
+		reflectAttribute(this, 'theme', this.core.theme);
 	}
 	/** Token overrides applied as inline `--dve-*` custom properties on the host. */
 	get themeColors(): Partial<EditorTheme> | undefined {
-		return this._themeColors;
+		return this.core.themeColors;
 	}
 	set themeColors(value: Partial<EditorTheme> | undefined) {
-		this._themeColors = value;
-		this.appliedThemeVars = applyThemeColors(this, this.appliedThemeVars, value);
-	}
-	static get observedAttributes() {
-		return ['theme'];
-	}
-	attributeChangedCallback(name: string, _old: string | null, value: string | null) {
-		if (name === 'theme') this._theme = normalizeThemeMode(value);
+		this.core.themeColors = value;
+		this.core.appliedThemeVars = applyThemeColors(this, this.core.appliedThemeVars, value);
 	}
 
 	get locale(): string {
-		return this._locale;
+		return this.core.locale;
 	}
 	set locale(value: string) {
-		this._locale = normalizeEditorLocale(value);
-		if (this.toolbar) setRibbonLocale(this.toolbar, this._locale);
-		this.searchPanel?.setLocale(this._locale);
-		this.parts.render(this.canvas, this.paper);
-		this.review?.setLocale(this._locale);
-		this.chrome?.setLocale(this._locale);
-		this.inserts.setLocale(this._locale);
-		this.refreshControls();
+		const { core } = this;
+		const { toolbar, searchPanel, review, chrome, canvas, paper } = core.shell;
+		core.locale = normalizeEditorLocale(value);
+		if (toolbar) setRibbonLocale(toolbar, core.locale);
+		searchPanel?.setLocale(core.locale);
+		core.parts.render(canvas, paper);
+		review?.setLocale(core.locale);
+		chrome?.setLocale(core.locale);
+		core.inserts.setLocale(core.locale);
+		core.refreshControls();
+		reflectAttribute(this, 'locale', core.locale);
 	}
 
 	publishPresence(profile: { name: string; color: string }) {
-		if (!this.collab.presence) throw new Error('Start collaboration before publishing presence.');
-		this._reviewAuthor = profile.name || this._reviewAuthor;
-		return this.collab.presence.publish(profile);
+		if (!this.core.collab.presence)
+			throw new Error('Start collaboration before publishing presence.');
+		this.reviewAuthor = profile.name || this.reviewAuthor;
+		return this.core.collab.presence.publish(profile);
 	}
 	receivePresence(message: unknown) {
-		if (!this.collab.presence) throw new Error('Start collaboration before receiving presence.');
-		return this.collab.presence.receive(message);
+		if (!this.core.collab.presence)
+			throw new Error('Start collaboration before receiving presence.');
+		return this.core.collab.presence.receive(message);
 	}
 	leavePresence() {
-		return this.collab.presence?.leave() ?? null;
+		return this.core.collab.presence?.leave() ?? null;
 	}
 
 	get documentModel() {
-		return this.model;
+		return this.core.model;
 	}
 	set documentModel(value: DocumentModel | null) {
 		this.assertDocumentReplaceable();
-		this.detachedState = undefined;
-		this.loadGeneration++;
-		this.loaded = undefined;
-		this.model = value || createDocument();
-		this.inserts.reset();
-		this.chrome?.setSaveState('saved');
-		if (this.isConnected) this.renderDocument();
+		this.replaceDocument(value || createDocument());
+		this.core.shell.chrome?.setSaveState('saved');
+		if (this.isConnected) renderDocument(this.core);
 	}
 
 	get readOnly() {
-		return this._readOnly;
+		return this.core.readOnly;
 	}
 	set readOnly(value: boolean) {
-		this._readOnly = Boolean(value);
-		if (this.view) this.view.setProps({ editable: () => !this._readOnly });
-		this.refreshControls();
+		this.core.readOnly = Boolean(value);
+		this.core.view?.setProps({ editable: () => !this.core.readOnly });
+		this.core.refreshControls();
+		reflectAttribute(this, 'read-only', this.core.readOnly);
 	}
 
 	connectedCallback() {
-		this.buildShell();
-		this.renderDocument();
+		buildShell(this.core, this.shellApi);
+		renderDocument(this.core);
 	}
 
 	disconnectedCallback() {
-		this.collab.presence?.leave();
-		this.detachedState = this.view?.state;
-		this.view?.destroy();
-		this.view = undefined;
-		this.imageMedia.release();
+		const { core } = this;
+		core.collab.presence?.leave();
+		core.detachedState = core.view?.state;
+		core.view?.destroy();
+		core.view = undefined;
+		core.imageMedia.release();
 	}
 
 	async load(input: Uint8Array | ArrayBuffer): Promise<void> {
+		const { core } = this;
 		this.assertDocumentReplaceable();
-		const generation = ++this.loadGeneration;
+		const generation = ++core.loadGeneration;
 		try {
 			const session = await loadDocument(input);
-			if (generation !== this.loadGeneration) return;
-			this.imageMedia.release();
-			this.inserts.reset();
-			this.loaded = session;
-			this.model = session.model;
-			this.detachedState = undefined;
-			this.chrome?.setSaveState('saved');
-			if (this.isConnected) this.renderDocument();
+			if (generation !== core.loadGeneration) return;
+			core.imageMedia.release();
+			this.replaceDocument(session.model, session, false);
+			core.shell.chrome?.setSaveState('saved');
+			if (this.isConnected) renderDocument(core);
 		} catch (cause) {
 			const error = cause instanceof Error ? cause : new Error(String(cause));
-			if (generation === this.loadGeneration) {
-				this.dispatchEvent(
-					new CustomEvent('document-error', { detail: error, bubbles: true, composed: true }),
-				);
-			}
+			if (generation === core.loadGeneration) emit(this, 'document-error', error);
 			throw error;
 		}
 	}
 
-	setLoadedDocument(session: Awaited<ReturnType<typeof loadDocument>>) {
+	setLoadedDocument(session: LoadedDocument) {
 		this.assertDocumentReplaceable();
-		this.detachedState = undefined;
-		this.loadGeneration++;
-		this.inserts.reset();
-		this.loaded = session;
-		this.model = session.model;
-		if (this.isConnected) this.renderDocument();
+		this.replaceDocument(session.model, session);
+		if (this.isConnected) renderDocument(this.core);
 	}
 
 	async save(): Promise<Uint8Array> {
+		const { core } = this;
 		// Only pass staged pictures when there are any: legacy DOC sessions take the model alone.
-		const media = this.inserts.pendingMedia.size ? this.inserts.pendingMedia : undefined;
-		if (this.loaded)
-			return media ? this.loaded.save(this.model, media) : this.loaded.save(this.model);
-		return saveDocx(this.model, media);
+		const media = core.inserts.pendingMedia.size ? core.inserts.pendingMedia : undefined;
+		if (core.loaded)
+			return media ? core.loaded.save(core.model, media) : core.loaded.save(core.model);
+		return saveDocx(core.model, media);
 	}
 
 	/** Join only after loading the authority's matching document snapshot and version. */
 	startCollaboration(config: CollaborationConfig): void {
-		if (this.collab.active) throw new Error('Stop the current collaboration session first.');
-		if (!this.view) throw new Error('Mount and load the document before starting collaboration.');
-		this.collab.start(config);
-		this.loadGeneration++;
-		this.detachedState = undefined;
-		this.renderDocument();
+		const { core } = this;
+		if (core.collab.active) throw new Error('Stop the current collaboration session first.');
+		if (!core.view) throw new Error('Mount and load the document before starting collaboration.');
+		core.collab.start(config);
+		core.loadGeneration++;
+		core.detachedState = undefined;
+		renderDocument(core);
 	}
 
 	getPendingCollaboration(): StepBatch | null {
-		const state = this.view?.state ?? this.detachedState;
-		return state && this.collab.client ? this.collab.client.createPendingBatch(state) : null;
+		return this.core.pendingCollaboration();
 	}
 
 	receiveCollaboration(batch: unknown): ClientReceiveResult['status'] {
-		if (!this.collab.client || !this.view) throw new Error('No mounted collaboration session.');
-		const result = this.collab.client.receive(this.view.state, batch);
-		if (result.status === 'applied') this.applyTransaction(result.transaction, true);
+		const { collab, view } = this.core;
+		if (!collab.client || !view) throw new Error('No mounted collaboration session.');
+		const result = collab.client.receive(view.state, batch);
+		if (result.status === 'applied') this.core.applyTransaction(result.transaction, true);
 		return result.status;
 	}
 
 	/** Stopping with pending edits requires an explicit discard of the transport queue. */
 	stopCollaboration(discardPending = false): void {
-		const state = this.view?.state ?? this.detachedState;
-		if (!discardPending && state && this.collab.client?.pendingStepCount(state))
+		const { core } = this;
+		const state: EditorState | undefined = core.view?.state ?? core.detachedState;
+		if (!discardPending && state && core.collab.client?.pendingStepCount(state))
 			throw new Error(
 				'Acknowledge pending collaboration edits before stopping, or explicitly discard the queue.',
 			);
-		this.collab.stop();
-		this.detachedState = undefined;
-		if (this.isConnected) this.renderDocument();
+		core.collab.stop();
+		core.detachedState = undefined;
+		if (this.isConnected) renderDocument(core);
 	}
 
 	private assertDocumentReplaceable() {
-		if (this.collab.client) throw new Error('Stop collaboration before replacing the document.');
+		if (this.core.collab.client)
+			throw new Error('Stop collaboration before replacing the document.');
 	}
 
-	private scheduleCollaborationSend() {
-		this.collab.scheduleSend(() => this.getPendingCollaboration());
+	/** Swaps in a new model (and the session that produced it) and invalidates in-flight loads. */
+	private replaceDocument(model: DocumentModel, session?: LoadedDocument, bumpGeneration = true) {
+		const { core } = this;
+		core.detachedState = undefined;
+		if (bumpGeneration) core.loadGeneration++;
+		core.loaded = session;
+		core.model = model;
+		core.inserts.reset();
 	}
+}
 
-	private buildShell() {
-		if (this.toolbar) return;
-		this.classList.add('dve-host');
-		const root = this.attachShadow({ mode: 'open' });
-		const style = document.createElement('style');
-		style.textContent = editorStyleText;
-		const frame = document.createElement('section');
-		frame.className = 'dve-frame';
-		const toolbar = createRibbon(this._locale);
-		toolbar.addEventListener('ribbon-action', (event) =>
-			this.handleRibbonAction((event as CustomEvent<RibbonAction>).detail),
-		);
-		const canvas = document.createElement('main');
-		canvas.className = 'dve-canvas';
-		const paper = document.createElement('div');
-		paper.className = 'dve-paper';
-		paper.setAttribute('aria-label', 'Document page');
-		canvas.append(paper);
-		this.printLayout = createPrintLayoutController(
-			canvas,
-			(blockId, offset) => {
-				this.pages.setViewMode('draft');
-				if (this.view) moveCursorToBlock(this.view, blockId, offset);
-			},
-			(partName, contentType) => this.imageMedia.urlFor(partName, contentType),
-		);
-		canvas.append(this.printLayout.element);
-		canvas.addEventListener('scroll', () => {
-			if (this.pages.viewMode === 'print') {
-				this.printLayout?.refreshCurrentPage();
-				this.refreshControls();
-			}
-		});
-		this.searchPanel = createSearchPanel({
-			getView: () => this.view,
-			onClose: () => this.view?.focus(),
-		});
-		this.searchPanel.setLocale(this._locale);
-		this.review = new ReviewController({
-			getModel: () => this.model,
-			setModel: (model) => {
-				this.model = model;
-			},
-			getView: () => this.view,
-			getReviewAuthor: () => this._reviewAuthor,
-			getCollaborationIds: () => this.collab.ids,
-			notifyChange: () =>
-				this.dispatchEvent(
-					new CustomEvent('document-change', { detail: this.model, bubbles: true, composed: true }),
-				),
-			refresh: () => this.refreshControls(),
-		});
-		this.review.setLocale(this._locale);
-		this.inserts.setLocale(this._locale);
-		const body = document.createElement('div');
-		body.className = 'dve-body';
-		body.append(canvas, this.review.commentsPanel.element);
-		frame.append(toolbar, this.searchPanel.element, body);
-		this.chrome = this.createChrome();
-		this.chrome.mount(frame, toolbar);
-		frame.append(
-			this.inserts.linkDialog.element,
-			this.inserts.pictureDialog.element,
-			this.inserts.pictureInput,
-		);
-		if (this.pendingFileName) this.chrome.fileName = this.pendingFileName;
-		this.chrome.setLocale(this._locale);
-		root.append(style, frame);
-		this.toolbar = toolbar;
-		this.canvas = canvas;
-		this.paper = paper;
-		this.setAttribute('role', 'region');
-		this.setAttribute('aria-label', 'Document editor');
-	}
-
-	private renderDocument() {
-		if (!this.paper) return;
-		resetStylePicker(this.toolbar);
-		this.view?.destroy();
-		this.paper.replaceChildren();
-		this.pages.refreshPageStyles();
-		const state =
-			this.detachedState ??
-			EditorState.create({
-				doc: modelToDoc(this.model),
-				plugins: bodyPlugins({
-					model: () => this.model,
-					reviewAuthor: () => this._reviewAuthor,
-					reviewDisplayMode: () => this.reviewDisplayMode,
-					insertNote: (kind) => this.parts.insertNote(kind, this.canvas, this.paper),
-					showSearch: () => this.showSearch(),
-					extraPlugins: this.inserts.plugins(),
-					collaborationPlugins: [
-						...(this.collab.client ? [this.collab.client.plugin] : []),
-						...(this.collab.presence ? [this.collab.presence.client.plugin] : []),
-					],
-				}),
-			});
-		this.view = new EditorView(this.paper, {
-			state,
-			editable: () => !this._readOnly,
-			dispatchTransaction: (transaction: Transaction) => this.applyTransaction(transaction),
-			nodeViews: {
-				image: imageNodeView(this.imageMedia, {
-					editPicture: (pos) => this.inserts.pictureDialog.open(pos),
-					maxWidth: () =>
-						this.model.page.width - this.model.page.marginLeft - this.model.page.marginRight,
-				}),
-			},
-			handleClick: (view, pos, event) => this.inserts.handleClick(view, pos, event),
-		});
-		this.detachedState = undefined;
-		this.inserts.syncPaper();
-		this.parts.render(this.canvas, this.paper);
-		this.pages.relayout();
-		this.refreshControls();
-		this.scheduleCollaborationSend();
-	}
-
-	private applyTransaction(transaction: Transaction, remote = false) {
-		if (!this.view) return;
-		if (remote) transaction.setMeta(REMOTE_TRANSACTION_META, true);
-		const applied = this.view.state.applyTransaction(transaction).state;
-		const repaired = remote
-			? null
-			: this.collab.client
-				? repairCollaborativeDocumentIds(applied, this.collab.client.clientId, this.collab.ids)
-				: assignMissingParagraphIds(applied);
-		this.view.updateState(repaired ? applied.apply(repaired) : applied);
-		if (transaction.docChanged) {
-			this.model = docToModel(this.view.state.doc, this.model);
-			this.pages.refreshPageStyles();
-			this.pages.relayout();
-			this.chrome?.setSaveState('dirty');
-			this.dispatchEvent(
-				new CustomEvent('document-change', { detail: this.model, bubbles: true, composed: true }),
-			);
-		}
-		this.refreshControls();
-		if (transaction.docChanged || remote) this.scheduleCollaborationSend();
-		if (transaction.docChanged || transaction.selectionSet || remote)
-			this.collab.presence?.schedule();
-	}
-
-	private showSearch() {
-		this.searchPanel?.open();
-	}
-
-	private handleRibbonAction(action: RibbonAction) {
-		if (this.inserts.handle(action)) return;
-		if (action.type === 'search') this.showSearch();
-		else if (action.type === 'zoom') this.pages.setZoom(action.value);
-		else if (action.type === 'list' && this.targetView()) {
-			runListAction(this.targetView()!, action.key, this.model);
-			focusView(this.targetView());
-		} else if (action.type === 'view') this.pages.setViewMode(action.value);
-		else if (action.type === 'print') this.pages.print();
-		else if (action.type === 'insertNote')
-			this.parts.insertNote(action.kind, this.canvas, this.paper);
-		else if (action.type === 'page') this.pages.changePageSetup(action.key, action.value);
-		else if (action.type === 'sectionBreak') this.pages.insertSectionBreak(action.kind);
-		else if (action.type === 'evenOddHeaders') this.pages.toggleEvenOddHeaders();
-		else if (action.type === 'reviewDisplay') {
-			this.reviewDisplayMode = action.value;
-			this.view?.dispatch(this.view.state.tr);
-		} else if (action.type === 'review') this.review?.handleReview(action.key);
-		else if (action.type === 'comments') this.review?.handleComments(action.key);
-		else {
-			const target = this.targetView();
-			if (!target) return;
-			runRibbonCommand(target, action, this.collab.ids);
-			focusView(target);
-		}
-	}
-
-	/** The ribbon acts on an open header/footer/note editor, otherwise on the main text. */
-	private targetView(): EditorView | undefined {
-		return this.parts.activeView() ?? this.view;
-	}
-
-	private createChrome(): EditorChrome {
-		return new EditorChrome({
-			element: this,
-			model: () => this.model,
-			ribbon: () => this.toolbar,
-			wordCount: () => {
-				const doc = this.view?.state.doc;
-				return doc
-					? countWords(doc.textBetween(0, doc.content.size, ' ').trim(), this.lang || undefined)
-					: 0;
-			},
-			locale: () => this._locale,
-			readOnly: () => this._readOnly,
-			setReadOnly: (readOnly) => {
-				this.readOnly = readOnly;
-				this.dispatchEvent(
-					new CustomEvent('readonly-change', { detail: readOnly, bubbles: true, composed: true }),
-				);
-			},
-			newDocument: () => {
-				this.documentModel = createDocument();
-			},
-			load: (bytes) => this.load(bytes),
-			save: () => this.save(),
-			print: () => this.pages.print(),
-			history: (key) => {
-				if (!this.view) return;
-				runRibbonCommand(this.view, { type: 'history', key }, this.collab.ids);
-				if (typeof document.execCommand === 'function') this.view.focus();
-			},
-			toggleComments: () => this.review?.handleComments('toggle'),
-			setViewMode: (mode) => this.pages.setViewMode(mode),
-			setZoom: (percent) => this.pages.setZoom(percent),
-			reportError: (error) => dispatchDocumentError(this, error),
-		});
-	}
-
-	private markEditedOutsideBody() {
-		this.chrome?.setSaveState('dirty');
-		this.pages.relayout();
-		this.dispatchEvent(
-			new CustomEvent('document-change', { detail: this.model, bubbles: true, composed: true }),
-		);
-	}
-
-	private refreshControls() {
-		this.searchPanel?.refresh();
-		if (this.pages.viewMode === 'print') this.printLayout?.refreshCurrentPage();
-		const status = refreshEditorControls(
-			this.toolbar,
-			this.view,
-			this.model,
-			this._readOnly,
-			Boolean(this.collab.client),
-			this._locale,
-			this.lang,
-			this.printLayout?.pageStatus(),
-			Boolean(this.review?.commentsOpen),
-		);
-		if (status) this.chrome?.refresh(status.pageText, status.wordText);
-		this.pages.syncControls();
-		this.chrome?.titleBar.setCommentsOpen(Boolean(this.review?.commentsOpen));
+declare global {
+	interface HTMLElementTagNameMap {
+		'docx-editor': DocxEditorElement;
 	}
 }
 

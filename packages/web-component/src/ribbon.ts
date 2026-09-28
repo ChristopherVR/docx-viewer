@@ -1,3 +1,4 @@
+import { emit } from './events';
 import { localizeElement, normalizeEditorLocale } from './localization';
 import type { RibbonAction } from './ribbon-action';
 import { buildHomePanel } from './ribbon-home';
@@ -76,13 +77,7 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 	root.addEventListener('click', (event) => {
 		const target = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]');
 		if (!target) return;
-		target.dispatchEvent(
-			new CustomEvent('ribbon-action', {
-				bubbles: true,
-				composed: true,
-				detail: JSON.parse(target.dataset.action!) as RibbonAction,
-			}),
-		);
+		emit(target, 'ribbon-action', JSON.parse(target.dataset.action!) as RibbonAction);
 	});
 	setRibbonLocale(root, locale);
 	return root;

@@ -3,6 +3,8 @@
  * announced as a cancelable `file-command` event so hosts can take over file I/O; when no host
  * cancels it, the editor performs a browser-only default (file picker, download, print).
  */
+import { emit } from './events';
+
 export type FileCommand = 'new' | 'open' | 'save' | 'export' | 'print';
 
 export interface FileCommandDetail {
@@ -10,14 +12,7 @@ export interface FileCommandDetail {
 }
 
 export function announceFileCommand(host: HTMLElement, command: FileCommand): boolean {
-	return host.dispatchEvent(
-		new CustomEvent<FileCommandDetail>('file-command', {
-			detail: { command },
-			bubbles: true,
-			composed: true,
-			cancelable: true,
-		}),
-	);
+	return emit(host, 'file-command', { command }, { cancelable: true });
 }
 
 const WORD_TYPES: Record<string, string> = {

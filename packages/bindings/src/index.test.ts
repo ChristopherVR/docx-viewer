@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDocument } from '@christophervr/docx-core';
-import { mountEditor } from './index';
+import {
+	EDITOR_EVENT_NAMES,
+	EDITOR_PROP_KEYS,
+	eventOptions,
+	mountEditor,
+	pickEditorProps,
+} from './index';
+import { DOCX_EDITOR_EVENTS } from '@christophervr/docx-web-component';
 afterEach(() => document.body.replaceChildren());
 describe('shared binding lifecycle', () => {
 	it('forwards theme to the element and defaults back to auto', () => {
@@ -60,5 +67,23 @@ describe('shared binding lifecycle', () => {
 		expect(second).toHaveBeenCalledTimes(1);
 		expect(host.children).toHaveLength(1);
 		expect(host.firstChild).toBe(sentinel);
+	});
+});
+
+describe('shared option keys', () => {
+	it('only lists real element events and props', () => {
+		for (const name of EDITOR_EVENT_NAMES) expect(DOCX_EDITOR_EVENTS).toContain(name);
+		const element = document.createElement('docx-editor');
+		for (const key of EDITOR_PROP_KEYS) expect(key in element).toBe(true);
+	});
+	it('picks exactly the shared props and maps event handlers', () => {
+		const model = createDocument();
+		const extra = { documentModel: model, readOnly: true, locale: 'fr', other: 1 };
+		expect(pickEditorProps(extra)).toEqual({ documentModel: model, readOnly: true, locale: 'fr' });
+		const change = vi.fn();
+		const options = eventOptions({ 'document-change': change, 'document-error': undefined });
+		options.onDocumentChange?.(model);
+		expect(change).toHaveBeenCalledWith(model);
+		expect(options.onDocumentError).toBeUndefined();
 	});
 });

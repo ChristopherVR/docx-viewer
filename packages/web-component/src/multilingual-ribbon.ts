@@ -3,6 +3,7 @@ import type { EditorState } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { closeHistory } from 'prosemirror-history';
 import { isValidLanguageTag } from '@christophervr/docx-core';
+import { emit as emitEvent } from './events';
 import { schema } from './schema';
 import { findLocalizedControl, localizeElement, normalizeEditorLocale } from './localization';
 
@@ -30,9 +31,7 @@ const languageOptions: Array<[string, string]> = [
 ];
 
 function emit(control: HTMLElement, detail: MultilingualAction): void {
-	control.dispatchEvent(
-		new CustomEvent('ribbon-action', { bubbles: true, composed: true, detail }),
-	);
+	emitEvent(control, 'ribbon-action', detail);
 }
 
 function languageControl(label: string, key: LanguageField): HTMLElement {

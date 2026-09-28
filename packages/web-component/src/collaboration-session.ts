@@ -1,3 +1,4 @@
+import { emit } from './events';
 import type { EditorView } from 'prosemirror-view';
 import { CollaborationClient, type CollaborationConfig, type StepBatch } from './collaboration';
 import { createCollaborationIdGenerator } from './collaboration-identity';
@@ -41,10 +42,7 @@ export class CollaborationSession {
 			this.sendScheduled = false;
 			if (!this.element.isConnected) return;
 			const batch = pending();
-			if (batch)
-				this.element.dispatchEvent(
-					new CustomEvent('collaboration-send', { detail: batch, bubbles: true, composed: true }),
-				);
+			if (batch) emit(this.element, 'collaboration-send', batch);
 		});
 	}
 }

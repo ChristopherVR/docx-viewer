@@ -1,3 +1,4 @@
+import { emit } from './events';
 import type { EditorView } from 'prosemirror-view';
 import type { DocumentModel } from '@christophervr/docx-core';
 import type { EditorLocale } from './localization';
@@ -19,11 +20,5 @@ export interface EditorHost {
 
 /** Raises the editor's `document-error` event for any thrown value. */
 export function dispatchDocumentError(element: HTMLElement, cause: unknown): void {
-	element.dispatchEvent(
-		new CustomEvent('document-error', {
-			detail: cause instanceof Error ? cause : new Error(String(cause)),
-			bubbles: true,
-			composed: true,
-		}),
-	);
+	emit(element, 'document-error', cause instanceof Error ? cause : new Error(String(cause)));
 }

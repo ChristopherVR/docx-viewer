@@ -215,8 +215,13 @@ function applyMarkFormatting(run: TextRun, child: ProseMirrorNode): void {
 			const field = key as keyof TextRun;
 			if ((explicitOffFields as readonly string[]).includes(key) && run[field] !== undefined)
 				continue;
-			(run as unknown as Record<string, unknown>)[field] = value;
+			setRunField(run, field, value);
 		}
+}
+
+/** Typed per-field assignment, so a value can only be written to a field that accepts it. */
+function setRunField<K extends keyof TextRun>(run: TextRun, field: K, value: TextRun[K]): void {
+	run[field] = value;
 }
 
 export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void {

@@ -1,3 +1,4 @@
+import { emit } from './events';
 import type { EditorView } from 'prosemirror-view';
 import type { DocumentModel } from '@christophervr/docx-core';
 import { translate, type EditorLocale } from './localization';
@@ -47,13 +48,7 @@ export function syncCharacterStylePicker(
 		select.dataset.characterStyles = '';
 		select.dataset.action = 'select';
 		select.addEventListener('change', () =>
-			select!.dispatchEvent(
-				new CustomEvent('ribbon-action', {
-					bubbles: true,
-					composed: true,
-					detail: { type: 'characterStyle', value: select!.value },
-				}),
-			),
+			emit(select!, 'ribbon-action', { type: 'characterStyle', value: select!.value }),
 		);
 		group.append(select);
 	}

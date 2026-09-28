@@ -1,10 +1,9 @@
+import { emit as emitEvent } from './events';
 import type { ReviewDisplayMode } from './review-display';
 import type { RibbonAction } from './ribbon';
 
 function emit(control: HTMLElement, detail: RibbonAction): void {
-	control.dispatchEvent(
-		new CustomEvent('ribbon-action', { bubbles: true, composed: true, detail }),
-	);
+	emitEvent(control, 'ribbon-action', detail);
 }
 function reviewButton(
 	label: string,

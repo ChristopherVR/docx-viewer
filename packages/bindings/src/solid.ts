@@ -1,6 +1,6 @@
 import { createEffect, createSignal, onCleanup, onMount } from 'solid-js';
 import type { EditorBinding, EditorHandle, EditorOptions } from './index';
-import { mountEditor } from './index';
+import { eventOptions, mountEditor, pickEditorProps } from './index';
 
 export interface WordEditorProps extends EditorOptions {
 	class?: string;
@@ -12,12 +12,11 @@ export function WordEditor(props: WordEditorProps) {
 	const host = document.createElement('div');
 	const [binding, setBinding] = createSignal<EditorBinding>();
 	const options = (): EditorOptions => ({
-		documentModel: props.documentModel,
-		readOnly: props.readOnly,
-		locale: props.locale,
-		theme: props.theme,
-		onDocumentChange: props.onDocumentChange,
-		onDocumentError: props.onDocumentError,
+		...pickEditorProps(props),
+		...eventOptions({
+			'document-change': props.onDocumentChange,
+			'document-error': props.onDocumentError,
+		}),
 	});
 	onMount(() => {
 		const mounted = mountEditor(host, options());

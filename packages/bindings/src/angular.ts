@@ -10,25 +10,25 @@ import {
 	type OnDestroy,
 } from '@angular/core';
 import type { DocumentModel } from '@christophervr/docx-core';
-import { mountEditor, type EditorBinding } from './index';
+import type { EditorThemeMode } from '@christophervr/docx-web-component';
+import { eventOptions, mountEditor, pickEditorProps, type EditorBinding } from './index';
 @Component({ selector: 'word-editor', standalone: true, template: '' })
 export class WordEditorComponent implements AfterViewInit, OnChanges, OnDestroy {
 	@Input() documentModel?: DocumentModel;
 	@Input() readOnly = false;
 	@Input() locale = 'en';
-	@Input() theme: 'light' | 'dark' | 'auto' = 'auto';
+	@Input() theme: EditorThemeMode = 'auto';
 	@Output() documentChange = new EventEmitter<DocumentModel>();
 	@Output() documentError = new EventEmitter<Error>();
 	private host = inject<ElementRef<HTMLElement>>(ElementRef);
 	private binding?: EditorBinding;
 	private options() {
 		return {
-			documentModel: this.documentModel,
-			readOnly: this.readOnly,
-			locale: this.locale,
-			theme: this.theme,
-			onDocumentChange: (model: DocumentModel) => this.documentChange.emit(model),
-			onDocumentError: (error: Error) => this.documentError.emit(error),
+			...pickEditorProps(this),
+			...eventOptions({
+				'document-change': (model) => this.documentChange.emit(model),
+				'document-error': (error) => this.documentError.emit(error),
+			}),
 		};
 	}
 	ngAfterViewInit() {

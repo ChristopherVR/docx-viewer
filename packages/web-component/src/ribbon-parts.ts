@@ -1,3 +1,4 @@
+import { emit } from './events';
 import type { RibbonAction } from './ribbon-action';
 
 /** Building blocks for ribbon tabs: buttons, selects, labelled groups and rows. */
@@ -33,11 +34,7 @@ export const select = (
 		el.append(option);
 	}
 	el.dataset.action = 'select';
-	el.addEventListener('change', () =>
-		el.dispatchEvent(
-			new CustomEvent('ribbon-action', { bubbles: true, composed: true, detail: action(el.value) }),
-		),
-	);
+	el.addEventListener('change', () => emit(el, 'ribbon-action', action(el.value)));
 	return el;
 };
 export const group = (label: string, ...children: HTMLElement[]) => {
