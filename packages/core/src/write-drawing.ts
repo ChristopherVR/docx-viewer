@@ -44,7 +44,13 @@ function updateExtent(drawing: XmlElement, widthPx: number, heightPx: number): v
 	const cy = String(Math.max(1, Math.round(heightPx * EMU_PER_PIXEL)));
 	walk(drawing, (node) => {
 		const isExtent = node.namespaceURI === WP_NS && node.localName === 'extent';
-		const isExt = node.namespaceURI === A_NS && node.localName === 'ext';
+		// Only a:xfrm/a:ext is a size; a:extLst/a:ext carries a uri and extension content.
+		const parent = node.parentNode as XmlElement | null;
+		const isExt =
+			node.namespaceURI === A_NS &&
+			node.localName === 'ext' &&
+			parent?.namespaceURI === A_NS &&
+			parent.localName === 'xfrm';
 		if (isExtent || isExt) {
 			node.setAttribute('cx', cx);
 			node.setAttribute('cy', cy);

@@ -3,6 +3,8 @@
 // sections, new section breaks (a paragraph-level w:sectPr copied from the following section,
 // as Word does) and removed breaks. Other section properties stay protected.
 import type { Block, SectionProperties } from './model.js';
+import { orderSectionProperties } from './element-order.js';
+import { orderParagraphProperties } from './tab-stops.js';
 import { children, first, makeW, WORD_NS, type XmlDocument, type XmlElement } from './xml.js';
 
 /** Section properties this writer can change; any other difference is rejected. */
@@ -206,10 +208,13 @@ export function applySectionEdits(
 			}
 			sectPr = following.cloneNode(true) as XmlElement;
 			pPr.appendChild(sectPr);
+			orderParagraphProperties(pPr);
 		}
 		assertWritable(section, previous);
-		if (!previous || JSON.stringify(previous) !== JSON.stringify(section))
+		if (!previous || JSON.stringify(previous) !== JSON.stringify(section)) {
 			writeSectionProperties(doc, sectPr, section);
+			orderSectionProperties(sectPr);
+		}
 		following = sectPr;
 	}
 }

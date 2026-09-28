@@ -21,7 +21,7 @@ function paraIdFor(id: string, index: number): string {
 
 function buildCommentsDocument(comments: Comment[]): XmlDocument {
 	const doc = parseXml(
-		`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:comments xmlns:w="${WORD_NS}" xmlns:w14="${W14_NS}"></w:comments>`,
+		`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:comments xmlns:w="${WORD_NS}" xmlns:w14="${W14_NS}" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="w14"></w:comments>`,
 	);
 	const root = doc.documentElement as XmlElement;
 	comments.forEach((comment, index) => {

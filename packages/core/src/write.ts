@@ -9,6 +9,7 @@ import { reconcileBookmarks } from './bookmarks.js';
 import { writeNumberingProperties } from './numbering-write.js';
 import { writeTable as writeTableContent } from './write-table.js';
 import { buildNewTableProperties } from './table-defaults.js';
+import { orderSectionProperties } from './element-order.js';
 import { applySectionEdits } from './write-sections.js';
 import { writeParagraphMarkRevision } from './write-revisions.js';
 import { runHasUnknownProperties } from './write-run-validation.js';
@@ -299,7 +300,7 @@ export function applyModel(
 	let size = first(section, 'pgSz');
 	if (!size) {
 		size = makeW(doc, 'pgSz');
-		section.insertBefore(size, section.firstChild);
+		section.appendChild(size);
 	}
 	setAttribute(size, 'w', twips(model.page.width));
 	setAttribute(size, 'h', twips(model.page.height));
@@ -311,8 +312,13 @@ export function applyModel(
 	for (const side of ['Top', 'Right', 'Bottom', 'Left'] as const)
 		setAttribute(margins, side.toLowerCase(), twips(model.page[`margin${side}`]));
 	// CT_PageMar requires header, footer and gutter; keep a source's values, else Word's defaults.
-	for (const [name, fallback] of [['header', '720'], ['footer', '720'], ['gutter', '0']] as const)
+	for (const [name, fallback] of [
+		['header', '720'],
+		['footer', '720'],
+		['gutter', '0'],
+	] as const)
 		if (!margins.getAttributeNS(WORD_NS, name)) setAttribute(margins, name, fallback);
+	orderSectionProperties(section);
 	if (model.sections) applySectionEdits(doc, body, model.blocks, model.sections, baseSections);
 	return { newRelationships: allocator.newRelationships };
 }

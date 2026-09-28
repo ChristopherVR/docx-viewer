@@ -66,3 +66,34 @@ export function orderChildren(parent: XmlElement, order: readonly string[]): voi
 	if (sorted.every((entry, index) => entry.element === elements[index])) return;
 	for (const { element } of sorted) parent.appendChild(element);
 }
+
+/** `CT_SectPr` child order (ECMA-376 §17.6.17); header/footer references come first. */
+export const SECTPR_ORDER = [
+	'headerReference',
+	'footerReference',
+	'footnotePr',
+	'endnotePr',
+	'type',
+	'pgSz',
+	'pgMar',
+	'paperSrc',
+	'pgBorders',
+	'lnNumType',
+	'pgNumType',
+	'cols',
+	'formProt',
+	'vAlign',
+	'noEndnote',
+	'titlePg',
+	'textDirection',
+	'bidi',
+	'rtlGutter',
+	'docGrid',
+	'printerSettings',
+	'sectPrChange',
+];
+
+/** Sorts `w:sectPr` children into schema order. */
+export function orderSectionProperties(sectPr: XmlElement): void {
+	orderChildren(sectPr, SECTPR_ORDER);
+}

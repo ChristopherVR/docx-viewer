@@ -29,9 +29,19 @@ function valueElement(doc: XmlDocument, local: string, value: string): XmlElemen
 function buildLevelElement(doc: XmlDocument, def: NumberingLevelDefinition): XmlElement {
 	const lvl = makeW(doc, 'lvl');
 	setAttribute(lvl, 'ilvl', String(def.level));
+	// CT_Lvl order: start, numFmt, lvlRestart, pStyle, isLgl, suff, lvlText, lvlPicBulletId, legacy, lvlJc, pPr, rPr.
 	lvl.appendChild(valueElement(doc, 'start', String(def.start)));
 	lvl.appendChild(valueElement(doc, 'numFmt', def.numFmt));
+	if (def.lvlRestart !== undefined)
+		lvl.appendChild(valueElement(doc, 'lvlRestart', String(def.lvlRestart)));
 	if (def.isLgl) lvl.appendChild(makeW(doc, 'isLgl'));
+	lvl.appendChild(
+		valueElement(
+			doc,
+			'suff',
+			def.suffix === 'space' ? 'space' : def.suffix === 'none' ? 'nothing' : 'tab',
+		),
+	);
 	lvl.appendChild(valueElement(doc, 'lvlText', def.lvlText));
 	if (def.lvlJc) lvl.appendChild(valueElement(doc, 'lvlJc', def.lvlJc));
 	if (
@@ -48,15 +58,6 @@ function buildLevelElement(doc: XmlDocument, def: NumberingLevelDefinition): Xml
 		pPr.appendChild(ind);
 		lvl.appendChild(pPr);
 	}
-	lvl.appendChild(
-		valueElement(
-			doc,
-			'suff',
-			def.suffix === 'space' ? 'space' : def.suffix === 'none' ? 'nothing' : 'tab',
-		),
-	);
-	if (def.lvlRestart !== undefined)
-		lvl.appendChild(valueElement(doc, 'lvlRestart', String(def.lvlRestart)));
 	return lvl;
 }
 
@@ -124,10 +125,11 @@ export async function applyNumberingCatalog(
 		? parseXml(await existingFile.async('string'))
 		: parseXml(`<w:numbering xmlns:w="${WORD_NS}"/>`);
 	const root = doc.documentElement;
-	const firstNum = children(root, 'num')[0] ?? null;
+	const cleanup = children(root, 'numIdMacAtCleanup')[0] ?? null;
+	// CT_Numbering: abstractNum* precede num*, which precede numIdMacAtCleanup.
+	const firstNum = children(root, 'num')[0] ?? cleanup;
 	for (const id of newAbstractIds)
 		root.insertBefore(buildAbstractNumElement(doc, next.abstractNums[id]), firstNum);
-	const cleanup = children(root, 'numIdMacAtCleanup')[0] ?? null;
 	for (const id of newNumIds) root.insertBefore(buildNumElement(doc, next.nums[id]), cleanup);
 	zip.file('word/numbering.xml', buildXml(doc));
 	if (!existingFile) await registerNumberingPart(zip);
