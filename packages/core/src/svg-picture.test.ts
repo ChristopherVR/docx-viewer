@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, saveDocx, createDocument, type Paragraph } from './index.js';
+import { at } from './test-support/access.js';
 
 const SVG = new TextEncoder().encode(
 	'<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10"/></svg>',
@@ -43,7 +44,7 @@ describe('SVG pictures', () => {
 			'Extension="svg" ContentType="image/svg+xml"',
 		);
 		const reloaded = await loadDocx(saved);
-		const image = (reloaded.model.blocks[0] as Paragraph).runs[0].image;
+		const image = at((at(reloaded.model.blocks, 0) as Paragraph).runs, 0).image;
 		expect(image).toMatchObject({
 			partName: 'word/media/logo.png',
 			svgPartName: 'word/media/logo.svg',

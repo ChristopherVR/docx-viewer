@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, type Paragraph } from './index.js';
+import { at, expectParagraph } from './test-support/access.js';
 
 const w = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
@@ -20,10 +21,10 @@ async function fixture(): Promise<Uint8Array> {
 describe('footnote editing', () => {
 	it('models the note number mark and rewrites only the edited note', async () => {
 		const loaded = await loadDocx(await fixture());
-		const note = loaded.model.footnotes![0];
-		const paragraph = note.blocks[0] as Paragraph;
+		const note = at(loaded.model.footnotes, 0);
+		const paragraph = expectParagraph(note.blocks[0]);
 		expect(paragraph.runs[0]).toMatchObject({ text: '', noteMark: 'footnote' });
-		paragraph.runs[1].text = ' Source: 2026 survey.';
+		at(paragraph.runs, 1).text = ' Source: 2026 survey.';
 		const saved = await loaded.save(loaded.model);
 		const xml = await (await JSZip.loadAsync(saved)).file('word/footnotes.xml')!.async('string');
 		expect(xml).toContain('2026 survey.');
@@ -31,7 +32,7 @@ describe('footnote editing', () => {
 		expect(xml).toContain('<w:separator/>');
 		expect(xml).toContain('<w:continuationSeparator/>');
 		const reloaded = await loadDocx(saved);
-		expect((reloaded.model.footnotes![0].blocks[0] as Paragraph).runs[1].text).toBe(
+		expect(at(expectParagraph(at(reloaded.model.footnotes, 0).blocks[0]).runs, 1).text).toBe(
 			' Source: 2026 survey.',
 		);
 	});

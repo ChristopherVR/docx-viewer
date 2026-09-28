@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, type Paragraph } from './index.js';
+import { at } from './test-support/access.js';
 
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
@@ -62,7 +63,7 @@ describe('inline content across features', () => {
 			text: ' added',
 			revision: { kind: 'insert', author: 'Ann' },
 		});
-		paragraph.runs[2].text = ' changed tail';
+		at(paragraph.runs, 2).text = ' changed tail';
 		const { document } = await partsOf(await loaded.save(loaded.model));
 		expect(document).toMatch(
 			/<w:hyperlink r:id="rId2"[^>]*><w:r><w:t[^>]*>Link<\/w:t><\/w:r><\/w:hyperlink>/,
@@ -80,10 +81,10 @@ describe('inline content across features', () => {
 		);
 		const paragraph = loaded.model.blocks[0] as Paragraph;
 		expect(paragraph.runs.map((run) => run.text)).toEqual(['Noted', ' text']);
-		paragraph.runs[1].text = ' edited';
+		at(paragraph.runs, 1).text = ' edited';
 		const once = await loaded.save(loaded.model);
 		const reloaded = await loadDocx(once);
-		(reloaded.model.blocks[0] as Paragraph).runs[1].text = ' edited again';
+		at((at(reloaded.model.blocks, 0) as Paragraph).runs, 1).text = ' edited again';
 		const { document } = await partsOf(await reloaded.save(reloaded.model));
 		expect(document.match(/<w:commentReference/g)).toHaveLength(1);
 		expect(document).toContain('edited again');

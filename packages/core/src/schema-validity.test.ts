@@ -17,6 +17,7 @@ import {
 	schemaErrors,
 	withoutExtensions,
 } from './test-support/schema-validation.js';
+import { at, expectParagraph, must } from './test-support/access.js';
 
 function kitchenSink(): DocumentModel {
 	const model = createDocument();
@@ -181,7 +182,7 @@ const fixtures: Fixture[] = [
 			const { catalog, numId } = ensureListDefinition(model.numberingCatalog, 'decimal');
 			model.numberingCatalog = catalog;
 			const plain = paragraphs(model).filter((paragraph) => !paragraph.style);
-			plain[0].runs[0].text = 'Edited text';
+			at(at(plain, 0).runs, 0).text = 'Edited text';
 			plain.at(-1)!.numbering = { numId, level: 0 };
 			return loaded.save(model);
 		},
@@ -204,7 +205,10 @@ const fixtures: Fixture[] = [
 			const loaded = await loadDocx(bytes);
 			const model = clone(loaded.model);
 			for (const section of model.sections ?? [])
-				(section.headers!.default!.blocks[0] as Paragraph).runs[0].text = 'Final';
+				at(
+					expectParagraph(must(section.headers?.default, 'default header').blocks[0]).runs,
+					0,
+				).text = 'Final';
 			return loaded.save(model);
 		},
 		expected: ['word/document.xml', 'word/header1.xml', 'word/footer1.xml'],
@@ -220,7 +224,7 @@ const fixtures: Fixture[] = [
 			});
 			const loaded = await loadDocx(bytes);
 			const model = clone(loaded.model);
-			(model.endnotes![0].blocks[0] as Paragraph).runs[1].text = ' Edited source.';
+			at(expectParagraph(at(model.endnotes, 0).blocks[0]).runs, 1).text = ' Edited source.';
 			model.endnotes!.push({
 				id: '3',
 				blocks: [
@@ -231,7 +235,7 @@ const fixtures: Fixture[] = [
 					},
 				],
 			});
-			paragraphs(model)[0].runs.push({ text: '', noteReference: { kind: 'endnote', id: '3' } });
+			at(paragraphs(model), 0).runs.push({ text: '', noteReference: { kind: 'endnote', id: '3' } });
 			return loaded.save(model);
 		},
 		expected: ['word/document.xml', 'word/endnotes.xml'],
@@ -266,9 +270,10 @@ const fixtures: Fixture[] = [
 			);
 			const loaded = await loadDocx(bytes);
 			const model = clone(loaded.model);
-			const [paragraph] = paragraphs(model);
-			paragraph.runs[0].image!.widthPx = 80;
-			paragraph.runs[0].image!.heightPx = 20;
+			const paragraph = at(paragraphs(model), 0);
+			const image = must(at(paragraph.runs, 0).image, 'inline image');
+			image.widthPx = 80;
+			image.heightPx = 20;
 			paragraph.runs.push({
 				text: '',
 				image: {
@@ -346,9 +351,9 @@ const fixtures: Fixture[] = [
 			});
 			const loaded = await loadDocx(bytes);
 			const model = clone(loaded.model);
-			const [last] = model.sections!;
+			const last = at(model.sections, 0);
 			model.sections = [
-				{ ...structuredClone(last), endsAtBlockId: model.blocks[0].id },
+				{ ...structuredClone(last), endsAtBlockId: at(model.blocks, 0).id },
 				{ ...last, type: 'continuous', columns: { count: 2, spacingTwips: 720, equalWidth: true } },
 			];
 			return loaded.save(model);

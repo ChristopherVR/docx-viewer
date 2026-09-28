@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx } from './parse.js';
 import type { Paragraph } from './model.js';
+import { expectParagraph } from './test-support/access.js';
 
 const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
 
@@ -14,7 +15,8 @@ describe('revision ids', () => {
 		);
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
 		const revision = { kind: 'insert' as const, author: 'Ada', id: 'dve-rev-abc-1' };
-		const [first, second] = loaded.model.blocks as Paragraph[];
+		const first = expectParagraph(loaded.model.blocks[0]);
+		const second = expectParagraph(loaded.model.blocks[1]);
 		const blocks = [
 			{ ...first, runs: [...first.runs, { text: ' new', revision }] },
 			{

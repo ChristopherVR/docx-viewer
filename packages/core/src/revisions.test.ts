@@ -7,6 +7,7 @@ import {
 	rejectRevision,
 	acceptAllRevisions,
 } from './revision-commands.js';
+import { at, expectParagraph } from './test-support/access.js';
 
 const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
 
@@ -29,8 +30,7 @@ describe('tracked-change revisions', () => {
 					'<w:r><w:t>world</w:t></w:r></w:p>',
 			),
 		);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('expected paragraph');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		expect(paragraph.runs).toMatchObject([
 			{ text: 'Hello ' },
 			{ text: 'brave ', revision: { kind: 'insert', author: 'Ada', id: '1' } },
@@ -47,12 +47,11 @@ describe('tracked-change revisions', () => {
 					'<w:r><w:rPr><w:rPrChange w:id="11" w:author="Ada"><w:rPr/></w:rPrChange></w:rPr><w:t>Reformatted</w:t></w:r></w:p>',
 			),
 		);
-		const [first, second] = loaded.model.blocks;
-		if (first.type !== 'paragraph' || second.type !== 'paragraph')
-			throw new Error('expected paragraphs');
+		const first = expectParagraph(loaded.model.blocks[0]);
+		const second = expectParagraph(loaded.model.blocks[1]);
 		expect(first.markRevision).toMatchObject({ kind: 'insert', author: 'Ada', id: '9' });
 		expect(second.formatRevision).toMatchObject({ kind: 'paragraphChange', id: '10' });
-		expect(second.runs[0].revision).toMatchObject({ kind: 'formatChange', id: '11' });
+		expect(at(second.runs, 0).revision).toMatchObject({ kind: 'formatChange', id: '11' });
 		expect(loaded.model.warnings.some((w) => w.includes('Formatting-change revisions'))).toBe(true);
 		expect(loaded.model.warnings.some((w) => w.includes('Comments and tracked review'))).toBe(
 			false,
@@ -66,10 +65,9 @@ describe('tracked-change revisions', () => {
 					'<w:moveTo w:id="4" w:author="A"><w:r><w:t>moved </w:t></w:r></w:moveTo><w:r><w:t>text</w:t></w:r></w:p>',
 			),
 		);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('expected paragraph');
-		expect(paragraph.runs[0].revision?.kind).toBe('moveFrom');
-		expect(paragraph.runs[1].revision?.kind).toBe('moveTo');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
+		expect(at(paragraph.runs, 0).revision?.kind).toBe('moveFrom');
+		expect(at(paragraph.runs, 1).revision?.kind).toBe('moveTo');
 		expect(loaded.model.warnings.some((w) => w.includes('linked by its move name'))).toBe(true);
 	});
 
@@ -80,9 +78,8 @@ describe('tracked-change revisions', () => {
 		const loaded = await loadDocx(bytes);
 		const revisions = listRevisions(loaded.model);
 		expect(revisions).toHaveLength(1);
-		const accepted = acceptRevision(loaded.model, revisions[0].id);
-		const acceptedParagraph = accepted.blocks[0];
-		if (acceptedParagraph.type !== 'paragraph') throw new Error('expected paragraph');
+		const accepted = acceptRevision(loaded.model, at(revisions, 0).id);
+		const acceptedParagraph = expectParagraph(accepted.blocks[0]);
 		expect(acceptedParagraph.runs.map((r) => r.text).join('')).toBe('Hello brave world');
 		expect(acceptedParagraph.runs.every((r) => !r.revision)).toBe(true);
 		const savedAccepted = await JSZip.loadAsync(await loaded.save(accepted));
@@ -90,9 +87,8 @@ describe('tracked-change revisions', () => {
 		expect(acceptedXml).not.toContain('<w:ins');
 		expect(acceptedXml).toContain('brave');
 
-		const rejected = rejectRevision(loaded.model, revisions[0].id);
-		const rejectedParagraph = rejected.blocks[0];
-		if (rejectedParagraph.type !== 'paragraph') throw new Error('expected paragraph');
+		const rejected = rejectRevision(loaded.model, at(revisions, 0).id);
+		const rejectedParagraph = expectParagraph(rejected.blocks[0]);
 		expect(rejectedParagraph.runs.map((r) => r.text).join('')).toBe('Hello world');
 		const savedRejected = await JSZip.loadAsync(await loaded.save(rejected));
 		const rejectedXml = (await savedRejected.file('word/document.xml')?.async('string')) ?? '';
@@ -104,7 +100,7 @@ describe('tracked-change revisions', () => {
 			'<w:p><w:r><w:t>Hello </w:t></w:r><w:del w:id="2" w:author="Grace"><w:r><w:delText>old </w:delText></w:r></w:del><w:r><w:t>world</w:t></w:r></w:p>',
 		);
 		const loaded = await loadDocx(bytes);
-		const [revision] = listRevisions(loaded.model);
+		const revision = at(listRevisions(loaded.model), 0);
 		const accepted = acceptRevision(loaded.model, revision.id);
 		expect((accepted.blocks[0] as any).runs.map((r: any) => r.text).join('')).toBe('Hello world');
 		const rejected = rejectRevision(loaded.model, revision.id);
@@ -126,10 +122,9 @@ describe('tracked-change revisions', () => {
 			'<w:p><w:r><w:t>Hello </w:t></w:r><w:del w:id="2" w:author="Grace"><w:r><w:delText>old </w:delText></w:r></w:del><w:r><w:t>world</w:t></w:r></w:p>',
 		);
 		const loaded = await loadDocx(bytes);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('expected paragraph');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		const next = structuredClone(loaded.model);
-		(next.blocks[0] as typeof paragraph).runs[0].text = 'Hi ';
+		at((at(next.blocks, 0) as typeof paragraph).runs, 0).text = 'Hi ';
 		const saved = await JSZip.loadAsync(await loaded.save(next));
 		const xml = (await saved.file('word/document.xml')?.async('string')) ?? '';
 		expect(xml).toContain('<w:del ');
@@ -152,7 +147,7 @@ describe('tracked-change revisions', () => {
 				'<w:p><w:pPr><w:rPr><w:del w:id="5" w:author="A"/></w:rPr></w:pPr><w:r><w:t>Last para</w:t></w:r></w:p>',
 			),
 		);
-		const [revision] = listRevisions(loaded.model);
+		const revision = at(listRevisions(loaded.model), 0);
 		expect(() => acceptRevision(loaded.model, revision.id)).toThrow(/merging/);
 	});
 });

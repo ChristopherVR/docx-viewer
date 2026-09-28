@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, type Paragraph } from './index.js';
+import { at } from './test-support/access.js';
 
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
@@ -38,9 +39,9 @@ describe('editable fields', () => {
 		const loaded = await loadDocx(await docx(complexField));
 		const paragraph = loaded.model.blocks[0] as Paragraph;
 		const runs = paragraph.runs.map((run) => ({ ...run }));
-		runs[0].text = 'Compare ';
-		runs[4].text = 'Figure 2';
-		runs[6].text = ' below.';
+		at(runs, 0).text = 'Compare ';
+		at(runs, 4).text = 'Figure 2';
+		at(runs, 6).text = ' below.';
 		const next = { ...loaded.model, blocks: [{ ...paragraph, runs }] };
 		const xml = await documentXml(await loaded.save(next));
 		expect(xml).toMatch(

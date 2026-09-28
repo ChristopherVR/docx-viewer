@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, parseTableStyleCatalog, resolveTableStyleFormatting } from './index.js';
+import { at, expectTable, must } from './test-support/access.js';
 
 const ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
@@ -18,8 +19,7 @@ async function loadTable(xml = mergedTableXml, styles?: string) {
 	zip.file('word/document.xml', xml);
 	if (styles) zip.file('word/styles.xml', styles);
 	const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
-	const table = loaded.model.blocks[0];
-	if (table.type !== 'table') throw new Error('Expected a table fixture');
+	const table = expectTable(loaded.model.blocks[0]);
 	return { loaded, table };
 }
 
@@ -41,7 +41,13 @@ describe('table grid, merge, border, shading and style fidelity', () => {
 
 	it('parses gridSpan, vMerge restart/continue, cell width, vAlign, shading and margins', async () => {
 		const { table } = await loadTable();
-		const [[a, b], [c, d]] = table.rows;
+		const [rowOne, rowTwo] = table.rows;
+		const firstRow = must(rowOne, 'first row');
+		const secondRow = must(rowTwo, 'second row');
+		const a = at(firstRow, 0);
+		const b = at(firstRow, 1);
+		const c = at(secondRow, 0);
+		const d = at(secondRow, 1);
 		expect(a).toMatchObject({
 			widthTwips: 1000,
 			verticalMerge: 'restart',
@@ -56,9 +62,9 @@ describe('table grid, merge, border, shading and style fidelity', () => {
 
 	it('surfaces a read-only text preview for a nested table instead of dropping it', async () => {
 		const { table, loaded } = await loadTable();
-		const nested = table.rows[1][1].nestedTables;
+		const nested = at(at(table.rows, 1), 1).nestedTables;
 		expect(nested).toHaveLength(1);
-		expect(nested?.[0].rows).toEqual([[{ text: 'Nested' }]]);
+		expect(at(nested, 0).rows).toEqual([[{ text: 'Nested' }]]);
 		expect(loaded.model.warnings.join(' ')).toContain(
 			'Nested tables render as a read-only text preview',
 		);
@@ -69,8 +75,7 @@ describe('table grid, merge, border, shading and style fidelity', () => {
 		zip.file('word/document.xml', mergedTableXml);
 		const original = await zip.generateAsync({ type: 'uint8array' });
 		const loaded = await loadDocx(original);
-		const table = loaded.model.blocks[0];
-		if (table.type !== 'table') throw new Error('Expected a table fixture');
+		const table = expectTable(loaded.model.blocks[0]);
 		expect(table.structureEditable).toBe(false);
 		expect(await loaded.save()).toEqual(original);
 	});
@@ -83,7 +88,7 @@ describe('table grid, merge, border, shading and style fidelity', () => {
 
 	it('rejects silently dropping a direct edit to cell-level descriptive properties', async () => {
 		const { table, loaded } = await loadTable();
-		table.rows[0][0].shadingFill = '#000000';
+		at(at(table.rows, 0), 0).shadingFill = '#000000';
 		await expect(loaded.save()).rejects.toThrow('Cannot edit table cell width, merge');
 	});
 
@@ -94,9 +99,10 @@ describe('table grid, merge, border, shading and style fidelity', () => {
 <w:tblStylePr w:type="band1Horz"><w:tcPr><w:shd w:fill="D9E2F3"/></w:tcPr></w:tblStylePr>
 </w:style></w:styles>`;
 		const catalog = parseTableStyleCatalog(stylesXml);
-		expect(catalog.styles.Grid.conditional.firstRow?.shadingFill).toBe('#4472C4');
-		expect(catalog.styles.Grid.conditional.firstRow?.run).toMatchObject({ bold: true });
-		expect(catalog.styles.Grid.borders?.top).toMatchObject({ style: 'single' });
+		const grid = must(catalog.styles.Grid, 'Grid style');
+		expect(grid.conditional.firstRow?.shadingFill).toBe('#4472C4');
+		expect(grid.conditional.firstRow?.run).toMatchObject({ bold: true });
+		expect(grid.borders?.top).toMatchObject({ style: 'single' });
 		// Row 0 is both banded (band1Horz) and firstRow; firstRow has higher precedence.
 		const firstRow = resolveTableStyleFormatting('Grid', catalog, { firstRow: true }, 0, 3, 0, 2);
 		expect(firstRow.shadingFill).toBe('#4472C4');

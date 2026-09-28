@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { createDocument, loadDocx, saveDocx } from './index.js';
+import { must } from './test-support/access.js';
 
 describe('new document styles', () => {
 	it("gives new documents Word's modern defaults and saves them in styles.xml", async () => {
@@ -31,7 +32,7 @@ describe('new document styles', () => {
 
 	it('still refuses changed style catalogs in the standalone writer', async () => {
 		const model = createDocument();
-		model.paragraphStyles!.styles.Normal.formatting.spacingAfterTwips = 0;
+		must(model.paragraphStyles?.styles.Normal, 'Normal style').formatting.spacingAfterTwips = 0;
 		await expect(saveDocx(model)).rejects.toThrow(/built-in default styles/);
 	});
 });

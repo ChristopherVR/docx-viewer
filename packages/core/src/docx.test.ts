@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, saveDocx } from './index.js';
+import { at, expectParagraph, expectTable } from './test-support/access.js';
 
 const sourceXml = `<?xml version="1.0"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:pPr><w:keepNext/><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t>Hello</w:t></w:r><w:r><w:t> world</w:t></w:r></w:p><w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>`;
 
@@ -31,10 +32,8 @@ describe('DOCX core', () => {
 			'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:pPr><w:keepNext/><w:spacing w:before="120" w:after="240" w:line="360" w:lineRule="exact" w:beforeAutospacing="1"/><w:ind w:left="720" w:right="360" w:firstLine="240"/></w:pPr><w:r><w:t>Styled</w:t></w:r></w:p><w:p><w:pPr><w:keepLines/><w:spacing w:after="120"/><w:ind w:start="480"/></w:pPr><w:r><w:t>Untouched</w:t></w:r></w:p><w:sectPr/></w:body></w:document>',
 		);
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
-		const styled = loaded.model.blocks[0];
-		const untouched = loaded.model.blocks[1];
-		if (styled.type !== 'paragraph' || untouched.type !== 'paragraph')
-			throw new Error('Expected paragraph fixtures');
+		const styled = expectParagraph(loaded.model.blocks[0]);
+		const untouched = expectParagraph(loaded.model.blocks[1]);
 		expect(styled).toMatchObject({
 			spacingBeforeTwips: 120,
 			spacingAfterTwips: 240,
@@ -58,7 +57,7 @@ describe('DOCX core', () => {
 		expect(xml).toContain('w:keepNext');
 		expect(xml).toContain('w:start="480"');
 		expect(xml).toContain('w:keepLines');
-		expect(untouched.runs[0].text).toBe('Untouched');
+		expect(at(untouched.runs, 0).text).toBe('Untouched');
 		expect(untouched.indentStartTwips).toBe(480);
 		const reopened = await loadDocx(await saved.generateAsync({ type: 'uint8array' }));
 		expect(reopened.model.blocks[0]).toMatchObject({
@@ -75,9 +74,8 @@ describe('DOCX core', () => {
 		const bytes = await fixture();
 		const loaded = await loadDocx(bytes);
 		expect(await loaded.save()).toEqual(bytes);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
-		paragraph.runs[0].text = 'Changed';
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
+		at(paragraph.runs, 0).text = 'Changed';
 		const zip = await JSZip.loadAsync(await loaded.save());
 		expect(await zip.file('word/styles.xml')?.async('string')).toContain('custom');
 		expect(await zip.file('customXml/item1.xml')?.async('string')).toContain('retain me');
@@ -87,8 +85,7 @@ describe('DOCX core', () => {
 		expect(xml).toContain('w:b');
 		expect(xml).not.toContain('undefined');
 		const reopened = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
-		const savedParagraph = reopened.model.blocks[0];
-		if (savedParagraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		const savedParagraph = expectParagraph(reopened.model.blocks[0]);
 		expect(savedParagraph.runs.map((run) => run.text).join('')).toBe('Changed world');
 	});
 
@@ -124,12 +121,10 @@ describe('DOCX core', () => {
 			'table',
 			'paragraph',
 		]);
-		const table = loaded.model.blocks[1];
-		if (table.type !== 'table') throw new Error('Expected a table fixture');
-		expect(table.rows[0][0].paragraphs[0].runs[0].text).toBe('Cell');
-		const last = loaded.model.blocks[2];
-		if (last.type !== 'paragraph') throw new Error('Expected final paragraph');
-		last.runs[0].text = 'Edited';
+		const table = expectTable(loaded.model.blocks[1]);
+		expect(at(at(at(at(table.rows, 0), 0).paragraphs, 0).runs, 0).text).toBe('Cell');
+		const last = expectParagraph(loaded.model.blocks[2]);
+		at(last.runs, 0).text = 'Edited';
 		const saved = await JSZip.loadAsync(await loaded.save());
 		const xml = (await saved.file('word/document.xml')?.async('string')) ?? '';
 		expect(xml.indexOf('<w:p')).toBeLessThan(xml.indexOf('<w:tbl'));
@@ -147,13 +142,11 @@ describe('DOCX core', () => {
 			'<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="https://example.com/" TargetMode="External"/></Relationships>',
 		);
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
-		const plain = loaded.model.blocks[1];
-		if (plain.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
-		plain.runs[0].text = 'Changed';
-		const linked = loaded.model.blocks[0];
-		if (linked.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		const plain = expectParagraph(loaded.model.blocks[1]);
+		at(plain.runs, 0).text = 'Changed';
+		const linked = expectParagraph(loaded.model.blocks[0]);
 		expect(linked.runs[0]).toMatchObject({ text: 'Link', link: { href: 'https://example.com/' } });
-		linked.runs[0].text = 'Changed link';
+		at(linked.runs, 0).text = 'Changed link';
 		const output = await JSZip.loadAsync(await loaded.save());
 		const xml = (await output.file('word/document.xml')?.async('string')) ?? '';
 		expect(xml).toContain('<w:hyperlink');
@@ -161,8 +154,7 @@ describe('DOCX core', () => {
 		const rels = (await output.file('word/_rels/document.xml.rels')?.async('string')) ?? '';
 		expect(rels.match(/rId5/g)).toHaveLength(1);
 		const reopened = await loadDocx(await output.generateAsync({ type: 'uint8array' }));
-		const reopenedLinked = reopened.model.blocks[0];
-		if (reopenedLinked.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		const reopenedLinked = expectParagraph(reopened.model.blocks[0]);
 		expect(reopenedLinked.runs[0]).toMatchObject({
 			text: 'Changed link',
 			link: { href: 'https://example.com/' },
@@ -176,9 +168,8 @@ describe('DOCX core', () => {
 			'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Plain</w:t></w:r></w:p><w:sectPr/></w:body></w:document>',
 		);
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
-		paragraph.runs[0].link = { href: 'https://example.org/' };
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
+		at(paragraph.runs, 0).link = { href: 'https://example.org/' };
 		const saved = await JSZip.loadAsync(await loaded.save());
 		const xml = (await saved.file('word/document.xml')?.async('string')) ?? '';
 		expect(xml).toContain('<w:hyperlink');
@@ -186,13 +177,12 @@ describe('DOCX core', () => {
 		expect(rels).toContain('TargetMode="External"');
 		expect(rels).toContain('https://example.org/');
 		const reopened = await loadDocx(await saved.generateAsync({ type: 'uint8array' }));
-		const reopenedParagraph = reopened.model.blocks[0];
-		if (reopenedParagraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		const reopenedParagraph = expectParagraph(reopened.model.blocks[0]);
 		expect(reopenedParagraph.runs[0]).toMatchObject({
 			text: 'Plain',
 			link: { href: 'https://example.org/' },
 		});
-		delete reopenedParagraph.runs[0].link;
+		delete at(reopenedParagraph.runs, 0).link;
 		const unwrapped = await JSZip.loadAsync(await reopened.save());
 		expect(await unwrapped.file('word/document.xml')?.async('string')).not.toContain(
 			'<w:hyperlink',
@@ -228,21 +218,18 @@ describe('DOCX core', () => {
 			'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>A</w:t><w:tab/><w:t>B</w:t><w:br/><w:t>C</w:t></w:r></w:p><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Bold</w:t></w:r></w:p><w:sectPr/></w:body></w:document>',
 		);
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
-		const first = loaded.model.blocks[0];
-		const second = loaded.model.blocks[1];
-		if (first.type !== 'paragraph' || second.type !== 'paragraph')
-			throw new Error('Expected paragraph fixtures');
-		expect(first.runs[0].text).toBe('A\tB\nC');
-		first.runs[0].text = 'X\tY\nZ';
+		const first = expectParagraph(loaded.model.blocks[0]);
+		const second = expectParagraph(loaded.model.blocks[1]);
+		expect(at(first.runs, 0).text).toBe('A\tB\nC');
+		at(first.runs, 0).text = 'X\tY\nZ';
 		// Removing the property drops `w:b`; `bold: false` would write an explicit off instead.
-		delete second.runs[0].bold;
+		delete at(second.runs, 0).bold;
 		const output = await JSZip.loadAsync(await loaded.save());
 		const xml = (await output.file('word/document.xml')?.async('string')) ?? '';
 		expect(xml).not.toMatch(/<w:b(?:\s|\/>|>)/);
 		const reopened = await loadDocx(await output.generateAsync({ type: 'uint8array' }));
-		const savedFirst = reopened.model.blocks[0];
-		if (savedFirst.type !== 'paragraph') throw new Error('Expected a paragraph');
-		expect(savedFirst.runs[0].text).toBe('X\tY\nZ');
+		const savedFirst = expectParagraph(reopened.model.blocks[0]);
+		expect(at(savedFirst.runs, 0).text).toBe('X\tY\nZ');
 	});
 
 	it('roundtrips direct strike, highlight and vertical alignment and clears edited values', async () => {
@@ -252,19 +239,18 @@ describe('DOCX core', () => {
 			'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:rPr><w:strike/><w:highlight w:val="yellow"/><w:vertAlign w:val="superscript"/><w:lang w:val="en-US"/></w:rPr><w:t>Formatted</w:t></w:r><w:r><w:t> Plain</w:t></w:r></w:p><w:sectPr/></w:body></w:document>',
 		);
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		expect(paragraph.runs[0]).toMatchObject({
 			text: 'Formatted',
 			strike: true,
 			highlight: 'yellow',
 			verticalAlign: 'superscript',
 		});
-		delete paragraph.runs[0].strike;
-		delete paragraph.runs[0].highlight;
-		paragraph.runs[0].verticalAlign = 'subscript';
-		paragraph.runs[1].strike = true;
-		paragraph.runs[1].highlight = 'cyan';
+		delete at(paragraph.runs, 0).strike;
+		delete at(paragraph.runs, 0).highlight;
+		at(paragraph.runs, 0).verticalAlign = 'subscript';
+		at(paragraph.runs, 1).strike = true;
+		at(paragraph.runs, 1).highlight = 'cyan';
 		const saved = await JSZip.loadAsync(await loaded.save());
 		const xml = (await saved.file('word/document.xml')?.async('string')) ?? '';
 		expect(xml.match(/<w:strike(?:\s|\/>|>)/g)).toHaveLength(1);
@@ -273,11 +259,10 @@ describe('DOCX core', () => {
 		expect(xml).toContain('<w:highlight w:val="cyan"');
 		expect(xml).toContain('<w:lang w:val="en-US"');
 		const reopened = await loadDocx(await saved.generateAsync({ type: 'uint8array' }));
-		const savedParagraph = reopened.model.blocks[0];
-		if (savedParagraph.type !== 'paragraph') throw new Error('Expected a paragraph');
+		const savedParagraph = expectParagraph(reopened.model.blocks[0]);
 		expect(savedParagraph.runs[0]).toMatchObject({ text: 'Formatted', verticalAlign: 'subscript' });
-		expect(savedParagraph.runs[0].strike).toBeUndefined();
-		expect(savedParagraph.runs[0].highlight).toBeUndefined();
+		expect(at(savedParagraph.runs, 0).strike).toBeUndefined();
+		expect(at(savedParagraph.runs, 0).highlight).toBeUndefined();
 		expect(savedParagraph.runs[1]).toMatchObject({ strike: true, highlight: 'cyan' });
 	});
 
@@ -310,11 +295,10 @@ describe('DOCX core', () => {
 			marginBottom: 0,
 			marginLeft: 0,
 		});
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected a paragraph');
-		paragraph.runs[0].text = 'First save';
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
+		at(paragraph.runs, 0).text = 'First save';
 		const firstSave = await loaded.save();
-		paragraph.runs[0].text = 'Second save';
+		at(paragraph.runs, 0).text = 'Second save';
 		const secondSave = await loaded.save();
 		const firstZip = await JSZip.loadAsync(firstSave);
 		const secondZip = await JSZip.loadAsync(secondSave);

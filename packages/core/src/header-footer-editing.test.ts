@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, type DocumentModel, type Paragraph } from './index.js';
+import { at, expectParagraph, must } from './test-support/access.js';
 
 const w = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const r = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
@@ -29,18 +30,24 @@ async function fixture(): Promise<Uint8Array> {
 }
 
 /** Applies `edit` to every section's default header (they all reference one part). */
+/** The first paragraph of a section's default header. */
+function headerParagraph(model: DocumentModel, sectionIndex: number): Paragraph {
+	const header = must(at(model.sections, sectionIndex).headers?.default, 'default header');
+	return expectParagraph(header.blocks[0]);
+}
+
 function editHeader(model: DocumentModel, edit: (paragraph: Paragraph) => void) {
 	for (const section of model.sections ?? [])
-		edit(section.headers!.default!.blocks[0] as Paragraph);
+		edit(expectParagraph(must(section.headers?.default, 'default header').blocks[0]));
 }
 
 describe('header and footer editing', () => {
 	it('rewrites only the edited header part and keeps its formatting', async () => {
 		const original = await fixture();
 		const loaded = await loadDocx(original);
-		expect(loaded.model.sections?.[0].headers?.default?.partName).toBe('word/header1.xml');
+		expect(at(loaded.model.sections, 0).headers?.default?.partName).toBe('word/header1.xml');
 		editHeader(loaded.model, (paragraph) => {
-			paragraph.runs[0].text = 'Final';
+			at(paragraph.runs, 0).text = 'Final';
 		});
 		const saved = await loaded.save(loaded.model);
 		const zip = await JSZip.loadAsync(saved);
@@ -53,7 +60,7 @@ describe('header and footer editing', () => {
 			await originalZip.file('word/footer1.xml')!.async('string'),
 		);
 		const reloaded = await loadDocx(saved);
-		const paragraph = reloaded.model.sections![1].headers!.default!.blocks[0] as Paragraph;
+		const paragraph = headerParagraph(reloaded.model, 1);
 		expect(paragraph.runs[0]).toMatchObject({ text: 'Final', bold: true });
 	});
 
@@ -61,7 +68,7 @@ describe('header and footer editing', () => {
 		const loaded = await loadDocx(await fixture());
 		// Editors work on cloned models, where the sections' copies of a shared part can diverge.
 		const model = JSON.parse(JSON.stringify(loaded.model)) as DocumentModel;
-		(model.sections![0].headers!.default!.blocks[0] as Paragraph).runs[0].text = 'Only one';
+		at(headerParagraph(model, 0).runs, 0).text = 'Only one';
 		await expect(loaded.save(model)).rejects.toThrow(/shared by several sections/);
 	});
 
@@ -81,7 +88,7 @@ describe('header and footer editing', () => {
 			'example.com',
 		);
 		const reloaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
-		const paragraph = reloaded.model.sections![0].headers!.default!.blocks[0] as Paragraph;
+		const paragraph = headerParagraph(reloaded.model, 0);
 		expect(paragraph.runs[0]).toMatchObject({ link: { href: 'https://example.com/' } });
 	});
 
@@ -97,8 +104,8 @@ describe('header and footer editing', () => {
 		);
 		zip.file('word/media/logo.png', new Uint8Array([137, 80, 78, 71]));
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
-		const paragraph = loaded.model.sections![0].headers!.default!.blocks[0] as Paragraph;
-		expect(paragraph.runs[0].image).toMatchObject({
+		const paragraph = headerParagraph(loaded.model, 0);
+		expect(at(paragraph.runs, 0).image).toMatchObject({
 			partName: 'word/media/logo.png',
 			widthPx: 100,
 			altText: 'Logo',
@@ -109,7 +116,7 @@ describe('header and footer editing', () => {
 	it('writes page size and orientation for one section and protects other properties', async () => {
 		const loaded = await loadDocx(await fixture());
 		const model = JSON.parse(JSON.stringify(loaded.model)) as DocumentModel;
-		Object.assign(model.sections![0], {
+		Object.assign(at(model.sections, 0), {
 			pageWidthTwips: 15840,
 			pageHeightTwips: 12240,
 			orientation: 'landscape',
@@ -121,13 +128,13 @@ describe('header and footer editing', () => {
 			/<w:pPr><w:sectPr>.*w:w="15840" w:h="12240" w:orient="landscape".*<w:cols w:num="2" w:space="360"\/>.*<\/w:sectPr><\/w:pPr>/,
 		);
 		const reloaded = await loadDocx(saved);
-		expect(reloaded.model.sections![0]).toMatchObject({
+		expect(at(reloaded.model.sections, 0)).toMatchObject({
 			orientation: 'landscape',
 			columns: { count: 2 },
 		});
-		expect(reloaded.model.sections![1]).toMatchObject({ pageWidthTwips: 12240 });
+		expect(at(reloaded.model.sections, 1)).toMatchObject({ pageWidthTwips: 12240 });
 		const titled = JSON.parse(JSON.stringify(loaded.model)) as DocumentModel;
-		titled.sections![0].lineNumbering = true;
+		at(titled.sections, 0).lineNumbering = true;
 		await expect(loaded.save(titled)).rejects.toThrow(/lineNumbering/);
 	});
 });

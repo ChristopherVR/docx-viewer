@@ -6,6 +6,7 @@ import {
 	parseRunStyleCatalog,
 	resolveRunFormatting,
 } from './index.js';
+import { at, expectParagraph } from './test-support/access.js';
 
 const ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const stylesXml = `<w:styles xmlns:w="${ns}">
@@ -96,8 +97,7 @@ describe('character style catalog and run formatting resolution', () => {
 		zip.file('word/document.xml', xml);
 		zip.file('word/styles.xml', stylesXml);
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		const run = paragraph.runs[0];
 		expect(run).toMatchObject({
 			style: 'Emph',
@@ -130,9 +130,8 @@ describe('character style catalog and run formatting resolution', () => {
 		);
 		expect(warnings).toContain('basedOn chains');
 		// Editing the paragraph containing rStyle stays supported, and the style reference survives.
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
-		paragraph.runs[0].text = 'Edited styled';
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
+		at(paragraph.runs, 0).text = 'Edited styled';
 		const saved = await JSZip.loadAsync(await loaded.save());
 		const xml = await saved.file('word/document.xml')?.async('string');
 		expect(xml).toContain('<w:rStyle w:val="Emph"');

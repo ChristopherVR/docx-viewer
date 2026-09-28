@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx } from './index.js';
+import { at, expectTable } from './test-support/access.js';
 
 const ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const cell = (text: string, fill: string, width: number) =>
@@ -11,8 +12,7 @@ async function loadFixture(xml = sourceXml) {
 	const zip = new JSZip();
 	zip.file('word/document.xml', xml);
 	const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
-	const table = loaded.model.blocks[0];
-	if (table.type !== 'table') throw new Error('Expected a table fixture');
+	const table = expectTable(loaded.model.blocks[0]);
 	return { loaded, table };
 }
 
@@ -27,7 +27,7 @@ async function savedTableXml(loaded: Awaited<ReturnType<typeof loadDocx>>) {
 
 function tableCells(xml: string): string[] {
 	const table = xml.match(/<w:tbl(?:\s[^>]*)?>[\s\S]*?<\/w:tbl>/)?.[0] ?? '';
-	return [...table.matchAll(/<w:tc(?:\s[^>]*)?>([\s\S]*?)<\/w:tc>/g)].map((match) => match[1]);
+	return [...table.matchAll(/<w:tc(?:\s[^>]*)?>([\s\S]*?)<\/w:tc>/g)].map((match) => at(match, 1));
 }
 
 function assertCellIdentity(cells: string[], text: string, fill: string, width: number) {
@@ -110,8 +110,7 @@ describe('DOCX table structure editing', () => {
 			zip.file('word/document.xml', xml);
 			const original = await zip.generateAsync({ type: 'uint8array' });
 			const loaded = await loadDocx(original);
-			const table = loaded.model.blocks[0];
-			if (table.type !== 'table') throw new Error('Expected a table fixture');
+			const table = expectTable(loaded.model.blocks[0]);
 			expect(table.structureEditable).toBe(false);
 			expect(loaded.model.warnings).toContain(
 				'Merged, nested, or complex tables can be read, but their row and column structure cannot be edited safely.',

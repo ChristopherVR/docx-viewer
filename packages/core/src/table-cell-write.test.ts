@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { createDocument, loadDocx, saveDocx, type DocumentModel, type Table } from './index.js';
+import { at, must } from './test-support/access.js';
 
 const para = (id: string) => ({ type: 'paragraph' as const, id, runs: [{ text: id }] });
 
@@ -38,7 +39,7 @@ describe('new table cell properties', () => {
 				],
 			}),
 		);
-		const tcPr = /<w:tcPr>([\s\S]*?)<\/w:tcPr>/.exec(xml)![1];
+		const tcPr = must(/<w:tcPr>([\s\S]*?)<\/w:tcPr>/.exec(xml)?.[1], 'tcPr contents');
 		const order = [
 			...tcPr.matchAll(/<w:(tcW|gridSpan|vMerge|tcBorders|shd|tcMar|vAlign)[ >/]/g),
 		].map((match) => match[1]);
@@ -80,7 +81,7 @@ describe('new table cell properties', () => {
 			],
 		});
 		const table = (await loadDocx(await saveDocx(model))).model.blocks[1] as Table;
-		expect(table.rows[0][0]).toMatchObject({
+		expect(at(at(table.rows, 0), 0)).toMatchObject({
 			gridSpan: 2,
 			verticalAlign: 'bottom',
 			widthTwips: 4000,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { formatNoteNumber, loadDocx, numberNotesInOrder, saveDocx } from './index.js';
+import { at, expectParagraph } from './test-support/access.js';
 
 const w = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const r = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
@@ -74,8 +75,7 @@ describe('headers, footers and settings', () => {
 		const zip = await fixtureZip();
 		const bytes = await zip.generateAsync({ type: 'uint8array' });
 		const loaded = await loadDocx(bytes);
-		const paragraph = loaded.model.blocks[1];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+		const paragraph = expectParagraph(loaded.model.blocks[1]);
 		paragraph.align = 'center';
 		const saved = await loaded.save();
 		const savedZip = await JSZip.loadAsync(saved);
@@ -167,7 +167,7 @@ describe('saveDocx guards', () => {
 			],
 		});
 		const reloaded = await loadDocx(saved);
-		expect(reloaded.model.footnotes?.[0].blocks[0]).toMatchObject({
+		expect(at(reloaded.model.footnotes, 0).blocks[0]).toMatchObject({
 			runs: [{ noteMark: 'footnote' }, { text: ' Note' }],
 		});
 	});

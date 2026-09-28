@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, type DocumentModel, type Paragraph } from './index.js';
 import { ensureListDefinition } from './numbering-editing.js';
+import { at, lastOf } from './test-support/access.js';
 
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
@@ -29,9 +30,9 @@ describe('numbering.xml element order', () => {
 		);
 		const model = clone(loaded.model);
 		const { catalog, numId } = ensureListDefinition(model.numberingCatalog, 'decimal');
-		const added = Object.values(catalog.abstractNums).at(-1)!;
+		const added = lastOf(Object.values(catalog.abstractNums));
 		added.levels[0] = {
-			...added.levels[0],
+			...at(added.levels, 0),
 			isLgl: true,
 			lvlRestart: 0,
 			lvlJc: 'right',
@@ -105,7 +106,7 @@ describe('picture extent updates', () => {
 			}),
 		);
 		const model = clone(loaded.model);
-		const image = (model.blocks[0] as Paragraph).runs[0].image!;
+		const image = at((at(model.blocks, 0) as Paragraph).runs, 0).image!;
 		image.widthPx = 192;
 		image.heightPx = 96;
 		const xml = await part(await loaded.save(model), 'word/document.xml');
@@ -132,7 +133,7 @@ describe('w:sectPr child order', () => {
 			}),
 		);
 		const model = clone(loaded.model);
-		(model.blocks[0] as Paragraph).runs[0].text = 'edited';
+		at((at(model.blocks, 0) as Paragraph).runs, 0).text = 'edited';
 		const xml = await part(await loaded.save(model), 'word/document.xml');
 		const sectPr = /<w:sectPr>.*<\/w:sectPr>/s.exec(xml)![0];
 		expect(childNames(sectPr).filter((name) => name !== 'sectPr')).toEqual([
@@ -153,9 +154,9 @@ describe('w:sectPr child order', () => {
 			}),
 		);
 		const model = clone(loaded.model);
-		const [last] = model.sections!;
+		const last = at(model.sections, 0);
 		model.sections = [
-			{ ...structuredClone(last), endsAtBlockId: model.blocks[0].id },
+			{ ...structuredClone(last), endsAtBlockId: at(model.blocks, 0).id },
 			{ ...last, type: 'continuous' },
 		];
 		const xml = await part(await loaded.save(model), 'word/document.xml');

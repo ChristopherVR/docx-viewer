@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx } from './index.js';
+import { at, expectParagraph } from './test-support/access.js';
 
 const ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const unicodeText = 'مرحبا עברית 中文 e\u0301 😀';
@@ -39,7 +40,7 @@ describe('DOCX multilingual metadata', () => {
 		expect(ltr.direction).toBe('ltr');
 		expect(ltr.runs[0]).toMatchObject({ language: 'he-IL', rtl: false, highlight: 'yellow' });
 		expect(inherited.direction).toBeUndefined();
-		expect(inherited.runs[0].rtl).toBeUndefined();
+		expect(at(inherited.runs, 0).rtl).toBeUndefined();
 	});
 
 	it('returns original bytes untouched and edits only selected language and direction attributes', async () => {
@@ -49,9 +50,9 @@ describe('DOCX multilingual metadata', () => {
 		if (first?.type !== 'paragraph' || second?.type !== 'paragraph')
 			throw new Error('Expected paragraphs');
 		first.direction = 'ltr';
-		first.runs[0].language = 'en-NZ';
-		delete first.runs[0].eastAsiaLanguage;
-		first.runs[0].rtl = false;
+		at(first.runs, 0).language = 'en-NZ';
+		delete at(first.runs, 0).eastAsiaLanguage;
+		at(first.runs, 0).rtl = false;
 		second.direction = 'rtl';
 		const xml = await xmlOf(await loaded.save());
 		expect(xml).toContain('<w:bidi w:val="0"');
@@ -71,20 +72,18 @@ describe('DOCX multilingual metadata', () => {
 
 	it('validates newly written language tags and accepts script subtags', async () => {
 		const { loaded } = await fixture();
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected a paragraph');
-		paragraph.runs[0].eastAsiaLanguage = 'zh-Hans-CN';
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
+		at(paragraph.runs, 0).eastAsiaLanguage = 'zh-Hans-CN';
 		expect(await loaded.save()).toBeInstanceOf(Uint8Array);
-		paragraph.runs[0].language = 'en--US';
+		at(paragraph.runs, 0).language = 'en--US';
 		await expect(loaded.save()).rejects.toThrow('Invalid BCP 47 language tag: en--US');
-		paragraph.runs[0].language = 'en"><evil';
+		at(paragraph.runs, 0).language = 'en"><evil';
 		await expect(loaded.save()).rejects.toThrow('Invalid BCP 47 language tag');
 	});
 
 	it('preserves supported language and explicit RTL-off metadata when a formatted run is split', async () => {
 		const { loaded } = await fixture();
-		const paragraph = loaded.model.blocks[1];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+		const paragraph = expectParagraph(loaded.model.blocks[1]);
 		const run = paragraph.runs[0];
 		paragraph.runs = [
 			{ ...run, text: 'Sec' },

@@ -11,6 +11,7 @@ import {
 	type TextRun,
 } from './index.js';
 import { isXsdDateTime } from './validate-issues.js';
+import { at } from './test-support/access.js';
 
 const cell = (id: string, extra: object = {}) => ({
 	paragraphs: [{ type: 'paragraph' as const, id, runs: [{ text: id }] }],
@@ -37,7 +38,7 @@ type Mutate = (model: DocumentModel) => void;
 const withRun =
 	(patch: Partial<TextRun>): Mutate =>
 	(model) => {
-		Object.assign((model.blocks[0] as Paragraph).runs[0], patch);
+		Object.assign(at((at(model.blocks, 0) as Paragraph).runs, 0), patch);
 	};
 const withParagraph =
 	(patch: Partial<Paragraph>): Mutate =>
@@ -411,9 +412,9 @@ describe('pre-save model validation', () => {
 			rule.invalid(invalid);
 			const issues = validateDocumentModel(invalid);
 			expect(issues).toHaveLength(1);
-			expect(issues[0].field).toBe(rule.field);
-			expect(issues[0].rule).toBeTruthy();
-			expect(issues[0].path).toBeTruthy();
+			expect(at(issues, 0).field).toBe(rule.field);
+			expect(at(issues, 0).rule).toBeTruthy();
+			expect(at(issues, 0).path).toBeTruthy();
 		});
 
 	it('reports the path, field, value and rule of each issue', () => {
@@ -472,7 +473,7 @@ describe('pre-save model validation', () => {
 describe('saveDocx validation', () => {
 	it('throws a typed error listing every issue and writes nothing', async () => {
 		const model = base();
-		Object.assign((model.blocks[0] as Paragraph).runs[0], { fontSize: -3, color: 'blue' });
+		Object.assign(at((at(model.blocks, 0) as Paragraph).runs, 0), { fontSize: -3, color: 'blue' });
 		(model.blocks[0] as Paragraph).spacingAfterTwips = 1.5;
 		const error = await saveDocx(model).then(
 			() => undefined,

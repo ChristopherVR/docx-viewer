@@ -7,6 +7,7 @@ import {
 	resolveParagraphNumbering,
 } from './numbering-format.js';
 import { cardinalWords, letterLabel, ordinalWords, romanNumeral } from './numbering-text.js';
+import { at, must } from './test-support/access.js';
 
 function page() {
 	return {
@@ -146,7 +147,9 @@ describe('computeListLabels', () => {
 		expect(labels.get('a1')?.text).toBe('1.');
 		// The simplified counter always restarts a deeper level on any shallower-level change.
 		expect(labels.get('b1')?.text).toBe('1.');
-		expect(catalog.abstractNums['0'].levels[1].lvlRestart).toBe(5);
+		expect(at(must(catalog.abstractNums['0'], 'abstract numbering 0').levels, 1).lvlRestart).toBe(
+			5,
+		);
 	});
 
 	it('renders bullet levels using the literal lvlText glyph without counting', () => {

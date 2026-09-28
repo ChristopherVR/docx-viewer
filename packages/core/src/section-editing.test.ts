@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, type DocumentModel } from './index.js';
+import { at } from './test-support/access.js';
 
 const w = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
@@ -23,9 +24,9 @@ describe('section editing', () => {
 			),
 		);
 		const model = clone(loaded.model);
-		const [last] = model.sections!;
+		const last = at(model.sections, 0);
 		model.sections = [
-			{ ...structuredClone(last), endsAtBlockId: model.blocks[0].id },
+			{ ...structuredClone(last), endsAtBlockId: at(model.blocks, 0).id },
 			{ ...last, type: 'continuous', columns: { count: 2, spacingTwips: 720, equalWidth: true } },
 		];
 		const saved = await loaded.save(model);
@@ -48,7 +49,7 @@ describe('section editing', () => {
 		);
 		expect(loaded.model.sections).toHaveLength(2);
 		const model = clone(loaded.model);
-		model.sections = [model.sections![1]];
+		model.sections = [at(model.sections, 1)];
 		const saved = await loaded.save(model);
 		expect((await documentXml(saved)).match(/<w:sectPr>/g)).toHaveLength(1);
 		expect((await loadDocx(saved)).model.sections).toHaveLength(1);
@@ -61,8 +62,8 @@ describe('section editing', () => {
 			),
 		);
 		const model = clone(loaded.model);
-		const [last] = model.sections!;
-		model.sections = [{ ...structuredClone(last), endsAtBlockId: model.blocks[0].id }, last];
+		const last = at(model.sections, 0);
+		model.sections = [{ ...structuredClone(last), endsAtBlockId: at(model.blocks, 0).id }, last];
 		await expect(loaded.save(model)).rejects.toThrow(/must end on a paragraph/);
 	});
 
@@ -71,7 +72,7 @@ describe('section editing', () => {
 			await docx(`<w:p><w:r><w:t>Text</w:t></w:r></w:p>${finalSection}`),
 		);
 		const model = clone(loaded.model);
-		Object.assign(model.sections![0], {
+		Object.assign(at(model.sections, 0), {
 			titlePage: true,
 			pageNumbering: { start: 1, format: 'lowerRoman' },
 		});
@@ -80,13 +81,14 @@ describe('section editing', () => {
 		expect(xml).toContain('<w:pgNumType w:fmt="lowerRoman" w:start="1"/><w:cols');
 		expect(xml).toMatch(/<w:cols[^>]*\/><w:titlePg\/>/);
 		const reloaded = await loadDocx(saved);
-		expect(reloaded.model.sections![0]).toMatchObject({
+		expect(at(reloaded.model.sections, 0)).toMatchObject({
 			titlePage: true,
 			pageNumbering: { start: 1, format: 'lowerRoman' },
 		});
 		const cleared = clone(reloaded.model);
-		cleared.sections![0].titlePage = false;
-		delete cleared.sections![0].pageNumbering;
+		const clearedSection = at(cleared.sections, 0);
+		clearedSection.titlePage = false;
+		delete clearedSection.pageNumbering;
 		const again = await documentXml(await reloaded.save(cleared));
 		expect(again).not.toContain('titlePg');
 		expect(again).not.toContain('pgNumType');
@@ -99,9 +101,9 @@ describe('section editing', () => {
 			),
 		);
 		const model = clone(loaded.model);
-		const [last] = model.sections!;
+		const last = at(model.sections, 0);
 		model.sections = [
-			{ ...structuredClone(last), endsAtBlockId: model.blocks[0].id, verticalAlign: 'center' },
+			{ ...structuredClone(last), endsAtBlockId: at(model.blocks, 0).id, verticalAlign: 'center' },
 			{ ...last, type: 'oddPage' },
 		];
 		const xml = await documentXml(await loaded.save(model));

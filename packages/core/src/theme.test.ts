@@ -9,6 +9,7 @@ import {
 	resolveThemeColorReference,
 	resolveThemeColorToken,
 } from './index.js';
+import { at, expectParagraph } from './test-support/access.js';
 
 const a = 'http://schemas.openxmlformats.org/drawingml/2006/main';
 const w = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
@@ -94,11 +95,10 @@ describe('theme parsing and color resolution', () => {
 			bg2: 'lt2',
 			tx2: 'dk2',
 		});
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
-		expect(paragraph.runs[0].colorTheme).toMatchObject({ token: 'accent1' });
-		expect(paragraph.runs[0].colorTheme?.tint).toBeCloseTo(0x66 / 255, 5);
-		expect(paragraph.runs[0].color).toBe('#000000');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
+		expect(at(paragraph.runs, 0).colorTheme).toMatchObject({ token: 'accent1' });
+		expect(at(paragraph.runs, 0).colorTheme?.tint).toBeCloseTo(0x66 / 255, 5);
+		expect(at(paragraph.runs, 0).color).toBe('#000000');
 		expect(loaded.model.warnings.join(' ')).toContain(
 			'Theme colors and fonts resolve for rendering',
 		);

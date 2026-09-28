@@ -15,6 +15,7 @@ import {
 	type DocumentModel,
 	type Paragraph,
 } from './index.js';
+import { at } from './test-support/access.js';
 
 function sample(): DocumentModel {
 	const model = createDocument();
@@ -59,12 +60,12 @@ describe('table of contents', () => {
 		]);
 		const toc = buildTableOfContents(sample(), { newId, pageNumbers, contentWidthTwips: 9000 });
 		expect(toc.map(text)).toEqual(['Introduction\t1', 'Scope and aims\t2']);
-		expect(toc[0].runs.slice(0, 3)).toEqual([
+		expect(at(toc, 0).runs.slice(0, 3)).toEqual([
 			{ text: '', fieldChar: 'begin' },
 			{ text: '', fieldCode: ' TOC \\o "1-3" \\h \\z \\u ' },
 			{ text: '', fieldChar: 'separate' },
 		]);
-		expect(toc[1].runs.at(-1)).toEqual({ text: '', fieldChar: 'end' });
+		expect(at(toc, 1).runs.at(-1)).toEqual({ text: '', fieldChar: 'end' });
 		// New documents define Word's TOC styles, so entries use them.
 		expect(toc[1]).toMatchObject({
 			style: 'TOC2',
@@ -82,13 +83,13 @@ describe('table of contents', () => {
 		const model = createDocument();
 		const toc = buildTableOfContents(model, { newId });
 		expect(toc).toHaveLength(1);
-		expect(text(toc[0])).toBe('No table of contents entries found.');
+		expect(text(at(toc, 0))).toBe('No table of contents entries found.');
 	});
 
 	it('updates an existing TOC in place, keeping its switches and surrounding text', () => {
 		const model = sample();
 		const toc = buildTableOfContents(model, { newId, instruction: ' TOC \\o "1-1" ' });
-		toc[0].runs.unshift({ text: 'Lead ' });
+		at(toc, 0).runs.unshift({ text: 'Lead ' });
 		toc.at(-1)!.runs.push({ text: ' tail' });
 		model.blocks.unshift(...toc);
 		expect(findTableOfContents(model.blocks)).toMatchObject({ start: 0, end: 0 });
@@ -101,7 +102,7 @@ describe('table of contents', () => {
 		const updated = updateTableOfContents(model, { newId })!;
 		const entries = updated.blocks.slice(0, 2) as Paragraph[];
 		expect(entries.map(text)).toEqual(['Lead Introduction', 'Results tail']);
-		expect(entries[0].runs.find((run) => run.fieldCode)?.fieldCode).toBe(' TOC \\o "1-1" ');
+		expect(at(entries, 0).runs.find((run) => run.fieldCode)?.fieldCode).toBe(' TOC \\o "1-1" ');
 		expect(updated.blocks).toHaveLength(model.blocks.length + 1);
 	});
 
@@ -137,7 +138,7 @@ describe('table of contents', () => {
 			pageNumbers: new Map([['h1', '1']]),
 		});
 		const name = bookmarks.get('h1')!;
-		expect(toc[0].runs.slice(3)).toEqual([
+		expect(at(toc, 0).runs.slice(3)).toEqual([
 			{ text: 'Introduction\t', link: { anchor: name } },
 			{ text: '', fieldChar: 'begin', link: { anchor: name } },
 			{ text: '', fieldCode: ` PAGEREF ${name} \\h `, link: { anchor: name } },

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, type Paragraph } from './index.js';
+import { at } from './test-support/access.js';
 
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const NS = `xmlns:w="${W}" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"`;
@@ -31,7 +32,7 @@ describe('floating pictures', () => {
 					`<w:p>${anchor('<wp:wrapNone/>', '<wp:align>left</wp:align>', 'behindDoc="1"')}</w:p>`,
 			),
 		);
-		const images = loaded.model.blocks.map((block) => (block as Paragraph).runs[0].image);
+		const images = loaded.model.blocks.map((block) => at((block as Paragraph).runs, 0).image);
 		expect(images[0]).toMatchObject({
 			anchored: true,
 			placement: { wrap: 'square', align: 'right', relativeFrom: 'column' },
@@ -47,14 +48,16 @@ describe('floating pictures', () => {
 			'<wp:positionV relativeFrom="page"><wp:align>bottom</wp:align></wp:positionV>',
 		);
 		const loaded = await loadDocx(await fixture(`<w:p>${xml}</w:p>`));
-		const image = (loaded.model.blocks[0] as Paragraph).runs[0].image;
+		const image = at((at(loaded.model.blocks, 0) as Paragraph).runs, 0).image;
 		expect(image?.placement).toMatchObject({ relativeFromV: 'page', alignV: 'bottom' });
 		const offset = anchor('<wp:wrapNone/>', '<wp:posOffset>0</wp:posOffset>').replace(
 			'<wp:posOffset>0</wp:posOffset></wp:positionV>',
 			'<wp:posOffset>476250</wp:posOffset></wp:positionV>',
 		);
 		const shifted = await loadDocx(await fixture(`<w:p>${offset}</w:p>`));
-		expect((shifted.model.blocks[0] as Paragraph).runs[0].image?.placement?.offsetYPx).toBe(50);
+		expect(at((at(shifted.model.blocks, 0) as Paragraph).runs, 0).image?.placement?.offsetYPx).toBe(
+			50,
+		);
 	});
 
 	it('keeps the anchor XML when text beside a floating picture is edited', async () => {
@@ -63,7 +66,7 @@ describe('floating pictures', () => {
 				`<w:p>${anchor('<wp:wrapSquare wrapText="bothSides"/>', '<wp:align>right</wp:align>')}<w:r><w:t>Text</w:t></w:r></w:p>`,
 			),
 		);
-		(loaded.model.blocks[0] as Paragraph).runs[1].text = 'Edited text';
+		at((at(loaded.model.blocks, 0) as Paragraph).runs, 1).text = 'Edited text';
 		const xml = await (
 			await JSZip.loadAsync(await loaded.save(loaded.model))
 		)

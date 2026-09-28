@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx } from './index.js';
+import { at, expectParagraph } from './test-support/access.js';
 
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const WP = 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing';
@@ -37,9 +38,8 @@ describe('inline pictures', () => {
 	it('parses an inline picture, its size/alt text, and exposes original bytes via media', async () => {
 		const xml = `<w:document ${NS}><w:body><w:p><w:r>${inlinePicture('rId1')}</w:r><w:r><w:t> caption</w:t></w:r></w:p><w:sectPr/></w:body></w:document>`;
 		const loaded = await loadDocx(await pictureFixture(xml));
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
-		expect(paragraph.runs[0].image).toMatchObject({
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
+		expect(at(paragraph.runs, 0).image).toMatchObject({
 			relId: 'rId1',
 			partName: 'word/media/image1.png',
 			contentType: 'image/png',
@@ -47,7 +47,7 @@ describe('inline pictures', () => {
 			heightPx: 48,
 			altText: 'A test image',
 		});
-		expect(paragraph.runs[1].text).toBe(' caption');
+		expect(at(paragraph.runs, 1).text).toBe(' caption');
 		expect(loaded.media?.get('word/media/image1.png')).toEqual(pngBytes());
 		expect(loaded.model.warnings.some((w) => w.includes('Inline pictures'))).toBe(true);
 	});
@@ -55,9 +55,8 @@ describe('inline pictures', () => {
 	it('preserves an unchanged picture verbatim while editing sibling text', async () => {
 		const xml = `<w:document ${NS}><w:body><w:p><w:r>${inlinePicture('rId1')}</w:r><w:r><w:t> caption</w:t></w:r></w:p><w:sectPr/></w:body></w:document>`;
 		const loaded = await loadDocx(await pictureFixture(xml));
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
-		paragraph.runs[1].text = ' new caption';
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
+		at(paragraph.runs, 1).text = ' new caption';
 		const saved = await JSZip.loadAsync(await loaded.save());
 		const savedXml = (await saved.file('word/document.xml')?.async('string')) ?? '';
 		expect(savedXml).toContain('r:embed="rId1"');
@@ -70,8 +69,7 @@ describe('inline pictures', () => {
 	it('removes a deleted picture entirely on save', async () => {
 		const xml = `<w:document ${NS}><w:body><w:p><w:r>${inlinePicture('rId1')}</w:r></w:p><w:sectPr/></w:body></w:document>`;
 		const loaded = await loadDocx(await pictureFixture(xml));
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		paragraph.runs = [{ text: 'Replaced' }];
 		const saved = await JSZip.loadAsync(await loaded.save());
 		const savedXml = (await saved.file('word/document.xml')?.async('string')) ?? '';
@@ -84,8 +82,7 @@ describe('inline pictures', () => {
 		const zip = new JSZip();
 		zip.file('word/document.xml', xml);
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		paragraph.runs.push({
 			text: '',
 			image: {
@@ -110,8 +107,7 @@ describe('inline pictures', () => {
 		const contentTypes = (await saved.file('[Content_Types].xml')?.async('string')) ?? '';
 		expect(contentTypes).toContain('Extension="png"');
 		const reopened = await loadDocx(await saved.generateAsync({ type: 'uint8array' }));
-		const reopenedParagraph = reopened.model.blocks[0];
-		if (reopenedParagraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		const reopenedParagraph = expectParagraph(reopened.model.blocks[0]);
 		expect(reopenedParagraph.runs.at(-1)?.image).toMatchObject({
 			partName: 'word/media/inserted.png',
 			widthPx: 32,
@@ -124,12 +120,10 @@ describe('inline pictures', () => {
 		const chart = `<w:drawing><wp:inline><wp:extent cx="914400" cy="457200"/><wp:docPr id="2" name="Chart 1"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart xmlns:c="urn:c" r:id="rId2"/></a:graphicData></a:graphic></wp:inline></w:drawing>`;
 		const xml = `<w:document ${NS}><w:body><w:p><w:r>${anchored}</w:r></w:p><w:p><w:r>${chart}</w:r></w:p><w:sectPr/></w:body></w:document>`;
 		const loaded = await loadDocx(await pictureFixture(xml));
-		const floating = loaded.model.blocks[0];
-		const chartBlock = loaded.model.blocks[1];
-		if (floating.type !== 'paragraph' || chartBlock.type !== 'paragraph')
-			throw new Error('Expected paragraph fixtures');
-		expect(floating.runs[0].image).toMatchObject({ anchored: true, relId: 'rId1' });
-		expect(chartBlock.runs[0].image).toMatchObject({ unsupported: 'Chart' });
+		const floating = expectParagraph(loaded.model.blocks[0]);
+		const chartBlock = expectParagraph(loaded.model.blocks[1]);
+		expect(at(floating.runs, 0).image).toMatchObject({ anchored: true, relId: 'rId1' });
+		expect(at(chartBlock.runs, 0).image).toMatchObject({ unsupported: 'Chart' });
 		expect(loaded.model.warnings.some((w) => w.includes('Floating'))).toBe(true);
 		expect(loaded.model.warnings.some((w) => w.includes('Chart'))).toBe(true);
 	});
@@ -143,11 +137,10 @@ describe('bookmarks', () => {
 			`<w:document xmlns:w="${W}"><w:body><w:p><w:bookmarkStart w:id="0" w:name="Intro"/><w:r><w:t>Hello</w:t></w:r><w:bookmarkEnd w:id="0"/></w:p><w:sectPr/></w:body></w:document>`,
 		);
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		expect(paragraph.bookmarks).toEqual(['Intro']);
 		expect(loaded.model.warnings.some((w) => w.includes('Bookmark'))).toBe(true);
-		paragraph.runs[0].text = 'Hello there';
+		at(paragraph.runs, 0).text = 'Hello there';
 		const saved = await JSZip.loadAsync(await loaded.save());
 		const xml = (await saved.file('word/document.xml')?.async('string')) ?? '';
 		expect(xml).toContain('w:name="Intro"');
@@ -155,8 +148,7 @@ describe('bookmarks', () => {
 		expect(xml).toContain('<w:bookmarkEnd');
 		expect(xml).toContain('Hello there');
 		const reopened = await loadDocx(await saved.generateAsync({ type: 'uint8array' }));
-		const reopenedParagraph = reopened.model.blocks[0];
-		if (reopenedParagraph.type !== 'paragraph') throw new Error('Expected a paragraph fixture');
+		const reopenedParagraph = expectParagraph(reopened.model.blocks[0]);
 		expect(reopenedParagraph.bookmarks).toEqual(['Intro']);
 	});
 });

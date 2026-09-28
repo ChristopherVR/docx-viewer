@@ -3,6 +3,7 @@ import JSZip from 'jszip';
 import { loadDocx } from './parse.js';
 import { ensureListDefinition } from './numbering-editing.js';
 import type { Paragraph } from './model.js';
+import { at, must } from './test-support/access.js';
 
 const WORD_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const documentXml = `<?xml version="1.0"?><w:document xmlns:w="${WORD_NS}"><w:body><w:p><w:r><w:t>Plain</w:t></w:r></w:p><w:sectPr/></w:body></w:document>`;
@@ -104,15 +105,16 @@ describe('numbering package surgery', () => {
 		const bytes = await fixtureWithNumbering();
 		const loaded = await loadDocx(bytes);
 		const catalog = loaded.model.numberingCatalog!;
+		const abstract = must(catalog.abstractNums['0'], 'abstract numbering 0');
 		const mutated = {
 			...catalog,
 			abstractNums: {
 				...catalog.abstractNums,
 				'0': {
-					...catalog.abstractNums['0'],
+					...abstract,
 					levels: {
-						...catalog.abstractNums['0'].levels,
-						0: { ...catalog.abstractNums['0'].levels[0], numFmt: 'upperRoman' as const },
+						...abstract.levels,
+						0: { ...at(abstract.levels, 0), numFmt: 'upperRoman' as const },
 					},
 				},
 			},

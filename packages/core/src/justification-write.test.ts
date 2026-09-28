@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { createDocument, loadDocx, saveDocx, type Paragraph } from './index.js';
 import { paragraphJustification } from './paragraph-alignment.js';
+import { at } from './test-support/access.js';
 
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
@@ -22,7 +23,7 @@ describe('justification on write', () => {
 	it('round-trips start, end and distribute losslessly when the text is edited', async () => {
 		for (const jc of ['start', 'end', 'distribute', 'thaiDistribute', 'numTab']) {
 			const loaded = await loadDocx(await packageFor(jc));
-			paragraphOf(loaded.model).runs[0].text = 'Edited';
+			at(paragraphOf(loaded.model).runs, 0).text = 'Edited';
 			const xml = await documentXml(await loaded.save());
 			expect(xml, jc).toContain(`<w:jc w:val="${jc}"`);
 		}

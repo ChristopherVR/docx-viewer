@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx } from './parse.js';
+import { expectParagraph } from './test-support/access.js';
 
 const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
 const W14 = 'xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"';
@@ -29,8 +30,7 @@ describe('comments', () => {
 		expect(loaded.model.comments).toMatchObject([
 			{ id: '0', author: 'Ada', initials: 'AL', text: 'Please check this.', resolved: false },
 		]);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('expected paragraph');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		expect(paragraph.runs[0]).toMatchObject({ text: 'Reviewed text', commentIds: ['0'] });
 		expect(loaded.model.warnings.some((w) => w.includes('run granularity'))).toBe(true);
 	});
@@ -110,7 +110,7 @@ describe('comments', () => {
 		expect(shortXml.match(/<w:commentRangeEnd /g)).toHaveLength(1);
 		expect(shortXml).toMatch(/<w:t>MIDDLE<\/w:t><\/w:r><w:commentRangeEnd w:id="0"\/>/);
 		const reloaded = await loadDocx(await loaded.save({ ...loaded.model, blocks: shortened }));
-		const last = reloaded.model.blocks[2];
-		expect(last.type === 'paragraph' && last.runs.every((run) => !run.commentIds)).toBe(true);
+		const last = expectParagraph(reloaded.model.blocks[2]);
+		expect(last.runs.every((run) => !run.commentIds)).toBe(true);
 	});
 });

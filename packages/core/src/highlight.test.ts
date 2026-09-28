@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { isWordHighlightToken, loadDocx, saveDocx, WORD_HIGHLIGHT_TOKENS } from './index.js';
+import { at, expectParagraph } from './test-support/access.js';
 
 const ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
@@ -42,17 +43,16 @@ describe('Word highlight tokens', () => {
 		);
 		const loaded = await loadDocx(original);
 		expect(await loaded.save()).toEqual(original);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		// `gray25` is not an ST_HighlightColor value: it is dropped from the model with a warning.
-		expect(paragraph.runs[0].highlight).toBeUndefined();
+		expect(at(paragraph.runs, 0).highlight).toBeUndefined();
 		expect(loaded.model.warnings.join('\n')).toContain(
 			'Ignored invalid w:highlight value “gray25”',
 		);
-		paragraph.runs[0].text = 'Edited';
+		at(paragraph.runs, 0).text = 'Edited';
 		const preserved = await JSZip.loadAsync(await loaded.save());
 		expect(await preserved.file('word/document.xml')?.async('string')).toContain('w:val="gray25"');
-		paragraph.runs[0].highlight = 'brightGreen' as never;
+		at(paragraph.runs, 0).highlight = 'brightGreen' as never;
 		await expect(loaded.save()).rejects.toThrow('Unsupported Word highlight token: brightGreen');
 	});
 
@@ -80,9 +80,8 @@ describe('Word highlight tokens', () => {
 			`<w:document xmlns:w="${ns}"><w:body><w:p><w:r><w:rPr><w:outline/></w:rPr><w:t>Formatted</w:t></w:r></w:p><w:sectPr/></w:body></w:document>`,
 		);
 		const loaded = await loadDocx(original);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
-		const originalRun = paragraph.runs[0];
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
+		const originalRun = at(paragraph.runs, 0);
 		paragraph.runs.splice(0, 1, { text: 'Format' }, { text: 'ted', bold: true });
 		await expect(loaded.save()).rejects.toThrow(
 			'changing run boundaries could drop unsupported run properties',
@@ -97,8 +96,7 @@ describe('Word highlight tokens', () => {
 			`<w:document xmlns:w="${ns}"><w:body><w:p><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="Noto"/></w:rPr><w:t>Formatted</w:t></w:r></w:p><w:sectPr/></w:body></w:document>`,
 		);
 		const loaded = await loadDocx(original);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		paragraph.runs.splice(0, 1, { text: 'Format' }, { text: 'ted', bold: true });
 		await expect(loaded.save()).rejects.toThrow(
 			'changing run boundaries could drop unsupported run properties',

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx } from './index.js';
+import { at, expectParagraph } from './test-support/access.js';
 
 const ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
@@ -23,8 +24,7 @@ describe('page and column breaks', () => {
 			'<w:p><w:r><w:t>Before</w:t></w:r><w:r><w:br w:type="page"/></w:r><w:r><w:t>After</w:t></w:r></w:p>',
 		);
 		const loaded = await loadDocx(bytes);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		expect(paragraph.runs).toMatchObject([
 			{ text: 'Before' },
 			{ text: '', break: 'page' },
@@ -48,8 +48,7 @@ describe('page and column breaks', () => {
 	it('models a column break run and round-trips it', async () => {
 		const { bytes } = await fixture('<w:p><w:r><w:br w:type="column"/></w:r></w:p>');
 		const loaded = await loadDocx(bytes);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		expect(paragraph.runs).toMatchObject([{ text: '', break: 'column' }]);
 		paragraph.spacingBeforeTwips = 240;
 		const xml = await documentXml(await loaded.save());
@@ -61,8 +60,7 @@ describe('page and column breaks', () => {
 			'<w:p><w:pPr><w:pageBreakBefore/></w:pPr><w:r><w:t>Text</w:t></w:r></w:p>',
 		);
 		const loaded = await loadDocx(bytes);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		expect(paragraph.pageBreakBefore).toBe(true);
 		paragraph.pageBreakBefore = false;
 		const xml = await documentXml(await loaded.save());
@@ -76,15 +74,14 @@ describe('footnote and endnote reference marks', () => {
 			'<w:p><w:r><w:t>See</w:t></w:r><w:r><w:rPr><w:vertAlign w:val="superscript"/></w:rPr><w:footnoteReference w:id="3"/></w:r></w:p>',
 		);
 		const loaded = await loadDocx(bytes);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		expect(paragraph.runs).toMatchObject([
 			{ text: 'See' },
 			{ text: '', noteReference: { kind: 'footnote', id: '3' } },
 		]);
 		expect(await loaded.save()).toEqual(bytes);
 		paragraph.align = 'center';
-		paragraph.runs[0].text = 'See also';
+		at(paragraph.runs, 0).text = 'See also';
 		const saved = await loaded.save();
 		const xml = await (await JSZip.loadAsync(saved)).file('word/document.xml')!.async('string');
 		expect(xml).toContain('See also');
@@ -96,8 +93,7 @@ describe('footnote and endnote reference marks', () => {
 	it('models an endnote reference run', async () => {
 		const { bytes } = await fixture('<w:p><w:r><w:endnoteReference w:id="1"/></w:r></w:p>');
 		const loaded = await loadDocx(bytes);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		expect(paragraph.runs).toMatchObject([
 			{ text: '', noteReference: { kind: 'endnote', id: '1' } },
 		]);

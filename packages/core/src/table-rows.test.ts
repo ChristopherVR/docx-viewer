@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, type Table } from './index.js';
+import { at } from './test-support/access.js';
 
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
@@ -22,7 +23,7 @@ describe('table row properties and default cell margins', () => {
 			{ heightTwips: 400, heightRule: 'atLeast' },
 			{},
 		]);
-		table.rows[1][0].paragraphs[0].runs[0].text = 'Edited';
+		at(at(at(at(table.rows, 1), 0).paragraphs, 0).runs, 0).text = 'Edited';
 		const xml = await (
 			await JSZip.loadAsync(await loaded.save(loaded.model))
 		)

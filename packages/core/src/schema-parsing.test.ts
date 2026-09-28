@@ -1,6 +1,7 @@
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 import { loadDocx, resolveParagraphFormatting, type Paragraph } from './index.js';
+import { at, expectTable } from './test-support/access.js';
 
 const ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 async function load(body: string, extra: Record<string, string> = {}) {
@@ -94,7 +95,7 @@ describe('table jc and cell vertical alignment', () => {
 		);
 		const tables = loaded.model.blocks.map((block) => (block.type === 'table' ? block : undefined));
 		expect(tables[0]).toMatchObject({ alignment: 'right', justification: 'end' });
-		expect(tables[0]?.rows[0][0].verticalAlign).toBe('both');
+		expect(at(at(expectTable(at(loaded.model.blocks, 0)).rows, 0), 0).verticalAlign).toBe('both');
 		expect(tables[1]).toMatchObject({ alignment: 'right', justification: 'start' });
 		expect(tables[2]?.alignment).toBeUndefined();
 		expect(loaded.model.warnings.join('\n')).toContain('w:tblPr/w:jc value “both”');
@@ -111,7 +112,7 @@ describe('typed attribute parsing', () => {
 		expect(para.keepLines).toBe(false);
 		expect(para.pageBreakBefore).toBe(true);
 		expect(para.runs[0]).toMatchObject({ italic: true, strike: true });
-		expect(para.runs[0].bold).toBeUndefined();
+		expect(at(para.runs, 0).bold).toBeUndefined();
 	});
 
 	it('reads 1in margins and universal-measure spacing as twips', async () => {
@@ -135,12 +136,12 @@ describe('typed attribute parsing', () => {
 			`<w:p><w:r><w:rPr><w:color w:val="112233" w:themeColor="bogus"/><w:highlight w:val="mauve"/><w:sz w:val="abc"/></w:rPr><w:t>x</w:t></w:r></w:p>
 <w:sectPr><w:type w:val="sideways"/><w:pgNumType w:fmt="roman9"/><w:vAlign w:val="middle"/></w:sectPr>`,
 		);
-		const run = paragraph(loaded).runs[0];
+		const run = at(paragraph(loaded).runs, 0);
 		expect(run.color).toBe('#112233');
 		expect(run.colorTheme).toBeUndefined();
 		expect(run.highlight).toBeUndefined();
 		expect(run.fontSize).toBeUndefined();
-		const section = loaded.model.sections![0];
+		const section = at(loaded.model.sections, 0);
 		expect(section.type).toBe('nextPage');
 		expect(section.verticalAlign).toBeUndefined();
 		expect(section.pageNumbering?.format).toBeUndefined();

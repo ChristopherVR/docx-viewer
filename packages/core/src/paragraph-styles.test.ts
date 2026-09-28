@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, parseParagraphStyleCatalog, resolveParagraphFormatting } from './index.js';
+import { at, expectParagraph, must } from './test-support/access.js';
 
 const ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const stylesXml = `<w:styles xmlns:w="${ns}">
@@ -66,9 +67,8 @@ describe('paragraph style catalog', () => {
 		const bytes = await fixture();
 		const loaded = await loadDocx(bytes);
 		expect(await loaded.save()).toEqual(bytes);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph fixture');
-		paragraph.runs[0].text = 'Edited styled paragraph';
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
+		at(paragraph.runs, 0).text = 'Edited styled paragraph';
 		const saved = new Uint8Array(await loaded.save());
 		const output = await JSZip.loadAsync(saved);
 		expect(await output.file('word/styles.xml')?.async('string')).toBe(stylesXml);
@@ -86,8 +86,7 @@ describe('paragraph style catalog', () => {
 				`<w:document xmlns:w="${ns}"><w:body><w:p><w:pPr><w:pStyle w:val="A"/></w:pPr><w:r><w:t>Cycle</w:t></w:r></w:p><w:sectPr/></w:body></w:document>`,
 			),
 		);
-		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph fixture');
+		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		expect(loaded.model.paragraphStyles?.warnings[0]).toContain('inheritance cycle detected');
 		expect(resolveParagraphFormatting(paragraph, loaded.model.paragraphStyles!).align).toBe(
 			'center',
@@ -96,7 +95,7 @@ describe('paragraph style catalog', () => {
 
 	it('rejects catalog mutations because styles.xml editing is unsupported', async () => {
 		const loaded = await loadDocx(await fixture());
-		loaded.model.paragraphStyles!.styles.Derived.formatting.align = 'center';
+		must(loaded.model.paragraphStyles?.styles.Derived, 'Derived style').formatting.align = 'center';
 		await expect(loaded.save()).rejects.toThrow(
 			'Editing the paragraph style catalog is not supported',
 		);

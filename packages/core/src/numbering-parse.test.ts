@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseNumberingCatalog, resolveNumberingLevel } from './numbering-parse.js';
+import { at, must } from './test-support/access.js';
 
 const WORD_NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
 
@@ -44,7 +45,7 @@ function numberingXml(): string {
 describe('numbering-parse', () => {
 	it('parses abstract numbering levels, indentation and suffix', () => {
 		const catalog = parseNumberingCatalog(numberingXml());
-		const level0 = catalog.abstractNums['0'].levels[0];
+		const level0 = at(must(catalog.abstractNums['0'], 'abstract numbering 0').levels, 0);
 		expect(level0).toMatchObject({
 			level: 0,
 			start: 1,
@@ -55,7 +56,7 @@ describe('numbering-parse', () => {
 			hangingTwips: 360,
 			suffix: 'tab',
 		});
-		expect(catalog.abstractNums['0'].levels[1]).toMatchObject({
+		expect(at(must(catalog.abstractNums['0'], 'abstract numbering 0').levels, 1)).toMatchObject({
 			numFmt: 'lowerLetter',
 			lvlRestart: 0,
 			suffix: 'tab',
@@ -70,7 +71,9 @@ describe('numbering-parse', () => {
 	it('parses num definitions and lvlOverride startOverride', () => {
 		const catalog = parseNumberingCatalog(numberingXml());
 		expect(catalog.nums['1']).toMatchObject({ id: '1', abstractNumId: '0' });
-		expect(catalog.nums['2'].levelOverrides?.[0]).toMatchObject({ startOverride: 5 });
+		expect(must(catalog.nums['2'], 'numbering instance 2').levelOverrides?.[0]).toMatchObject({
+			startOverride: 5,
+		});
 	});
 
 	it('resolves the effective level definition applying startOverride', () => {
