@@ -79,21 +79,27 @@ describe('legacy .doc', () => {
 	])('rejects unsupported run property %s instead of silently dropping it', async (key, value) => {
 		const loaded = await loadLegacyDoc(new Uint8Array(await readFile(fixture)));
 		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
-		Object.assign(paragraph.runs[0], { [String(key)]: value });
+		if (paragraph?.type !== 'paragraph') throw new Error('Expected paragraph');
+		const [run] = paragraph.runs;
+		if (!run) throw new Error('Expected run');
+		Object.assign(run, { [String(key)]: value });
 		await expect(loaded.save()).rejects.toThrow(/formatting edits are unsupported/);
 	});
 
 	it('rejects paragraph direction, spacing and new line breaks in legacy DOC output', async () => {
 		for (const change of [{ direction: 'rtl' }, { lineSpacingTwips: 480 }]) {
 			const loaded = await loadLegacyDoc(new Uint8Array(await readFile(fixture)));
-			Object.assign(loaded.model.blocks[0], change);
+			const block = loaded.model.blocks[0];
+			if (!block) throw new Error('Expected block');
+			Object.assign(block, change);
 			await expect(loaded.save()).rejects.toThrow(/formatting edits are unsupported/);
 		}
 		const loaded = await loadLegacyDoc(new Uint8Array(await readFile(fixture)));
 		const paragraph = loaded.model.blocks[0];
-		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
-		paragraph.runs[0].text += '\nAnother line';
+		if (paragraph?.type !== 'paragraph') throw new Error('Expected paragraph');
+		const [run] = paragraph.runs;
+		if (!run) throw new Error('Expected run');
+		run.text += '\nAnother line';
 		await expect(loaded.save()).rejects.toThrow(/line breaks/);
 	});
 
