@@ -2,6 +2,7 @@
 import { chromeStrings } from './localization-chrome-strings';
 import { commandStrings } from './localization-command-strings';
 import { navigationStrings } from './localization-navigation-strings';
+import { keyboardStrings } from './localization-keyboard-strings';
 
 const baseStrings = {
 	en: {
@@ -331,6 +332,18 @@ const baseStrings = {
 } as const;
 
 export const strings = {
-	en: { ...baseStrings.en, ...chromeStrings.en, ...commandStrings.en, ...navigationStrings.en },
-	fr: { ...baseStrings.fr, ...chromeStrings.fr, ...commandStrings.fr, ...navigationStrings.fr },
+	en: {
+		...baseStrings.en,
+		...chromeStrings.en,
+		...commandStrings.en,
+		...navigationStrings.en,
+		...keyboardStrings.en,
+	},
+	fr: {
+		...baseStrings.fr,
+		...chromeStrings.fr,
+		...commandStrings.fr,
+		...navigationStrings.fr,
+		...keyboardStrings.fr,
+	},
 } as const;

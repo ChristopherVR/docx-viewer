@@ -24,22 +24,27 @@ const editable =
 	(state, dispatch, view) =>
 		view?.editable === false ? false : command(state, dispatch, view);
 
+/** ProseMirror bindings the editor adds on top of the base keymap; the help dialog lists these. */
+export const editorBindings: Record<string, Command> = {
+	'Mod-z': undo,
+	'Mod-y': redo,
+	'Mod-Shift-z': redo,
+	'Mod-b': marks.bold,
+	'Mod-i': marks.italic,
+	'Mod-u': marks.underline,
+	'Shift-Enter': insertHardBreak,
+	Enter: chainCommands(exitListOnEmptyEnter, baseKeymap.Enter),
+	Tab: indentListItem,
+	'Shift-Tab': outdentListItem,
+	'Mod-Enter': insertPageBreak,
+};
+
 export function editorKeymap(showSearch: () => void) {
 	const shortcuts = Object.fromEntries(
-		Object.entries({
-			...baseKeymap,
-			'Mod-z': undo,
-			'Mod-y': redo,
-			'Mod-Shift-z': redo,
-			'Mod-b': marks.bold,
-			'Mod-i': marks.italic,
-			'Mod-u': marks.underline,
-			'Shift-Enter': insertHardBreak,
-			Enter: chainCommands(exitListOnEmptyEnter, baseKeymap.Enter),
-			Tab: indentListItem,
-			'Shift-Tab': outdentListItem,
-			'Mod-Enter': insertPageBreak,
-		}).map(([key, command]) => [key, editable(command)]),
+		Object.entries({ ...baseKeymap, ...editorBindings }).map(([key, command]) => [
+			key,
+			editable(command),
+		]),
 	);
 	return keymap({
 		...shortcuts,

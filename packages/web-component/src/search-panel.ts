@@ -14,7 +14,7 @@ export interface SearchPanelOptions {
 
 export interface SearchPanelHandle {
 	element: HTMLElement;
-	open(): void;
+	open(focus?: 'find' | 'replace'): void;
 	close(): void;
 	refresh(): void;
 	setLocale(locale: string): void;
@@ -152,11 +152,11 @@ export function createSearchPanel(
 		get isOpen() {
 			return isOpen;
 		},
-		open() {
+		open(focus = 'find') {
 			isOpen = true;
 			panel.hidden = false;
 			this.refresh();
-			findInput.focus();
+			(focus === 'replace' ? replaceInput : findInput).focus();
 		},
 		close: closePanel,
 		refresh() {

@@ -54,13 +54,13 @@ export function createBackstage(handlers: BackstageHandlers): Backstage {
 	element.className = 'dve-backstage';
 	element.setAttribute('role', 'dialog');
 	element.setAttribute('aria-modal', 'true');
-	element.setAttribute('aria-label', 'File');
 	element.hidden = true;
 	const nav = document.createElement('nav');
 	nav.className = 'dve-backstage-nav';
 	const content = document.createElement('div');
 	content.className = 'dve-backstage-content';
 	const t = (text: string) => translateUiText(element, text);
+	element.setAttribute('aria-label', t('File'));
 
 	const back = navButton('back', 'Back to document');
 	back.classList.add('dve-backstage-back');

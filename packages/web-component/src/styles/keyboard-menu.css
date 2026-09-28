@@ -1,0 +1,89 @@
+/* Context menu and keyboard shortcut help. Colors come from the --dve-* theme tokens. */
+.dve-context-menu {
+	position: fixed;
+	z-index: 60;
+	box-sizing: border-box;
+	display: flex;
+	min-width: 190px;
+	max-width: min(320px, calc(100vw - 8px));
+	flex-direction: column;
+	padding: 4px;
+	border: 1px solid var(--dve-border);
+	border-radius: 6px;
+	background: var(--dve-popover);
+	box-shadow: 0 8px 24px #0003;
+	color: var(--dve-popover-foreground, var(--ink));
+	font: inherit;
+}
+.dve-context-menu [role='menuitem'] {
+	display: block;
+	width: 100%;
+	padding: 6px 12px;
+	border: 0;
+	border-radius: 4px;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+.dve-context-menu [role='menuitem']:hover:not([aria-disabled]),
+.dve-context-menu [role='menuitem']:focus-visible {
+	background: var(--word-soft);
+}
+.dve-context-menu [role='menuitem']:focus-visible {
+	outline: 2px solid var(--dve-ring);
+	outline-offset: -2px;
+}
+.dve-context-menu [role='menuitem'][aria-disabled='true'] {
+	color: var(--muted);
+	cursor: default;
+	opacity: 0.65;
+}
+.dve-context-menu [role='separator'] {
+	height: 1px;
+	margin: 4px 2px;
+	background: var(--dve-border);
+}
+
+.dve-shortcut-help {
+	max-height: calc(100% - 180px);
+	overflow: auto;
+	width: min(560px, calc(100% - 32px));
+}
+.dve-shortcut-help .dve-shortcut-note {
+	margin: 0;
+	color: var(--muted);
+	font-size: 12px;
+}
+.dve-shortcut-help table {
+	width: 100%;
+	border-collapse: collapse;
+}
+.dve-shortcut-help th,
+.dve-shortcut-help td {
+	padding: 5px 8px;
+	border-bottom: 1px solid var(--dve-border);
+	text-align: left;
+	vertical-align: top;
+}
+.dve-shortcut-help th {
+	color: var(--muted);
+	font-size: 12px;
+	font-weight: 600;
+}
+.dve-shortcut-help kbd {
+	padding: 1px 6px;
+	border: 1px solid var(--dve-border);
+	border-radius: 4px;
+	background: var(--surface);
+	font:
+		12px/1.4 ui-monospace,
+		'SFMono-Regular',
+		Consolas,
+		monospace;
+	white-space: nowrap;
+}
+.dve-canvas:focus-visible {
+	outline-offset: -2px;
+}

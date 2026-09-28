@@ -99,7 +99,7 @@ export function createCommentsPanel(options: CommentsPanelOptions): CommentsPane
 	const panel = document.createElement('aside');
 	panel.className = 'dve-comments-panel';
 	panel.setAttribute('role', 'complementary');
-	panel.setAttribute('aria-label', 'Comments');
+	panel.setAttribute('aria-label', translate(locale, 'Comments'));
 	panel.hidden = true;
 	const style = document.createElement('style');
 	style.textContent = styleText;
@@ -108,12 +108,12 @@ export function createCommentsPanel(options: CommentsPanelOptions): CommentsPane
 	const closeButton = document.createElement('button');
 	closeButton.type = 'button';
 	closeButton.textContent = translate(locale, 'Close comments');
-	closeButton.setAttribute('aria-label', 'Close comments');
+	closeButton.setAttribute('aria-label', translate(locale, 'Close comments'));
 	closeButton.addEventListener('click', () => close());
 	const newForm = document.createElement('div');
 	newForm.className = 'dve-comment-new';
 	const newInput = document.createElement('textarea');
-	newInput.setAttribute('aria-label', 'New comment');
+	newInput.setAttribute('aria-label', translate(locale, 'New comment'));
 	newInput.placeholder = translate(locale, 'New comment');
 	const addButton = document.createElement('button');
 	addButton.type = 'button';
@@ -169,6 +169,10 @@ export function createCommentsPanel(options: CommentsPanelOptions): CommentsPane
 		setLocale(value: string) {
 			locale = normalizeEditorLocale(value);
 			heading.textContent = translate(locale, 'Comments');
+			panel.setAttribute('aria-label', translate(locale, 'Comments'));
+			closeButton.textContent = translate(locale, 'Close comments');
+			closeButton.setAttribute('aria-label', translate(locale, 'Close comments'));
+			newInput.setAttribute('aria-label', translate(locale, 'New comment'));
 			newInput.placeholder = translate(locale, 'New comment');
 			addButton.textContent = translate(locale, 'Add comment');
 			refresh();

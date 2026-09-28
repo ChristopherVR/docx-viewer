@@ -15,6 +15,7 @@ import { routeRibbonAction } from './ribbon-router';
 import { countWords } from './word-count';
 import { PageNavigator } from './page-navigator';
 import { applyViewOptions } from './view-options';
+import { attachEditorInteractions } from './editor-interactions';
 
 /** Element-level operations the chrome needs; they stay on the element because they are public API. */
 export interface ShellApi {
@@ -141,6 +142,7 @@ export function buildShell(core: EditorCore, api: ShellApi): void {
 	root.append(style, frame);
 	Object.assign(shell, { toolbar, canvas, paper });
 	applyViewOptions(core);
+	attachEditorInteractions(core, frame);
 	element.setAttribute('role', 'region');
 	element.setAttribute('aria-label', 'Document editor');
 }
