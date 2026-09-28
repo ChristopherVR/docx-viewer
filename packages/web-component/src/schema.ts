@@ -7,6 +7,9 @@ import { markSpecs } from './schema-marks';
 
 export { wordHighlightColors } from './schema-marks';
 
+/** Single line spacing as a multiple of the font size, close to Calibri's and Arial's metrics. */
+export const NATURAL_LINE_HEIGHT = 1.2;
+
 const safeCssValue = (value: unknown): string => String(value ?? '').replace(/[;{}]/g, '');
 const twipsCss = (value: unknown): string | null =>
 	Number.isSafeInteger(value) ? `${Number(value) / 15}px` : null;
@@ -35,9 +38,10 @@ export function paragraphStyle(attrs: Record<string, unknown>): string {
 		Number.isSafeInteger(attrs.lineSpacingTwips) &&
 			`line-height:${
 				attrs.lineSpacingRule == null || attrs.lineSpacingRule === 'auto'
-					? Number(attrs.lineSpacingTwips) / 240
+					? // Word multiplies the font's natural line height (about 1.2em), not its size.
+						Math.round((Number(attrs.lineSpacingTwips) / 240) * NATURAL_LINE_HEIGHT * 1000) / 1000
 					: attrs.lineSpacingRule === 'atLeast'
-						? `max(1.35em, ${Number(attrs.lineSpacingTwips) / 15}px)`
+						? `max(${NATURAL_LINE_HEIGHT}em, ${Number(attrs.lineSpacingTwips) / 15}px)`
 						: `${Number(attrs.lineSpacingTwips) / 15}px`
 			}`,
 	].filter(Boolean);

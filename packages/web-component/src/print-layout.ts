@@ -5,6 +5,7 @@ import {
 	type LayoutLine,
 	type LayoutResult,
 } from '@christophervr/docx-layout';
+import { renderTable } from './print-table';
 
 /** One clickable line, recorded for best-effort click-to-cursor mapping. */
 interface LineHitBox {
@@ -129,6 +130,7 @@ function renderBlock(
 	box: LayoutBlockBox,
 	hitboxes: LineHitBox[],
 	pictureUrl: PictureUrl | undefined,
+	columnWidthPx: number,
 ): HTMLElement {
 	if (box.kind === 'paragraph') {
 		const el = document.createElement('div');
@@ -138,27 +140,9 @@ function renderBlock(
 		for (const line of box.lines) el.append(renderLine(line, box.blockId, hitboxes, pictureUrl));
 		return el;
 	}
-	const table = document.createElement('div');
-	table.className = 'dve-print-block dve-print-table';
-	table.style.top = `${box.yPx}px`;
-	table.style.height = `${box.heightPx}px`;
-	for (const row of box.rows) {
-		const rowEl = document.createElement('div');
-		rowEl.className = 'dve-print-row';
-		rowEl.style.top = `${row.yPx}px`;
-		rowEl.style.height = `${row.heightPx}px`;
-		if (row.repeated) rowEl.dataset.repeated = 'true';
-		// Column widths are not yet threaded through the model (see
-		// docs/parity-roadmap.md §3); every cell renders as an equal flex share.
-		for (const cell of row.cells) {
-			const cellEl = document.createElement('div');
-			cellEl.className = 'dve-print-cell';
-			for (const paragraph of cell) cellEl.append(renderBlock(paragraph, hitboxes, pictureUrl));
-			rowEl.append(cellEl);
-		}
-		table.append(rowEl);
-	}
-	return table;
+	return renderTable(box, columnWidthPx, (paragraph) =>
+		renderBlock(paragraph, hitboxes, pictureUrl, columnWidthPx),
+	);
 }
 
 /** Pure, framework-neutral renderer: turns a `LayoutResult` into a DOM tree of page sheets. */
@@ -182,7 +166,8 @@ export function renderPrintLayout(
 			columnEl.style.left = `${page.marginLeftPx + column.xPx}px`;
 			columnEl.style.width = `${column.widthPx}px`;
 			columnEl.style.height = `${page.heightPx - page.marginTopPx - page.marginBottomPx}px`;
-			for (const block of column.blocks) columnEl.append(renderBlock(block, hitboxes, pictureUrl));
+			for (const block of column.blocks)
+				columnEl.append(renderBlock(block, hitboxes, pictureUrl, column.widthPx));
 			sheet.append(columnEl);
 		}
 		for (const float of page.floats ?? []) {

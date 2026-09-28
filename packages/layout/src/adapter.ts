@@ -16,6 +16,7 @@ import {
 	resolveRunFormatting,
 	resolveThemeColorReference,
 } from '@christophervr/docx-core';
+import { adaptTable } from './adapt-table.js';
 import type {
 	LayoutBlock,
 	LayoutDocumentInput,
@@ -30,6 +31,8 @@ const KEEP_TOGETHER_NOTE =
 	'Paragraph keepNext/keepLines/widowControl overrides and contextualSpacing are not yet represented in the document model; Word’s defaults (widow/orphan control on, no forced keep-together) are used for every paragraph.';
 const TABLE_ROW_NOTE =
 	'Table row "keep together" (cantSplit) and repeating header rows (tblHeader) are not yet represented in the document model; every row may split across a page.';
+const VERTICAL_MERGE_NOTE =
+	'Vertically merged table cells are drawn as one cell, but their text stays in the first row of the merge.';
 const NEXT_COLUMN_NOTE = 'A "next column" section break is laid out as a continuous section break.';
 
 const twipsToPx = (twips: number): number => twips / 15;
@@ -191,18 +194,11 @@ export function adaptDocumentModel(
 			...(paragraph.pageBreakBefore ? { pageBreakBefore: true } : {}),
 		};
 	}
-	function adaptTable(table: Table): LayoutTable {
-		reportOnce(TABLE_ROW_NOTE);
-		return {
-			kind: 'table',
-			id: table.id,
-			rows: table.rows.map((row) => ({
-				cells: row.map((cell) => ({ paragraphs: cell.paragraphs.map(adaptParagraph) })),
-			})),
-		};
-	}
 	function adaptBlock(block: Block): LayoutBlock {
-		return block.type === 'table' ? adaptTable(block) : adaptParagraph(block);
+		if (block.type === 'paragraph') return adaptParagraph(block);
+		reportOnce(TABLE_ROW_NOTE);
+		reportOnce(VERTICAL_MERGE_NOTE);
+		return adaptTable(block, model, adaptParagraph);
 	}
 
 	const blocks = model.blocks.map(adaptBlock);

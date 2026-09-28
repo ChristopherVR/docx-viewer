@@ -45,3 +45,5 @@ export { DEFAULT_TABLE_BORDERS } from './table-defaults.js';
 export { fieldName } from './field-runs.js';
 export { dateFieldResult, datePicture, formatWordDate } from './field-date.js';
 export * from './table-of-contents.js';
+export { resolveCellVisuals, type CellPlacement } from './table-visuals.js';
+export { DEFAULT_STYLES_XML, defaultStyleCatalogs } from './default-styles.js';

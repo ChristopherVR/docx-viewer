@@ -22,6 +22,14 @@ export function placeTable(
 		layoutRow(row, cursor.columnWidthPx, measurer, note),
 	);
 
+	// Table indent, or alignment of the grid within the column.
+	const width = table.widthPx ?? cursor.columnWidthPx;
+	const xPx =
+		table.alignment === 'center'
+			? Math.max(0, (cursor.columnWidthPx - width) / 2)
+			: table.alignment === 'right'
+				? Math.max(0, cursor.columnWidthPx - width)
+				: (table.indentPx ?? 0);
 	let fragmentRows: LayoutTableRowBox[] = [];
 	let fragmentHeight = 0;
 
@@ -31,6 +39,7 @@ export function placeTable(
 			heightPx: layout.heightPx,
 			repeated,
 			cells: layout.cells,
+			geometry: layout.geometry,
 		};
 		fragmentHeight += layout.heightPx;
 		return box;
@@ -41,6 +50,7 @@ export function placeTable(
 		const box: LayoutTableBox = {
 			kind: 'table',
 			blockId: table.id,
+			...(xPx ? { xPx } : {}),
 			yPx: 0,
 			heightPx: fragmentHeight,
 			rows: fragmentRows,

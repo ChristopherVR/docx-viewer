@@ -1,11 +1,12 @@
 import type { TextMeasurer } from './measure.js';
 import { layoutParagraph } from './paragraph-layout.js';
 import type { LayoutParagraph, LayoutTableCell, LayoutTableRow } from './input.js';
-import type { LayoutParagraphBox } from './result.js';
+import type { LayoutCellGeometry, LayoutParagraphBox } from './result.js';
 
 export interface RowLayout {
 	heightPx: number;
 	cells: LayoutParagraphBox[][];
+	geometry: LayoutCellGeometry[];
 }
 
 function layoutCellParagraphs(
@@ -13,8 +14,9 @@ function layoutCellParagraphs(
 	widthPx: number,
 	measurer: TextMeasurer,
 	note: (message: string) => void,
+	topPx = 0,
 ): { heightPx: number; boxes: LayoutParagraphBox[] } {
-	let y = 0;
+	let y = topPx;
 	const boxes: LayoutParagraphBox[] = [];
 	for (const paragraph of paragraphs) {
 		const layout = layoutParagraph(paragraph, widthPx, measurer, note);
@@ -34,10 +36,8 @@ function layoutCellParagraphs(
 }
 
 /**
- * Lays out one table row. Cell widths are the row's own `widthPx` if given,
- * otherwise the table width split evenly; cell padding, vertical alignment
- * and merged cells are not modeled (see the pagination-engine approximations
- * list this feeds into `LayoutResult.approximations`).
+ * Lays out one table row. Cells take their grid position and width when the table has a grid,
+ * otherwise the table width split evenly, and their content is inset by the cell margins.
  */
 export function layoutRow(
 	row: LayoutTableRow,
@@ -46,13 +46,36 @@ export function layoutRow(
 	note: (message: string) => void,
 ): RowLayout {
 	const count = row.cells.length || 1;
-	const widths = row.cells.map((cell) => cell.widthPx ?? tableWidthPx / count);
-	const laidOut = row.cells.map((cell, index) =>
-		layoutCellParagraphs(cell.paragraphs, widths[index], measurer, note),
-	);
+	let x = 0;
+	const geometry: LayoutCellGeometry[] = [];
+	const laidOut = row.cells.map((cell) => {
+		const widthPx = cell.widthPx ?? tableWidthPx / count;
+		const padding = cell.padding ?? { top: 0, right: 0, bottom: 0, left: 0 };
+		const content = layoutCellParagraphs(
+			cell.paragraphs,
+			Math.max(1, widthPx - padding.left - padding.right),
+			measurer,
+			note,
+			padding.top,
+		);
+		const heightPx = content.heightPx + padding.bottom;
+		geometry.push({
+			xPx: cell.xPx ?? x,
+			widthPx,
+			paddingLeftPx: padding.left,
+			paddingRightPx: padding.right,
+			contentHeightPx: heightPx,
+			...(cell.borders ? { borders: cell.borders } : {}),
+			...(cell.shading ? { shading: cell.shading } : {}),
+			...(cell.verticalAlign ? { verticalAlign: cell.verticalAlign } : {}),
+		});
+		x = (cell.xPx ?? x) + widthPx;
+		return { heightPx, boxes: content.boxes };
+	});
 	return {
 		heightPx: Math.max(0, ...laidOut.map((cell) => cell.heightPx)),
 		cells: laidOut.map((cell) => cell.boxes),
+		geometry,
 	};
 }
 
@@ -125,6 +148,7 @@ export function splitRowAtHeight(row: RowLayout, cutHeightPx: number): RowSplit 
 	const before: RowLayout = {
 		heightPx: Math.max(0, ...splits.map((split) => split.beforeHeightPx)),
 		cells: splits.map((split) => split.before),
+		geometry: row.geometry,
 	};
 	if (!anyAfter) return { before, after: null };
 	const after: RowLayout = {
@@ -135,6 +159,7 @@ export function splitRowAtHeight(row: RowLayout, cutHeightPx: number): RowSplit 
 			),
 		),
 		cells: splits.map((split) => split.after),
+		geometry: row.geometry,
 	};
 	return { before, after };
 }

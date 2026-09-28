@@ -146,3 +146,76 @@ describe('Print Layout tab leaders', () => {
 		expect(rule.style.borderBottom).toContain('solid');
 	});
 });
+
+describe('Print Layout tables', () => {
+	it('draws cells at their grid positions with borders, shading and vertical alignment', () => {
+		const line = {
+			yPx: 0,
+			heightPx: 20,
+			sourceStart: 0,
+			sourceEnd: 1,
+			fragments: [{ text: 'x', xPx: 0, widthPx: 10, runIndex: 0 }],
+		};
+		const paragraph = {
+			kind: 'paragraph' as const,
+			blockId: 'c',
+			yPx: 0,
+			heightPx: 20,
+			lines: [line],
+		};
+		const red = { widthPx: 1, style: 'solid' as const, color: '#ff0000' };
+		const result = sampleResult();
+		result.pages[0].columns[0].blocks = [
+			{
+				kind: 'table',
+				blockId: 't',
+				xPx: 40,
+				yPx: 0,
+				heightPx: 60,
+				rows: [
+					{
+						yPx: 0,
+						heightPx: 60,
+						repeated: false,
+						cells: [[paragraph], [paragraph]],
+						geometry: [
+							{
+								xPx: 0,
+								widthPx: 100,
+								paddingLeftPx: 7,
+								paddingRightPx: 7,
+								contentHeightPx: 20,
+								borders: { top: red, left: red, right: red, bottom: red },
+							},
+							{
+								xPx: 100,
+								widthPx: 150,
+								paddingLeftPx: 7,
+								paddingRightPx: 7,
+								contentHeightPx: 20,
+								shading: '#ffff00',
+								verticalAlign: 'bottom',
+								borders: { top: red, left: red, right: red, bottom: red },
+							},
+						],
+					},
+				],
+			},
+		];
+		const { element } = renderPrintLayout(result);
+		const table = element.querySelector<HTMLElement>('.dve-print-table')!;
+		expect(table.style.left).toBe('40px');
+		const [first, second] = element.querySelectorAll<HTMLElement>('.dve-print-cell');
+		expect([first.style.left, first.style.width, second.style.left]).toEqual([
+			'0px',
+			'100px',
+			'100px',
+		]);
+		// Shared edges are drawn once: the first cell has no right edge, the last does.
+		expect(first.style.borderRight).toBe('');
+		expect(second.style.borderRight).toBe('1px solid rgb(255, 0, 0)');
+		expect(second.style.background).toContain('rgb(255, 255, 0)');
+		const content = second.querySelector<HTMLElement>('.dve-print-cell-content')!;
+		expect([content.style.left, content.style.top]).toEqual(['7px', '40px']);
+	});
+});

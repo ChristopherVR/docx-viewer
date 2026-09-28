@@ -1,4 +1,5 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
+import { defaultStyleCatalogs } from './default-styles.js';
 import type { NumberingCatalog } from './numbering-model.js';
 import type { HyperlinkInfo, InlineImage } from './inline-model.js';
 export type { HyperlinkInfo, InlineImage, PicturePlacement } from './inline-model.js';
@@ -309,5 +310,6 @@ export function createDocument(): DocumentModel {
 			marginLeft: 96,
 		},
 		warnings: [],
+		...defaultStyleCatalogs(),
 	};
 }

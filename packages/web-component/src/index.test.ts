@@ -216,7 +216,7 @@ describe('DocxEditorElement', () => {
 			'margin-left: 24px',
 		);
 		expect(root.querySelector('.ProseMirror p')?.getAttribute('style')).toContain(
-			'line-height: max(1.35em, 24px)',
+			'line-height: max(1.2em, 24px)',
 		);
 		editor.remove();
 	});

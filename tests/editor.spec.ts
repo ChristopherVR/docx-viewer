@@ -102,11 +102,11 @@ test('ribbon edits preserve font properties and save table and page settings', a
 	await editor.getByLabel('Font family', { exact: true }).selectOption('Georgia');
 	await editor.getByLabel('Font size', { exact: true }).selectOption('18');
 	await editor.getByLabel('Font color', { exact: true }).selectOption('#0070c0');
-	await expect(surface.locator('span').filter({ hasText: 'Ribbon document' })).toHaveCSS(
+	await expect(surface.locator('span').filter({ hasText: 'Ribbon document' }).last()).toHaveCSS(
 		'font-family',
 		'Georgia',
 	);
-	await expect(surface.locator('span').filter({ hasText: 'Ribbon document' })).toHaveCSS(
+	await expect(surface.locator('span').filter({ hasText: 'Ribbon document' }).last()).toHaveCSS(
 		'font-size',
 		'24px',
 	);

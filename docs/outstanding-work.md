@@ -78,10 +78,15 @@ Still missing:
   and character styles and theme fonts. It uses metric-compatible substitutes (Carlito, Caladea,
   Arimo, Tinos, Cousine) when Word's fonts are missing, and re-paginates once web fonts load. Single
   line height comes from the font's ascent and descent. Kerning, per-script fonts (East Asian and
-  complex-script faces), footnote placement, text wrap around floats and comparisons against
-  Word-rendered references are still missing.
+  complex-script faces), footnote placement and comparisons against Word-rendered references are
+  still missing.
+- New documents carry Word's modern defaults (Calibri 11pt, 8pt after, 1.08 lines; Normal,
+  Heading 1–3, Title, TOC 1–3 and Hyperlink styles) and save them in `styles.xml`, so they open in
+  Word as edited. The editing surface and Print Layout apply the same spacing and line heights.
+- Print Layout tables use the document's grid widths, cell margins, borders (table style, table
+  and cell), shading, vertical alignment and table indent or alignment. Vertically merged cells are
+  drawn as one cell, but their text stays in the merge's first row.
 
 ### Engineering follow-ups
 
-- Modules over the 300-line guideline: `web-component/src/component.ts` (~530: the element's public API, lifecycle and ribbon dispatch) and the `localization-strings.ts` data table.
-- The Track Changes plugin handles transactions of plain replace steps; multi-step transactions mixing deletions and insertions need position mapping between steps.
+- Modules over the 300-line guideline: `web-component/src/component.ts` (~520: the element's public API, lifecycle and ribbon dispatch) and the `localization-strings.ts` data table.

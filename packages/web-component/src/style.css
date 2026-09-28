@@ -278,15 +278,17 @@
 		0 1px 3px #20212430,
 		0 4px 12px #20212420;
 	outline: none;
+	/* Single spacing and no paragraph gap unless the document's styles set them, as in Word. */
 	font:
-		11pt/1.35 Calibri,
+		11pt/1.2 Calibri,
+		Carlito,
 		Arial,
 		sans-serif;
 	zoom: var(--dve-zoom, 1);
 }
 .dve-paper p {
-	min-height: 1.35em;
-	margin: 0 0 0.5em;
+	min-height: 1.2em;
+	margin: 0;
 	white-space: pre-wrap;
 }
 .dve-paper p:last-child {
@@ -303,10 +305,13 @@
 		0 4px 12px #20212420,
 		0 0 0 1px var(--blue);
 }
+/* Columns follow the table's grid and cell widths (equal when it has none), as Word lays them out;
+   tables add no space around themselves. */
 .dve-paper table {
 	width: 100%;
+	table-layout: fixed;
 	border-collapse: collapse;
-	margin: 1em 0;
+	margin: 0;
 }
 .dve-paper td {
 	min-width: 44px;
@@ -561,13 +566,16 @@
 	position: absolute;
 	left: 0;
 	width: 100%;
-	display: flex;
 }
+/* Cells sit at their grid positions; borders come from the document (Word prints no gridlines). */
 .dve-print-cell {
-	position: relative;
-	flex: 1 1 0;
-	min-width: 0;
-	border: 1px solid #9aa0a6;
+	position: absolute;
+	top: 0;
+	box-sizing: border-box;
+}
+.dve-print-cell-content {
+	position: absolute;
+	bottom: 0;
 }
 @media print {
 	.dve-ribbon,

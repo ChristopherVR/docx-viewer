@@ -39,7 +39,7 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		await editor.getByRole('button', { name: 'Redo', exact: true }).click();
 		await expect(spacing).toHaveValue('auto:480');
 		for (const paragraph of await surface.locator('p').all())
-			await expect(paragraph).toHaveAttribute('style', /line-height:\s*2(?:;|$)/);
+			await expect(paragraph).toHaveAttribute('style', /line-height:\s*2\.4(?:;|$)/);
 		await setReadOnly(page, true);
 		await expect(spacing).toBeDisabled();
 		await setReadOnly(page, false);

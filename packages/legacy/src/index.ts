@@ -49,7 +49,13 @@ function paragraphText(model: DocumentModel): string[] {
 }
 
 function makeModel(paragraphs: string[]): DocumentModel {
-	const model = createDocument();
+	// A .doc's styles are not modeled, so the new-document default catalogs do not apply.
+	const {
+		paragraphStyles: _paragraphStyles,
+		characterStyles: _characterStyles,
+		tableStyles: _tableStyles,
+		...model
+	} = createDocument();
 	model.blocks = paragraphs.map((text, index) => ({
 		type: 'paragraph',
 		id: `p${index + 1}`,

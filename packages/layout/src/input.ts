@@ -91,10 +91,37 @@ export interface LayoutParagraph {
 	tabStops?: LayoutTabStop[];
 }
 
+/** A resolved cell border, ready to draw. */
+export interface LayoutBorder {
+	widthPx: number;
+	style: 'solid' | 'double' | 'dotted' | 'dashed';
+	color: string;
+}
+export interface LayoutCellBorders {
+	top?: LayoutBorder;
+	right?: LayoutBorder;
+	bottom?: LayoutBorder;
+	left?: LayoutBorder;
+}
+export interface LayoutCellPadding {
+	top: number;
+	right: number;
+	bottom: number;
+	left: number;
+}
+
 export interface LayoutTableCell {
 	paragraphs: LayoutParagraph[];
 	/** Column width in CSS pixels; undefined cells share the row's remaining width evenly. */
 	widthPx?: number;
+	/** Left edge from the table's left, from the table grid (merged cells span grid columns). */
+	xPx?: number;
+	/** Cell margins (`w:tcMar`, else the table default); content is inset by them. */
+	padding?: LayoutCellPadding;
+	borders?: LayoutCellBorders;
+	/** `#rrggbb` shading fill. */
+	shading?: string;
+	verticalAlign?: 'top' | 'center' | 'bottom';
 }
 
 export interface LayoutTableRow {
@@ -109,6 +136,12 @@ export interface LayoutTable {
 	kind: 'table';
 	id: string;
 	rows: LayoutTableRow[];
+	/** Total grid width, for aligning the table in its column. */
+	widthPx?: number;
+	/** `w:tblInd`: offset from the column's left edge. */
+	indentPx?: number;
+	/** `w:jc` on the table. */
+	alignment?: 'left' | 'center' | 'right';
 }
 
 export type LayoutBlock = LayoutParagraph | LayoutTable;

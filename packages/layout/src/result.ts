@@ -37,17 +37,34 @@ export interface LayoutParagraphBox {
 	lines: LayoutLine[];
 }
 
+/** Where a cell sits in its row and how it is drawn (borders, shading, padding). */
+export interface LayoutCellGeometry {
+	xPx: number;
+	widthPx: number;
+	paddingLeftPx: number;
+	paddingRightPx: number;
+	borders?: import('./input.js').LayoutCellBorders;
+	shading?: string;
+	verticalAlign?: 'top' | 'center' | 'bottom';
+	/** Height of the cell's content (with its top and bottom padding), for vertical alignment. */
+	contentHeightPx: number;
+}
+
 export interface LayoutTableRowBox {
 	yPx: number;
 	heightPx: number;
 	/** True when this row is a repeated header copy rather than the row's first placement. */
 	repeated: boolean;
 	cells: LayoutParagraphBox[][];
+	/** Per-cell position and appearance, parallel to `cells`. */
+	geometry?: LayoutCellGeometry[];
 }
 
 export interface LayoutTableBox {
 	kind: 'table';
 	blockId: string;
+	/** Offset from the column's left edge (table indent or alignment). */
+	xPx?: number;
 	yPx: number;
 	heightPx: number;
 	rows: LayoutTableRowBox[];

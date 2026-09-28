@@ -88,7 +88,7 @@ describe('paragraph line breaks and spacing adapter', () => {
 		const dom = schema.nodes.paragraph.spec.toDOM?.(paragraph);
 		expect(dom).toEqual([
 			'p',
-			{ style: 'text-align:left;line-height:1.5', dir: null, 'data-id': '' },
+			{ style: 'text-align:left;line-height:1.8', dir: null, 'data-id': '' },
 			0,
 		]);
 	});

@@ -11,6 +11,10 @@ import { writeNewRelationships } from './part-relationships.js';
 import { applySettingsFlag, applyTrackChangesSetting } from './settings.js';
 import { applyComments } from './write-comments.js';
 import { numberCommentIds } from './comment-spans.js';
+import { DEFAULT_STYLES_XML, hasDefaultStyles } from './default-styles.js';
+import { ensureContentTypeOverride, ensureDocumentRelationship } from './zip-parts.js';
+
+const DEFAULT_STYLES_PATH = 'word/styles.xml';
 import { maxWordId, numberRevisionIds } from './revision-ids.js';
 import { parseRelationships } from './package-parts.js';
 
@@ -59,9 +63,9 @@ export async function saveDocx(
 		throw new Error(
 			'Editing the paragraph style catalog is not supported; source styles.xml is preserved unchanged.',
 		);
-	if (!binding && model.paragraphStyles)
+	if (!binding && model.paragraphStyles && !hasDefaultStyles(model))
 		throw new Error(
-			'Creating or editing paragraph styles is not supported by the standalone DOCX writer.',
+			'Creating or editing paragraph styles is not supported by the standalone DOCX writer; new documents use the built-in default styles.',
 		);
 	if (!binding && model.sections?.some((section) => section.headers || section.footers))
 		throw new Error(
@@ -117,6 +121,20 @@ export async function saveDocx(
 		await applySettingsFlag(zip, 'evenAndOddHeaders', Boolean(model.evenAndOddHeaders));
 	if (model.trackChanges !== binding?.base.trackChanges)
 		await applyTrackChangesSetting(zip, model.trackChanges === true);
+	// New documents carry Word's modern defaults, so they open in Word as they were edited.
+	if (!binding && model.paragraphStyles) {
+		zip.file(DEFAULT_STYLES_PATH, DEFAULT_STYLES_XML);
+		await ensureContentTypeOverride(
+			zip,
+			DEFAULT_STYLES_PATH,
+			'application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml',
+		);
+		await ensureDocumentRelationship(
+			zip,
+			'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles',
+			'styles.xml',
+		);
+	}
 	if (JSON.stringify(model.comments ?? []) !== JSON.stringify(binding?.base.comments ?? []))
 		await applyComments(zip, model.comments ?? []);
 	return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });

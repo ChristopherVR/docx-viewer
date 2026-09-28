@@ -65,9 +65,16 @@ describe('table of contents', () => {
 			{ text: '', fieldChar: 'separate' },
 		]);
 		expect(toc[1].runs.at(-1)).toEqual({ text: '', fieldChar: 'end' });
+		// New documents define Word's TOC styles, so entries use them.
 		expect(toc[1]).toMatchObject({
-			indentLeftTwips: 220,
+			style: 'TOC2',
 			tabStops: [{ posTwips: 9000, align: 'right', leader: 'dot' }],
+		});
+		// Without TOC styles, entries get matching direct indents.
+		const unstyled = { ...sample(), paragraphStyles: undefined };
+		expect(buildTableOfContents(unstyled, { newId })[1]).toMatchObject({
+			indentLeftTwips: 220,
+			spacingAfterTwips: 100,
 		});
 	});
 
@@ -110,7 +117,7 @@ describe('table of contents', () => {
 			'<w:instrText xml:space="preserve"> TOC \\o "1-3" \\h \\z \\u </w:instrText>',
 		);
 		expect(xml).toMatch(
-			/<w:pPr><w:tabs><w:tab w:val="right" w:leader="dot" w:pos="9360"\/><\/w:tabs><w:spacing w:after="100"\/><\/w:pPr>/,
+			/<w:pPr><w:pStyle w:val="TOC1"\/><w:tabs><w:tab w:val="right" w:leader="dot" w:pos="9360"\/><\/w:tabs><\/w:pPr>/,
 		);
 		expect(xml).toContain('<w:t>Introduction</w:t><w:tab/><w:t>1</w:t>');
 		const reloaded = await loadDocx(saved);
