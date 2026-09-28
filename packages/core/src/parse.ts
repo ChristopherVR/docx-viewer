@@ -145,7 +145,7 @@ export async function readPackage(input: Uint8Array | ArrayBuffer): Promise<{
 			await extendedFile?.async('string'),
 		);
 		model.warnings.push(
-			'Comments are anchored per paragraph; a comment range spanning multiple paragraphs is not modeled.',
+			'Comment ranges are modeled at run granularity (they may span paragraphs); a range edge outside any run, such as around an empty paragraph or a table, moves to the nearest commented text when that paragraph is edited.',
 		);
 	}
 	if (settingsFile)

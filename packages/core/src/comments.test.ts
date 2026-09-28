@@ -32,7 +32,7 @@ describe('comments', () => {
 		const paragraph = loaded.model.blocks[0];
 		if (paragraph.type !== 'paragraph') throw new Error('expected paragraph');
 		expect(paragraph.runs[0]).toMatchObject({ text: 'Reviewed text', commentIds: ['0'] });
-		expect(loaded.model.warnings.some((w) => w.includes('anchored per paragraph'))).toBe(true);
+		expect(loaded.model.warnings.some((w) => w.includes('run granularity'))).toBe(true);
 	});
 
 	it('leaves an untouched comment list byte-identical on save', async () => {
@@ -67,5 +67,50 @@ describe('comments', () => {
 		expect(contentTypes).toContain('comments+xml');
 		const rels = await saved.file('word/_rels/document.xml.rels')?.async('string');
 		expect(rels).toContain('/comments');
+	});
+
+	it('models a comment spanning paragraphs and writes one range for it', async () => {
+		const zip = await JSZip.loadAsync(await fixture());
+		zip.file(
+			'word/document.xml',
+			`<w:document ${NS}><w:body><w:p><w:r><w:t xml:space="preserve">Before </w:t></w:r><w:commentRangeStart w:id="0"/><w:r><w:t>first</w:t></w:r></w:p><w:p><w:r><w:t>middle</w:t></w:r></w:p><w:p><w:r><w:t>last</w:t></w:r><w:commentRangeEnd w:id="0"/><w:r><w:commentReference w:id="0"/></w:r><w:r><w:t xml:space="preserve"> after</w:t></w:r></w:p><w:sectPr/></w:body></w:document>`,
+		);
+		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
+		const runs = loaded.model.blocks.map((block) => (block.type === 'paragraph' ? block.runs : []));
+		expect(runs.map((list) => list.map((run) => run.commentIds ?? []))).toEqual([
+			[[], ['0']],
+			[['0']],
+			[['0'], []],
+		]);
+		// Edit the middle and last paragraphs; the range still opens in the first and closes in the last.
+		const blocks = loaded.model.blocks.map((block, index) =>
+			block.type === 'paragraph' && index > 0
+				? { ...block, runs: block.runs.map((run) => ({ ...run, text: run.text.toUpperCase() })) }
+				: block,
+		);
+		const saved = await loaded.save({ ...loaded.model, blocks });
+		const xml = await (await JSZip.loadAsync(saved)).file('word/document.xml')!.async('string');
+		expect(xml.match(/<w:commentRangeStart /g)).toHaveLength(1);
+		expect(xml.match(/<w:commentRangeEnd /g)).toHaveLength(1);
+		expect(xml.match(/<w:commentReference /g)).toHaveLength(1);
+		expect(xml).toMatch(
+			/<w:t>LAST<\/w:t><\/w:r><w:commentRangeEnd w:id="0"\/><w:r><w:commentReference w:id="0"\/>/,
+		);
+		// Moving the end: drop the comment from the last paragraph, and the middle one closes it.
+		const shortened = blocks.map((block, index) =>
+			block.type === 'paragraph' && index === 2
+				? { ...block, runs: block.runs.map(({ commentIds: _ids, ...run }) => run) }
+				: block,
+		);
+		const shortXml = await (
+			await JSZip.loadAsync(await loaded.save({ ...loaded.model, blocks: shortened }))
+		)
+			.file('word/document.xml')!
+			.async('string');
+		expect(shortXml.match(/<w:commentRangeEnd /g)).toHaveLength(1);
+		expect(shortXml).toMatch(/<w:t>MIDDLE<\/w:t><\/w:r><w:commentRangeEnd w:id="0"\/>/);
+		const reloaded = await loadDocx(await loaded.save({ ...loaded.model, blocks: shortened }));
+		const last = reloaded.model.blocks[2];
+		expect(last.type === 'paragraph' && last.runs.every((run) => !run.commentIds)).toBe(true);
 	});
 });

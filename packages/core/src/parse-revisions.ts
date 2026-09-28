@@ -58,16 +58,17 @@ export function runFormatRevision(rPr: XmlElement | undefined): Revision | undef
  * Walks a paragraph's direct children in document order, expanding `w:ins`/`w:del`/`w:moveFrom`/
  * `w:moveTo` wrappers into their contained runs (tagged with the wrapper's revision) and tracking
  * `w:commentRangeStart`/`w:commentRangeEnd` so runs inside an open range carry the comment's id.
- * Comment ranges are assumed to stay within one paragraph; multi-paragraph ranges are not modeled.
+ * Pass the same `active` array for consecutive paragraphs so a range spanning paragraphs tags
+ * every run inside it.
  */
 export function collectParagraphRuns(
 	node: XmlElement,
 	parseRun: (run: XmlElement, revision?: Revision) => TextRun,
 	parseOther?: (item: XmlElement) => TextRun[] | undefined,
 	resolveLink?: (hyperlink: XmlElement) => TextRun['link'],
+	active: string[] = [],
 ): { runs: TextRun[]; hasMove: boolean } {
 	const runs: TextRun[] = [];
-	const active: string[] = [];
 	let hasMove = false;
 	const push = (run: TextRun) => {
 		if (active.length) run.commentIds = [...active];

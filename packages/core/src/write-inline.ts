@@ -4,6 +4,7 @@
 // comment-anchor wrapping helpers from write-revisions.ts and write-comments.ts.
 import type { HyperlinkInfo, TextRun } from './model.js';
 import type { RelationshipAllocator } from './relationship-allocator.js';
+import type { CommentContinuation } from './comment-spans.js';
 import { createRun } from './write-run.js';
 import { hasSpecialBreak, isModeledBreak } from './breaks.js';
 import { isCommentReferenceRun } from './parse-revisions.js';
@@ -195,8 +196,14 @@ export function buildInlineContent(
 	base: TextRun[] | undefined,
 	slots: InlineSlot[],
 	allocator?: RelationshipAllocator,
+	continuation?: CommentContinuation,
 ): XmlElement[] {
-	const { opens, closes } = commentAnchorEdges(runs);
+	const edges = commentAnchorEdges(runs);
+	// Ranges continuing from an earlier paragraph or into a later one open or close there instead.
+	const without = (map: Map<number, string[]>, skip: Set<string> | undefined) =>
+		new Map([...map].map(([index, ids]) => [index, ids.filter((id) => !skip?.has(id))]));
+	const opens = without(edges.opens, continuation?.before);
+	const closes = without(edges.closes, continuation?.after);
 	const nodesFor = (index: number) =>
 		runNodes(
 			doc,

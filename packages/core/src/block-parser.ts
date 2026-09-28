@@ -59,6 +59,8 @@ function fieldPlaceholderText(instr: string | undefined): string {
  * relationship parts, so their drawings and external links are not resolved.
  */
 let activeContext: DrawingContext | undefined;
+/** Comment ranges open at the current position in the part being parsed; ranges may span paragraphs. */
+let openComments: string[] | undefined;
 
 /** Content children of a run other than its `rPr`, used to detect single-purpose runs. */
 function runContent(node: XmlElement): XmlElement[] {
@@ -160,6 +162,7 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 			const link = resolveHyperlink(hyperlink, activeContext.rels);
 			return link.href !== undefined || link.anchor !== undefined ? link : undefined;
 		},
+		openComments,
 	);
 	if (!runs.length) runs.push({ text: '' });
 	const paragraph: Paragraph = { type: 'paragraph', id, runs };
@@ -233,11 +236,14 @@ export function parseBlocksFromContainer(
 	context?: DrawingContext,
 ): Block[] {
 	const previous = activeContext;
+	const previousComments = openComments;
 	activeContext = context;
+	openComments = [];
 	try {
 		return parseContainer(container, idPrefix);
 	} finally {
 		activeContext = previous;
+		openComments = previousComments;
 	}
 }
 

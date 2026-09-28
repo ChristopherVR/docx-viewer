@@ -69,7 +69,7 @@ Still missing:
   in table cells, headers and footers are not paginated. The editing surface still approximates
   floats with CSS floats.
 - Picture bullets, `numStyleLink`, Word's exact `lvlRestart` cascade.
-- Move linkage for `moveFrom`/`moveTo`, prior-formatting snapshots for `rPrChange`/`pPrChange`, table-structure revisions, and comments spanning multiple paragraphs.
+- Move linkage for `moveFrom`/`moveTo`, prior-formatting snapshots for `rPrChange`/`pPrChange`, and table-structure revisions. Comments may span paragraphs (one range per comment); range edges outside any run move to the nearest commented text when edited.
 - Print Layout measures and draws text with formatting inherited from document defaults, paragraph
   and character styles and theme fonts. It uses metric-compatible substitutes (Carlito, Caladea,
   Arimo, Tinos, Cousine) when Word's fonts are missing, and re-paginates once web fonts load. Single

@@ -3,6 +3,11 @@ import type { Block, DocumentModel, Paragraph, SectionProperties } from './model
 import { children, first, getW, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
 import { writeParagraphProperties } from './write-paragraph-properties.js';
 import { orderParagraphProperties, writeTabStops } from './tab-stops.js';
+import {
+	commentContinuations,
+	continuationKey,
+	type CommentContinuation,
+} from './comment-spans.js';
 import { writeNumberingProperties } from './numbering-write.js';
 import { writeTable as writeTableContent } from './write-table.js';
 import { buildNewTableProperties } from './table-defaults.js';
@@ -51,8 +56,12 @@ function writeParagraphImpl(
 	node: XmlElement,
 	base: Paragraph | undefined,
 	allocator: RelationshipAllocator | undefined,
+	spans?: CommentSpans,
 ): XmlElement {
-	if (base && JSON.stringify(paragraph) === JSON.stringify(base)) return node;
+	const continuation = spans?.next.get(paragraph.id);
+	const sameRanges =
+		continuationKey(continuation) === continuationKey(spans?.original.get(paragraph.id));
+	if (base && sameRanges && JSON.stringify(paragraph) === JSON.stringify(base)) return node;
 	const slots = collectInlineSlots(node);
 	if (!slots)
 		throw new Error(
@@ -97,7 +106,14 @@ function writeParagraphImpl(
 	const bookmarkEnds = children(node, 'bookmarkEnd');
 	for (const bookmark of [...bookmarkStarts, ...bookmarkEnds]) node.removeChild(bookmark);
 	for (const oldNode of replaceableInlineChildren(node)) node.removeChild(oldNode);
-	const newNodes = buildInlineContent(doc, paragraph.runs, base?.runs, slots, allocator);
+	const newNodes = buildInlineContent(
+		doc,
+		paragraph.runs,
+		base?.runs,
+		slots,
+		allocator,
+		continuation,
+	);
 	let anchor: XmlElement = pPr;
 	for (const bookmark of bookmarkStarts) {
 		node.insertBefore(bookmark, anchor.nextSibling);
@@ -119,9 +135,16 @@ function createParagraph(
 	doc: XmlDocument,
 	paragraph: Paragraph,
 	allocator: RelationshipAllocator | undefined,
+	spans?: CommentSpans,
 ): XmlElement {
 	const node = makeW(doc, 'p');
-	return writeParagraphImpl(doc, paragraph, node, undefined, allocator);
+	return writeParagraphImpl(doc, paragraph, node, undefined, allocator, spans);
+}
+
+/** Comment range continuations in the blocks being written and in the part as loaded. */
+interface CommentSpans {
+	next: Map<string, CommentContinuation>;
+	original: Map<string, CommentContinuation>;
 }
 
 function createTable(
@@ -129,6 +152,7 @@ function createTable(
 	table: Extract<Block, { type: 'table' }>,
 	allocator: RelationshipAllocator | undefined,
 	contentWidthTwips: number,
+	spans?: CommentSpans,
 ): XmlElement {
 	const node = makeW(doc, 'tbl');
 	const { tblPr, tblGrid } = buildNewTableProperties(doc, table, contentWidthTwips);
@@ -139,7 +163,7 @@ function createTable(
 		for (const cell of row) {
 			const tc = makeW(doc, 'tc');
 			for (const paragraph of cell.paragraphs)
-				tc.appendChild(createParagraph(doc, paragraph, allocator));
+				tc.appendChild(createParagraph(doc, paragraph, allocator, spans));
 			if (!cell.paragraphs.length) tc.appendChild(makeW(doc, 'p'));
 			tr.appendChild(tc);
 		}
@@ -193,12 +217,16 @@ export function applyBlocks(
 	contentWidthTwips: number,
 	anchor: XmlElement | null = null,
 ): void {
+	const spans: CommentSpans = {
+		next: commentContinuations(blocks),
+		original: commentContinuations(original),
+	};
 	const boundWriteParagraph = (
 		writeDoc: XmlDocument,
 		paragraph: Paragraph,
 		node: XmlElement,
 		base?: Paragraph,
-	) => writeParagraphImpl(writeDoc, paragraph, node, base, allocator);
+	) => writeParagraphImpl(writeDoc, paragraph, node, base, allocator, spans);
 	const oldNodes = originalNodes(container);
 	const oldById = new Map<string, XmlElement>();
 	original.forEach((block, index) => {
@@ -213,7 +241,7 @@ export function applyBlocks(
 			output.push(
 				old
 					? boundWriteParagraph(doc, block, old, base?.type === 'paragraph' ? base : undefined)
-					: createParagraph(doc, block, allocator),
+					: createParagraph(doc, block, allocator, spans),
 			);
 		else
 			output.push(
@@ -226,7 +254,7 @@ export function applyBlocks(
 							boundWriteParagraph,
 							replaceSlots,
 						)
-					: createTable(doc, block, allocator, contentWidthTwips),
+					: createTable(doc, block, allocator, contentWidthTwips, spans),
 			);
 	}
 	replaceSlots(doc, container, originalNodes(container), output, anchor);
