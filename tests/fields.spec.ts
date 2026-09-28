@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
-import { fileInput, fileNameLabel, saveButton } from './helpers';
+import { fileInput, fileNameLabel, newDocument, saveButton } from './helpers';
 
 const w = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
@@ -114,5 +114,52 @@ test('inserts a table of contents from the References tab and saves it as a TOC 
 		/<w:hyperlink w:anchor="(_Toc\d+)"[^>]*><w:r><w:t>Details<\/w:t><w:tab\/><\/w:r>.*?PAGEREF \1 .*?<w:t>2<\/w:t>/,
 	);
 	expect(xml).toMatch(/<w:bookmarkStart w:id="\d+" w:name="_Toc\d+"\/><w:r><w:t>Details<\/w:t>/);
+	expect(errors).toEqual([]);
+});
+
+test('records cut and paste under Track Changes as a tracked move and saves it', async ({
+	page,
+	context,
+}) => {
+	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/');
+	await newDocument(page);
+	const editor = page.locator('docx-editor');
+	const body = editor.locator('.ProseMirror').first();
+	await body.locator('p').first().click();
+	await page.keyboard.type('Alpha Beta');
+	await page.keyboard.press('Enter');
+	await page.keyboard.type('Gamma');
+	await editor.getByRole('tab', { name: 'Review', exact: true }).click();
+	await editor.getByRole('button', { name: 'Track changes', exact: true }).click();
+	// Select "Beta" and cut it, then paste it at the end of "Gamma".
+	await body
+		.locator('p')
+		.first()
+		.dblclick({ position: { x: 60, y: 8 } });
+	await page.keyboard.press('Control+x');
+	await page.keyboard.press('ArrowDown');
+	await page.keyboard.press('End');
+	// Let the editor read the caret move (a selectionchange task) before pasting.
+	await page.evaluate(
+		() => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 50))),
+	);
+	await page.keyboard.press('Control+v');
+	await expect(editor.locator('.dve-revision-move')).toHaveCount(2);
+
+	const pending = page.waitForEvent('download');
+	await saveButton(page).click();
+	const zip = await JSZip.loadAsync(await readFile((await (await pending).path())!));
+	const xml = await zip.file('word/document.xml')!.async('string');
+	const name = /<w:moveFromRangeStart w:id="\d+"[^>]* w:name="(move\d+)"\/>/.exec(xml)?.[1];
+	expect(name).toBeTruthy();
+	expect(xml).toContain(`<w:moveToRangeStart`);
+	expect(xml).toMatch(/<w:moveFrom w:id="\d+"[^>]*><w:r><w:delText>Beta<\/w:delText>/);
+	expect(xml).toMatch(/<w:moveTo w:id="\d+"[^>]*><w:r>(?:<w:rPr>.*?<\/w:rPr>)?<w:t>Beta<\/w:t>/);
+	// Pasted CSS values are converted to what Word accepts, never written verbatim.
+	expect(xml).not.toMatch(/rgb\(|sans-serif/);
+	expect(xml).not.toContain('dve-rev');
 	expect(errors).toEqual([]);
 });

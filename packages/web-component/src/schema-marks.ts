@@ -6,6 +6,40 @@ import { linkMarkSpec } from './inline-content-schema';
 
 const safeCssValue = (value: unknown): string => String(value ?? '').replace(/[;{}]/g, '');
 
+const GENERIC_FAMILIES = new Set([
+	'serif',
+	'sans-serif',
+	'monospace',
+	'cursive',
+	'fantasy',
+	'system-ui',
+]);
+
+/** The first named family of a pasted CSS `font-family` list (Word stores one font name). */
+function pastedFontFamily(value: string): string | null {
+	const first =
+		value
+			.split(',')[0]
+			?.trim()
+			.replace(/^['"]|['"]$/g, '') ?? '';
+	return first && !GENERIC_FAMILIES.has(first.toLowerCase()) ? first : null;
+}
+
+/** A pasted CSS color as `#rrggbb`, the only form Word's `w:color` accepts; others are dropped. */
+function pastedColor(value: string): string | null {
+	const hex = /^#([0-9a-f]{6})$/i.exec(value.trim());
+	if (hex) return `#${hex[1].toLowerCase()}`;
+	const short = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(value.trim());
+	if (short)
+		return `#${short[1]}${short[1]}${short[2]}${short[2]}${short[3]}${short[3]}`.toLowerCase();
+	const rgb = /^rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)$/i.exec(value.trim());
+	if (!rgb || (rgb[4] !== undefined && Number(rgb[4]) === 0)) return null;
+	return `#${rgb
+		.slice(1, 4)
+		.map((part) => Math.min(255, Number(part)).toString(16).padStart(2, '0'))
+		.join('')}`;
+}
+
 function parseFontSize(value: string): number | null {
 	const match = /^\s*(\d+(?:\.\d+)?)\s*(pt|px)?\s*$/i.exec(value);
 	if (!match) return null;
@@ -49,6 +83,9 @@ export const markSpecs: Record<string, MarkSpec> = {
 				tag: 'span[style*="background-color"]',
 				getAttrs: (el) => {
 					const color = (el as HTMLElement).style.backgroundColor.toLowerCase();
+					// A white background is the page, not a highlight (browsers inline it when copying).
+					if (color === 'white' || color === 'rgb(255, 255, 255)' || color === '#ffffff')
+						return false;
 					const entry = Object.entries(wordHighlightColors).find(([, css]) => {
 						const hex = css.slice(1);
 						const rgb = `rgb(${parseInt(hex.slice(0, 2), 16)}, ${parseInt(hex.slice(2, 4), 16)}, ${parseInt(hex.slice(4, 6), 16)})`;
@@ -119,11 +156,12 @@ export const markSpecs: Record<string, MarkSpec> = {
 				tag: 'span',
 				getAttrs: (el) => {
 					const style = (el as HTMLElement).style;
-					return {
-						family: style.fontFamily.trim() || null,
+					const attrs = {
+						family: pastedFontFamily(style.fontFamily),
 						size: style.fontSize ? parseFontSize(style.fontSize) : null,
-						color: style.color || null,
+						color: pastedColor(style.color),
 					};
+					return attrs.family || attrs.size || attrs.color ? attrs : false;
 				},
 			},
 		],

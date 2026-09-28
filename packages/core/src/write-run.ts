@@ -173,9 +173,11 @@ function setRunProperties(
 	}
 	if (changed('color') || changed('colorTheme')) {
 		removeChildren(props, 'color');
-		if (run.color || run.colorTheme) {
+		// `w:color/@w:val` must be RRGGBB or `auto`; anything else (e.g. a CSS rgb()) is not written.
+		const hex = run.color && /^#?([0-9a-f]{6})$/i.exec(run.color)?.[1];
+		if (hex || run.colorTheme) {
 			const color = makeW(doc, 'color');
-			setAttribute(color, 'val', run.color ? run.color.replace(/^#/, '') : 'auto');
+			setAttribute(color, 'val', hex || 'auto');
 			if (run.colorTheme) {
 				setAttribute(color, 'themeColor', run.colorTheme.token);
 				if (run.colorTheme.tint !== undefined)

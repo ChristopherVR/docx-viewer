@@ -71,7 +71,7 @@ Still missing:
   every page; floats inside table cells are not positioned. The editing surface still approximates
   floats with CSS floats.
 - Picture bullets, `numStyleLink`, Word's exact `lvlRestart` cascade.
-- Prior-formatting snapshots for `rPrChange`/`pPrChange`, and table-structure revisions. Tracked moves are linked by name (accepting or rejecting either side resolves both) and saved with their range markers; the editor does not yet record new moves (cut and paste under Track Changes records a deletion and an insertion). Comments may span paragraphs (one range per comment); range edges outside any run move to the nearest commented text when edited.
+- Prior-formatting snapshots for `rPrChange`/`pPrChange`, and table-structure revisions. Tracked moves are linked by name (accepting or rejecting either side resolves both) and saved with their range markers. Under Track Changes, dragging text or cutting and pasting the same text records a move; moving formatted content across table cells is recorded as a deletion and an insertion. Comments may span paragraphs (one range per comment); range edges outside any run move to the nearest commented text when edited.
 - Print Layout measures and draws text with formatting inherited from document defaults, paragraph
   and character styles and theme fonts. It uses metric-compatible substitutes (Carlito, Caladea,
   Arimo, Tinos, Cousine) when Word's fonts are missing, and re-paginates once web fonts load. Single
