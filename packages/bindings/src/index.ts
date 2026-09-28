@@ -5,6 +5,8 @@ export interface EditorOptions {
 	documentModel?: DocumentModel;
 	readOnly?: boolean;
 	locale?: string;
+	/** `light`, `dark`, or `auto` (default) to follow the OS color scheme. */
+	theme?: 'light' | 'dark' | 'auto';
 	onDocumentChange?: (model: DocumentModel) => void;
 	onDocumentError?: (error: Error) => void;
 }
@@ -39,6 +41,7 @@ export function mountEditor(host: HTMLElement, initial: EditorOptions = {}): Edi
 			options = next;
 			element.locale = next.locale ?? 'en';
 			element.readOnly = next.readOnly ?? false;
+			element.theme = next.theme ?? 'auto';
 			if (
 				next.documentModel &&
 				next.documentModel !== lastInput &&

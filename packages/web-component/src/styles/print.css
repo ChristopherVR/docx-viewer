@@ -1,0 +1,188 @@
+.dve-print-pages {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 24px;
+	margin: 0 auto;
+	zoom: var(--dve-zoom, 1);
+}
+.dve-print-pages[hidden] {
+	display: none;
+}
+.dve-print-page {
+	position: relative;
+	flex: none;
+	background: #fff;
+	color: #202124;
+	box-shadow:
+		0 1px 3px #20212430,
+		0 4px 12px #20212420;
+	overflow: hidden;
+}
+.dve-print-column {
+	position: absolute;
+	z-index: 1;
+}
+/* Floating pictures sit in front of text unless anchored behind it (wp:anchor/@behindDoc). */
+.dve-print-float {
+	z-index: 2;
+}
+.dve-print-float-behind {
+	z-index: 0;
+}
+.dve-print-picture-missing {
+	box-sizing: border-box;
+	border: 1px dashed #8a8886;
+	background: #f3f2f1;
+}
+.dve-print-block {
+	position: absolute;
+	left: 0;
+	width: 100%;
+}
+.dve-print-line {
+	position: absolute;
+	left: 0;
+	width: 100%;
+	font:
+		11pt/1.2 Calibri,
+		Arial,
+		sans-serif;
+	cursor: text;
+}
+.dve-print-line span {
+	position: absolute;
+	top: 0;
+}
+.dve-print-row {
+	position: absolute;
+	left: 0;
+	width: 100%;
+}
+/* Cells sit at their grid positions; borders come from the document (Word prints no gridlines). */
+.dve-print-cell {
+	position: absolute;
+	top: 0;
+	box-sizing: border-box;
+}
+.dve-print-cell-content {
+	position: absolute;
+	bottom: 0;
+}
+@media print {
+	.dve-ribbon,
+	.dve-status,
+	.multilingual-controls {
+		display: none !important;
+	}
+	.dve-canvas {
+		overflow: visible !important;
+		padding: 0 !important;
+	}
+	.dve-paper {
+		display: none !important;
+	}
+	.dve-print-pages {
+		gap: 0 !important;
+		zoom: 1 !important;
+	}
+	.dve-print-page {
+		box-shadow: none !important;
+		break-after: page;
+	}
+}
+.dve-print-header,
+.dve-print-footer {
+	position: absolute;
+	color: var(--ink);
+	font-size: 11pt;
+	pointer-events: none;
+}
+.dve-print-header p,
+.dve-print-footer p {
+	margin: 0;
+}
+.dve-print-header table,
+.dve-print-footer table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+/* Complex field begin/code/separate/end markers: kept in the document, never shown. */
+.dve-field-marker {
+	display: inline;
+	font-size: 0;
+}
+
+/* TOC entries link to hidden _Toc bookmarks; Word draws them in the entry's style, not as links. */
+a.dve-link[data-anchor^='_Toc'] {
+	color: inherit;
+	text-decoration: none;
+}
+
+/* Tabs sized to Word's tab stops by tab-stops-view.ts; leaders fill the tab's width. */
+.dve-tab {
+	display: inline-block;
+	overflow: hidden;
+	white-space: pre;
+	vertical-align: baseline;
+	text-indent: 0;
+}
+.dve-tab-leader-dot,
+.dve-tab-leader-middleDot {
+	background-image: radial-gradient(circle, currentColor 0.8px, transparent 1.1px);
+	background-size: 4px 4px;
+	background-repeat: repeat-x;
+	background-position: right 0 bottom 0.25em;
+}
+.dve-tab-leader-hyphen {
+	background-image: linear-gradient(to right, currentColor 50%, transparent 50%);
+	background-size: 6px 1px;
+	background-repeat: repeat-x;
+	background-position: right 0 bottom 0.4em;
+}
+.dve-tab-leader-underscore,
+.dve-tab-leader-heavy {
+	border-bottom: 1px solid currentColor;
+}
+.dve-tab-leader-heavy {
+	border-bottom-width: 2px;
+}
+
+/* Footnotes above the bottom margin; the separator is Word's 2-inch rule. */
+.dve-print-footnotes {
+	position: absolute;
+	z-index: 1;
+}
+.dve-print-footnote-separator {
+	position: absolute;
+	top: -7px;
+	left: 0;
+	width: 192px;
+	border-top: 1px solid currentColor;
+}
+.dve-print-footnote {
+	position: absolute;
+	left: 0;
+	width: 100%;
+}
+
+[data-print-view] .dve-notes-container {
+	display: none;
+}
+
+/* Word draws superscript and subscript at about two thirds size without growing the line. */
+.dve-paper sup,
+.dve-paper sub {
+	font-size: 0.65em;
+	line-height: 0;
+}
+/* Exact-height rows clip content that does not fit, as Word does. */
+.dve-print-cell {
+	overflow: hidden;
+}
+.dve-print-paragraph-frame {
+	position: absolute;
+	top: 0;
+	box-sizing: border-box;
+}

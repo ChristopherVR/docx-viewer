@@ -1,0 +1,127 @@
+/* Links, pictures and hidden text in the document */
+.dve-paper a.dve-link {
+	color: var(--word);
+	text-decoration: underline;
+	cursor: text;
+}
+.dve-paper img.dve-image {
+	max-width: 100%;
+	height: auto;
+	vertical-align: bottom;
+}
+.dve-paper .dve-image-placeholder {
+	display: inline-grid;
+	place-items: center;
+	border: 1px dashed var(--line);
+	background: var(--canvas);
+	color: var(--muted);
+	font-size: 11px;
+}
+.dve-paper:not([data-show-hidden]) .dve-hidden-text {
+	display: none;
+}
+.dve-paper[data-show-hidden] .dve-hidden-text {
+	opacity: 0.55;
+	text-decoration: underline dotted;
+}
+
+/* Pictures: selection outline and proportional resize handle */
+.dve-paper .dve-picture {
+	position: relative;
+	display: inline-block;
+	max-width: 100%;
+	line-height: 0;
+}
+.dve-paper .dve-picture-selected {
+	outline: 2px solid var(--word);
+	outline-offset: 1px;
+}
+.dve-picture-handle {
+	position: absolute;
+	right: -5px;
+	bottom: -5px;
+	display: none;
+	width: 10px;
+	height: 10px;
+	border: 1px solid var(--word);
+	background: #fff;
+	cursor: nwse-resize;
+}
+.dve-picture-selected .dve-picture-handle {
+	display: block;
+}
+.dve-dialog textarea {
+	min-height: 60px;
+	padding: 6px 8px;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+	background: var(--surface);
+	color: var(--ink);
+	font: inherit;
+	resize: vertical;
+}
+.dve-dialog-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+.dve-dialog .dve-dialog-check {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--ink);
+}
+
+/* Header/footer editing (double-click a header or footer) */
+.dve-header-footer-slot[data-slot] {
+	cursor: text;
+}
+.dve-header-footer-editing {
+	outline: 1px dashed var(--word);
+	outline-offset: 4px;
+}
+.dve-header-footer-editor .ProseMirror {
+	outline: none;
+	white-space: pre-wrap;
+}
+.dve-header-footer-editor .ProseMirror p {
+	margin: 0;
+}
+
+/* Section break marks after the paragraph that ends a section */
+.dve-paper .dve-section-end::after {
+	display: block;
+	margin: 6px 0;
+	border-top: 1px dotted var(--muted);
+	border-bottom: 1px dotted var(--muted);
+	color: var(--muted);
+	content: attr(data-section-break);
+	font-size: 10px;
+	line-height: 14px;
+	text-align: center;
+	user-select: none;
+}
+
+/* Floating pictures: an approximation of Word's text wrapping */
+.dve-paper .dve-float-left,
+.dve-header-footer-body .dve-float-left {
+	float: left;
+	margin: 2px 12px 6px 0;
+}
+.dve-paper .dve-float-right,
+.dve-header-footer-body .dve-float-right {
+	float: right;
+	margin: 2px 0 6px 12px;
+}
+.dve-paper .dve-float-block {
+	display: block;
+	width: fit-content;
+	margin: 6px 0;
+}
+.dve-paper .dve-float-block-center {
+	margin-right: auto;
+	margin-left: auto;
+}
+.dve-paper .dve-float-block-right {
+	margin-left: auto;
+}

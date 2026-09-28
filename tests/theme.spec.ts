@@ -19,6 +19,11 @@ test('appearance changes from another window preserve the open document', async 
 		'data-theme',
 		themeBefore === 'dark' ? 'light' : 'dark',
 	);
+	// The demo drives the editor's own theme property, not only the page attribute.
+	await expect(page.locator('docx-editor')).toHaveAttribute(
+		'theme',
+		themeBefore === 'dark' ? 'light' : 'dark',
+	);
 	await expect(surface).toContainText('Theme synchronization keeps this edit.');
 	await expect(saveStateLabel(page)).toHaveText('Unsaved changes');
 	await controls.close();

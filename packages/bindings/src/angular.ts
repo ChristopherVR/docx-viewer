@@ -16,6 +16,7 @@ export class WordEditorComponent implements AfterViewInit, OnChanges, OnDestroy 
 	@Input() documentModel?: DocumentModel;
 	@Input() readOnly = false;
 	@Input() locale = 'en';
+	@Input() theme: 'light' | 'dark' | 'auto' = 'auto';
 	@Output() documentChange = new EventEmitter<DocumentModel>();
 	@Output() documentError = new EventEmitter<Error>();
 	private host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -25,6 +26,7 @@ export class WordEditorComponent implements AfterViewInit, OnChanges, OnDestroy 
 			documentModel: this.documentModel,
 			readOnly: this.readOnly,
 			locale: this.locale,
+			theme: this.theme,
 			onDocumentChange: (model: DocumentModel) => this.documentChange.emit(model),
 			onDocumentError: (error: Error) => this.documentError.emit(error),
 		};

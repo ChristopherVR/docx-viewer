@@ -18,3 +18,5 @@ export {
 } from './collaboration-identity';
 export type { ReviewDisplayMode } from './review-display';
 export type { RevisionRange } from './review-commands';
+export { lightTheme, darkTheme, themeToCssVars } from './theme';
+export type { EditorTheme, EditorThemeMode } from './theme';

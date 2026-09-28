@@ -1,0 +1,216 @@
+.dve-ribbon {
+	display: flex;
+	flex: none;
+	min-width: 0;
+	flex-direction: column;
+	background: var(--surface);
+	border-bottom: 1px solid var(--line);
+}
+.ribbon-tabs {
+	display: flex;
+	flex: none;
+	min-width: 0;
+	gap: 4px;
+	min-height: 39px;
+	padding: 0 14px;
+	border-bottom: 1px solid var(--line);
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	scrollbar-width: thin;
+}
+.ribbon-tabs [role='tab'] {
+	position: relative;
+	border: 0;
+	background: none;
+	padding: 0 13px;
+	flex: none;
+	white-space: nowrap;
+	color: var(--muted);
+	font:
+		500 13px 'Segoe UI',
+		Arial,
+		sans-serif;
+	cursor: pointer;
+}
+.ribbon-tabs [aria-selected='true'] {
+	color: var(--blue);
+}
+.ribbon-tabs [aria-selected='true']:after {
+	position: absolute;
+	right: 8px;
+	bottom: 0;
+	left: 8px;
+	height: 3px;
+	border-radius: 3px 3px 0 0;
+	background: var(--blue);
+	content: '';
+}
+.ribbon-panel {
+	flex: none;
+	min-width: 0;
+	min-height: 100px;
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: stretch;
+	gap: 10px;
+	padding: 8px 14px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	overscroll-behavior-x: contain;
+	scrollbar-width: thin;
+}
+.ribbon-panel[hidden] {
+	display: none;
+}
+.ribbon-group {
+	display: flex;
+	flex: 0 0 auto;
+	flex-wrap: wrap;
+	align-content: flex-start;
+	align-items: center;
+	min-width: 0;
+	max-width: 330px;
+	gap: 2px;
+	padding: 2px 10px 0 2px;
+	border-right: 1px solid var(--line);
+}
+.ribbon-row {
+	display: flex;
+	flex: 0 0 100%;
+	flex-wrap: nowrap;
+	align-items: center;
+	gap: 2px;
+}
+.ribbon-group:last-child {
+	border: 0;
+}
+.ribbon-group::after {
+	order: 1;
+	flex: 0 0 100%;
+	margin-top: 3px;
+	color: var(--muted);
+	font-size: 10px;
+	line-height: 1.1;
+	text-align: center;
+	content: attr(data-caption);
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Font'] {
+	width: 310px;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Paragraph'] {
+	width: 270px;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Alignment'] {
+	width: 180px;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Editing'] {
+	width: 140px;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Styles'] {
+	width: 150px;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Styles'] select {
+	width: 100%;
+	max-width: 100%;
+}
+.ribbon-group[aria-label='Language'] {
+	flex: 0 0 100%;
+}
+.ribbon-panel[data-panel='Review'] .ribbon-group[data-label='Tracking'],
+.ribbon-panel[data-panel='Review'] .ribbon-group[data-label='Changes'],
+.ribbon-panel[data-panel='Review'] .ribbon-group[data-label='Comments'] {
+	flex: 0 0 auto;
+}
+.ribbon-group button {
+	min-width: 32px;
+	flex: none;
+	height: 31px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	background: transparent;
+	color: var(--ink);
+	font:
+		500 14px 'Segoe UI',
+		Arial,
+		sans-serif;
+	cursor: pointer;
+	padding: 0 4px;
+}
+.ribbon-group button:hover:not(:disabled) {
+	background: var(--accent-soft);
+	border-color: var(--line);
+}
+.ribbon-group button[aria-pressed='true'] {
+	background: var(--accent-soft);
+	color: var(--blue);
+}
+.ribbon-group .tool-bold {
+	font-weight: 800;
+}
+.ribbon-group .tool-italic {
+	font-style: italic;
+}
+.ribbon-group .tool-underline {
+	text-decoration: underline;
+}
+.ribbon-group select {
+	flex: none;
+	max-width: 150px;
+	height: 30px;
+	border: 1px solid var(--line);
+	border-radius: 3px;
+	background: var(--surface);
+	padding: 0 7px;
+	color: var(--ink);
+	font:
+		12px 'Segoe UI',
+		Arial,
+		sans-serif;
+}
+.ribbon-group select option {
+	background: var(--surface);
+	color: var(--ink);
+}
+.ribbon-group select.font-family-select {
+	width: 120px;
+}
+.ribbon-group select.font-size-select {
+	width: 52px;
+}
+.ribbon-group[data-label='Font'] .ribbon-row button {
+	min-width: 28px;
+	padding-inline: 0;
+}
+.ribbon-group select.spacing-select {
+	width: 150px;
+}
+.ribbon-group select.line-spacing-select {
+	width: 112px;
+}
+.dve-status {
+	display: block;
+	flex: none;
+	min-width: 0;
+	padding: 6px 14px;
+	border-bottom: 1px solid var(--line);
+	border-top: 1px solid var(--line);
+	background: var(--surface);
+	color: var(--muted);
+	font-size: 11px;
+}
+.dve-body {
+	display: flex;
+	flex: 1;
+	min-height: 0;
+	min-width: 0;
+}
+.dve-canvas {
+	flex: 1;
+	min-height: 0;
+	min-width: 0;
+	max-height: none;
+	overflow: auto;
+	padding: 30px clamp(16px, 5vw, 70px) 60px;
+	background: var(--canvas);
+	overscroll-behavior: contain;
+}

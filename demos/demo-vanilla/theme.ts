@@ -10,8 +10,17 @@ export function initTheme() {
 			: systemTheme.matches
 				? 'dark'
 				: 'light';
+	// Drive the editor's own `theme` property (chrome tokens) alongside the demo page theme. Editors
+	// mount lazily, so also sync any docx-editor added later.
+	const syncEditors = () => {
+		const theme = document.documentElement.dataset.theme as 'light' | 'dark';
+		for (const editor of document.querySelectorAll<HTMLElement & { theme: string }>('docx-editor'))
+			if (editor.theme !== theme) editor.theme = theme;
+	};
+	new MutationObserver(syncEditors).observe(document.body, { childList: true, subtree: true });
 	const applyTheme = (theme: 'light' | 'dark') => {
 		document.documentElement.dataset.theme = theme;
+		syncEditors();
 		const toggle = get<HTMLButtonElement>('theme-toggle');
 		const dark = theme === 'dark';
 		toggle.textContent = dark ? 'Light' : 'Dark';

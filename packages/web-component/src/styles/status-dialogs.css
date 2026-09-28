@@ -1,0 +1,145 @@
+/* Status bar */
+.dve-status {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	min-height: 26px;
+	padding: 0 10px;
+	border-bottom: 0;
+	background: var(--chrome);
+	font-size: 11px;
+}
+.dve-status-left,
+.dve-status-right {
+	display: flex;
+	min-width: 0;
+	align-items: center;
+	gap: 14px;
+	white-space: nowrap;
+}
+.dve-status-right {
+	gap: 2px;
+}
+.dve-status-notes {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 6px;
+	border: 0;
+	border-radius: 4px;
+	background: none;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+.dve-status-notes:hover {
+	background: var(--word-soft);
+}
+.dve-status-notes[hidden],
+.dve-status-language[hidden] {
+	display: none;
+}
+.dve-status .dve-icon-button {
+	min-width: 24px;
+	height: 22px;
+}
+.dve-zoom-slider {
+	width: 110px;
+	accent-color: var(--word);
+}
+.dve-zoom-percent {
+	min-width: 44px;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+
+@media (max-width: 760px) {
+	.dve-titlebar {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+	.dve-tellme,
+	.dve-status-language,
+	.dve-zoom-slider {
+		display: none;
+	}
+	.dve-backstage {
+		grid-template-columns: 1fr;
+		grid-template-rows: auto minmax(0, 1fr);
+	}
+	.dve-backstage-nav {
+		flex-direction: row;
+		overflow-x: auto;
+		padding: 0;
+	}
+	.dve-backstage-content {
+		padding: 20px;
+	}
+}
+
+/* Dialogs (Insert link) */
+.dve-dialog {
+	position: absolute;
+	z-index: 35;
+	top: 150px;
+	left: 50%;
+	display: grid;
+	width: min(440px, calc(100% - 32px));
+	gap: 10px;
+	padding: 18px 20px;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	background: var(--dve-popover);
+	box-shadow: 0 12px 32px #0003;
+	color: var(--ink);
+	transform: translateX(-50%);
+}
+.dve-dialog[hidden],
+.dve-dialog label[hidden] {
+	display: none;
+}
+.dve-dialog h2 {
+	margin: 0 0 4px;
+	font-size: 16px;
+	font-weight: 600;
+}
+.dve-dialog label {
+	display: grid;
+	gap: 4px;
+	color: var(--muted);
+	font-size: 12px;
+}
+.dve-dialog input,
+.dve-dialog select {
+	height: 30px;
+	padding: 0 8px;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+	background: var(--surface);
+	color: var(--ink);
+	font: inherit;
+}
+.dve-dialog-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 6px;
+}
+.dve-dialog-actions button {
+	min-height: 30px;
+	padding: 0 14px;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+	background: var(--surface);
+	color: var(--ink);
+	font: inherit;
+	cursor: pointer;
+}
+.dve-dialog-actions .dve-dialog-primary {
+	border-color: var(--word);
+	background: var(--word);
+	color: var(--dve-primary-foreground);
+}

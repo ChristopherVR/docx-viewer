@@ -4,6 +4,16 @@ import { createDocument } from '@christophervr/docx-core';
 import { mountEditor } from './index';
 afterEach(() => document.body.replaceChildren());
 describe('shared binding lifecycle', () => {
+	it('forwards theme to the element and defaults back to auto', () => {
+		const host = document.createElement('div');
+		document.body.append(host);
+		const binding = mountEditor(host, { theme: 'dark' });
+		expect(binding.element.theme).toBe('dark');
+		expect(binding.element.getAttribute('theme')).toBe('dark');
+		binding.update({});
+		expect(binding.element.theme).toBe('auto');
+		binding.destroy();
+	});
 	it('does not overwrite edits on unrelated parent updates or model feedback', () => {
 		const host = document.createElement('div');
 		document.body.append(host);

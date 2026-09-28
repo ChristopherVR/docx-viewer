@@ -15,6 +15,7 @@ export function WordEditor(props: WordEditorProps) {
 		documentModel: props.documentModel,
 		readOnly: props.readOnly,
 		locale: props.locale,
+		theme: props.theme,
 		onDocumentChange: props.onDocumentChange,
 		onDocumentError: props.onDocumentError,
 	});

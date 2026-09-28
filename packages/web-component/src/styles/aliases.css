@@ -1,0 +1,14 @@
+/* Chrome aliases: the pre-token custom property names, now derived from --dve-* tokens. */
+:host {
+	--word: var(--dve-primary);
+	--word-strong: color-mix(in srgb, var(--dve-primary) 70%, #000);
+	--word-soft: color-mix(in srgb, var(--dve-primary) 12%, transparent);
+	--blue: var(--word);
+	--accent-soft: var(--word-soft);
+	--ink: var(--dve-foreground);
+	--muted: var(--dve-muted-foreground);
+	--line: var(--dve-border);
+	--canvas: var(--dve-muted);
+	--surface: var(--dve-card);
+	--chrome: var(--dve-background);
+}

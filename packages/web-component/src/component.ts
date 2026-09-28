@@ -6,8 +6,13 @@ import { createDocument, saveDocx } from '@christophervr/docx-core';
 import { loadDocument } from '@christophervr/docx-document';
 import { createRibbon, setRibbonLocale, type RibbonAction } from './ribbon';
 import { assignMissingParagraphIds, docToModel, modelToDoc } from './model-adapter';
-import styleText from './style.css?inline';
-import chromeStyleText from './chrome.css?inline';
+import { editorStyleText } from './styles';
+import {
+	applyThemeColors,
+	normalizeThemeMode,
+	type EditorTheme,
+	type EditorThemeMode,
+} from './theme';
 import { runRibbonCommand } from './editor-commands';
 import { createSearchPanel, type SearchPanelHandle } from './search-panel';
 import {
@@ -50,6 +55,9 @@ export class DocxEditorElement extends HTMLElementBase {
 	private readonly collab = new CollaborationSession(this, () => this.view);
 	private detachedState?: EditorState;
 	private _locale: EditorLocale = 'en';
+	private _theme: EditorThemeMode = 'auto';
+	private _themeColors?: Partial<EditorTheme>;
+	private appliedThemeVars: string[] = [];
 	private printLayout?: PrintLayoutController;
 	private readonly inserts = new InsertController({
 		view: () => this.targetView(),
@@ -116,6 +124,30 @@ export class DocxEditorElement extends HTMLElementBase {
 	set fileName(value: string) {
 		if (this.chrome) this.chrome.fileName = value;
 		else this.pendingFileName = value;
+	}
+
+	/** `light`, `dark`, or `auto` (default, follows the OS). Reflected to the `theme` attribute. */
+	get theme(): EditorThemeMode {
+		return this._theme;
+	}
+	set theme(value: EditorThemeMode) {
+		const next = normalizeThemeMode(value);
+		this._theme = next;
+		if (this.getAttribute('theme') !== next) this.setAttribute('theme', next);
+	}
+	/** Token overrides applied as inline `--dve-*` custom properties on the host. */
+	get themeColors(): Partial<EditorTheme> | undefined {
+		return this._themeColors;
+	}
+	set themeColors(value: Partial<EditorTheme> | undefined) {
+		this._themeColors = value;
+		this.appliedThemeVars = applyThemeColors(this, this.appliedThemeVars, value);
+	}
+	static get observedAttributes() {
+		return ['theme'];
+	}
+	attributeChangedCallback(name: string, _old: string | null, value: string | null) {
+		if (name === 'theme') this._theme = normalizeThemeMode(value);
 	}
 
 	get locale(): string {
@@ -270,8 +302,7 @@ export class DocxEditorElement extends HTMLElementBase {
 		this.classList.add('dve-host');
 		const root = this.attachShadow({ mode: 'open' });
 		const style = document.createElement('style');
-		style.textContent = `${styleText}
-${chromeStyleText}`;
+		style.textContent = editorStyleText;
 		const frame = document.createElement('section');
 		frame.className = 'dve-frame';
 		const toolbar = createRibbon(this._locale);
