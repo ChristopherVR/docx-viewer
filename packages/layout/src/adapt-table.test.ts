@@ -16,7 +16,8 @@ function model(table: Table): DocumentModel {
 	return { ...createDocument(), blocks: [table] };
 }
 
-const single = { style: 'single', sizeEighthPoints: 8, color: 'FF0000' };
+// Parsed documents store colors with their `#`.
+const single = { style: 'single', sizeEighthPoints: 8, color: '#FF0000' };
 const table: Table = {
 	type: 'table',
 	id: 't',
@@ -31,7 +32,7 @@ const table: Table = {
 		insideV: single,
 	},
 	rows: [
-		[cell('a', { gridSpan: 2, verticalMerge: 'restart' }), cell('b', { shadingFill: 'FFFF00' })],
+		[cell('a', { gridSpan: 2, verticalMerge: 'restart' }), cell('b', { shadingFill: '#FFFF00' })],
 		[
 			cell('', { gridSpan: 2, verticalMerge: 'continue' }),
 			cell('c', { verticalAlign: 'bottom', margins: { left: 300 } }),

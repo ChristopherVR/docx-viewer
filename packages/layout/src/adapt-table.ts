@@ -20,6 +20,12 @@ const twipsToPx = (twips: number): number => twips / 15;
 /** Word's default table cell margins (`w:tblCellMar`): 108 twips (0.075in) left and right. */
 const DEFAULT_PADDING_TWIPS = { top: 0, right: 108, bottom: 0, left: 108 };
 
+/** `#rrggbb` from a model color, which the parser stores with or without its `#`. */
+export function cssHex(value: string | undefined): string | undefined {
+	const hex = value?.replace(/^#/, '');
+	return hex && /^[0-9a-f]{6}$/i.test(hex) ? `#${hex}` : undefined;
+}
+
 function border(
 	side: TableBorderSide | undefined,
 	theme: DocumentModel['theme'],
@@ -36,7 +42,7 @@ function border(
 		side.themeColor && theme
 			? resolveThemeColorReference({ token: side.themeColor }, theme)
 			: undefined;
-	const hex = side.color && /^[0-9a-f]{6}$/i.test(side.color) ? `#${side.color}` : undefined;
+	const hex = cssHex(side.color);
 	// `sz` is in eighths of a point; a double line needs room for both strokes.
 	const widthPx = Math.max(
 		style === 'double' ? 3 : 1,
@@ -126,14 +132,14 @@ export function adaptTable(
 				};
 				const width =
 					gridWidth(start, span) ?? (cell.widthTwips ? twipsToPx(cell.widthTwips) : undefined);
-				const fill = visuals.shadingFill;
+				const fill = cssHex(visuals.shadingFill);
 				return {
 					paragraphs: cell.paragraphs.map(adaptParagraph),
 					...(width !== undefined ? { widthPx: width } : {}),
 					...(grid ? { xPx: gridWidth(0, start) } : {}),
 					padding,
 					...(Object.keys(borders).length ? { borders } : {}),
-					...(fill && /^[0-9a-f]{6}$/i.test(fill) ? { shading: `#${fill}` } : {}),
+					...(fill ? { shading: fill } : {}),
 					...(cell.verticalAlign ? { verticalAlign: cell.verticalAlign } : {}),
 				};
 			}),
