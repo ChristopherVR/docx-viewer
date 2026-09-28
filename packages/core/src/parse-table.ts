@@ -1,5 +1,11 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
-import type { NestedTablePreview, TableCell, TableLook } from './table-model.js';
+import type {
+	NestedTablePreview,
+	TableCell,
+	TableCellMargins,
+	TableLook,
+	TableRowProperties,
+} from './table-model.js';
 import type { Paragraph, Table } from './model.js';
 import { children, first, getW, type XmlElement, WORD_NS } from './xml.js';
 import { canEditTableStructure } from './write-table.js';
@@ -49,15 +55,8 @@ function parseCell(
 	if (themeFill) result.shadingThemeFill = themeFill;
 	const borders = parseTableBorders(first(props, 'tcBorders'));
 	if (borders) result.borders = borders;
-	const margins = first(props, 'tcMar');
-	if (margins) {
-		const parsed: NonNullable<TableCell['margins']> = {};
-		for (const side of ['top', 'bottom', 'left', 'right'] as const) {
-			const value = dxa(getW(first(margins, side), 'w'));
-			if (value !== undefined) parsed[side] = value;
-		}
-		if (Object.keys(parsed).length) result.margins = parsed;
-	}
+	const margins = parseMargins(first(props, 'tcMar'));
+	if (margins) result.margins = margins;
 	const nested = children(cell, 'tbl').map(nestedPreview);
 	if (nested.length) result.nestedTables = nested;
 	return result;
@@ -86,6 +85,39 @@ function parseLook(element: XmlElement | undefined): TableLook | undefined {
 	if (noHBand !== undefined) look.noHBand = noHBand;
 	if (noVBand !== undefined) look.noVBand = noVBand;
 	return Object.keys(look).length ? look : undefined;
+}
+
+/** Cell margins from `w:tcMar` or `w:tblCellMar`, in twips (`start`/`end` read as left/right). */
+function parseMargins(element: XmlElement | undefined): TableCellMargins | undefined {
+	if (!element) return undefined;
+	const parsed: TableCellMargins = {};
+	for (const [side, logical] of [
+		['top', 'top'],
+		['bottom', 'bottom'],
+		['left', 'start'],
+		['right', 'end'],
+	] as const) {
+		const value = dxa(getW(first(element, side) ?? first(element, logical), 'w'));
+		if (value !== undefined) parsed[side] = value;
+	}
+	return Object.keys(parsed).length ? parsed : undefined;
+}
+
+/** Row height (`w:trHeight`, `auto` rule meaning at least), keep-together and header flags. */
+function parseRowProperties(row: XmlElement): TableRowProperties {
+	const trPr = first(row, 'trPr');
+	const result: TableRowProperties = {};
+	const height = first(trPr, 'trHeight');
+	const heightTwips = dxa(getW(height, 'val'));
+	if (heightTwips) {
+		result.heightTwips = heightTwips;
+		result.heightRule = getW(height, 'hRule') === 'exact' ? 'exact' : 'atLeast';
+	}
+	const on = (element: XmlElement | undefined) =>
+		Boolean(element) && !['0', 'false', 'off'].includes(getW(element, 'val') ?? '');
+	if (on(first(trPr, 'cantSplit'))) result.cantSplit = true;
+	if (on(first(trPr, 'tblHeader'))) result.header = true;
+	return result;
 }
 
 /** Parses a `w:tbl`, including grid widths, merges, borders, shading and table style/look. */
@@ -119,5 +151,9 @@ export function parseTable(
 	if (styleId) table.style = styleId;
 	const look = parseLook(first(tblPr, 'tblLook'));
 	if (look) table.look = look;
+	const cellMargins = parseMargins(first(tblPr, 'tblCellMar'));
+	if (cellMargins) table.cellMargins = cellMargins;
+	const rowProperties = children(node, 'tr').map(parseRowProperties);
+	if (rowProperties.some((row) => Object.keys(row).length)) table.rowProperties = rowProperties;
 	return table;
 }

@@ -13,6 +13,7 @@ import type {
 	LayoutParagraph,
 	LayoutTable,
 	LayoutTableCell,
+	LayoutTableRow,
 } from './input.js';
 
 const twipsToPx = (twips: number): number => twips / 15;
@@ -42,6 +43,20 @@ function border(
 		(((side.sizeEighthPoints ?? 4) / 8) * 96) / 72,
 	);
 	return { widthPx, style, color: themed ?? hex ?? '#000000' };
+}
+
+/** Row height, keep-together and repeat-as-header flags for pagination. */
+function rowLayout(
+	props: NonNullable<Table['rowProperties']>[number] | undefined,
+): Partial<LayoutTableRow> {
+	if (!props) return {};
+	return {
+		...(props.heightTwips
+			? { heightPx: twipsToPx(props.heightTwips), heightRule: props.heightRule ?? 'atLeast' }
+			: {}),
+		...(props.cantSplit ? { cantSplit: true } : {}),
+		...(props.header ? { isHeader: true } : {}),
+	};
 }
 
 /**
@@ -78,6 +93,7 @@ export function adaptTable(
 		...(table.indentTwips ? { indentPx: twipsToPx(table.indentTwips) } : {}),
 		...(table.alignment ? { alignment: table.alignment } : {}),
 		rows: table.rows.map((row, rowIndex) => ({
+			...rowLayout(table.rowProperties?.[rowIndex]),
 			cells: row.map((cell, cellIndex): LayoutTableCell => {
 				const start = gridIndexes[rowIndex][cellIndex];
 				const span = cell.gridSpan ?? 1;
@@ -101,7 +117,7 @@ export function adaptTable(
 				}
 				if (cell.verticalMerge === 'continue') delete borders.top;
 				if (cellAt(rowIndex + 1, start)?.verticalMerge === 'continue') delete borders.bottom;
-				const margins = { ...DEFAULT_PADDING_TWIPS, ...cell.margins };
+				const margins = { ...DEFAULT_PADDING_TWIPS, ...table.cellMargins, ...cell.margins };
 				const padding: LayoutCellPadding = {
 					top: twipsToPx(margins.top),
 					right: twipsToPx(margins.right),

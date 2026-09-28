@@ -75,3 +75,27 @@ describe('tables in Print Layout', () => {
 		expect(box.rows[1].geometry?.[1]).toMatchObject({ paddingLeftPx: 20, verticalAlign: 'bottom' });
 	});
 });
+
+describe('table rows in Print Layout', () => {
+	it('applies row heights, table cell margins and repeats header rows on the next page', () => {
+		const rows = Array.from({ length: 40 }, (_, index) => [cell(`r${index}`)]);
+		const tall: Table = {
+			type: 'table',
+			id: 'tall',
+			grid: [3000],
+			cellMargins: { left: 0, right: 0 },
+			rowProperties: [
+				{ header: true, heightTwips: 600, heightRule: 'exact' },
+				{ heightTwips: 900 },
+			],
+			rows,
+		};
+		const result = layoutDocument(adaptDocumentModel(model(tall)), measurer);
+		const first = result.pages[0].columns[0].blocks[0] as LayoutTableBox;
+		// Exact 600 twips = 40px; at-least 900 twips = 60px (more than one 20px line).
+		expect(first.rows.slice(0, 2).map((row) => row.heightPx)).toEqual([40, 60]);
+		expect(first.rows[0].geometry?.[0].paddingLeftPx).toBe(0);
+		const next = result.pages[1].columns[0].blocks[0] as LayoutTableBox;
+		expect(next.rows[0]).toMatchObject({ repeated: true, heightPx: 40 });
+	});
+});

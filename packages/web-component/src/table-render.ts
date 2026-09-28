@@ -57,6 +57,8 @@ export function tableStyle(attrs: Record<string, unknown>): string {
 		// Cells without their own resolved borders (e.g. a table inserted in the editor) draw the
 		// table's inside line; tables with no border information fall back to dashed gridlines.
 		borders && `--dve-cell-border:${cssBorderSide(borders.insideH ?? borders.top) ?? 'none'}`,
+		// Cells without their own margins use the table's (`w:tblCellMar`).
+		typeof attrs.cellMargins === 'string' && `--dve-cell-padding:${marginsCss(attrs.cellMargins)}`,
 	].filter(Boolean);
 	return declarations.join(';');
 }
@@ -64,7 +66,7 @@ export function tableStyle(attrs: Record<string, unknown>): string {
 /** Word's default cell margins: none above/below, 0.075" (108 twips) left and right. */
 const DEFAULT_CELL_MARGINS = { top: 0, bottom: 0, left: 108, right: 108 };
 
-function cellPadding(value: unknown): string {
+function marginsCss(value: unknown): string {
 	let margins: Partial<typeof DEFAULT_CELL_MARGINS> = {};
 	if (typeof value === 'string')
 		try {
@@ -74,7 +76,13 @@ function cellPadding(value: unknown): string {
 		}
 	const side = (key: keyof typeof DEFAULT_CELL_MARGINS) =>
 		`${(margins[key] ?? DEFAULT_CELL_MARGINS[key]) / 15}px`;
-	return `padding:${side('top')} ${side('right')} ${side('bottom')} ${side('left')}`;
+	return `${side('top')} ${side('right')} ${side('bottom')} ${side('left')}`;
+}
+
+function cellPadding(value: unknown): string {
+	return value == null
+		? `padding:var(--dve-cell-padding, ${marginsCss(null)})`
+		: `padding:${marginsCss(value)}`;
 }
 
 export function tableCellStyle(attrs: Record<string, unknown>): string {

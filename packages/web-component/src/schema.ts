@@ -180,11 +180,23 @@ export const schema = new Schema({
 				alignment: { default: null },
 				indentTwips: { default: null },
 				borders: { default: null },
+				/** Default cell margins (`w:tblCellMar`) as JSON; display only. */
+				cellMargins: { default: null },
 			},
 			parseDOM: [{ tag: 'table' }],
 			toDOM: (node) => ['table', { style: tableStyle(node.attrs) }, ['tbody', 0]],
 		},
-		tableRow: { content: 'tableCell+', parseDOM: [{ tag: 'tr' }], toDOM: () => ['tr', 0] },
+		tableRow: {
+			content: 'tableCell+',
+			/** `w:trHeight` in CSS pixels (a minimum on screen); display only. */
+			attrs: { heightPx: { default: null } },
+			parseDOM: [{ tag: 'tr' }],
+			toDOM: (node) => [
+				'tr',
+				Number.isFinite(node.attrs.heightPx) ? { style: `height:${node.attrs.heightPx}px` } : {},
+				0,
+			],
+		},
 		tableCell: {
 			content: '(paragraph | nestedTablePreview)+',
 			attrs: {

@@ -23,6 +23,16 @@ export interface TableCellMargins {
 	left?: number;
 	right?: number;
 }
+/** Row-level properties (`w:trPr`): height, keep-together and repeat-as-header. */
+export interface TableRowProperties {
+	heightTwips?: number;
+	/** `exact` fixes the height; `atLeast` (Word's `atLeast` and `auto`) is a minimum. */
+	heightRule?: 'atLeast' | 'exact';
+	/** `w:cantSplit`: the row is never split across pages. */
+	cantSplit?: boolean;
+	/** `w:tblHeader`: the row repeats at the top of each page the table continues onto. */
+	header?: boolean;
+}
 /** A read-only preview of a nested table's text, rendered but not independently editable. */
 export interface NestedTablePreview {
 	rows: { text: string }[][];

@@ -31,7 +31,7 @@ import type {
 const KEEP_TOGETHER_NOTE =
 	'Paragraph keepNext/keepLines/widowControl overrides and contextualSpacing are not yet represented in the document model; Word’s defaults (widow/orphan control on, no forced keep-together) are used for every paragraph.';
 const TABLE_ROW_NOTE =
-	'Table row "keep together" (cantSplit) and repeating header rows (tblHeader) are not yet represented in the document model; every row may split across a page.';
+	'Table rows with an exact height clip content that does not fit; text in them is not shrunk.';
 const VERTICAL_MERGE_NOTE =
 	'Vertically merged table cells are drawn as one cell, but their text stays in the first row of the merge.';
 const NEXT_COLUMN_NOTE = 'A "next column" section break is laid out as a continuous section break.';

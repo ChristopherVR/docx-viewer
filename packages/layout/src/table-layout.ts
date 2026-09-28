@@ -73,11 +73,14 @@ export function layoutRow(
 		x = (cell.xPx ?? x) + widthPx;
 		return { heightPx, boxes: content.boxes };
 	});
-	return {
-		heightPx: Math.max(0, ...laidOut.map((cell) => cell.heightPx)),
-		cells: laidOut.map((cell) => cell.boxes),
-		geometry,
-	};
+	const content = Math.max(0, ...laidOut.map((cell) => cell.heightPx));
+	const heightPx =
+		row.heightPx === undefined
+			? content
+			: row.heightRule === 'exact'
+				? row.heightPx
+				: Math.max(content, row.heightPx);
+	return { heightPx, cells: laidOut.map((cell) => cell.boxes), geometry };
 }
 
 interface CellSplit {

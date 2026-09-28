@@ -192,7 +192,14 @@ export function docToModel(
 					// Table-level properties (grid, width, borders, style, look) have no editor node;
 					// carry them over from the prior model so editing cell text never drops them.
 					...(prior
-						? { ...prior, structureEditable: undefined }
+						? {
+								...prior,
+								structureEditable: undefined,
+								// Row properties follow rows by position; drop them once rows are added or removed.
+								...(prior.rowProperties && prior.rows.length !== node.childCount
+									? { rowProperties: undefined }
+									: {}),
+							}
 						: tableBordersFromNode(node.attrs.borders)),
 					type: 'table',
 					id,

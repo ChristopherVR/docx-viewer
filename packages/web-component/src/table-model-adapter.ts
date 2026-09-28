@@ -70,7 +70,8 @@ export function tableNode(
 				),
 			);
 		});
-		return schema.node('tableRow', null, cells);
+		const heightTwips = block.rowProperties?.[rowIndex]?.heightTwips;
+		return schema.node('tableRow', heightTwips ? { heightPx: heightTwips / 15 } : null, cells);
 	});
 	return schema.node(
 		'table',
@@ -81,6 +82,7 @@ export function tableNode(
 			alignment: block.alignment ?? null,
 			indentTwips: block.indentTwips ?? null,
 			borders: block.borders ? JSON.stringify(block.borders) : null,
+			cellMargins: block.cellMargins ? JSON.stringify(block.cellMargins) : null,
 		},
 		rows,
 	);

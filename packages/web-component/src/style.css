@@ -685,3 +685,7 @@ a.dve-link[data-anchor^='_Toc'] {
 	font-size: 0.65em;
 	line-height: 0;
 }
+/* Exact-height rows clip content that does not fit, as Word does. */
+.dve-print-cell {
+	overflow: hidden;
+}

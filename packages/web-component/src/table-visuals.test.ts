@@ -12,7 +12,7 @@ import {
 import type { EditorView } from 'prosemirror-view';
 import { DocxEditorElement, registerDocxEditor } from './index';
 import { insertTable } from './ribbon-commands';
-import { tableCellStyle } from './table-render';
+import { tableCellStyle, tableStyle } from './table-render';
 
 registerDocxEditor();
 
@@ -126,7 +126,11 @@ describe('table rendering', () => {
 	});
 
 	it('pads cells with their own margins, defaulting to Word margins of 0.075 inch left and right', () => {
-		expect(tableCellStyle({})).toContain('padding:0px 7.2px 0px 7.2px');
+		// Without its own margins a cell uses the table's (`w:tblCellMar`), else Word's default.
+		expect(tableCellStyle({})).toContain('padding:var(--dve-cell-padding, 0px 7.2px 0px 7.2px)');
+		expect(tableStyle({ cellMargins: JSON.stringify({ left: 0, right: 0 }) })).toContain(
+			'--dve-cell-padding:0px 0px 0px 0px',
+		);
 		expect(tableCellStyle({ margins: JSON.stringify({ top: 45, left: 216 }) })).toContain(
 			'padding:3px 7.2px 0px 14.4px',
 		);

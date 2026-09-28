@@ -239,6 +239,10 @@ export interface Table {
 	/** `w:tblStyle/@w:val`; conditional formatting resolves through `tableStyles` without flattening. */
 	style?: string;
 	look?: import('./table-model.js').TableLook;
+	/** Default cell margins (`w:tblCellMar`); cells' own `w:tcMar` override them. */
+	cellMargins?: import('./table-model.js').TableCellMargins;
+	/** Per-row properties, parallel to `rows` (read from `w:trPr`; preserved on save). */
+	rowProperties?: import('./table-model.js').TableRowProperties[];
 }
 export type Block = Paragraph | Table;
 export interface DocumentModel {

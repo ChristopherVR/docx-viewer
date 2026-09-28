@@ -138,6 +138,9 @@ export interface LayoutTableRow {
 	cells: LayoutTableCell[];
 	/** `w:trPr/w:cantSplit`: this row must stay on one page. */
 	cantSplit?: boolean;
+	/** `w:trHeight`: a minimum (`atLeast`) or fixed (`exact`) row height. */
+	heightPx?: number;
+	heightRule?: 'atLeast' | 'exact';
 	/** `w:trPr/w:tblHeader`: repeat this row at the top of every page the table continues onto. */
 	isHeader?: boolean;
 }
