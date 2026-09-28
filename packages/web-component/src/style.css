@@ -256,6 +256,11 @@
 	text-decoration: line-through;
 	text-decoration-color: var(--dve-revision-color, currentColor);
 }
+/* Moved text, like Word: green, double underline at the destination, double strike at the source. */
+.dve-revision-move {
+	--dve-revision-color: #2e7d32;
+	text-decoration-style: double;
+}
 .dve-revision-hidden {
 	display: none;
 }

@@ -4,7 +4,13 @@
 // comment-anchor wrapping helpers from write-revisions.ts and write-comments.ts.
 import type { HyperlinkInfo, TextRun } from './model.js';
 import type { RelationshipAllocator } from './relationship-allocator.js';
-import type { CommentContinuation } from './comment-spans.js';
+import { rangeKeys, type CommentContinuation } from './comment-spans.js';
+
+/** How this paragraph's comment and move ranges continue across paragraphs, plus new range ids. */
+export interface ParagraphRanges extends CommentContinuation {
+	/** `w:id`s for move ranges that have none yet (new moves), by range key. */
+	rangeIds: ReadonlyMap<string, string>;
+}
 import { createRun } from './write-run.js';
 import { hasSpecialBreak, isModeledBreak } from './breaks.js';
 import { isCommentReferenceRun } from './parse-revisions.js';
@@ -14,11 +20,7 @@ import {
 	isRevisionWrapperElement,
 	revisionWrapper,
 } from './write-revisions.js';
-import {
-	commentAnchorEdges,
-	commentRangeEndNodes,
-	commentRangeStartNode,
-} from './write-comments.js';
+import { commentRangeEndNodes, commentRangeStartNode } from './write-comments.js';
 import {
 	getW,
 	isElement,
@@ -168,25 +170,90 @@ function newHyperlink(
 	return container;
 }
 
-/** Builds one run's nodes: its comment-range starts, the (revision-wrapped) run, and range ends. */
+/** A range marker to emit around a run: a comment anchor or a move range. */
+type RangeEdge =
+	| { kind: 'comment'; id: string }
+	| { kind: 'moveFrom' | 'moveTo'; name: string; rangeId: string; revision: TextRun['revision'] };
+
+function rangeStartNodes(doc: XmlDocument, edge: RangeEdge): XmlElement[] {
+	if (edge.kind === 'comment') return [commentRangeStartNode(doc, edge.id)];
+	const start = makeW(doc, `${edge.kind}RangeStart`);
+	setW(start, 'id', edge.rangeId);
+	if (edge.revision?.author) setW(start, 'author', edge.revision.author);
+	if (edge.revision?.date) setW(start, 'date', edge.revision.date);
+	setW(start, 'name', edge.name);
+	return [start];
+}
+function rangeEndNodes(doc: XmlDocument, edge: RangeEdge): XmlElement[] {
+	if (edge.kind === 'comment') return commentRangeEndNodes(doc, edge.id);
+	const end = makeW(doc, `${edge.kind}RangeEnd`);
+	setW(end, 'id', edge.rangeId);
+	return [end];
+}
+
+/** Builds one run's nodes: its range starts, the (revision-wrapped) run, and range ends. */
 function runNodes(
 	doc: XmlDocument,
 	run: TextRun,
 	base: TextRun | undefined,
 	old: XmlElement | undefined,
-	opens: string[],
-	closes: string[],
+	opens: RangeEdge[],
+	closes: RangeEdge[],
 	allocator?: RelationshipAllocator,
 ): XmlElement[] {
-	const nodes = opens.map((id) => commentRangeStartNode(doc, id));
+	// Comments open outside moves and close outside them, so ranges nest.
+	const nodes = opens.flatMap((edge) => rangeStartNodes(doc, edge));
 	const node = createRun(doc, run, base, old, allocator);
 	const revision = run.revision;
 	if (revision && ['insert', 'delete', 'moveFrom', 'moveTo'].includes(revision.kind)) {
 		if (revision.kind === 'delete' || revision.kind === 'moveFrom') convertToDeleteText(doc, node);
 		nodes.push(revisionWrapper(doc, revision, node));
 	} else nodes.push(node);
-	for (const id of closes) nodes.push(...commentRangeEndNodes(doc, id));
+	for (const edge of [...closes].reverse()) nodes.push(...rangeEndNodes(doc, edge));
 	return nodes;
+}
+
+/** Range edges per run index: where each comment or move range opens and closes in this paragraph. */
+function rangeEdges(
+	runs: TextRun[],
+	ranges: ParagraphRanges | undefined,
+): { opens: Map<number, RangeEdge[]>; closes: Map<number, RangeEdge[]> } {
+	const first = new Map<string, number>();
+	const last = new Map<string, number>();
+	runs.forEach((run, index) => {
+		for (const key of rangeKeys(run)) {
+			if (!first.has(key)) first.set(key, index);
+			last.set(key, index);
+		}
+	});
+	const edgeFor = (key: string, index: number): RangeEdge => {
+		const separator = key.indexOf(':');
+		const kind = key.slice(0, separator);
+		const name = key.slice(separator + 1);
+		if (kind === 'comment') return { kind: 'comment', id: name };
+		const revision = runs[index].revision;
+		return {
+			kind: kind as 'moveFrom' | 'moveTo',
+			name,
+			rangeId: revision?.move?.rangeId ?? ranges?.rangeIds.get(key) ?? '0',
+			revision,
+		};
+	};
+	const opens = new Map<number, RangeEdge[]>();
+	const closes = new Map<number, RangeEdge[]>();
+	// Comments sort before moves when opening, so a comment encloses a move range it overlaps.
+	const order = (key: string) => (key.startsWith('comment:') ? 0 : 1);
+	for (const key of [...first.keys()].sort((a, b) => order(a) - order(b))) {
+		if (!ranges?.before.has(key)) {
+			const index = first.get(key)!;
+			(opens.get(index) ?? opens.set(index, []).get(index)!).push(edgeFor(key, index));
+		}
+		if (!ranges?.after.has(key)) {
+			const index = last.get(key)!;
+			(closes.get(index) ?? closes.set(index, []).get(index)!).push(edgeFor(key, index));
+		}
+	}
+	return { opens, closes };
 }
 
 /** Builds the paragraph's ordered top-level inline nodes from the model's flat run list. */
@@ -196,14 +263,10 @@ export function buildInlineContent(
 	base: TextRun[] | undefined,
 	slots: InlineSlot[],
 	allocator?: RelationshipAllocator,
-	continuation?: CommentContinuation,
+	ranges?: ParagraphRanges,
 ): XmlElement[] {
-	const edges = commentAnchorEdges(runs);
 	// Ranges continuing from an earlier paragraph or into a later one open or close there instead.
-	const without = (map: Map<number, string[]>, skip: Set<string> | undefined) =>
-		new Map([...map].map(([index, ids]) => [index, ids.filter((id) => !skip?.has(id))]));
-	const opens = without(edges.opens, continuation?.before);
-	const closes = without(edges.closes, continuation?.after);
+	const { opens, closes } = rangeEdges(runs, ranges);
 	const nodesFor = (index: number) =>
 		runNodes(
 			doc,

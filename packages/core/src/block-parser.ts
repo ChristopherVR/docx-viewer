@@ -23,6 +23,7 @@ import { parseTabStops } from './tab-stops.js';
 import { createFieldTracker } from './field-runs.js';
 import {
 	collectParagraphRuns,
+	type OpenMoves,
 	paragraphFormatRevision,
 	paragraphMarkRevision,
 	runFormatRevision,
@@ -61,6 +62,7 @@ function fieldPlaceholderText(instr: string | undefined): string {
 let activeContext: DrawingContext | undefined;
 /** Comment ranges open at the current position in the part being parsed; ranges may span paragraphs. */
 let openComments: string[] | undefined;
+let openMoves: OpenMoves | undefined;
 
 /** Content children of a run other than its `rPr`, used to detect single-purpose runs. */
 function runContent(node: XmlElement): XmlElement[] {
@@ -163,6 +165,7 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 			return link.href !== undefined || link.anchor !== undefined ? link : undefined;
 		},
 		openComments,
+		openMoves,
 	);
 	if (!runs.length) runs.push({ text: '' });
 	const paragraph: Paragraph = { type: 'paragraph', id, runs };
@@ -237,13 +240,16 @@ export function parseBlocksFromContainer(
 ): Block[] {
 	const previous = activeContext;
 	const previousComments = openComments;
+	const previousMoves = openMoves;
 	activeContext = context;
 	openComments = [];
+	openMoves = { moveFrom: [], moveTo: [] };
 	try {
 		return parseContainer(container, idPrefix);
 	} finally {
 		activeContext = previous;
 		openComments = previousComments;
+		openMoves = previousMoves;
 	}
 }
 

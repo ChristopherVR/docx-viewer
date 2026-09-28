@@ -98,26 +98,6 @@ export async function applyComments(zip: JSZip, comments: Comment[]): Promise<vo
 	}
 }
 
-/** First/last run index (inclusive) touched by each comment id, to bracket contiguous anchors. */
-export function commentAnchorEdges(runs: { commentIds?: string[] }[]): {
-	opens: Map<number, string[]>;
-	closes: Map<number, string[]>;
-} {
-	const first = new Map<string, number>();
-	const last = new Map<string, number>();
-	runs.forEach((run, index) => {
-		for (const id of run.commentIds ?? []) {
-			if (!first.has(id)) first.set(id, index);
-			last.set(id, index);
-		}
-	});
-	const opens = new Map<number, string[]>();
-	const closes = new Map<number, string[]>();
-	for (const [id, index] of first) (opens.get(index) ?? opens.set(index, []).get(index)!).push(id);
-	for (const [id, index] of last) (closes.get(index) ?? closes.set(index, []).get(index)!).push(id);
-	return { opens, closes };
-}
-
 export function commentRangeStartNode(doc: XmlDocument, id: string): XmlElement {
 	const element = makeW(doc, 'commentRangeStart');
 	setAttribute(element, 'id', id);

@@ -9,6 +9,8 @@ export interface RevisionEntry {
 	paragraphId: string;
 	/** Present for run-level revisions; absent for paragraph mark/format revisions. */
 	runIndex?: number;
+	/** The move a `moveFrom`/`moveTo` revision belongs to; both sides resolve together. */
+	move?: { name: string; rangeId?: string };
 }
 
 function paragraphsOf(blocks: Block[]): Paragraph[] {
@@ -85,8 +87,40 @@ function resolveParagraphMark(model: DocumentModel, id: string, keepBreak: boole
 	return next;
 }
 
-/** Accepts one revision: keeps insertions, drops deletions, clears format markers. */
-export function acceptRevision(model: DocumentModel, id: string): DocumentModel {
+/** Revision ids resolved together with `id`: every side of the same move, or just `id`. */
+export function linkedRevisionIds(model: DocumentModel, id: string): string[] {
+	const entries = listRevisions(model);
+	const move = entries.find((entry) => entry.id === id)?.move;
+	if (!move) return [id];
+	const ids = entries
+		.filter(
+			(entry) =>
+				(entry.kind === 'moveFrom' || entry.kind === 'moveTo') && entry.move?.name === move.name,
+		)
+		.map((entry) => entry.id);
+	return [...new Set([id, ...ids])];
+}
+
+function resolveLinked(
+	model: DocumentModel,
+	id: string,
+	resolve: (model: DocumentModel, id: string) => DocumentModel,
+): DocumentModel {
+	if (!findRevision(model, id)) throw new Error(`No revision with id ${id} was found.`);
+	let current = model;
+	for (const linked of linkedRevisionIds(model, id))
+		while (findRevision(current, linked)) current = resolve(current, linked);
+	return current;
+}
+
+/** Accepts one revision (both sides of a move): keeps insertions, drops deletions, clears format markers. */
+export const acceptRevision = (model: DocumentModel, id: string): DocumentModel =>
+	resolveLinked(model, id, acceptOne);
+/** Rejects one revision (both sides of a move): drops insertions, restores deletions. */
+export const rejectRevision = (model: DocumentModel, id: string): DocumentModel =>
+	resolveLinked(model, id, rejectOne);
+
+function acceptOne(model: DocumentModel, id: string): DocumentModel {
 	const entry = findRevision(model, id);
 	if (!entry) throw new Error(`No revision with id ${id} was found.`);
 	if (entry.kind === 'formatChange')
@@ -109,8 +143,8 @@ export function acceptRevision(model: DocumentModel, id: string): DocumentModel 
 	});
 }
 
-/** Rejects one revision: drops insertions, restores deletions. Formatting-only changes cannot be reverted. */
-export function rejectRevision(model: DocumentModel, id: string): DocumentModel {
+/** Formatting-only changes cannot be reverted: their prior formatting is not modeled. */
+function rejectOne(model: DocumentModel, id: string): DocumentModel {
 	const entry = findRevision(model, id);
 	if (!entry) throw new Error(`No revision with id ${id} was found.`);
 	if (entry.kind === 'formatChange' || entry.kind === 'paragraphChange')

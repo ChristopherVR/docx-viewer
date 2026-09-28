@@ -13,6 +13,32 @@ const REVISION_WRAPPERS: Record<string, Revision['kind']> = {
 export const REVISION_WRAPPER_NAMES = Object.keys(REVISION_WRAPPERS);
 export const COMMENT_ANCHOR_NAMES = ['commentRangeStart', 'commentRangeEnd', 'commentReference'];
 
+/** Move ranges open at the current parse position (they may span paragraphs), innermost last. */
+export interface OpenMoves {
+	moveFrom: { name: string; id: string }[];
+	moveTo: { name: string; id: string }[];
+}
+const MOVE_RANGES: Record<string, { kind: keyof OpenMoves; start: boolean }> = {
+	moveFromRangeStart: { kind: 'moveFrom', start: true },
+	moveFromRangeEnd: { kind: 'moveFrom', start: false },
+	moveToRangeStart: { kind: 'moveTo', start: true },
+	moveToRangeEnd: { kind: 'moveTo', start: false },
+};
+
+function trackMoveRange(item: XmlElement, moves: OpenMoves): boolean {
+	if (item.namespaceURI && item.namespaceURI !== WORD_NS) return false;
+	const range = MOVE_RANGES[item.localName ?? ''];
+	if (!range) return false;
+	const id = getW(item, 'id') ?? '';
+	const open = moves[range.kind];
+	if (range.start) open.push({ name: getW(item, 'name') ?? id, id });
+	else {
+		const index = open.findIndex((entry) => entry.id === id);
+		if (index >= 0) open.splice(index, 1);
+	}
+	return true;
+}
+
 /** A `w:r` whose only content is a `w:commentReference`: a comment anchor, not document text. */
 export function isCommentReferenceRun(run: XmlElement): boolean {
 	const content = Array.from(run.childNodes).filter(
@@ -67,6 +93,7 @@ export function collectParagraphRuns(
 	parseOther?: (item: XmlElement) => TextRun[] | undefined,
 	resolveLink?: (hyperlink: XmlElement) => TextRun['link'],
 	active: string[] = [],
+	moves: OpenMoves = { moveFrom: [], moveTo: [] },
 ): { runs: TextRun[]; hasMove: boolean } {
 	const runs: TextRun[] = [];
 	let hasMove = false;
@@ -91,7 +118,11 @@ export function collectParagraphRuns(
 			const kind = REVISION_WRAPPERS[item.localName];
 			if (kind === 'moveFrom' || kind === 'moveTo') hasMove = true;
 			const revision = revisionFrom(item, kind);
+			const range = kind === 'moveFrom' || kind === 'moveTo' ? moves[kind].at(-1) : undefined;
+			if (range) revision.move = { name: range.name, rangeId: range.id };
 			for (const run of children(item, 'r')) push(parseRun(run, revision));
+		} else if (trackMoveRange(item, moves)) {
+			continue;
 		} else if (named(item, 'commentRangeStart')) {
 			const id = getW(item, 'id');
 			if (id !== undefined) active.push(id);

@@ -3,7 +3,16 @@ import type { Paragraph, Revision } from './model.js';
 import { children, first, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
 
 const REVISION_WRAPPER_NAMES = ['ins', 'del', 'moveFrom', 'moveTo'];
-const COMMENT_ANCHOR_NAMES = ['commentRangeStart', 'commentRangeEnd', 'commentReference'];
+/** Range markers the writer regenerates from the model: comment anchors and move ranges. */
+const COMMENT_ANCHOR_NAMES = [
+	'commentRangeStart',
+	'commentRangeEnd',
+	'commentReference',
+	'moveFromRangeStart',
+	'moveFromRangeEnd',
+	'moveToRangeStart',
+	'moveToRangeEnd',
+];
 
 function isWordElement(element: XmlElement, names: string[]): boolean {
 	return (

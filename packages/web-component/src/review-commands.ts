@@ -2,6 +2,7 @@ import { TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { closeHistory } from 'prosemirror-history';
 import { schema } from './schema';
+import { moveName } from './review-schema';
 
 export interface RevisionRange {
 	id: string;
@@ -9,6 +10,8 @@ export interface RevisionRange {
 	from: number;
 	to: number;
 	author: string;
+	/** The move this range is one side of; both sides are accepted or rejected together. */
+	move?: string;
 }
 
 /** Merges adjacent text/hardBreak nodes sharing the same revision mark id into one range. */
@@ -22,6 +25,7 @@ export function collectRevisionRanges(doc: import('prosemirror-model').Node): Re
 		if (!mark) return;
 		const kind = mark.type.name === 'insertion' ? 'insert' : 'delete';
 		const id = String(mark.attrs.id);
+		const move = moveName(mark.attrs.move);
 		const last = ranges.at(-1);
 		if (last && last.id === id && last.kind === kind && last.to === pos)
 			last.to = pos + node.nodeSize;
@@ -32,6 +36,7 @@ export function collectRevisionRanges(doc: import('prosemirror-model').Node): Re
 				from: pos,
 				to: pos + node.nodeSize,
 				author: String(mark.attrs.author),
+				...(move ? { move } : {}),
 			});
 	});
 	return ranges;
@@ -56,28 +61,41 @@ function markType(kind: 'insert' | 'delete') {
 	return kind === 'insert' ? schema.marks.insertion : schema.marks.deletion;
 }
 
-function resolveRange(view: EditorView, range: RevisionRange): { from: number; to: number } {
-	// Re-locate by scanning current marks with the same id, in case the doc changed since collection.
-	const current = collectRevisionRanges(view.state.doc).find((item) => item.id === range.id);
-	return current ?? range;
+/**
+ * The current ranges `range` resolves with: every range of the same revision id (re-located in
+ * case the document changed since collection) and, for a move, every range on either side of it.
+ */
+function linkedRanges(view: EditorView, range: RevisionRange): RevisionRange[] {
+	const current = collectRevisionRanges(view.state.doc);
+	const linked = current.filter(
+		(item) =>
+			(item.id === range.id && item.kind === range.kind) ||
+			(range.move !== undefined && item.move === range.move),
+	);
+	return linked.length ? linked : [range];
 }
 
-/** Accepting an insertion keeps the text; accepting a deletion removes it. */
+/** Applies accept or reject to ranges in one transaction, mapping positions as text is removed. */
+function resolveRanges(view: EditorView, ranges: RevisionRange[], mode: 'accept' | 'reject') {
+	let tr = view.state.tr;
+	for (const range of ranges) {
+		const from = tr.mapping.map(range.from);
+		const to = tr.mapping.map(range.to);
+		const removeText = (mode === 'accept') === (range.kind === 'delete');
+		if (removeText) tr = tr.delete(from, to);
+		else tr = tr.removeMark(from, to, markType(range.kind));
+	}
+	return tr;
+}
+
+/** Accepting an insertion keeps the text; accepting a deletion removes it. Moves resolve both sides. */
 export function acceptRevisionRange(view: EditorView, range: RevisionRange): void {
-	const { from, to } = resolveRange(view, range);
-	const tr =
-		range.kind === 'insert'
-			? view.state.tr.removeMark(from, to, markType('insert'))
-			: view.state.tr.delete(from, to);
+	const tr = resolveRanges(view, linkedRanges(view, range), 'accept');
 	view.dispatch(closeHistory(tr).scrollIntoView());
 }
-/** Rejecting an insertion removes the text; rejecting a deletion restores it. */
+/** Rejecting an insertion removes the text; rejecting a deletion restores it. Moves resolve both sides. */
 export function rejectRevisionRange(view: EditorView, range: RevisionRange): void {
-	const { from, to } = resolveRange(view, range);
-	const tr =
-		range.kind === 'insert'
-			? view.state.tr.delete(from, to)
-			: view.state.tr.removeMark(from, to, markType('delete'));
+	const tr = resolveRanges(view, linkedRanges(view, range), 'reject');
 	view.dispatch(closeHistory(tr).scrollIntoView());
 }
 
@@ -97,15 +115,7 @@ export function rejectChangeAtCursor(view: EditorView): boolean {
 function applyToAll(view: EditorView, mode: 'accept' | 'reject'): boolean {
 	const ranges = collectRevisionRanges(view.state.doc);
 	if (!ranges.length) return false;
-	let tr = view.state.tr;
-	for (const range of ranges) {
-		const from = tr.mapping.map(range.from);
-		const to = tr.mapping.map(range.to);
-		const removeText = (mode === 'accept') === (range.kind === 'delete');
-		if (removeText) tr = tr.delete(from, to);
-		else tr = tr.removeMark(from, to, markType(range.kind));
-	}
-	view.dispatch(closeHistory(tr));
+	view.dispatch(closeHistory(resolveRanges(view, ranges, mode)));
 	return true;
 }
 export const acceptAllChanges = (view: EditorView): boolean => applyToAll(view, 'accept');

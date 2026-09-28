@@ -46,12 +46,14 @@ function marksForRun(run: TextRun): Mark[] {
 			schema.marks.field.create({ instr: run.field.instr, simple: Boolean(run.field.simple) }),
 		);
 	const revision = run.revision;
+	const move = revision?.move ? JSON.stringify(revision.move) : null;
 	if (revision?.kind === 'insert' || revision?.kind === 'moveTo')
 		marks.push(
 			schema.marks.insertion.create({
 				author: revision.author,
 				date: revision.date ?? null,
 				id: revision.id,
+				move: revision.kind === 'moveTo' ? move : null,
 			}),
 		);
 	else if (revision?.kind === 'delete' || revision?.kind === 'moveFrom')
@@ -60,6 +62,7 @@ function marksForRun(run: TextRun): Mark[] {
 				author: revision.author,
 				date: revision.date ?? null,
 				id: revision.id,
+				move: revision.kind === 'moveFrom' ? move : null,
 			}),
 		);
 	if (run.commentIds?.length) marks.push(schema.marks.comment.create({ ids: run.commentIds }));
@@ -181,13 +184,20 @@ function applyMarkFormatting(run: TextRun, child: ProseMirrorNode): void {
 	const insertion = propertyOfMark(child, 'insertion');
 	const deletion = propertyOfMark(child, 'deletion');
 	const revisionMark = insertion ?? deletion;
-	if (revisionMark)
+	if (revisionMark) {
+		const move =
+			typeof revisionMark.attrs.move === 'string'
+				? (JSON.parse(revisionMark.attrs.move) as NonNullable<TextRun['revision']>['move'])
+				: undefined;
 		run.revision = {
-			kind: insertion ? 'insert' : 'delete',
+			// A move without its move data is recorded as a plain insertion or deletion.
+			kind: insertion ? (move ? 'moveTo' : 'insert') : move ? 'moveFrom' : 'delete',
 			author: String(revisionMark.attrs.author || ''),
 			id: String(revisionMark.attrs.id || ''),
 			...(revisionMark.attrs.date ? { date: String(revisionMark.attrs.date) } : {}),
+			...(move ? { move } : {}),
 		};
+	}
 	const comment = propertyOfMark(child, 'comment');
 	if (comment?.attrs.ids?.length) run.commentIds = [...comment.attrs.ids];
 	const field = propertyOfMark(child, 'field');

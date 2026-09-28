@@ -14,8 +14,12 @@ export type {
 } from './section-model.js';
 /** A tracked-change revision recorded on a run or paragraph mark. */
 export interface Revision {
-	/** `moveFrom`/`moveTo` are tracked as delete/insert pairs; Word's move linkage is not modeled. */
 	kind: 'insert' | 'delete' | 'moveFrom' | 'moveTo' | 'formatChange' | 'paragraphChange';
+	/**
+	 * For `moveFrom`/`moveTo`: the move this text belongs to. Both sides share `name` (from
+	 * `w:moveFromRangeStart`/`w:moveToRangeStart`); `rangeId` is that range marker's `w:id`.
+	 */
+	move?: { name: string; rangeId?: string };
 	author: string;
 	date?: string;
 	/** Source `w:id`; not guaranteed unique outside the paragraph it was parsed from. */

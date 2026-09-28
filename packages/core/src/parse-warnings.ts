@@ -17,11 +17,11 @@ export function warningsFor(document: XmlDocument): string[] {
 		[['altChunk'], 'Embedded alternate-format content is not represented in the document model.'],
 		[
 			['fldSimple', 'instrText', 'fldChar'],
-			'Field codes such as PAGE and NUMPAGES are shown as static placeholders (or omitted) and are not recalculated.',
+			'Fields show the result Word last saved while editing; Print Layout recalculates PAGE, NUMPAGES, SECTIONPAGES, DATE and TIME, and tables of contents update from the References tab.',
 		],
 		[
 			['moveFrom', 'moveTo'],
-			'Moved text is tracked as a paired delete/insert revision; Word’s move linkage between them is not modeled.',
+			'Moved text is linked by its move name: accepting or rejecting either side resolves both. Moves are shown and saved with their range markers.',
 		],
 		[
 			['rPrChange', 'pPrChange'],

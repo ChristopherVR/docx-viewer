@@ -59,7 +59,7 @@ describe('tracked-change revisions', () => {
 		);
 	});
 
-	it('parses moveFrom/moveTo as a delete/insert pair and warns about the missing move linkage', async () => {
+	it('parses moveFrom/moveTo as a delete/insert pair and notes how moves are linked', async () => {
 		const loaded = await loadDocx(
 			await docx(
 				'<w:p><w:moveFrom w:id="3" w:author="A"><w:r><w:t>moved </w:t></w:r></w:moveFrom>' +
@@ -70,7 +70,7 @@ describe('tracked-change revisions', () => {
 		if (paragraph.type !== 'paragraph') throw new Error('expected paragraph');
 		expect(paragraph.runs[0].revision?.kind).toBe('moveFrom');
 		expect(paragraph.runs[1].revision?.kind).toBe('moveTo');
-		expect(loaded.model.warnings.some((w) => w.includes('move linkage'))).toBe(true);
+		expect(loaded.model.warnings.some((w) => w.includes('linked by its move name'))).toBe(true);
 	});
 
 	it('round-trips an insertion revision through accept/reject/save', async () => {

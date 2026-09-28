@@ -1,9 +1,19 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
-// Comment ranges that span paragraphs: each comment gets one w:commentRangeStart in the first
-// paragraph it touches and one w:commentRangeEnd (plus its reference) in the last.
-import type { Block, DocumentModel, Paragraph } from './model.js';
+// Ranges that span paragraphs: each comment gets one w:commentRangeStart in the first paragraph it
+// touches and one w:commentRangeEnd (plus its reference) in the last; move ranges
+// (w:moveFromRangeStart/w:moveToRangeStart) work the same way.
+import type { Block, DocumentModel, Paragraph, TextRun } from './model.js';
 
-/** Comment ids on a paragraph that started in an earlier paragraph or continue into a later one. */
+/** Range keys a run belongs to: `comment:<id>` and, for moved text, `moveFrom:<name>`/`moveTo:<name>`. */
+export function rangeKeys(run: TextRun): string[] {
+	const keys = (run.commentIds ?? []).map((id) => `comment:${id}`);
+	const revision = run.revision;
+	if (revision?.move && (revision.kind === 'moveFrom' || revision.kind === 'moveTo'))
+		keys.push(`${revision.kind}:${revision.move.name}`);
+	return keys;
+}
+
+/** Range keys on a paragraph that started in an earlier paragraph or continue into a later one. */
 export interface CommentContinuation {
 	before: Set<string>;
 	after: Set<string>;
@@ -17,13 +27,13 @@ function paragraphsOf(blocks: Block[]): Paragraph[] {
 	);
 }
 
-/** Per paragraph id, the comments crossing its start or end, in document order. */
+/** Per paragraph id, the comment and move ranges crossing its start or end, in document order. */
 export function commentContinuations(blocks: Block[]): Map<string, CommentContinuation> {
 	const paragraphs = paragraphsOf(blocks);
 	const first = new Map<string, number>();
 	const last = new Map<string, number>();
 	const idsByParagraph = paragraphs.map((paragraph, index) => {
-		const ids = new Set(paragraph.runs.flatMap((run) => run.commentIds ?? []));
+		const ids = new Set(paragraph.runs.flatMap(rangeKeys));
 		for (const id of ids) {
 			if (!first.has(id)) first.set(id, index);
 			last.set(id, index);
