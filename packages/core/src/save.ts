@@ -11,6 +11,7 @@ import { writeNewRelationships } from './part-relationships.js';
 import { applySettingsFlag, applyTrackChangesSetting } from './settings.js';
 import { applyComments } from './write-comments.js';
 import { numberCommentIds } from './comment-spans.js';
+import { maxWordId, numberRevisionIds } from './revision-ids.js';
 import { parseRelationships } from './package-parts.js';
 
 const RELS_PART = 'word/_rels/document.xml.rels';
@@ -50,7 +51,7 @@ export async function saveDocx(
 	const binding = contexts.get(model);
 	if (binding && JSON.stringify(model) === JSON.stringify(binding.base))
 		return new Uint8Array(binding.context.original);
-	model = numberCommentIds(model);
+	model = numberRevisionIds(numberCommentIds(model), maxWordId(binding?.context.sourceXml));
 	if (
 		binding &&
 		JSON.stringify(model.paragraphStyles) !== JSON.stringify(binding.base.paragraphStyles)
