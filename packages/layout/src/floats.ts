@@ -9,7 +9,11 @@ interface Span {
 	size: number;
 }
 
-function horizontalArea(float: LayoutFloat, page: LayoutPageBox, column: LayoutColumnBox): Span {
+function horizontalArea(
+	float: LayoutFloat,
+	page: LayoutPageBox,
+	column: Pick<LayoutColumnBox, 'xPx' | 'widthPx'>,
+): Span {
 	const contentLeft = page.marginLeftPx;
 	switch (float.relativeFromH) {
 		case 'page':
@@ -68,6 +72,24 @@ function place(
 }
 
 /**
+ * A floating picture's top-left on the page (CSS pixels), from its horizontal and vertical frame,
+ * alignment and offset. `paragraph` is the anchor paragraph's page-relative top and height.
+ */
+export function floatPosition(
+	float: LayoutFloat,
+	page: LayoutPageBox,
+	column: Pick<LayoutColumnBox, 'xPx' | 'widthPx'>,
+	paragraph: { topPx: number; heightPx: number },
+): { xPx: number; yPx: number } {
+	const h = horizontalArea(float, page, column);
+	const v = verticalArea(float, page, paragraph.topPx, paragraph.heightPx);
+	return {
+		xPx: place(h, float.widthPx, float.alignH, float.offsetXPx),
+		yPx: place(v, float.heightPx, float.alignV, float.offsetYPx),
+	};
+}
+
+/**
  * Positions each paragraph's floating pictures on the page where the paragraph starts, from their
  * `wp:positionH`/`wp:positionV` reference frame, alignment and offset. Returns whether any were placed.
  */
@@ -88,12 +110,13 @@ export function positionFloats(input: LayoutDocumentInput, pages: LayoutPageBox[
 				placed.add(block.blockId);
 				const top = page.marginTopPx + block.yPx;
 				for (const float of floats) {
-					const h = horizontalArea(float, page, column);
-					const v = verticalArea(float, page, top, block.heightPx);
+					const position = floatPosition(float, page, column, {
+						topPx: top,
+						heightPx: block.heightPx,
+					});
 					boxes.push({
 						blockId: block.blockId,
-						xPx: place(h, float.widthPx, float.alignH, float.offsetXPx),
-						yPx: place(v, float.heightPx, float.alignV, float.offsetYPx),
+						...position,
 						widthPx: float.widthPx,
 						heightPx: float.heightPx,
 						partName: float.partName,

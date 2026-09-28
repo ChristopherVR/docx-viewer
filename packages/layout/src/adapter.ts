@@ -46,7 +46,7 @@ function sectionBreak(
 }
 
 /** Floating pictures anchored in a paragraph, with their `wp:positionH`/`wp:positionV` placement. */
-function floatsOf(paragraph: Paragraph): { floats?: LayoutFloat[] } {
+export function paragraphFloats(paragraph: Paragraph): LayoutFloat[] {
 	const floats: LayoutFloat[] = [];
 	for (const run of paragraph.runs) {
 		const image = run.image;
@@ -67,6 +67,10 @@ function floatsOf(paragraph: Paragraph): { floats?: LayoutFloat[] } {
 			...(placement?.wrap ? { wrap: placement.wrap } : {}),
 		});
 	}
+	return floats;
+}
+function floatsOf(paragraph: Paragraph): { floats?: LayoutFloat[] } {
+	const floats = paragraphFloats(paragraph);
 	return floats.length ? { floats } : {};
 }
 

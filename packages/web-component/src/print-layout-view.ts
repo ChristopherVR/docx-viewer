@@ -60,9 +60,13 @@ export function createPrintLayoutController(
 		lastModel = model;
 		result = layoutDocumentModel(model, measurer);
 		handle = renderPrintLayout(result, pictureUrl);
-		decoratePages(model, result.pages, [
-			...handle.element.querySelectorAll<HTMLElement>('.dve-print-page'),
-		]);
+		decoratePages(
+			model,
+			result.pages,
+			[...handle.element.querySelectorAll<HTMLElement>('.dve-print-page')],
+			new Date(),
+			pictureUrl,
+		);
 		element.replaceChildren(handle.element);
 		refreshCurrentPage();
 	}

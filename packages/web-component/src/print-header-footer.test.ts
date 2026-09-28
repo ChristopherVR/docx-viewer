@@ -146,3 +146,62 @@ describe('Print Layout headers, footers and page fields', () => {
 		expect(sheets[0].querySelector('.dve-print-header')?.textContent).toBe('2026-09-07');
 	});
 });
+
+describe('Print Layout header and footer pictures', () => {
+	const logo = {
+		relId: 'rId1',
+		partName: 'word/media/logo.png',
+		contentType: 'image/png',
+		widthPx: 80,
+		heightPx: 40,
+	};
+
+	it('draws inline logos in the header and floating ones at their page position', () => {
+		const model: DocumentModel = {
+			...createDocument(),
+			sections: [
+				section({
+					headers: {
+						default: {
+							blocks: [
+								{
+									type: 'paragraph',
+									id: 'h1',
+									runs: [
+										{ text: '', image: logo },
+										{ text: ' Company' },
+										{
+											text: '',
+											image: {
+												...logo,
+												anchored: true,
+												placement: {
+													wrap: 'none',
+													relativeFrom: 'page',
+													align: 'right',
+													relativeFromV: 'page',
+													offsetYPx: 10,
+												},
+											},
+										},
+									],
+								},
+							],
+						},
+					},
+				}),
+			],
+		};
+		const sheets = [document.createElement('div')];
+		decoratePages(model, [page(0, 0, 0)], sheets, new Date(), (partName) => `blob:${partName}`);
+		const header = sheets[0].querySelector('.dve-print-header')!;
+		expect(header.textContent).toBe(' Company');
+		const inline = header.querySelector('img')!;
+		expect([inline.getAttribute('src'), inline.style.width]).toEqual([
+			'blob:word/media/logo.png',
+			'80px',
+		]);
+		const float = sheets[0].querySelector<HTMLElement>(':scope > .dve-print-float')!;
+		expect([float.style.left, float.style.top]).toEqual(['736px', '10px']);
+	});
+});

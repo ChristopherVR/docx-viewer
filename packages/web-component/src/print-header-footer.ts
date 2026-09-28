@@ -9,7 +9,8 @@ import {
 	type Paragraph,
 	type TextRun,
 } from '@christophervr/docx-core';
-import type { LayoutPageBox } from '@christophervr/docx-layout';
+import { floatPosition, paragraphFloats, type LayoutPageBox } from '@christophervr/docx-layout';
+import type { PictureUrl } from './print-layout';
 
 /** Page facts a header or footer field can show. */
 export interface PageFieldValues {
@@ -18,6 +19,8 @@ export interface PageFieldValues {
 	sectionPages: string;
 	/** When the layout was produced; DATE and TIME fields update to it, as Word updates them. */
 	now?: Date;
+	/** Resolves header/footer pictures to displayable URLs. */
+	pictureUrl?: PictureUrl;
 }
 
 /** Word page numbers per laid-out page, honoring each section's restart value and number format. */
@@ -71,7 +74,23 @@ export function fieldDisplayText(run: TextRun, values: PageFieldValues): string 
 	return run.text;
 }
 
+/** An inline header/footer picture, or a placeholder box when its bytes are unavailable. */
+function inlinePicture(image: NonNullable<TextRun['image']>, values: PageFieldValues): HTMLElement {
+	const url = image.partName ? values.pictureUrl?.(image.partName, image.contentType) : undefined;
+	const element = document.createElement(url ? 'img' : 'span');
+	if (url) {
+		(element as HTMLImageElement).src = url;
+		(element as HTMLImageElement).alt = image.altText ?? '';
+	} else element.className = 'dve-print-picture-missing';
+	element.style.display = 'inline-block';
+	element.style.verticalAlign = 'bottom';
+	element.style.width = `${image.widthPx}px`;
+	element.style.height = `${image.heightPx}px`;
+	return element;
+}
+
 function runElement(run: TextRun, values: PageFieldValues): HTMLElement {
+	if (run.image) return inlinePicture(run.image, values);
 	const span = document.createElement('span');
 	span.textContent = fieldDisplayText(run, values);
 	if (run.field) span.dataset.field = fieldName(run.field.instr);
@@ -88,7 +107,9 @@ function paragraphElement(paragraph: Paragraph, values: PageFieldValues): HTMLEl
 	const element = document.createElement('p');
 	if (paragraph.align) element.style.textAlign = paragraph.align;
 	if (paragraph.direction) element.dir = paragraph.direction;
-	for (const run of paragraph.runs) if (!run.break) element.append(runElement(run, values));
+	// Floating pictures are placed on the sheet by `decoratePages`, not in the text flow.
+	for (const run of paragraph.runs)
+		if (!run.break && !run.image?.anchored) element.append(runElement(run, values));
 	return element;
 }
 
@@ -122,11 +143,46 @@ export function renderHeaderFooter(
 }
 
 /** Adds each page's header and footer, positioned at the section's header/footer distances. */
+/** Header/footer floating pictures, positioned on the sheet from their anchor frames. */
+function floatingPictures(
+	content: HeaderFooterContent,
+	page: LayoutPageBox,
+	anchorTopPx: number,
+	values: PageFieldValues,
+): HTMLElement[] {
+	const paragraphs = content.blocks.flatMap((block) =>
+		block.type === 'paragraph'
+			? [block]
+			: block.rows.flatMap((row) => row.flatMap((cell) => cell.paragraphs)),
+	);
+	const column = { xPx: 0, widthPx: page.widthPx - page.marginLeftPx - page.marginRightPx };
+	return paragraphs.flatMap((paragraph) =>
+		paragraphFloats(paragraph).map((float) => {
+			const { xPx, yPx } = floatPosition(float, page, column, { topPx: anchorTopPx, heightPx: 0 });
+			const url = values.pictureUrl?.(float.partName, float.contentType);
+			const element = document.createElement(url ? 'img' : 'div');
+			if (url) (element as HTMLImageElement).src = url;
+			else element.classList.add('dve-print-picture-missing');
+			element.classList.add('dve-print-picture', 'dve-print-float');
+			if (float.behindText) element.classList.add('dve-print-float-behind');
+			Object.assign(element.style, {
+				position: 'absolute',
+				left: `${xPx}px`,
+				top: `${yPx}px`,
+				width: `${float.widthPx}px`,
+				height: `${float.heightPx}px`,
+			});
+			return element;
+		}),
+	);
+}
+
 export function decoratePages(
 	model: DocumentModel,
 	pages: LayoutPageBox[],
 	sheets: HTMLElement[],
 	now: Date = new Date(),
+	pictureUrl?: PictureUrl,
 ) {
 	const numbers = pageNumbers(model, pages);
 	const sectionPageCounts = new Map<number, number>();
@@ -140,6 +196,7 @@ export function decoratePages(
 			numPages: String(pages.length),
 			sectionPages: String(sectionPageCounts.get(page.sectionIndex) ?? 1),
 			now,
+			...(pictureUrl ? { pictureUrl } : {}),
 		};
 		const section = model.sections?.[page.sectionIndex];
 		const pageNumber = Number.parseInt(numbers[index], 10) || index + 1;
@@ -154,6 +211,9 @@ export function decoratePages(
 			element.style.right = `${page.marginRightPx}px`;
 			element.style[kind === 'header' ? 'top' : 'bottom'] = `${distancePx}px`;
 			sheet.append(element);
+			// Anchors in a footer sit roughly one line above its bottom distance.
+			const anchorTop = kind === 'header' ? distancePx : page.heightPx - distancePx - 20;
+			sheet.append(...floatingPictures(content, page, anchorTop, values));
 		}
 	});
 }

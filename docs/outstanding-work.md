@@ -37,7 +37,8 @@ inherited run formatting and theme fonts/colors rendered in the editor, and a hi
 Fields are editable (complex `fldChar`/`instrText` and `fldSimple`): the result text edits in place
 and the field structure is kept. A References tab has Table of Contents and Update Table: entries
 come from heading styles (`\o` levels), and page numbers come from Print Layout pagination. Paragraph
-tab stops (`w:tabs`) are modeled and saved.
+tab stops (`w:tabs`) are modeled and saved, and Print Layout honors them (alignment and leaders),
+along with paragraph indents and list labels.
 
 Still missing:
 
@@ -65,8 +66,9 @@ Still missing:
   begin/code/separate/end structure is preserved and guarded against partial deletion.
 - Picture crop and effects. Print Layout draws inline pictures on their lines and floating pictures
   at their `wp:positionH`/`wp:positionV` positions, in front of or behind text. Body text does not
-  wrap around them yet, `character`/`line` frames approximate to the column/paragraph, and pictures
-  in table cells, headers and footers are not paginated. The editing surface still approximates
+  wrap around them yet, and `character`/`line` frames approximate to the column/paragraph. Pictures
+  in table cells paginate inline; header and footer pictures (inline and floating) are drawn on
+  every page; floats inside table cells are not positioned. The editing surface still approximates
   floats with CSS floats.
 - Picture bullets, `numStyleLink`, Word's exact `lvlRestart` cascade.
 - Prior-formatting snapshots for `rPrChange`/`pPrChange`, and table-structure revisions. Tracked moves are linked by name (accepting or rejecting either side resolves both) and saved with their range markers; the editor does not yet record new moves (cut and paste under Track Changes records a deletion and an insertion). Comments may span paragraphs (one range per comment); range edges outside any run move to the nearest commented text when edited.
