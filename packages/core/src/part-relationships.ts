@@ -13,6 +13,7 @@ import {
 	scanUsedRelationshipIds,
 	type NewRelationship,
 } from './relationship-allocator.js';
+import type { DocPrIdAllocator } from './docpr-ids.js';
 import type { XmlDocument } from './xml.js';
 
 const CONTENT_TYPES_PART = '[Content_Types].xml';
@@ -29,11 +30,17 @@ export async function allocatorForPart(
 	zip: JSZip,
 	partName: string,
 	doc: XmlDocument,
+	docPrIds?: DocPrIdAllocator,
 ): Promise<RelationshipAllocator> {
 	const declared = parseRelationships(
 		await zip.file(relationshipsPartFor(partName))?.async('string'),
 	);
-	return new RelationshipAllocator([...scanUsedRelationshipIds(doc), ...declared.keys()]);
+	const allocator = new RelationshipAllocator(
+		[...scanUsedRelationshipIds(doc), ...declared.keys()],
+		docPrIds,
+	);
+	allocator.docPrIds.reserveFromDocument(doc);
+	return allocator;
 }
 
 /** Adds `created` relationships to the part's .rels and writes any newly inserted media. */

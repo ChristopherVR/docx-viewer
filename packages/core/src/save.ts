@@ -4,6 +4,8 @@ import type { DocumentModel, PendingMediaPart } from './model.js';
 import { buildXml, parseXml, type XmlDocument } from './xml.js';
 import type { PackageContext } from './parse.js';
 import { applyModel } from './write.js';
+import { DocPrIdAllocator } from './docpr-ids.js';
+import { assertValidDocumentModel } from './validate-model.js';
 import { applyNumberingCatalog } from './numbering-package.js';
 import { applyHeaderFooterEdits } from './write-header-footer.js';
 import { applyNoteEdits } from './write-notes.js';
@@ -55,6 +57,7 @@ export async function saveDocx(
 	const binding = contexts.get(model);
 	if (binding && JSON.stringify(model) === JSON.stringify(binding.base))
 		return new Uint8Array(binding.context.original);
+	assertValidDocumentModel(model);
 	model = numberRevisionIds(numberCommentIds(model), maxWordId(binding?.context.sourceXml));
 	if (
 		binding &&
@@ -88,6 +91,8 @@ export async function saveDocx(
 		);
 	const zip = binding ? await JSZip.loadAsync(binding.context.original) : new JSZip();
 	const document = binding ? parseXml(binding.context.sourceXml) : newDocument();
+	const docPrIds = new DocPrIdAllocator();
+	await docPrIds.reserveFromPackage(zip);
 	const existingRelationships = parseRelationships(await zip.file(RELS_PART)?.async('string'));
 	const { newRelationships } = applyModel(
 		document,
@@ -95,6 +100,7 @@ export async function saveDocx(
 		binding?.base.blocks ?? [],
 		existingRelationships.keys(),
 		binding?.base.sections ?? [],
+		docPrIds,
 	);
 	zip.file('word/document.xml', buildXml(document));
 	if (!binding) {
@@ -108,13 +114,14 @@ export async function saveDocx(
 		);
 	}
 	await writeNewRelationships(zip, 'word/document.xml', newRelationships, pendingMedia);
-	if (binding) await applyHeaderFooterEdits(zip, model, binding.base, pendingMedia);
+	if (binding) await applyHeaderFooterEdits(zip, model, binding.base, pendingMedia, docPrIds);
 	// A new document starts without notes, so every note is created along with its part.
 	await applyNoteEdits(
 		zip,
 		model,
 		binding?.base ?? { ...model, footnotes: [], endnotes: [] },
 		pendingMedia,
+		docPrIds,
 	);
 	await applyNumberingCatalog(zip, model, binding);
 	if (Boolean(model.evenAndOddHeaders) !== Boolean(binding?.base.evenAndOddHeaders))

@@ -72,17 +72,6 @@ function updateDocPr(
 	});
 }
 
-function nextDocPrId(doc: XmlDocument): string {
-	let max = 0;
-	if (doc.documentElement)
-		walk(doc.documentElement, (node) => {
-			if (node.namespaceURI !== WP_NS || node.localName !== 'docPr') return;
-			const id = Number(node.getAttribute('id'));
-			if (Number.isFinite(id) && id > max) max = id;
-		});
-	return String(max + 1);
-}
-
 function el(doc: XmlDocument, ns: string, qualified: string): XmlElement {
 	return makeNS(doc, ns, qualified);
 }
@@ -110,6 +99,7 @@ function buildInlineDrawing(
 	doc: XmlDocument,
 	image: InlineImage,
 	relId: string,
+	docPrId: string,
 	svgRelId?: string,
 ): XmlElement {
 	const drawing = makeW(doc, 'drawing');
@@ -122,7 +112,6 @@ function buildInlineDrawing(
 	extent.setAttribute('cy', cy);
 	const effectExtent = el(doc, WP_NS, 'wp:effectExtent');
 	for (const side of ['l', 't', 'r', 'b']) effectExtent.setAttribute(side, '0');
-	const docPrId = nextDocPrId(doc);
 	const docPr = el(doc, WP_NS, 'wp:docPr');
 	docPr.setAttribute('id', docPrId);
 	docPr.setAttribute('name', `Picture ${docPrId}`);
@@ -210,7 +199,7 @@ export function createImageRun(
 	if (!allocator) throw new Error('Cannot insert a new picture without a relationship allocator.');
 	const relId = allocator.addImage(image.partName);
 	const svgRelId = image.svgPartName ? allocator.addImage(image.svgPartName) : undefined;
-	const drawing = buildInlineDrawing(doc, image, relId, svgRelId);
+	const drawing = buildInlineDrawing(doc, image, relId, allocator.docPrIds.next(), svgRelId);
 	clearNonProperties(node);
 	node.appendChild(drawing);
 	return node;

@@ -22,6 +22,12 @@ export {
 } from './theme-color.js';
 export { loadDocx } from './parse.js';
 export { saveDocx } from './save.js';
+export {
+	assertValidDocumentModel,
+	DocxModelValidationError,
+	validateDocumentModel,
+	type ValidationIssue,
+} from './validate-model.js';
 export * from './numbering-model.js';
 export { parseNumberingCatalog, resolveNumberingLevel } from './numbering-parse.js';
 export {

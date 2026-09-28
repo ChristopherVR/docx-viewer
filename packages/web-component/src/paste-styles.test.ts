@@ -49,6 +49,10 @@ describe('pasted styles', () => {
 				],
 			},
 		];
+		// Pre-save validation rejects the model instead of silently dropping the bad color.
+		await expect(saveDocx(model)).rejects.toThrow(/runs\[0\]\.color.*ST_HexColor/);
+		const [paragraph] = model.blocks;
+		if (paragraph.type === 'paragraph') paragraph.runs.shift();
 		const xml = await (
 			await JSZip.loadAsync(await saveDocx(model))
 		)

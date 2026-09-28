@@ -2,6 +2,7 @@
 // The single `w:pPr/w:jc` parser shared by direct paragraphs, styles and docDefaults.
 import type { StJc } from './generated/wml-simple-types.js';
 import { isStJc } from './generated/wml-simple-types.js';
+import type { Paragraph } from './model.js';
 import { enumValue } from './parse-diagnostics.js';
 import { onOffElement } from './simple-types.js';
 import { first, getW, type XmlElement } from './xml.js';
@@ -29,6 +30,21 @@ export function alignFromJustification(jc: StJc, rtl: boolean): ParagraphAlign |
 		default:
 			return undefined; // numTab aligns to the list tab and has no plain equivalent.
 	}
+}
+
+/**
+ * The `w:jc` value to write. `justification` (the exact value read from the file) is only
+ * authoritative while `align` still equals what it implies; once an editor changes `align` alone,
+ * the stale `justification` is ignored and `align` is written.
+ */
+export function paragraphJustification(paragraph: Paragraph): StJc | undefined {
+	const { align, justification } = paragraph;
+	if (
+		justification &&
+		alignFromJustification(justification, paragraph.direction === 'rtl') === align
+	)
+		return justification;
+	return align === undefined ? undefined : align === 'justify' ? 'both' : align;
 }
 
 export interface ParsedJustification {

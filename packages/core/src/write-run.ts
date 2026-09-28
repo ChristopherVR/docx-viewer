@@ -2,8 +2,6 @@
 import { orderChildren, RPR_ORDER } from './element-order.js';
 import type { TextRun } from './model.js';
 import { children, first, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
-import { isWordHighlightToken } from './highlight.js';
-import { isValidLanguageTag } from './language.js';
 import { setExtendedRunProperties } from './write-run-extra.js';
 import { fractionToThemeByte } from './theme-color.js';
 import { createImageRun } from './write-drawing.js';
@@ -54,8 +52,6 @@ function setLanguageAttribute(
 	value: string | undefined,
 ): void {
 	let language = first(props, 'lang');
-	if (value !== undefined && value !== '' && !isValidLanguageTag(value))
-		throw new Error(`Invalid BCP 47 language tag: ${value}`);
 	if (value === undefined || value === '') {
 		if (!language) return;
 		language.removeAttributeNS(WORD_NS, attribute);
@@ -140,8 +136,6 @@ function setRunProperties(
 		}
 	}
 	if (changed('highlight')) {
-		if (run.highlight && !isWordHighlightToken(run.highlight))
-			throw new Error(`Unsupported Word highlight token: ${run.highlight}`);
 		removeChildren(props, 'highlight');
 		if (run.highlight) {
 			const highlight = makeW(doc, 'highlight');

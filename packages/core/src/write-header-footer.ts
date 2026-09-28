@@ -10,6 +10,7 @@ import type {
 	SectionProperties,
 } from './model.js';
 import { allocatorForPart, writeNewRelationships } from './part-relationships.js';
+import type { DocPrIdAllocator } from './docpr-ids.js';
 import { buildXml, parseXml } from './xml.js';
 import { applyBlocks } from './write.js';
 
@@ -56,6 +57,7 @@ export async function applyHeaderFooterEdits(
 	model: DocumentModel,
 	base: DocumentModel,
 	pendingMedia?: ReadonlyMap<string, PendingMediaPart>,
+	docPrIds?: DocPrIdAllocator,
 ): Promise<void> {
 	const next = partContents(model.sections);
 	const previous = partContents(base.sections);
@@ -68,7 +70,7 @@ export async function applyHeaderFooterEdits(
 		const file = zip.file(partName);
 		if (!file) throw new Error(`Header/footer part ${partName} is missing from the package.`);
 		const doc = parseXml(await file.async('string'));
-		const allocator = await allocatorForPart(zip, partName, doc);
+		const allocator = await allocatorForPart(zip, partName, doc, docPrIds);
 		applyBlocks(doc, doc.documentElement, blocks, original, allocator, contentWidthTwips);
 		zip.file(partName, buildXml(doc));
 		await writeNewRelationships(zip, partName, allocator.newRelationships, pendingMedia);

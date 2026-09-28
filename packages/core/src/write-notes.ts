@@ -4,6 +4,7 @@
 import type JSZip from 'jszip';
 import type { DocumentModel, Note, PendingMediaPart } from './model.js';
 import { allocatorForPart, writeNewRelationships } from './part-relationships.js';
+import type { DocPrIdAllocator } from './docpr-ids.js';
 import { buildXml, children, getW, parseXml } from './xml.js';
 import { applyBlocks } from './write.js';
 import { ensureContentTypeOverride, ensureDocumentRelationship } from './zip-parts.js';
@@ -39,6 +40,7 @@ export async function applyNoteEdits(
 	model: DocumentModel,
 	base: DocumentModel,
 	pendingMedia?: ReadonlyMap<string, PendingMediaPart>,
+	docPrIds?: DocPrIdAllocator,
 ): Promise<void> {
 	const contentWidthTwips = Math.round(
 		(model.page.width - model.page.marginLeft - model.page.marginRight) * 15,
@@ -58,7 +60,7 @@ export async function applyNoteEdits(
 		const elements = new Map(
 			children(doc.documentElement, kind).map((element) => [getW(element, 'id'), element]),
 		);
-		const allocator = await allocatorForPart(zip, part, doc);
+		const allocator = await allocatorForPart(zip, part, doc, docPrIds);
 		for (const note of edited) {
 			let element = elements.get(note.id);
 			const original = baseNotes.get(note.id);

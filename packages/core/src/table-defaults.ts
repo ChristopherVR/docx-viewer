@@ -2,7 +2,8 @@
 // Properties for tables created by the editor: Word requires `w:tblPr` and `w:tblGrid` on every
 // table, and "Insert Table" gives new tables single-line borders on every edge.
 import type { Table } from './model.js';
-import type { TableBorderSide, TableBorders } from './table-model.js';
+import type { StJcTable } from './generated/wml-simple-types.js';
+import type { TableBorderSide, TableBorders, TableCellMargins } from './table-model.js';
 import { makeW, WORD_NS, type XmlDocument, type XmlElement } from './xml.js';
 
 const SINGLE: TableBorderSide = { style: 'single', sizeEighthPoints: 4 };
@@ -44,6 +45,32 @@ export function buildBorders(
 	return element;
 }
 
+/** `w:tblCellMar` / `w:tcMar` with children in schema order (top, left, bottom, right). */
+export function buildMargins(
+	doc: XmlDocument,
+	margins: TableCellMargins,
+	tag: 'tblCellMar' | 'tcMar',
+): XmlElement | undefined {
+	const element = makeW(doc, tag);
+	for (const side of ['top', 'left', 'bottom', 'right'] as const) {
+		const value = margins[side];
+		if (value === undefined) continue;
+		const edge = makeW(doc, side);
+		setW(edge, 'w', String(value));
+		setW(edge, 'type', 'dxa');
+		element.appendChild(edge);
+	}
+	return element.childNodes.length ? element : undefined;
+}
+
+/** The `w:tblPr/w:jc` value: the exact `justification` while `alignment` still matches it, else `alignment`. */
+function tableJustification(table: Table): StJcTable | undefined {
+	const { alignment, justification } = table;
+	const implied =
+		justification === 'start' ? 'left' : justification === 'end' ? 'right' : justification;
+	return justification && implied === alignment ? justification : alignment;
+}
+
 /** Number of grid columns a table spans (the widest row, counting horizontal merges). */
 export function tableColumnCount(table: Table): number {
 	return Math.max(
@@ -71,12 +98,21 @@ export function buildNewTableProperties(
 	setW(width, 'w', String(table.widthTwips ?? 0));
 	setW(width, 'type', table.widthTwips ? 'dxa' : 'auto');
 	tblPr.appendChild(width);
-	if (table.alignment) {
+	const jcValue = tableJustification(table);
+	if (jcValue) {
 		const jc = makeW(doc, 'jc');
-		setW(jc, 'val', table.alignment);
+		setW(jc, 'val', jcValue);
 		tblPr.appendChild(jc);
 	}
+	if (table.indentTwips !== undefined) {
+		const indent = makeW(doc, 'tblInd');
+		setW(indent, 'w', String(table.indentTwips));
+		setW(indent, 'type', 'dxa');
+		tblPr.appendChild(indent);
+	}
 	if (table.borders) tblPr.appendChild(buildBorders(doc, table.borders, 'tblBorders'));
+	const margins = table.cellMargins && buildMargins(doc, table.cellMargins, 'tblCellMar');
+	if (margins) tblPr.appendChild(margins);
 	const look = makeW(doc, 'tblLook');
 	for (const [name, value] of [
 		['val', '04A0'],

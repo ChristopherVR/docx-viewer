@@ -8,16 +8,19 @@ import { annotationIdAllocator, newMoveRangeIds, type CommentSpans } from './wri
 import { reconcileBookmarks } from './bookmarks.js';
 import { writeNumberingProperties } from './numbering-write.js';
 import { writeTable as writeTableContent } from './write-table.js';
-import { buildNewTableProperties } from './table-defaults.js';
+import { buildNewTableProperties, tableColumnCount } from './table-defaults.js';
+import { buildCellProperties, buildRowProperties } from './table-cell-write.js';
 import { orderSectionProperties } from './element-order.js';
 import { applySectionEdits } from './write-sections.js';
 import { writeParagraphMarkRevision } from './write-revisions.js';
+import { paragraphJustification } from './paragraph-alignment.js';
 import { runHasUnknownProperties } from './write-run-validation.js';
 import {
 	buildInlineContent,
 	collectInlineSlots,
 	replaceableInlineChildren,
 } from './write-inline.js';
+import type { DocPrIdAllocator } from './docpr-ids.js';
 import {
 	RelationshipAllocator,
 	scanUsedRelationshipIds,
@@ -75,11 +78,17 @@ function writeParagraphImpl(
 		pPr = makeW(doc, 'pPr');
 		node.insertBefore(pPr, node.firstChild);
 	}
-	if (!base || paragraph.align !== base.align) {
+	if (
+		!base ||
+		paragraph.align !== base.align ||
+		paragraph.justification !== base.justification ||
+		paragraph.direction !== base.direction
+	) {
 		removeChildren(pPr, 'jc');
-		if (paragraph.align) {
+		const jc = paragraphJustification(paragraph);
+		if (jc) {
 			const align = makeW(doc, 'jc');
-			setAttribute(align, 'val', paragraph.align === 'justify' ? 'both' : paragraph.align);
+			setAttribute(align, 'val', jc);
 			pPr.appendChild(align);
 		}
 	}
@@ -155,17 +164,23 @@ function createTable(
 	const { tblPr, tblGrid } = buildNewTableProperties(doc, table, contentWidthTwips);
 	node.appendChild(tblPr);
 	node.appendChild(tblGrid);
-	for (const row of table.rows) {
+	const columns = tableColumnCount(table);
+	table.rows.forEach((row, rowIndex) => {
 		const tr = makeW(doc, 'tr');
+		const spanned = row.reduce((sum, cell) => sum + (cell.gridSpan ?? 1), 0);
+		const trPr = buildRowProperties(doc, table.rowProperties?.[rowIndex], columns - spanned);
+		if (trPr) tr.appendChild(trPr);
 		for (const cell of row) {
 			const tc = makeW(doc, 'tc');
+			const tcPr = buildCellProperties(doc, cell);
+			if (tcPr) tc.appendChild(tcPr);
 			for (const paragraph of cell.paragraphs)
 				tc.appendChild(createParagraph(doc, paragraph, allocator, spans));
 			if (!cell.paragraphs.length) tc.appendChild(makeW(doc, 'p'));
 			tr.appendChild(tc);
 		}
 		node.appendChild(tr);
-	}
+	});
 	return node;
 }
 
@@ -273,13 +288,16 @@ export function applyModel(
 	reservedRelationshipIds: Iterable<string> = [],
 	/** The loaded document's sections, so unchanged sections stay byte-identical. */
 	baseSections: SectionProperties[] = [],
+	/** Package-wide `wp:docPr` id allocator shared with header, footer and note parts. */
+	docPrIds?: DocPrIdAllocator,
 ): ApplyModelResult {
 	const body = Array.from(doc.getElementsByTagNameNS(WORD_NS, 'body'))[0];
 	if (!body) throw new Error('DOCX document.xml has no w:body');
-	const allocator = new RelationshipAllocator([
-		...scanUsedRelationshipIds(doc),
-		...reservedRelationshipIds,
-	]);
+	const allocator = new RelationshipAllocator(
+		[...scanUsedRelationshipIds(doc), ...reservedRelationshipIds],
+		docPrIds,
+	);
+	allocator.docPrIds.reserveFromDocument(doc);
 	const contentWidthTwips = Math.round(
 		(model.page.width - model.page.marginLeft - model.page.marginRight) * 15,
 	);

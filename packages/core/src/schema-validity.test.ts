@@ -288,6 +288,51 @@ const fixtures: Fixture[] = [
 		expected: ['word/document.xml'],
 	},
 	{
+		name: 'a new table with merged, shaded, bordered and aligned cells and a short row',
+		build: async () => {
+			const model = createDocument();
+			const cellParagraph = (id: string) => ({
+				type: 'paragraph' as const,
+				id,
+				runs: [{ text: id }],
+			});
+			model.blocks.push({
+				type: 'table',
+				id: 'new-table',
+				widthTwips: 9000,
+				alignment: 'right',
+				justification: 'end',
+				indentTwips: 100,
+				cellMargins: { left: 108, right: 108 },
+				borders: { top: { style: 'single', sizeEighthPoints: 4, themeColor: 'accent1' } },
+				rowProperties: [{ heightTwips: 500, heightRule: 'exact', cantSplit: true, header: true }],
+				rows: [
+					[
+						{
+							paragraphs: [cellParagraph('m1')],
+							gridSpan: 2,
+							verticalMerge: 'restart',
+							widthTwips: 6000,
+							shadingFill: '#D9D9D9',
+							shadingThemeFill: { token: 'accent2', tint: 0.5 },
+							verticalAlign: 'center',
+							borders: { bottom: { style: 'double', sizeEighthPoints: 6, color: '#112233' } },
+							margins: { top: 10, left: 20, bottom: 30, right: 40 },
+						},
+						{ paragraphs: [cellParagraph('m2')], widthTwips: 3000 },
+					],
+					[
+						{ paragraphs: [cellParagraph('m3')], verticalMerge: 'continue', gridSpan: 2 },
+						{ paragraphs: [cellParagraph('m4')] },
+					],
+					[{ paragraphs: [cellParagraph('m5')] }, { paragraphs: [cellParagraph('m6')] }],
+				],
+			});
+			return saveDocx(model);
+		},
+		expected: ['word/document.xml'],
+	},
+	{
 		name: 'a section without pgSz or pgMar but with a header reference, plus a new section break',
 		build: async () => {
 			const bytes = await packageWith({

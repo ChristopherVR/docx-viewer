@@ -1,6 +1,7 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 // Assigns fresh relationship ids when write.ts introduces a new external hyperlink or a
 // newly inserted picture, and records what save.ts must add to word/_rels/document.xml.rels.
+import { DocPrIdAllocator } from './docpr-ids.js';
 import { isElement, REL_NS, type XmlDocument, type XmlElement } from './xml.js';
 
 export const HYPERLINK_RELATIONSHIP_TYPE =
@@ -43,8 +44,12 @@ export class RelationshipAllocator {
 	private readonly created: NewRelationship[] = [];
 	private readonly imagePartToRelId = new Map<string, string>();
 
-	constructor(existingIds: Iterable<string>) {
+	/** Shared drawing-id allocator, so `wp:docPr` ids stay unique across every part of a save. */
+	readonly docPrIds: DocPrIdAllocator;
+
+	constructor(existingIds: Iterable<string>, docPrIds: DocPrIdAllocator = new DocPrIdAllocator()) {
 		this.used = new Set(existingIds);
+		this.docPrIds = docPrIds;
 	}
 
 	private nextId(): string {
