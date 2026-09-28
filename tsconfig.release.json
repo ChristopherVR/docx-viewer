@@ -13,6 +13,8 @@
 		"packages/**/*.test.ts",
 		"packages/**/*.test.tsx",
 		"packages/**/__tests__/**",
+		"packages/**/test-support/**",
+		"packages/**/test-support.ts",
 		"packages/**/dist/**"
 	]
 }
