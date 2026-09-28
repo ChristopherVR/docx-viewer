@@ -193,6 +193,10 @@ export interface Paragraph {
 	widowControl?: boolean;
 	/** `w:contextualSpacing`: no spacing between paragraphs of the same style. */
 	contextualSpacing?: boolean;
+	/** `w:pBdr`; read-only (preserved in the source XML, not written for new paragraphs). */
+	borders?: import('./table-model.js').ParagraphBorders;
+	/** `w:shd/@w:fill` as `#rrggbb`; read-only like `borders`. */
+	shadingFill?: string;
 	/**
 	 * Bookmark names starting in this paragraph (`w:bookmarkStart/@w:name`). Added names are
 	 * written around the whole paragraph; removed names lose their markers here. Exact character
@@ -219,6 +223,8 @@ export type ParagraphFormatting = Pick<
 	| 'keepLines'
 	| 'widowControl'
 	| 'contextualSpacing'
+	| 'borders'
+	| 'shadingFill'
 >;
 export interface ParagraphStyleDefinition {
 	id: string;

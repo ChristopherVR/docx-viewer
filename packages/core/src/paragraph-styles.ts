@@ -5,6 +5,7 @@ import type {
 	ParagraphStyleDefinition,
 } from './model.js';
 import { first, getW, named, parseXml, type XmlDocument, type XmlElement } from './xml.js';
+import { parseParagraphBorders, parseShadingFill } from './table-borders.js';
 
 const integer = (value: string | undefined): number | undefined => {
 	if (value === undefined || !/^-?\d+$/.test(value)) return undefined;
@@ -37,6 +38,10 @@ export function parseFormatting(pPr: XmlElement | undefined): ParagraphFormattin
 		const value = enabled(first(pPr, key));
 		if (value !== undefined) result[key] = value;
 	}
+	const borders = parseParagraphBorders(first(pPr, 'pBdr'));
+	if (borders) result.borders = borders;
+	const shading = parseShadingFill(first(pPr, 'shd'));
+	if (shading) result.shadingFill = shading;
 	const spacing = first(pPr, 'spacing');
 	const before = integer(getW(spacing, 'before'));
 	const after = integer(getW(spacing, 'after'));
@@ -165,6 +170,8 @@ export function resolveParagraphFormatting(
 		'firstLineTwips',
 		'hangingTwips',
 		...PAGINATION_KEYS,
+		'borders',
+		'shadingFill',
 	];
 	for (const key of keys) {
 		const value = paragraph[key];

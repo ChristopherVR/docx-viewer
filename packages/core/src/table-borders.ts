@@ -1,5 +1,5 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
-import type { TableBorderSide, TableBorders } from './table-model.js';
+import type { ParagraphBorders, TableBorderSide, TableBorders } from './table-model.js';
 import type { ThemeColorToken } from './theme-model.js';
 import { first, getW, type XmlElement } from './xml.js';
 
@@ -12,7 +12,7 @@ const SIDES = [
 	'insideV',
 ] as const satisfies readonly (keyof TableBorders)[];
 
-function borderSide(element: XmlElement | undefined): TableBorderSide | undefined {
+export function borderSide(element: XmlElement | undefined): TableBorderSide | undefined {
 	if (!element) return undefined;
 	const style = getW(element, 'val');
 	const size = getW(element, 'sz');
@@ -60,4 +60,21 @@ export function parseShadingThemeFill(shd: XmlElement | undefined) {
 	if (tint && /^[0-9a-fA-F]{2}$/.test(tint)) ref.tint = Number.parseInt(tint, 16) / 255;
 	if (shade && /^[0-9a-fA-F]{2}$/.test(shade)) ref.shade = Number.parseInt(shade, 16) / 255;
 	return ref;
+}
+
+/** Parses `w:pBdr`: box sides, the line `between` paragraphs of a group, and each side's `w:space` (points). */
+export function parseParagraphBorders(pBdr: XmlElement | undefined): ParagraphBorders | undefined {
+	if (!pBdr) return undefined;
+	const result: ParagraphBorders = {};
+	for (const side of ['top', 'bottom', 'left', 'right', 'between'] as const) {
+		const element =
+			first(pBdr, side) ??
+			(side === 'left' ? first(pBdr, 'start') : side === 'right' ? first(pBdr, 'end') : undefined);
+		const value = borderSide(element);
+		if (!value) continue;
+		const space = getW(element, 'space');
+		if (space !== undefined && /^\d+$/.test(space)) value.spacePoints = Number(space);
+		result[side] = value;
+	}
+	return Object.keys(result).length ? result : undefined;
 }

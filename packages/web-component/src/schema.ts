@@ -1,7 +1,7 @@
 import { Schema, type DOMOutputSpec } from 'prosemirror-model';
 import { isWordHighlightToken, type WordHighlightToken } from '@christophervr/docx-core';
 import { fieldMarkerNodeSpec, noteReferenceNodeSpec, pageBreakNodeSpec } from './break-note-schema';
-import { tableStyle, tableCellStyle } from './table-render';
+import { paragraphBoxCss, tableStyle, tableCellStyle } from './table-render';
 import { imageNodeSpec } from './inline-content-schema';
 import { markSpecs } from './schema-marks';
 
@@ -44,6 +44,7 @@ export function paragraphStyle(attrs: Record<string, unknown>): string {
 						? `max(${NATURAL_LINE_HEIGHT}em, ${Number(attrs.lineSpacingTwips) / 15}px)`
 						: `${Number(attrs.lineSpacingTwips) / 15}px`
 			}`,
+		...paragraphBoxCss(attrs.borders, attrs.shadingFill),
 	].filter(Boolean);
 	return declarations.join(';');
 }
@@ -98,6 +99,9 @@ export const schema = new Schema({
 				keepLines: { default: null },
 				widowControl: { default: null },
 				contextualSpacing: { default: null },
+				/** `w:pBdr` (object) and shading fill; read-only, drawn around the paragraph. */
+				borders: { default: null },
+				shadingFill: { default: null },
 				/** Custom tab stops (`w:tabs`) as an array; kept for saving, not rendered at their positions. */
 				tabStops: { default: null },
 				/** Read-only bookmark names starting in this paragraph; not user-editable. */

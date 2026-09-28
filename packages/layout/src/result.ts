@@ -42,6 +42,15 @@ export interface LayoutParagraphBox {
 	yPx: number;
 	heightPx: number;
 	lines: LayoutLine[];
+	/** Paragraph borders and shading, spanning the box's height at these horizontal bounds. */
+	frame?: LayoutParagraphFrame;
+}
+
+export interface LayoutParagraphFrame {
+	leftPx: number;
+	widthPx: number;
+	borders?: import('./input.js').LayoutParagraphBorders;
+	shading?: string;
 }
 
 /** Where a cell sits in its row and how it is drawn (borders, shading, padding). */

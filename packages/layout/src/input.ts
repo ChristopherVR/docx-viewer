@@ -57,6 +57,17 @@ export interface LayoutTabStop {
 	leader?: 'none' | 'dot' | 'hyphen' | 'underscore' | 'heavy' | 'middleDot';
 }
 
+/** A paragraph border side: the line and its `w:space` gap to the text. */
+export interface LayoutParagraphBorder extends LayoutBorder {
+	spacePx: number;
+}
+export interface LayoutParagraphBorders {
+	top?: LayoutParagraphBorder;
+	bottom?: LayoutParagraphBorder;
+	left?: LayoutParagraphBorder;
+	right?: LayoutParagraphBorder;
+}
+
 /** A footnote's content, laid out in the page's footnote area. */
 export interface LayoutNote {
 	id: string;
@@ -99,6 +110,10 @@ export interface LayoutParagraph {
 	tabStops?: LayoutTabStop[];
 	/** Footnotes referenced here; they go at the bottom of the page where the paragraph starts. */
 	footnotes?: LayoutNote[];
+	/** Border lines around the paragraph, with each side's gap to the text. */
+	borders?: LayoutParagraphBorders;
+	/** `#rrggbb` shading behind the paragraph. */
+	shading?: string;
 }
 
 /** A resolved cell border, ready to draw. */

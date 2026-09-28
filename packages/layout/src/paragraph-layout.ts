@@ -1,6 +1,6 @@
 import { fontMetrics, type LayoutFontSpec, type TextMeasurer } from './measure.js';
 import { appendBreakMarker, tokenizeRun, type BreakToken } from './text-breaks.js';
-import type { LayoutFragment, LayoutLine } from './result.js';
+import type { LayoutFragment, LayoutLine, LayoutParagraphFrame } from './result.js';
 import type { LayoutParagraph, LayoutRun } from './input.js';
 import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE_PT, ptToPx, twipsToPx } from './units.js';
 import { placeTab } from './tab-stops.js';
@@ -15,6 +15,10 @@ export interface ParagraphLayoutResult {
 	pageBreakAfterLine: Set<number>;
 	/** Indices after which an explicit column break token was consumed. */
 	columnBreakAfterLine: Set<number>;
+	/** Space above the first line and below the last taken by top and bottom borders. */
+	insetTopPx: number;
+	insetBottomPx: number;
+	frame?: LayoutParagraphFrame;
 }
 
 /** Word draws superscript and subscript text at about two thirds of the run's size. */
@@ -383,18 +387,37 @@ export function layoutParagraph(
 		};
 	}
 
-	let y = 0;
+	// Borders sit outside the text: top and bottom lines (with their gaps) add to the height, and
+	// side lines are drawn beyond the indents.
+	const borders = paragraph.borders;
+	const extent = (side: keyof NonNullable<typeof borders>) =>
+		borders?.[side] ? borders[side]!.widthPx + borders[side]!.spacePx : 0;
+	const insetTopPx = extent('top');
+	const insetBottomPx = extent('bottom');
+	let y = insetTopPx;
 	for (const line of lines) {
 		y += line.gapBeforePx ?? 0;
 		line.yPx = y;
 		y += line.heightPx;
 	}
+	const frame =
+		borders || paragraph.shading
+			? {
+					leftPx: leftPx - extent('left'),
+					widthPx: bodyWidth + extent('left') + extent('right'),
+					...(borders ? { borders } : {}),
+					...(paragraph.shading ? { shading: paragraph.shading } : {}),
+				}
+			: undefined;
 
 	return {
 		lines,
 		spacingBeforePx: twipsToPx(paragraph.spacingBeforeTwips ?? 0),
 		spacingAfterPx: twipsToPx(paragraph.spacingAfterTwips ?? 0),
-		contentHeightPx: y,
+		contentHeightPx: y + insetBottomPx,
+		insetTopPx,
+		insetBottomPx,
+		...(frame ? { frame } : {}),
 		pageBreakAfterLine,
 		columnBreakAfterLine,
 	};

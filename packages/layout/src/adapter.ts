@@ -17,12 +17,14 @@ import {
 	resolveThemeColorReference,
 } from '@christophervr/docx-core';
 import { adaptTable } from './adapt-table.js';
+import { groupParagraphBorders, paragraphBox } from './adapt-paragraph-box.js';
 import { endnoteParagraphs, noteLabels, paragraphFootnotes } from './adapt-notes.js';
 import type {
 	LayoutBlock,
 	LayoutDocumentInput,
 	LayoutFloat,
 	LayoutParagraph,
+	LayoutParagraphBorders,
 	LayoutRun,
 	LayoutSection,
 	LayoutTable,
@@ -174,7 +176,17 @@ export function adaptDocumentModel(
 			...(first.color ? { color: first.color } : {}),
 		};
 	}
+	const betweenBorders = new Map<LayoutParagraph, LayoutParagraphBorders['top']>();
 	function adaptParagraph(paragraph: Paragraph, markLabel?: string): LayoutParagraph {
+		const adapted = adaptParagraphOnly(paragraph, markLabel);
+		const between = paragraphBox(
+			catalog ? resolveParagraphFormatting(paragraph, catalog) : paragraph,
+			model.theme,
+		).betweenBorder;
+		if (between) betweenBorders.set(adapted, between);
+		return adapted;
+	}
+	function adaptParagraphOnly(paragraph: Paragraph, markLabel?: string): LayoutParagraph {
 		const resolved = catalog ? resolveParagraphFormatting(paragraph, catalog) : paragraph;
 		const label = labels.get(paragraph.id);
 		// Numbering level indents apply unless the paragraph or its style sets its own.
@@ -182,11 +194,13 @@ export function adaptDocumentModel(
 			resolved.firstLineTwips !== undefined || resolved.hangingTwips !== undefined;
 		const runs = paragraph.runs.map((run) => adaptRun(run, paragraph.style, markLabel));
 		const footnotes = paragraphFootnotes(paragraph, model, noteLabel, adaptParagraph);
+		const { betweenBorder: _between, ...box } = paragraphBox(resolved, model.theme);
 		return {
 			kind: 'paragraph',
 			id: paragraph.id,
 			runs: label ? [labelRun(paragraph, label), ...runs] : runs,
 			...(footnotes.length ? { footnotes } : {}),
+			...box,
 			...(paragraph.tabStops?.length
 				? {
 						tabStops: paragraph.tabStops.map((stop) => ({
@@ -228,6 +242,7 @@ export function adaptDocumentModel(
 		...model.blocks.map(adaptBlock),
 		...endnoteParagraphs(model, noteLabel, adaptParagraph),
 	];
+	groupParagraphBorders(blocks, betweenBorders);
 	const sections = model.sections;
 	if (!sections || !sections.length) {
 		return {

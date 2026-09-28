@@ -88,19 +88,23 @@ export function placeParagraph(
 			placedCount = Math.max(1, end - lineCursor);
 		}
 		const first = layout.lines[lineCursor];
-		const origin = first.yPx - (firstSegment ? (first.gapBeforePx ?? 0) : 0);
+		const origin = first.yPx - (firstSegment ? (first.gapBeforePx ?? 0) + layout.insetTopPx : 0);
 		const segmentLines = layout.lines
 			.slice(lineCursor, lineCursor + placedCount)
 			.map((line) => ({ ...line, yPx: line.yPx - origin }));
 		const isFinal = lineCursor + placedCount >= layout.lines.length;
 		const lastLine = segmentLines.at(-1);
-		const segmentHeight = lastLine ? lastLine.yPx + lastLine.heightPx : 0;
+		const isLastSegment = lineCursor + placedCount >= layout.lines.length;
+		const segmentHeight =
+			(lastLine ? lastLine.yPx + lastLine.heightPx : 0) +
+			(isLastSegment ? layout.insetBottomPx : 0);
 		const box: LayoutParagraphBox = {
 			kind: 'paragraph',
 			blockId: paragraph.id,
 			yPx: 0,
 			heightPx: segmentHeight,
 			lines: segmentLines,
+			...(layout.frame ? { frame: layout.frame } : {}),
 		};
 		const advance =
 			(firstSegment ? spacingBeforePx : 0) + segmentHeight + (isFinal ? layout.spacingAfterPx : 0);

@@ -21,6 +21,7 @@ import { resolveHyperlink, parseSimpleHyperlinkField } from './hyperlink.js';
 import { paragraphBookmarkNames } from './bookmarks.js';
 import { parseTabStops } from './tab-stops.js';
 import { PAGINATION_KEYS } from './paragraph-styles.js';
+import { parseParagraphBorders, parseShadingFill } from './table-borders.js';
 import { createFieldTracker } from './field-runs.js';
 import {
 	collectParagraphRuns,
@@ -192,6 +193,10 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 		const element = first(props, key);
 		if (element) paragraph[key] = on(element);
 	}
+	const borders = parseParagraphBorders(first(props, 'pBdr'));
+	if (borders) paragraph.borders = borders;
+	const shading = parseShadingFill(first(props, 'shd'));
+	if (shading) paragraph.shadingFill = shading;
 	const tabStops = parseTabStops(first(props, 'tabs'));
 	if (tabStops.length) paragraph.tabStops = tabStops;
 	const spacing = first(props, 'spacing');

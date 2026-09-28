@@ -26,7 +26,7 @@ export function cssHex(value: string | undefined): string | undefined {
 	return hex && /^[0-9a-f]{6}$/i.test(hex) ? `#${hex}` : undefined;
 }
 
-function border(
+export function border(
 	side: TableBorderSide | undefined,
 	theme: DocumentModel['theme'],
 ): LayoutBorder | undefined {

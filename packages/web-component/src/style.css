@@ -689,3 +689,8 @@ a.dve-link[data-anchor^='_Toc'] {
 .dve-print-cell {
 	overflow: hidden;
 }
+.dve-print-paragraph-frame {
+	position: absolute;
+	top: 0;
+	box-sizing: border-box;
+}

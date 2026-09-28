@@ -48,6 +48,8 @@ function paragraphNode(paragraph: Paragraph, labels: ListLabels, noteNumber?: No
 			keepLines: paragraph.keepLines ?? null,
 			widowControl: paragraph.widowControl ?? null,
 			contextualSpacing: paragraph.contextualSpacing ?? null,
+			borders: paragraph.borders ?? null,
+			shadingFill: paragraph.shadingFill ?? null,
 			bookmarks: paragraph.bookmarks ?? [],
 		},
 		children,
@@ -143,6 +145,8 @@ export function docToModel(
 			Boolean(previous.pageBreakBefore) === Boolean(node.attrs.pageBreakBefore) &&
 			sameJson(previous.tabStops ?? null, node.attrs.tabStops ?? null) &&
 			KEEP_KEYS.every((key) => (previous[key] ?? null) === (node.attrs[key] ?? null)) &&
+			sameJson(previous.borders ?? null, node.attrs.borders ?? null) &&
+			(previous.shadingFill ?? null) === (node.attrs.shadingFill ?? null) &&
 			sameJson(previous.bookmarks ?? [], node.attrs.bookmarks ?? [])
 		)
 			return previous;
@@ -185,6 +189,8 @@ export function docToModel(
 			...Object.fromEntries(
 				KEEP_KEYS.filter((key) => node.attrs[key] != null).map((key) => [key, node.attrs[key]]),
 			),
+			...(node.attrs.borders ? { borders: structuredClone(node.attrs.borders) } : {}),
+			...(node.attrs.shadingFill ? { shadingFill: node.attrs.shadingFill } : {}),
 			...(node.attrs.bookmarks?.length ? { bookmarks: [...node.attrs.bookmarks] } : {}),
 		};
 	};

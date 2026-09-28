@@ -3,6 +3,7 @@ import {
 	DEFAULT_FONT_SIZE_PT,
 	type LayoutBlockBox,
 	type LayoutLine,
+	type LayoutParagraphFrame,
 	type LayoutResult,
 } from '@christophervr/docx-layout';
 import { renderTable } from './print-table';
@@ -129,6 +130,24 @@ function renderLine(
 	return lineEl;
 }
 
+/** A paragraph's borders and shading, drawn behind its text across the box's height. */
+function paragraphFrame(frame: LayoutParagraphFrame, heightPx: number): HTMLElement {
+	const el = document.createElement('div');
+	el.className = 'dve-print-paragraph-frame';
+	Object.assign(el.style, {
+		left: `${frame.leftPx}px`,
+		width: `${frame.widthPx}px`,
+		height: `${heightPx}px`,
+	});
+	if (frame.shading) el.style.background = frame.shading;
+	for (const side of ['top', 'right', 'bottom', 'left'] as const) {
+		const line = frame.borders?.[side];
+		if (line)
+			el.style.setProperty(`border-${side}`, `${line.widthPx}px ${line.style} ${line.color}`);
+	}
+	return el;
+}
+
 function renderBlock(
 	box: LayoutBlockBox,
 	hitboxes: LineHitBox[],
@@ -140,6 +159,7 @@ function renderBlock(
 		el.className = 'dve-print-block';
 		el.style.top = `${box.yPx}px`;
 		el.style.height = `${box.heightPx}px`;
+		if (box.frame) el.append(paragraphFrame(box.frame, box.heightPx));
 		for (const line of box.lines) el.append(renderLine(line, box.blockId, hitboxes, pictureUrl));
 		return el;
 	}

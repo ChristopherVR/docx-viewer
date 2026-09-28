@@ -8,6 +8,16 @@ export interface TableBorderSide {
 	sizeEighthPoints?: number;
 	color?: string;
 	themeColor?: ThemeColorToken;
+	/** Paragraph borders only: gap between the border and the text (`w:space`), in points. */
+	spacePoints?: number;
+}
+/** Paragraph borders (`w:pBdr`); `between` separates paragraphs that share the same borders. */
+export interface ParagraphBorders {
+	top?: TableBorderSide;
+	bottom?: TableBorderSide;
+	left?: TableBorderSide;
+	right?: TableBorderSide;
+	between?: TableBorderSide;
 }
 export interface TableBorders {
 	top?: TableBorderSide;

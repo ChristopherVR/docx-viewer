@@ -23,7 +23,7 @@ function cssBorderStyle(style: string | undefined): string {
 	if (style.toLowerCase().includes('dash')) return 'dashed';
 	return 'solid';
 }
-function cssBorderSide(side: BorderSide | undefined): string | null {
+export function cssBorderSide(side: BorderSide | undefined): string | null {
 	if (!side || NONE_STYLES.has(side.style ?? '')) return null;
 	const widthPx = side.sizeEighthPoints
 		? Math.max(1, Math.round((side.sizeEighthPoints / 8) * (4 / 3)))
@@ -108,4 +108,29 @@ export function tableCellStyle(attrs: Record<string, unknown>): string {
 		),
 	].filter(Boolean);
 	return declarations.join(';');
+}
+
+/**
+ * CSS for paragraph borders (`w:pBdr`) and shading: each side's line plus its `w:space` gap as
+ * padding, so the text keeps its position and the border sits outside it as in Word.
+ */
+export function paragraphBoxCss(borders: unknown, shadingFill: unknown): string[] {
+	const parsed = (typeof borders === 'string' ? parseBordersJson(borders) : borders) as
+		| Record<
+				'top' | 'bottom' | 'left' | 'right',
+				(BorderSide & { spacePoints?: number }) | undefined
+		  >
+		| undefined;
+	const css: string[] = [];
+	for (const side of ['top', 'bottom', 'left', 'right'] as const) {
+		const line = cssBorderSide(parsed?.[side]);
+		if (!line) continue;
+		css.push(
+			`border-${side}:${line}`,
+			`padding-${side}:${((parsed![side]!.spacePoints ?? 0) * 4) / 3}px`,
+		);
+	}
+	if (typeof shadingFill === 'string' && /^#?[0-9a-f]{6}$/i.test(shadingFill))
+		css.push(`background-color:#${shadingFill.replace(/^#/, '')}`);
+	return css;
 }
