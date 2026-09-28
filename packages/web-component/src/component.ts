@@ -1,3 +1,4 @@
+import { applyShellLabels } from './shell-labels';
 import { EditorState } from 'prosemirror-state';
 import type { DocumentModel } from '@christophervr/docx-core';
 import { createDocument } from '@christophervr/docx-core';
@@ -142,6 +143,7 @@ export class DocxEditorElement extends DocxEditorApi {
 		review?.setLocale(core.locale);
 		chrome?.setLocale(core.locale);
 		core.inserts.setLocale(core.locale);
+		applyShellLabels(this, paper, core.locale);
 		core.refreshControls();
 		reflectAttribute(this, 'locale', core.locale);
 	}

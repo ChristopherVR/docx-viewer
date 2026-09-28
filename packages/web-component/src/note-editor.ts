@@ -1,4 +1,5 @@
 import type { Block, Note, Paragraph, TextRun } from '@christophervr/docx-core';
+import { translateUiText } from './localization';
 import { openBlocksEditor, type InlineEditorOptions } from './header-footer-editor';
 
 export interface NoteEditingOptions {
@@ -32,7 +33,7 @@ export function attachNoteEditing(root: HTMLElement, options: NoteEditingOptions
 		const id = item.dataset.docxNoteId!;
 		const body = item.querySelector<HTMLElement>('.dve-note-body');
 		if (!body) continue;
-		item.title = 'Double-click to edit';
+		item.title = translateUiText(root, 'Double-click to edit');
 		item.addEventListener('dblclick', () => {
 			if (!options.editable() || item.classList.contains('dve-header-footer-editing')) return;
 			const note = options.note(id);

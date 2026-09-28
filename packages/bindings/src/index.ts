@@ -3,6 +3,7 @@ import {
 	type DocxEditorElement,
 	type DocxEditorEventDetail,
 	type DocxEditorEventName,
+	type EditorLocaleInput,
 	type EditorThemeMode,
 	type PageChangeDetail,
 	normalizeRibbonActions,
@@ -14,7 +15,8 @@ import type { DocumentModel } from '@christophervr/docx-core';
 export interface EditorProps {
 	documentModel?: DocumentModel;
 	readOnly?: boolean;
-	locale?: string;
+	/** Interface language: `en`, `fr`, `de`, `es`, `zh-CN`, or a tag such as `de-DE` that maps to one. */
+	locale?: EditorLocaleInput;
 	/** `light`, `dark`, or `auto` (default) to follow the OS color scheme. */
 	theme?: EditorThemeMode;
 	/** Left rail of page thumbnails (needs Print Layout). Default false. */

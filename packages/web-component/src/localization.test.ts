@@ -9,7 +9,8 @@ import { normalizeEditorLocale, translate } from './localization';
 describe('shared editor localization', () => {
 	it('normalizes display locale with English fallback and dictionary coverage', () => {
 		expect(normalizeEditorLocale('fr-CA')).toBe('fr');
-		expect(normalizeEditorLocale('de-DE')).toBe('en');
+		expect(normalizeEditorLocale('de-DE')).toBe('de');
+		expect(normalizeEditorLocale('pt-BR')).toBe('en');
 		expect(translate('fr', 'status.words')).toBe('{count} mots');
 	});
 

@@ -24,8 +24,8 @@ export type { CollaborationAuthorityConfig } from './collaboration';
 export { createCollaborationAuthority } from './collaboration-model';
 export { PresenceClient, PRESENCE_PALETTE } from './presence';
 export type { PresenceMessage, PresenceConfig, PresenceReceiveResult } from './presence';
-export { normalizeEditorLocale } from './localization';
-export type { EditorLocale } from './localization';
+export { EDITOR_LOCALES, normalizeEditorLocale } from './localization';
+export type { EditorLocale, EditorLocaleInput } from './localization';
 export {
 	createCollaborationIdGenerator,
 	repairCollaborativeDocumentIds,

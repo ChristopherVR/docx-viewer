@@ -1,6 +1,7 @@
 import { initTheme } from './theme';
 import './style.css';
 import { createDocument } from '@christophervr/docx-core';
+import { normalizeEditorLocale, type DocxEditorElement } from '@christophervr/docx-web-component';
 import type { EditorHandle } from '../../packages/bindings/src/index';
 import { mountFramework } from './framework';
 import { createSampleDocument } from './sample-document';
@@ -20,12 +21,26 @@ function toast(message: string) {
 	toastTimer = setTimeout(() => (element.hidden = true), 6000);
 }
 
+/** Interface language: `?locale=de` (any supported tag), switchable from the picker. */
+const localeSelect = get<HTMLSelectElement>('locale-select');
+let locale = normalizeEditorLocale(new URLSearchParams(location.search).get('locale'));
+localeSelect.value = locale;
+localeSelect.addEventListener('change', () => {
+	locale = normalizeEditorLocale(localeSelect.value);
+	const url = new URL(location.href);
+	url.searchParams.set('locale', locale);
+	history.replaceState(null, '', url);
+	for (const element of document.querySelectorAll<DocxEditorElement>('docx-editor'))
+		element.locale = locale;
+});
+
 let editor: EditorHandle | undefined;
 async function showEditor(): Promise<EditorHandle> {
 	get('landing').hidden = true;
 	get('workspace').hidden = false;
 	editor ??= await mountFramework(get('editor'), {
 		documentModel: createDocument(),
+		locale,
 		onDocumentError(error) {
 			toast(error.message);
 		},

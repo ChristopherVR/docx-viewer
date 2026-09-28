@@ -60,7 +60,8 @@ describe('attribute reflection', () => {
 		expect(editor.locale).toBe('fr');
 		expect(editor.getAttribute('locale')).toBe('FR-fr');
 		editor.locale = 'fr'; // same locale: no attribute write beyond the author's own
-		expect(setter).toHaveBeenCalledTimes(1);
+		// Only `locale` writes count: the localized aria-label is a separate attribute.
+		expect(setter.mock.calls.filter(([name]) => name === 'locale')).toHaveLength(1);
 		editor.readOnly = true;
 		editor.readOnly = true;
 		expect(editor.hasAttribute('read-only')).toBe(true);

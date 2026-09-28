@@ -1,7 +1,9 @@
 import { getVersion, sendableSteps } from 'prosemirror-collab';
-import { Decoration, DecorationSet } from 'prosemirror-view';
+import { DecorationSet } from 'prosemirror-view';
+import { peerDecorations } from './presence-decorations';
 import { Plugin, PluginKey, type EditorState, type Transaction } from 'prosemirror-state';
 import { validId } from './collaboration-protocol';
+import type { EditorLocale } from './localization';
 
 export const PRESENCE_PALETTE = [
 	'#2563eb',
@@ -26,6 +28,8 @@ export function validatePresenceProfile(profile: { name: string; color: string }
 export interface PresenceConfig {
 	sessionId: string;
 	clientId: string;
+	/** Display locale of peer labels; English when omitted. */
+	locale?: () => EditorLocale;
 }
 
 export interface PresenceMessage {
@@ -48,7 +52,7 @@ export type PresenceReceiveResult =
 			reason?: string;
 	  };
 
-interface PeerPresence {
+export interface PeerPresence {
 	clientId: string;
 	name: string;
 	color: (typeof PRESENCE_PALETTE)[number];
@@ -62,55 +66,7 @@ const MAX_PEERS = 100;
 const MAX_RECENT = 200;
 const presenceKey = new PluginKey<Map<string, PeerPresence>>('docx-presence');
 
-function peerDecorations(doc: EditorState['doc'], peers: Map<string, PeerPresence>): DecorationSet {
-	const decorations: Decoration[] = [];
-	for (const peer of peers.values()) {
-		const from = Math.min(peer.anchor, peer.head);
-		const to = Math.max(peer.anchor, peer.head);
-		if (from < to) {
-			decorations.push(
-				Decoration.inline(from, to, {
-					class: 'dve-peer-selection',
-					style: `background-color: ${peer.color}33; box-shadow: inset 0 -2px ${peer.color}`,
-					'aria-label': `${peer.name}'s selection`,
-				}),
-			);
-		}
-		const cursor = document.createElement('span');
-		cursor.className = 'dve-peer-cursor';
-		cursor.style.borderColor = peer.color;
-		cursor.style.position = 'relative';
-		cursor.style.borderLeftWidth = '2px';
-		cursor.style.borderLeftStyle = 'solid';
-		cursor.style.marginInline = '-1px';
-		cursor.setAttribute('role', 'img');
-		cursor.setAttribute('aria-label', `${peer.name}'s cursor`);
-		cursor.contentEditable = 'false';
-		const label = document.createElement('span');
-		label.className = 'dve-peer-cursor-label';
-		label.textContent = peer.name;
-		label.style.backgroundColor = peer.color;
-		label.style.position = 'absolute';
-		label.style.left = '-2px';
-		label.style.bottom = '100%';
-		label.style.padding = '2px 6px';
-		label.style.borderRadius = '3px 3px 3px 0';
-		label.style.color = '#fff';
-		label.style.font = '600 10px/1.4 system-ui, sans-serif';
-		label.style.whiteSpace = 'nowrap';
-		label.style.pointerEvents = 'none';
-		cursor.append(label);
-		decorations.push(
-			Decoration.widget(peer.head, cursor, {
-				key: `peer-${peer.clientId}-${peer.sequence}`,
-				side: 1,
-			}),
-		);
-	}
-	return DecorationSet.create(doc, decorations);
-}
-
-function createPresencePlugin(): Plugin {
+function createPresencePlugin(locale: () => EditorLocale): Plugin {
 	return new Plugin({
 		key: presenceKey,
 		state: {
@@ -138,19 +94,22 @@ function createPresencePlugin(): Plugin {
 		},
 		props: {
 			decorations(state) {
-				return peerDecorations(state.doc, presenceKey.getState(state) ?? new Map());
+				return peerDecorations(state.doc, presenceKey.getState(state) ?? new Map(), locale());
 			},
 		},
 	});
 }
 
-export function getPresenceDecorations(state: EditorState): DecorationSet {
-	return peerDecorations(state.doc, presenceKey.getState(state) ?? new Map());
+export function getPresenceDecorations(
+	state: EditorState,
+	locale: EditorLocale = 'en',
+): DecorationSet {
+	return peerDecorations(state.doc, presenceKey.getState(state) ?? new Map(), locale);
 }
 
 /** Transient selection sharing for a host-provided transport; it does not send data itself. */
 export class PresenceClient {
-	readonly plugin = createPresencePlugin();
+	readonly plugin: Plugin;
 	readonly sessionId: string;
 	readonly clientId: string;
 	private readonly received = new Map<string, { sequence: number; fingerprint: string }>();
@@ -161,6 +120,7 @@ export class PresenceClient {
 			throw new Error('Presence sessionId and clientId must be non-empty strings');
 		this.sessionId = config.sessionId;
 		this.clientId = config.clientId;
+		this.plugin = createPresencePlugin(config.locale ?? (() => 'en'));
 	}
 
 	publish(state: EditorState, profile: { name: string; color: string }): PresenceMessage | null {

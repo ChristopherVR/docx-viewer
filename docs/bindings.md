@@ -80,7 +80,7 @@ The vanilla mount adapter is exported from `@christophervr/docx-viewer/vanilla` 
 
 Framework packages use their own native lifecycle and ref APIs. No framework template contains a toolbar, page renderer or document command implementation. SSR imports do not register elements; mounting is a client operation. The current browser contract validates the installed versions, not every historical peer version.
 
-Set the optional `locale` prop on any framework editor to localize the ribbon and search controls (for example, `locale="fr"`). This affects interface text only; it does not translate document content.
+Set the optional `locale` prop on any framework editor to localize the ribbon and search controls (`en`, `fr`, `de`, `es` or `zh-CN`; for example, `locale="de"`). This affects interface text only; it does not translate document content.
 
 ## Window chrome and file commands
 

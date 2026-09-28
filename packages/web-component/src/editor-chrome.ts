@@ -66,7 +66,6 @@ export class EditorChrome {
 		this.fileInput.accept = '.docx,.doc';
 		this.fileInput.hidden = true;
 		this.fileInput.className = 'dve-file-input';
-		this.fileInput.setAttribute('aria-label', 'Open');
 		this.fileInput.addEventListener('change', () => void this.openSelectedFile());
 		this.titleBar.setFileName(this._fileName);
 		this.titleBar.setSaveState(this.state);
@@ -112,6 +111,7 @@ export class EditorChrome {
 		}
 		const fileTab = this.host.ribbon()?.querySelector('.dve-file-tab');
 		if (fileTab) fileTab.textContent = translate(locale, 'File');
+		this.fileInput.setAttribute('aria-label', translate(locale, 'Open'));
 		this.titleBar.setSaveState(this.state);
 	}
 

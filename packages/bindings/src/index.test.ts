@@ -112,6 +112,22 @@ describe('customisation, page and save bindings', () => {
 		expect(binding.element.hiddenActions).toEqual([]);
 		binding.destroy();
 	});
+	it('forwards de, es and zh-CN locales and their region variants', () => {
+		const host = document.createElement('div');
+		document.body.append(host);
+		const binding = mountEditor(host, { locale: 'de-DE' });
+		expect(binding.element.locale).toBe('de');
+		for (const [input, expected] of [
+			['es-MX', 'es'],
+			['zh-Hans', 'zh-CN'],
+			['zh-TW', 'en'],
+			['fr', 'fr'],
+		] as const) {
+			binding.update({ locale: input });
+			expect(binding.element.locale).toBe(expected);
+		}
+		binding.destroy();
+	});
 	it('maps deprecated English labels to ids and warns once, not on every update', () => {
 		const host = document.createElement('div');
 		document.body.append(host);

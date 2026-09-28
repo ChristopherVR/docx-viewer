@@ -77,6 +77,19 @@ body {
 		sans-serif;
 	cursor: pointer;
 }
+.locale-select {
+	min-height: 26px;
+	padding: 0 6px;
+	border: 1px solid var(--demo-line);
+	border-radius: 4px;
+	background: var(--demo-surface);
+	color: var(--demo-ink);
+	font:
+		500 11px 'Segoe UI',
+		Arial,
+		sans-serif;
+	cursor: pointer;
+}
 .theme-toggle:hover {
 	background: var(--demo-word-soft);
 }

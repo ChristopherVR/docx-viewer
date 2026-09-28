@@ -47,9 +47,13 @@ storage and reconnect policy belong to the application.
 
 ## Interface language
 
-Set the shared editor's `locale` property (or the binding's `locale` prop) to `fr`
-for French or `en` for English. Regional tags such as `fr-CA` use the French UI;
-unsupported locales fall back to English. Changing the interface language preserves
+Set the shared editor's `locale` property (or the binding's `locale` prop) to `en`,
+`fr`, `de`, `es` or `zh-CN`. Regional and script variants resolve to the nearest
+supported language (`fr-CA`, `de-DE`, `es-MX`, `zh-Hans`, `zh-SG`); unsupported
+locales, including Traditional Chinese (`zh-TW`, `zh-Hant`), fall back to English.
+`EDITOR_LOCALES` lists the codes and `normalizeEditorLocale()` maps any tag to one.
+Every locale defines every string key (checked at compile time and by tests). The German,
+Spanish and Simplified Chinese strings have not been reviewed by native speakers. Changing the interface language preserves
 the current document, selection, undo history and document-language metadata.
 
 ## Imported paragraph styles

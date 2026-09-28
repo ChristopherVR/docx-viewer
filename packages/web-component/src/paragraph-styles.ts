@@ -7,7 +7,7 @@ import {
 	type Paragraph,
 } from '@christophervr/docx-core';
 import { paragraphStyle } from './schema';
-import { translate, type EditorLocale } from './localization';
+import { translate, translateTemplate, type EditorLocale } from './localization';
 
 /** Derived display formatting stays out of document attributes and collaboration steps. */
 export function paragraphStylesPlugin(getModel: () => DocumentModel) {
@@ -58,9 +58,7 @@ export function syncStylePicker(
 		group.setAttribute('role', 'group');
 		group.setAttribute(
 			'aria-label',
-			locale === 'fr'
-				? `Commandes : ${group.dataset.caption}`
-				: `${group.dataset.caption} controls`,
+			translateTemplate(locale, 'ribbon.groupControls', { group: group.dataset.caption }),
 		);
 		group.append(select);
 		toolbar.querySelector('#dve-panel-home')?.prepend(group);

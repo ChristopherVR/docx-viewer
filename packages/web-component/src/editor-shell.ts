@@ -1,3 +1,4 @@
+import { applyShellLabels } from './shell-labels';
 import type { DocumentModel } from '@christophervr/docx-core';
 import { createDocument } from '@christophervr/docx-core';
 import type { EditorCore } from './editor-core';
@@ -78,7 +79,6 @@ export function buildShell(core: EditorCore, api: ShellApi): void {
 	canvas.className = 'dve-canvas';
 	const paper = document.createElement('div');
 	paper.className = 'dve-paper';
-	paper.setAttribute('aria-label', 'Document page');
 	canvas.append(paper);
 	const printLayout = createPrintLayoutController(
 		canvas,
@@ -138,11 +138,12 @@ export function buildShell(core: EditorCore, api: ShellApi): void {
 		core.inserts.pictureInput,
 	);
 	if (core.pendingFileName) chrome.fileName = core.pendingFileName;
-	chrome.setLocale(core.locale);
 	root.append(style, frame);
 	Object.assign(shell, { toolbar, canvas, paper });
+	// After the toolbar is registered: the File tab label is localized through the shell.
+	chrome.setLocale(core.locale);
 	applyViewOptions(core);
 	attachEditorInteractions(core, frame);
 	element.setAttribute('role', 'region');
-	element.setAttribute('aria-label', 'Document editor');
+	applyShellLabels(element, paper, core.locale);
 }

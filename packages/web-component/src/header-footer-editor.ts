@@ -6,6 +6,7 @@ import { assignMissingParagraphIds, docToModel, modelToDoc } from './model-adapt
 import { editorKeymap } from './editor-commands';
 import { focusView } from './focus-view';
 import { renderBlocks } from './header-footer-view';
+import { translateUiText } from './localization';
 
 export type HeaderFooterSlotName = 'default' | 'first' | 'even';
 
@@ -44,7 +45,7 @@ export function attachHeaderFooterEditing(
 		const name = slot.dataset.slot as HeaderFooterSlotName | undefined;
 		const body = slot.querySelector<HTMLElement>('.dve-header-footer-body');
 		if (!name || !body) continue;
-		slot.title = 'Double-click to edit';
+		slot.title = translateUiText(root, 'Double-click to edit');
 		slot.addEventListener('dblclick', () => {
 			if (!options.editable() || slot.classList.contains('dve-header-footer-editing')) return;
 			const content = options.content(name);

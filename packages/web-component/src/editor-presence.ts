@@ -1,4 +1,5 @@
 import { emit } from './events';
+import { normalizeEditorLocale } from './localization';
 import type { EditorView } from 'prosemirror-view';
 import { sendableSteps } from 'prosemirror-collab';
 import {
@@ -18,7 +19,10 @@ export class EditorPresence {
 		private element: HTMLElement,
 		private view: () => EditorView | undefined,
 	) {
-		this.client = new PresenceClient(config);
+		this.client = new PresenceClient({
+			locale: () => normalizeEditorLocale((element as { locale?: string }).locale),
+			...config,
+		});
 	}
 	publish(profile: { name: string; color: string }): PresenceMessage | null {
 		this.profile = validatePresenceProfile(profile);

@@ -9,7 +9,7 @@ import { NodeSelection } from 'prosemirror-state';
 import { followLinkAt } from './link-commands';
 import { insertPicture, PICTURE_TYPES, stagePicture } from './picture-commands';
 import type { RibbonAction } from './ribbon';
-import type { EditorLocale } from './localization';
+import { translate, type EditorLocale } from './localization';
 import { focusView } from './focus-view';
 import { insertTableOfContents, updateTableOfContents } from './toc-commands';
 
@@ -43,7 +43,6 @@ export class InsertController {
 		this.pictureInput.accept = [...Object.keys(PICTURE_TYPES), 'image/svg+xml'].join(',');
 		this.pictureInput.hidden = true;
 		this.pictureInput.className = 'dve-picture-input';
-		this.pictureInput.setAttribute('aria-label', 'Insert picture');
 		this.pictureInput.addEventListener('change', () => void this.insertSelectedPicture());
 	}
 
@@ -107,6 +106,7 @@ export class InsertController {
 	setLocale(locale: EditorLocale): void {
 		this.linkDialog.setLocale(locale);
 		this.pictureDialog.setLocale(locale);
+		this.pictureInput.setAttribute('aria-label', translate(locale, 'Insert picture'));
 	}
 
 	/** Re-applies the hidden-text display state after the paper is rebuilt. */

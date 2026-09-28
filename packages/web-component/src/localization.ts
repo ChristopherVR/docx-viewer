@@ -1,26 +1,61 @@
 /** Display-language strings for the shared editor UI. This locale never changes DOCX language marks. */
-export type EditorLocale = 'en' | 'fr';
+import { EDITOR_LOCALES, strings, type LocalizationKey } from './localization-strings';
 
-import { strings } from './localization-strings';
+export type EditorLocale = (typeof EDITOR_LOCALES)[number];
+/** A locale code a host may pass: a canonical code (autocompleted) or any BCP 47 tag such as `de-DE`. */
+export type EditorLocaleInput = EditorLocale | (string & {});
+export { EDITOR_LOCALES };
+export type { LocalizationKey };
 
-export type LocalizationKey = keyof typeof strings.en;
+/**
+ * Maps any BCP 47 tag to a supported display locale, falling back to English. Region variants
+ * resolve to their language (`fr-CA`, `de-DE`, `es-MX`); `zh`, `zh-CN`, `zh-Hans` and `zh-SG` use
+ * Simplified Chinese, while Traditional tags (`zh-TW`, `zh-HK`, `zh-Hant`) are unsupported.
+ */
 export function normalizeEditorLocale(value: string | null | undefined): EditorLocale {
-	return value?.trim().toLowerCase().split(/[-_]/)[0] === 'fr' ? 'fr' : 'en';
+	const parts = (value ?? '').trim().toLowerCase().split(/[-_]/);
+	switch (parts[0]) {
+		case 'fr':
+		case 'de':
+		case 'es':
+			return parts[0];
+		case 'zh':
+			return parts.some((part) => ['hant', 'tw', 'hk', 'mo'].includes(part)) ? 'en' : 'zh-CN';
+		default:
+			return 'en';
+	}
 }
 export function translate(locale: EditorLocale, key: LocalizationKey): string {
 	return strings[locale][key] ?? strings.en[key] ?? key;
 }
+/** Translates a `{name}` template key and fills its placeholders. */
+export function translateTemplate(
+	locale: EditorLocale,
+	key: LocalizationKey,
+	values: Record<string, string | number>,
+): string {
+	return translate(locale, key).replace(/\{(\w+)\}/g, (match, name: string) =>
+		name in values ? String(values[name]) : match,
+	);
+}
 function translateDynamic(locale: EditorLocale, text: string): string {
 	if (locale === 'en') return text;
 	const line = /^(\d+(?:\.\d+)?) lines$/.exec(text);
-	if (line) return `${line[1]} ${Number(line[1]) === 1 ? 'ligne' : 'lignes'}`;
+	if (line)
+		return translateTemplate(locale, Number(line[1]) === 1 ? 'dyn.line' : 'dyn.lines', {
+			n: line[1],
+		});
 	const automatic = /^Automatic (.+) lines \((.+)\)$/.exec(text);
-	if (automatic) return `Automatique ${automatic[1]} lignes (${automatic[2]})`;
+	if (automatic)
+		return translateTemplate(locale, 'dyn.automatic', { n: automatic[1], ratio: automatic[2] });
 	const ruleOnly = /^(Exact|At least) rule \(no amount\)$/.exec(text);
 	if (ruleOnly)
-		return `${ruleOnly[1] === 'Exact' ? 'Règle exacte' : 'Règle minimale'} (sans valeur)`;
+		return translate(locale, ruleOnly[1] === 'Exact' ? 'dyn.exactRule' : 'dyn.atLeastRule');
 	const points = /^(Exact|At least) (.+) pt$/.exec(text);
-	if (points) return `${points[1] === 'Exact' ? 'Exactement' : 'Au moins'} ${points[2]} pt`;
+	if (points)
+		return translateTemplate(locale, points[1] === 'Exact' ? 'dyn.exact' : 'dyn.atLeast', {
+			n: points[2],
+		});
 	return text in strings.en ? translate(locale, text as LocalizationKey) : text;
 }
 export function translateUiText(root: HTMLElement, englishText: string): string {
@@ -41,6 +76,27 @@ export function formatPageStatus(locale: EditorLocale, current: number, total: n
 		.replace('{total}', String(total));
 }
 
+/** A language's name in the display locale (`Intl.DisplayNames`), or the English fallback. */
+function languageName(locale: EditorLocale, tag: string, english: string): string {
+	if (locale === 'en') return english;
+	try {
+		const names = new Intl.DisplayNames([locale], {
+			type: 'language',
+			languageDisplay: 'standard',
+		});
+		return names.of(tag) ?? english;
+	} catch {
+		return english;
+	}
+}
+
+/** The display locale of the editor chrome that contains `element`. */
+export function localeOf(element: Element): EditorLocale {
+	return normalizeEditorLocale(
+		element.closest<HTMLElement>('[data-editor-locale]')?.dataset.editorLocale,
+	);
+}
+
 /** Translate literal UI labels in-place while retaining action data and current control state. */
 export function localizeElement(root: HTMLElement, locale: EditorLocale): void {
 	for (const element of [root, ...root.querySelectorAll<HTMLElement>('*')]) {
@@ -50,7 +106,15 @@ export function localizeElement(root: HTMLElement, locale: EditorLocale): void {
 			element.dataset.caption = translated;
 			element.setAttribute(
 				'aria-label',
-				locale === 'fr' ? `Commandes : ${translated}` : `${translated} controls`,
+				translateTemplate(locale, 'ribbon.groupControls', { group: translated }),
+			);
+		}
+		if (element instanceof HTMLOptionElement && element.dataset.languageTag) {
+			element.dataset.englishName ??= element.textContent ?? '';
+			element.textContent = languageName(
+				locale,
+				element.dataset.languageTag,
+				element.dataset.englishName,
 			);
 		}
 		for (const attribute of ['aria-label', 'title', 'placeholder']) {

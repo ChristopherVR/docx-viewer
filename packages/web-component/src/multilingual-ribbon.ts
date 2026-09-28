@@ -5,7 +5,13 @@ import { closeHistory } from 'prosemirror-history';
 import { isValidLanguageTag } from '@christophervr/docx-core';
 import { emit as emitEvent } from './events';
 import { schema } from './schema';
-import { findLocalizedControl, localizeElement, normalizeEditorLocale } from './localization';
+import {
+	findLocalizedControl,
+	localeOf,
+	localizeElement,
+	normalizeEditorLocale,
+	translate,
+} from './localization';
 
 export type LanguageField = 'language' | 'eastAsiaLanguage' | 'bidiLanguage';
 export type MultilingualAction =
@@ -45,6 +51,7 @@ function languageControl(label: string, key: LanguageField): HTMLElement {
 		const option = document.createElement('option');
 		option.value = value;
 		option.textContent = text;
+		if (value) option.dataset.languageTag = value;
 		select.append(option);
 	}
 	select.addEventListener('change', () => {
@@ -62,7 +69,9 @@ function languageControl(label: string, key: LanguageField): HTMLElement {
 	custom.addEventListener('change', () => {
 		const value = custom.value.trim();
 		if (value && !isValidLanguageTag(value)) {
-			custom.setCustomValidity('Enter a BCP 47 language tag, such as en-US or ar-SA.');
+			custom.setCustomValidity(
+				translate(localeOf(custom), 'Enter a BCP 47 language tag, such as en-US or ar-SA.'),
+			);
 			custom.reportValidity();
 			return;
 		}
