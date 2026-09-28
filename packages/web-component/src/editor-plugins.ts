@@ -4,6 +4,7 @@ import { keymap } from 'prosemirror-keymap';
 import type { Plugin } from 'prosemirror-state';
 import { editorKeymap } from './editor-commands';
 import { fieldGuardPlugin } from './field-guard';
+import { tabStopsPlugin } from './tab-stops-view';
 import { noteNumberingPlugin } from './note-commands';
 import { paragraphStylesPlugin } from './paragraph-styles';
 import { reviewDisplayPlugin, type ReviewDisplayMode } from './review-display';
@@ -31,6 +32,7 @@ export function bodyPlugins(host: BodyPluginHost): Plugin[] {
 		noteNumberingPlugin(),
 		sectionBreaksPlugin(),
 		fieldGuardPlugin(),
+		tabStopsPlugin(),
 		keymap({
 			'Mod-Alt-f': () => (host.insertNote('footnote'), true),
 			'Mod-Alt-d': () => (host.insertNote('endnote'), true),

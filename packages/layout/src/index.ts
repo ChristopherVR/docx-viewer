@@ -15,3 +15,4 @@ export { adaptDocumentModel, paragraphFloats } from './adapter.js';
 export { layoutDocument, layoutDocumentModel } from './layout.js';
 export { floatPosition, positionFloats, FLOAT_WRAP_NOTE } from './floats.js';
 export { cssFontStack } from './fonts.js';
+export { placeTab, type TabPlacement } from './tab-stops.js';

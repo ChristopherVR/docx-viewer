@@ -51,7 +51,8 @@ Still missing:
   Ctrl+Alt as AltGr and not deliver them; the References ribbon buttons always work.
 - Table of contents entries link to `_Toc` bookmarks on their headings with `PAGEREF` page numbers,
   as Word writes them. TC fields and custom style mappings (`\t`) are not collected. Tab stops
-  are saved and honored in Print Layout, but the editing surface shows tabs at default widths.
+  are saved and honored in Print Layout and on the editing surface (measured after rendering, with
+  leaders); the implicit hanging-indent stop is applied in Print Layout only.
 - Pictures and links in headers, footers and notes are resolved, shown and saved with each part's own
   relationships; while a header, footer or note is being edited, the ribbon (formatting, Insert
   Picture, Link) targets it.

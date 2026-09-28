@@ -89,6 +89,19 @@ test('inserts a table of contents from the References tab and saves it as a TOC 
 	await editor.getByRole('button', { name: 'Insert table of contents', exact: true }).click();
 	await expect(body.locator('p').first()).toHaveText(/^Overview\s+1$/);
 	await expect(body.locator('p').nth(1)).toHaveText(/^Details\s+2$/);
+	// The editing surface sizes the tab to the right-aligned stop: the page number ends at the
+	// right margin, and the tab shows a dot leader.
+	await expect(body.locator('.dve-tab-leader-dot')).toHaveCount(2);
+	await expect
+		.poll(() =>
+			body.evaluate((root) => {
+				const paragraph = root.querySelectorAll('p')[1];
+				const range = document.createRange();
+				range.selectNodeContents(paragraph);
+				return Math.round(root.getBoundingClientRect().right - range.getBoundingClientRect().right);
+			}),
+		)
+		.toBeLessThanOrEqual(2);
 
 	const pending = page.waitForEvent('download');
 	await saveButton(page).click();
