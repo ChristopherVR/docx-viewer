@@ -25,10 +25,10 @@ export function romanNumeral(n: number): string {
 	];
 	let remaining = Math.max(1, Math.min(Math.trunc(n), 3999));
 	let result = '';
-	for (let i = 0; i < values.length; i++) {
-		while (remaining >= values[i]) {
-			result += numerals[i];
-			remaining -= values[i];
+	for (const [i, value] of values.entries()) {
+		while (remaining >= value) {
+			result += numerals[i] ?? '';
+			remaining -= value;
 		}
 	}
 	return result;
@@ -43,7 +43,7 @@ const LATIN_LOWER = Array.from('abcdefghijklmnopqrstuvwxyz');
  */
 export function letterLabel(n: number): string {
 	const index = Math.max(0, Math.trunc(n) - 1);
-	const letter = LATIN_LOWER[index % LATIN_LOWER.length];
+	const letter = LATIN_LOWER[index % LATIN_LOWER.length] ?? 'a';
 	return letter.repeat(Math.floor(index / LATIN_LOWER.length) + 1);
 }
 
@@ -97,13 +97,13 @@ export function cardinalWords(n: number): string {
 	const chunk = (v: number): string => {
 		const parts: string[] = [];
 		if (v >= 100) {
-			parts.push(ONES[Math.floor(v / 100)], 'hundred');
+			parts.push(ONES[Math.floor(v / 100)] ?? '', 'hundred');
 			v %= 100;
 		}
 		if (v >= 20) {
-			parts.push(TENS[Math.floor(v / 10)] + (v % 10 ? `-${ONES[v % 10]}` : ''));
+			parts.push((TENS[Math.floor(v / 10)] ?? '') + (v % 10 ? `-${ONES[v % 10] ?? ''}` : ''));
 		} else if (v > 0) {
-			parts.push(ONES[v]);
+			parts.push(ONES[v] ?? '');
 		}
 		return parts.join(' ');
 	};

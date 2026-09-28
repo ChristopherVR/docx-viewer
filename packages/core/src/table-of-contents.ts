@@ -1,6 +1,7 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 // Table of contents fields (`TOC \o "1-3"`): builds entries from heading paragraphs and finds or
 // refreshes an existing TOC field that spans body paragraphs.
+import { expectDefined } from './expect-defined.js';
 import { fieldName } from './field-runs.js';
 import type { Block, DocumentModel, Paragraph, ParagraphStyleCatalog, TextRun } from './model.js';
 
@@ -189,7 +190,7 @@ export function buildTableOfContents(model: DocumentModel, options: TocOptions):
 			tabStops: [{ posTwips: width, align: 'right', leader: 'dot' }],
 		};
 	});
-	paragraphs[0].runs.unshift(
+	expectDefined(paragraphs[0], 'first table of contents paragraph').runs.unshift(
 		{ text: '', fieldChar: 'begin' },
 		{ text: '', fieldCode: instruction },
 		{ text: '', fieldChar: 'separate' },
@@ -213,11 +214,11 @@ export function findTableOfContents(blocks: Block[]): TocLocation | undefined {
 	const stack: { code: string; block: number; run: number }[] = [];
 	for (let index = 0; index < blocks.length; index++) {
 		const block = blocks[index];
-		if (block.type !== 'paragraph') continue;
+		if (block?.type !== 'paragraph') continue;
 		for (const [runIndex, run] of block.runs.entries()) {
 			if (run.fieldChar === 'begin') stack.push({ code: '', block: index, run: runIndex });
-			else if (run.fieldCode !== undefined && stack.length)
-				stack[stack.length - 1].code += run.fieldCode;
+			else if (run.fieldCode !== undefined && stack.at(-1))
+				expectDefined(stack.at(-1), 'open field frame').code += run.fieldCode;
 			else if (run.fieldChar === 'end') {
 				const frame = stack.pop();
 				if (!frame || fieldName(frame.code) !== 'TOC') continue;
@@ -250,7 +251,9 @@ export function updateTableOfContents(
 		instruction: found.instruction,
 		...(linked ? { bookmarks: linked.bookmarks } : {}),
 	});
-	rebuilt[0].runs.unshift(...found.before);
+	expectDefined(rebuilt[0], 'first rebuilt table of contents paragraph').runs.unshift(
+		...found.before,
+	);
 	rebuilt.at(-1)!.runs.push(...found.after);
 	const blocks = [...withTocBookmarks(model, linked?.added ?? new Map()).blocks];
 	blocks.splice(found.start, found.end - found.start + 1, ...rebuilt);

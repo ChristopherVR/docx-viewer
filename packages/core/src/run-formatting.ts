@@ -42,11 +42,14 @@ function paragraphStyleRunChain(
 	const chain: RunFormatting[] = [];
 	const visited = new Set<string>();
 	let current: string | undefined = styleId;
-	while (current && paragraphCatalog.styles[current] && !visited.has(current)) {
+	while (current && !visited.has(current)) {
+		const style: ParagraphStyleCatalog['styles'][string] | undefined =
+			paragraphCatalog.styles[current];
+		if (!style) break;
 		visited.add(current);
 		const runDefinition = runCatalog?.styles[current];
 		if (runDefinition) chain.push(runDefinition.formatting);
-		current = paragraphCatalog.styles[current].basedOn;
+		current = style.basedOn;
 	}
 	return chain.reverse();
 }
@@ -59,10 +62,12 @@ function characterStyleChain(
 	const chain: RunFormatting[] = [];
 	const visited = new Set<string>();
 	let current: string | undefined = styleId;
-	while (current && runCatalog.styles[current] && !visited.has(current)) {
+	while (current && !visited.has(current)) {
+		const style: RunStyleCatalog['styles'][string] | undefined = runCatalog.styles[current];
+		if (!style) break;
 		visited.add(current);
-		chain.push(runCatalog.styles[current].formatting);
-		current = runCatalog.styles[current].basedOn;
+		chain.push(style.formatting);
+		current = style.basedOn;
 	}
 	return chain.reverse();
 }
@@ -106,7 +111,7 @@ export function resolveRunFormatting(
 	// default. Direct formatting on the run sets the value outright, including an explicit off.
 	const chainValue = (chain: RunFormatting[], key: (typeof TOGGLE_KEYS)[number]) => {
 		for (let index = chain.length - 1; index >= 0; index--)
-			if (chain[index][key] !== undefined) return Boolean(chain[index][key]);
+			if (chain[index]?.[key] !== undefined) return Boolean(chain[index]?.[key]);
 		return false;
 	};
 	for (const key of TOGGLE_KEYS) {

@@ -82,8 +82,8 @@ function parseRun(node: XmlElement, revision?: Revision): TextRun {
 		content.length > 0 && content.every((child) => named(child, 'instrText'))
 			? content.map((child) => textContent(child)).join('')
 			: undefined;
-	if (content.length === 1) {
-		const only = content[0];
+	const only = content.length === 1 ? content[0] : undefined;
+	if (only) {
 		if (named(only, 'br')) {
 			const kind = classifyBreak(only);
 			if (kind === 'page' || kind === 'column') breakKind = kind;

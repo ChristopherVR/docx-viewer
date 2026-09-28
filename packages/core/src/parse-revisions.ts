@@ -1,4 +1,5 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
+import { expectDefined } from './expect-defined.js';
 import type { Revision, TextRun } from './model.js';
 import { children, first, getW, isElement, named, type XmlElement, WORD_NS } from './xml.js';
 
@@ -115,7 +116,10 @@ export function collectParagraphRuns(
 			(!item.namespaceURI || item.namespaceURI === WORD_NS) &&
 			Object.hasOwn(REVISION_WRAPPERS, item.localName)
 		) {
-			const kind = REVISION_WRAPPERS[item.localName];
+			const kind = expectDefined(
+				REVISION_WRAPPERS[item.localName],
+				`revision wrapper ${item.localName}`,
+			);
 			if (kind === 'moveFrom' || kind === 'moveTo') hasMove = true;
 			const revision = revisionFrom(item, kind);
 			const range = kind === 'moveFrom' || kind === 'moveTo' ? moves[kind].at(-1) : undefined;

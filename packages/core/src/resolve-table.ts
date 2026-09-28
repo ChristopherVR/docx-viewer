@@ -1,5 +1,6 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import type {
+	TableStyleDefinition,
 	TableLook,
 	TableStyleCatalog,
 	TableStyleConditionalFormatting,
@@ -7,13 +8,15 @@ import type {
 
 function styleChain(styleId: string | undefined, catalog: TableStyleCatalog | undefined) {
 	if (!styleId || !catalog) return [];
-	const chain: NonNullable<TableStyleCatalog['styles'][string]>[] = [];
+	const chain: TableStyleDefinition[] = [];
 	const visited = new Set<string>();
 	let current: string | undefined = styleId;
-	while (current && catalog.styles[current] && !visited.has(current)) {
+	while (current && !visited.has(current)) {
+		const style: TableStyleDefinition | undefined = catalog.styles[current];
+		if (!style) break;
 		visited.add(current);
-		chain.push(catalog.styles[current]);
-		current = catalog.styles[current].basedOn;
+		chain.push(style);
+		current = style.basedOn;
 	}
 	return chain.reverse();
 }

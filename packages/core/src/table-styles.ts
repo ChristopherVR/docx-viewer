@@ -94,7 +94,7 @@ export function parseTableStyleCatalog(xml: string): TableStyleCatalog {
 				break;
 			}
 			seen.add(parent);
-			parent = styles[parent].basedOn;
+			parent = styles[parent]?.basedOn;
 		}
 	}
 	return { styles, warnings: [...new Set(warnings)] };

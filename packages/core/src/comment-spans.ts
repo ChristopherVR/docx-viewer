@@ -42,9 +42,9 @@ export function commentContinuations(blocks: Block[]): Map<string, CommentContin
 	});
 	const result = new Map<string, CommentContinuation>();
 	paragraphs.forEach((paragraph, index) => {
-		const ids = [...idsByParagraph[index]];
-		const before = new Set(ids.filter((id) => first.get(id)! < index));
-		const after = new Set(ids.filter((id) => last.get(id)! > index));
+		const ids = [...(idsByParagraph[index] ?? [])];
+		const before = new Set(ids.filter((id) => (first.get(id) ?? index) < index));
+		const after = new Set(ids.filter((id) => (last.get(id) ?? index) > index));
 		if (before.size || after.size) result.set(paragraph.id, { before, after });
 	});
 	return result;

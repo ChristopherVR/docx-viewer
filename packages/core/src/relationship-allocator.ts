@@ -14,7 +14,8 @@ const SAFE_HYPERLINK_SCHEMES = new Set(['http:', 'https:', 'mailto:']);
 /** Only http(s) and mailto targets are accepted; anything else (notably `javascript:`) is rejected. */
 export function isSafeHyperlinkHref(href: string): boolean {
 	const match = /^([a-z][a-z0-9+.-]*:)/i.exec(href.trim());
-	return Boolean(match && SAFE_HYPERLINK_SCHEMES.has(match[1].toLowerCase()));
+	const scheme = match?.[1];
+	return scheme !== undefined && SAFE_HYPERLINK_SCHEMES.has(scheme.toLowerCase());
 }
 
 export interface NewRelationship {

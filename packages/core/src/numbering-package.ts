@@ -128,9 +128,14 @@ export async function applyNumberingCatalog(
 	const cleanup = children(root, 'numIdMacAtCleanup')[0] ?? null;
 	// CT_Numbering: abstractNum* precede num*, which precede numIdMacAtCleanup.
 	const firstNum = children(root, 'num')[0] ?? cleanup;
-	for (const id of newAbstractIds)
-		root.insertBefore(buildAbstractNumElement(doc, next.abstractNums[id]), firstNum);
-	for (const id of newNumIds) root.insertBefore(buildNumElement(doc, next.nums[id]), cleanup);
+	for (const id of newAbstractIds) {
+		const abstractNum = next.abstractNums[id];
+		if (abstractNum) root.insertBefore(buildAbstractNumElement(doc, abstractNum), firstNum);
+	}
+	for (const id of newNumIds) {
+		const num = next.nums[id];
+		if (num) root.insertBefore(buildNumElement(doc, num), cleanup);
+	}
 	zip.file('word/numbering.xml', buildXml(doc));
 	if (!existingFile) await registerNumberingPart(zip);
 }

@@ -1,3 +1,4 @@
+import { expectDefined } from './expect-defined.js';
 import type { Paragraph, Table, TableCell } from './model.js';
 import {
 	children,
@@ -33,7 +34,9 @@ export function canEditTableStructure(table: XmlElement): boolean {
 	if (grid && !only(grid, ['gridCol'])) return false;
 	const rows = children(table, 'tr');
 	if (!rows.length) return false;
-	const width = children(rows[0], 'tc').length;
+	const [firstRow] = rows;
+	if (!firstRow) return false;
+	const width = children(firstRow, 'tc').length;
 	if (!width) return false;
 	if (grid && children(grid, 'gridCol').length !== width) return false;
 	for (const row of rows) {
@@ -145,7 +148,7 @@ export function writeTable(
 	const sourceById = new Map<string, Source>();
 	base?.rows.forEach((row, ri) =>
 		row.forEach((cell, ci) => {
-			const oldCell = children(oldRows[ri], 'tc')[ci];
+			const oldCell = children(expectDefined(oldRows[ri], `table row ${ri}`), 'tc')[ci];
 			if (oldCell)
 				for (const paragraph of cell.paragraphs)
 					sourceById.set(paragraph.id, {
@@ -169,7 +172,10 @@ export function writeTable(
 		if (sourceRow !== undefined && usedRows.has(sourceRow))
 			throw new Error('Splitting an existing table row is not supported.');
 		if (sourceRow !== undefined) usedRows.add(sourceRow);
-		const tr = sourceRow === undefined ? makeW(doc, 'tr') : oldRows[sourceRow];
+		const tr =
+			sourceRow === undefined
+				? makeW(doc, 'tr')
+				: expectDefined(oldRows[sourceRow], `table row ${sourceRow}`);
 		const oldCells = children(tr, 'tc');
 		const nextCells = row.map((cell, ci) => {
 			const source = sources[ci];

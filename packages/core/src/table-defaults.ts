@@ -114,7 +114,7 @@ export function buildNewTableProperties(
 	const margins = table.cellMargins && buildMargins(doc, table.cellMargins, 'tblCellMar');
 	if (margins) tblPr.appendChild(margins);
 	const look = makeW(doc, 'tblLook');
-	for (const [name, value] of [
+	const lookAttributes: [string, string][] = [
 		['val', '04A0'],
 		['firstRow', '1'],
 		['lastRow', '0'],
@@ -122,8 +122,8 @@ export function buildNewTableProperties(
 		['lastColumn', '0'],
 		['noHBand', '0'],
 		['noVBand', '1'],
-	])
-		setW(look, name, value);
+	];
+	for (const [name, value] of lookAttributes) setW(look, name, value);
 	tblPr.appendChild(look);
 	const tblGrid = makeW(doc, 'tblGrid');
 	const columns = tableColumnCount(table);

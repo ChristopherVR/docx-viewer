@@ -111,7 +111,7 @@ export function parseParagraphStyleCatalog(xml: string): ParagraphStyleCatalog {
 				break;
 			}
 			seen.add(parent);
-			parent = styles[parent].basedOn;
+			parent = styles[parent]?.basedOn;
 		}
 	}
 	return { docDefaults: parseFormatting(pDefaults), styles, warnings: [...new Set(warnings)] };
@@ -132,8 +132,7 @@ function applyStyle(
 		chain.push(style);
 		current = style.basedOn;
 	}
-	for (let index = chain.length - 1; index >= 0; index--)
-		Object.assign(out, chain[index].formatting);
+	for (const style of chain.reverse()) Object.assign(out, style.formatting);
 }
 
 /** Resolves defaults and style ancestry without modifying paragraph direct properties. */

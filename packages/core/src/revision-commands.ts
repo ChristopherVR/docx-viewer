@@ -120,12 +120,17 @@ export const acceptRevision = (model: DocumentModel, id: string): DocumentModel 
 export const rejectRevision = (model: DocumentModel, id: string): DocumentModel =>
 	resolveLinked(model, id, rejectOne);
 
+function clearRunRevision(paragraph: Paragraph, runIndex: number): void {
+	const run = paragraph.runs[runIndex];
+	if (run) delete run.revision;
+}
+
 function acceptOne(model: DocumentModel, id: string): DocumentModel {
 	const entry = findRevision(model, id);
 	if (!entry) throw new Error(`No revision with id ${id} was found.`);
 	if (entry.kind === 'formatChange')
 		return updateRuns(model, id, (paragraph, runIndex) => {
-			delete paragraph.runs[runIndex].revision;
+			clearRunRevision(paragraph, runIndex);
 		});
 	if (entry.kind === 'paragraphChange') {
 		const next = structuredClone(model);
@@ -136,7 +141,7 @@ function acceptOne(model: DocumentModel, id: string): DocumentModel {
 	if (entry.runIndex === undefined) return resolveParagraphMark(model, id, entry.kind === 'insert');
 	if (entry.kind === 'insert' || entry.kind === 'moveTo')
 		return updateRuns(model, id, (paragraph, runIndex) => {
-			delete paragraph.runs[runIndex].revision;
+			clearRunRevision(paragraph, runIndex);
 		});
 	return updateRuns(model, id, (paragraph, runIndex) => {
 		paragraph.runs.splice(runIndex, 1);
@@ -157,7 +162,7 @@ function rejectOne(model: DocumentModel, id: string): DocumentModel {
 			paragraph.runs.splice(runIndex, 1);
 		});
 	return updateRuns(model, id, (paragraph, runIndex) => {
-		delete paragraph.runs[runIndex].revision;
+		clearRunRevision(paragraph, runIndex);
 	});
 }
 
@@ -176,7 +181,7 @@ function applyAll(
 			if (!fallbackWarning) throw error;
 			const next = structuredClone(current);
 			const paragraph = paragraphsOf(next.blocks).find((p) => p.id === entry.paragraphId)!;
-			if (entry.runIndex !== undefined) delete paragraph.runs[entry.runIndex].revision;
+			if (entry.runIndex !== undefined) clearRunRevision(paragraph, entry.runIndex);
 			else delete paragraph.formatRevision;
 			current = next;
 			warned = true;

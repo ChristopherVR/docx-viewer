@@ -2,6 +2,7 @@
 // Rebuilds a paragraph's inline content (runs, pictures, hyperlinks, tracked-change wrappers and
 // comment/move range markers) from the model's flat run list: hyperlink and field grouping plus
 // the revision wrappers from write-revisions.ts and range markers from write-ranges.ts.
+import { expectDefined } from './expect-defined.js';
 import type { HyperlinkInfo, TextRun } from './model.js';
 import type { RelationshipAllocator } from './relationship-allocator.js';
 import {
@@ -46,18 +47,19 @@ function runIsSafe(run: XmlElement): boolean {
 	const content = Array.from(run.childNodes).filter(
 		(child): child is XmlElement => isElement(child) && !named(child, 'rPr'),
 	);
-	if (content.length === 1 && named(content[0], 'br') && isModeledBreak(content[0])) return true;
+	const only = content.length === 1 ? content[0] : undefined;
+	if (only && named(only, 'br') && isModeledBreak(only)) return true;
 	// Note references and a note's own number mark are modeled runs (see block-parser.ts).
 	if (
-		content.length === 1 &&
+		only &&
 		['footnoteReference', 'endnoteReference', 'footnoteRef', 'endnoteRef'].some((name) =>
-			named(content[0], name),
+			named(only, name),
 		)
 	)
 		return true;
 	// A complex field's marker (without form-field data) or its instruction text are modeled runs.
-	if (content.length === 1 && named(content[0], 'fldChar') && !content[0].childNodes.length)
-		return ['begin', 'separate', 'end'].includes(getW(content[0], 'fldCharType') ?? '');
+	if (only && named(only, 'fldChar') && !only.childNodes.length)
+		return ['begin', 'separate', 'end'].includes(getW(only, 'fldCharType') ?? '');
 	if (content.length && content.every((element) => named(element, 'instrText'))) return true;
 	const kinds = new Set<string>();
 	for (const element of content) {
@@ -203,10 +205,11 @@ export function buildInlineContent(
 ): XmlElement[] {
 	// Ranges continuing from an earlier paragraph or into a later one open or close there instead.
 	const { opens, closes } = rangeEdges(runs, ranges);
+	const runAt = (at: number) => expectDefined(runs[at], `run ${at}`);
 	const nodesFor = (index: number) =>
 		runNodes(
 			doc,
-			runs[index],
+			runAt(index),
 			base?.[index],
 			slots[index]?.element,
 			opens.get(index) ?? [],
@@ -216,14 +219,14 @@ export function buildInlineContent(
 	const output: XmlElement[] = [];
 	let index = 0;
 	while (index < runs.length) {
-		const group = containerGroup(runs[index]);
+		const group = containerGroup(runAt(index));
 		if (!group) {
 			output.push(...nodesFor(index));
 			index++;
 			continue;
 		}
 		const start = index;
-		while (index < runs.length && sameGroup(containerGroup(runs[index]), group)) index++;
+		while (index < runs.length && sameGroup(containerGroup(runAt(index)), group)) index++;
 		const oldContainers = new Set(slots.slice(start, index).map((slot) => slot?.container));
 		const [onlyContainer] = oldContainers;
 		const reusable =

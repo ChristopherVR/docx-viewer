@@ -61,7 +61,10 @@ function replaceSlots(
 		return marker;
 	});
 	const shared = Math.min(placeholders.length, nextNodes.length);
-	for (let i = 0; i < shared; i++) parent.replaceChild(nextNodes[i], placeholders[i]);
+	for (const [i, marker] of placeholders.slice(0, shared).entries()) {
+		const next = nextNodes[i];
+		if (next) parent.replaceChild(next, marker);
+	}
 	for (const marker of placeholders.slice(shared)) parent.removeChild(marker);
 	for (const node of nextNodes.slice(shared)) parent.insertBefore(node, insertionAnchor);
 }

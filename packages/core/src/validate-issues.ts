@@ -62,10 +62,12 @@ export function isXsdDateTime(value: unknown): boolean {
 	if (typeof value !== 'string') return false;
 	const match = DATE_TIME.exec(value);
 	if (!match) return false;
-	const [year, month, day, hour, minute, second] = match.slice(1, 7).map(Number);
+	const [year = 0, month = 0, day = 0, hour = 0, minute = 0, second = 0] = match
+		.slice(1, 7)
+		.map(Number);
 	if (year === 0 || month < 1 || month > 12 || day < 1) return false;
 	const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-	const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+	const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1] ?? 0;
 	if (day > days || minute > 59 || second > 59) return false;
 	if (hour === 24) return minute === 0 && second === 0;
 	if (hour > 23) return false;

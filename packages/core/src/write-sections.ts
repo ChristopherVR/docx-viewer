@@ -192,6 +192,7 @@ export function applySectionEdits(
 	let following = bodySection;
 	for (let index = sections.length - 1; index >= 0; index--) {
 		const section = sections[index];
+		if (!section) continue;
 		const last = index === sections.length - 1;
 		let sectPr: XmlElement | undefined = last
 			? bodySection

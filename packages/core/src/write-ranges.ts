@@ -109,7 +109,7 @@ export function rangeEdges(
 		const kind = key.slice(0, separator);
 		const name = key.slice(separator + 1);
 		if (kind === 'comment') return { kind: 'comment', id: name };
-		const revision = runs[index].revision;
+		const revision = runs[index]?.revision;
 		return {
 			kind: kind as 'moveFrom' | 'moveTo',
 			name,

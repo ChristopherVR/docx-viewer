@@ -47,7 +47,7 @@ export function parseRunStyleCatalog(xml: string): RunStyleCatalog {
 				break;
 			}
 			seen.add(parent);
-			parent = styles[parent].basedOn;
+			parent = styles[parent]?.basedOn;
 		}
 	}
 	return {
