@@ -17,7 +17,7 @@ async function documentXml(bytes: Uint8Array): Promise<string> {
 	return (await JSZip.loadAsync(bytes)).file('word/document.xml')!.async('string');
 }
 
-const complexField = `<w:p><w:r><w:t xml:space="preserve">See </w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> REF _Ref1 \h </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>Figure 1</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r><w:r><w:t xml:space="preserve"> above.</w:t></w:r></w:p>`;
+const complexField = `<w:p><w:r><w:t xml:space="preserve">See </w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> REF _Ref1 \\h </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>Figure 1</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r><w:r><w:t xml:space="preserve"> above.</w:t></w:r></w:p>`;
 
 describe('editable fields', () => {
 	it('models complex field markers and codes as runs', async () => {
@@ -26,9 +26,9 @@ describe('editable fields', () => {
 		expect(runs).toEqual([
 			{ text: 'See ' },
 			{ text: '', fieldChar: 'begin', bold: true },
-			{ text: '', fieldCode: ' REF _Ref1 \h ' },
+			{ text: '', fieldCode: ' REF _Ref1 \\h ' },
 			{ text: '', fieldChar: 'separate' },
-			{ text: 'Figure 1', field: { instr: 'REF _Ref1 \h' } },
+			{ text: 'Figure 1', field: { instr: 'REF _Ref1 \\h' } },
 			{ text: '', fieldChar: 'end' },
 			{ text: ' above.' },
 		]);
@@ -44,12 +44,12 @@ describe('editable fields', () => {
 		const next = { ...loaded.model, blocks: [{ ...paragraph, runs }] };
 		const xml = await documentXml(await loaded.save(next));
 		expect(xml).toMatch(
-			/Compare <\/w:t><\/w:r><w:r><w:rPr><w:b\/><\/w:rPr><w:fldChar w:fldCharType="begin"\/><\/w:r><w:r><w:instrText xml:space="preserve"> REF _Ref1 \h <\/w:instrText><\/w:r><w:r><w:fldChar w:fldCharType="separate"\/><\/w:r><w:r><w:t>Figure 2<\/w:t><\/w:r><w:r><w:fldChar w:fldCharType="end"\/><\/w:r><w:r><w:t xml:space="preserve"> below.<\/w:t>/,
+			/Compare <\/w:t><\/w:r><w:r><w:rPr><w:b\/><\/w:rPr><w:fldChar w:fldCharType="begin"\/><\/w:r><w:r><w:instrText xml:space="preserve"> REF _Ref1 \\h <\/w:instrText><\/w:r><w:r><w:fldChar w:fldCharType="separate"\/><\/w:r><w:r><w:t>Figure 2<\/w:t><\/w:r><w:r><w:fldChar w:fldCharType="end"\/><\/w:r><w:r><w:t xml:space="preserve"> below.<\/w:t>/,
 		);
 		const reloaded = await loadDocx(await loaded.save(next));
 		expect((reloaded.model.blocks[0] as Paragraph).runs[4]).toEqual({
 			text: 'Figure 2',
-			field: { instr: 'REF _Ref1 \h' },
+			field: { instr: 'REF _Ref1 \\h' },
 		});
 	});
 

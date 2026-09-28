@@ -1,7 +1,6 @@
 import { refreshEditorControls } from './editor-controls';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { history } from 'prosemirror-history';
 import type { DocumentModel } from '@christophervr/docx-core';
 import { createDocument, saveDocx } from '@christophervr/docx-core';
 import { loadDocument } from '@christophervr/docx-document';
@@ -9,7 +8,7 @@ import { createRibbon, setRibbonLocale, type RibbonAction } from './ribbon';
 import { assignMissingParagraphIds, docToModel, modelToDoc } from './model-adapter';
 import styleText from './style.css?inline';
 import chromeStyleText from './chrome.css?inline';
-import { editorKeymap, runRibbonCommand } from './editor-commands';
+import { runRibbonCommand } from './editor-commands';
 import { createSearchPanel, type SearchPanelHandle } from './search-panel';
 import {
 	type CollaborationConfig,
@@ -19,16 +18,13 @@ import {
 import { repairCollaborativeDocumentIds } from './collaboration-identity';
 import { normalizeEditorLocale, type EditorLocale } from './localization';
 import { CollaborationSession } from './collaboration-session';
-import { paragraphStylesPlugin, resetStylePicker } from './paragraph-styles';
+import { resetStylePicker } from './paragraph-styles';
+import { bodyPlugins } from './editor-plugins';
 import { runListAction } from './list-commands';
-import { fieldGuardPlugin } from './field-guard';
-import { sectionBreaksPlugin } from './section-commands';
-import { noteNumberingPlugin } from './note-commands';
-import { keymap } from 'prosemirror-keymap';
 import { createPrintLayoutController, type PrintLayoutController } from './print-layout-view';
 import { moveCursorToBlock } from './print-layout-cursor';
-import { trackChangesPlugin, REMOTE_TRANSACTION_META } from './track-changes-mode';
-import { reviewDisplayPlugin, type ReviewDisplayMode } from './review-display';
+import { REMOTE_TRANSACTION_META } from './track-changes-mode';
+import type { ReviewDisplayMode } from './review-display';
 import { ReviewController } from './review-controller';
 import { ImageMediaCache, imageNodeView } from './image-media';
 import { EditorChrome } from './editor-chrome';
@@ -37,7 +33,6 @@ import { PartsController } from './parts-controller';
 import { PageController } from './page-controller';
 import { focusView } from './focus-view';
 import { InsertController } from './insert-controller';
-import { runStylesPlugin } from './run-styles';
 import { countWords } from './word-count';
 
 const HTMLElementBase: typeof HTMLElement =
@@ -356,27 +351,18 @@ ${chromeStyleText}`;
 			this.detachedState ??
 			EditorState.create({
 				doc: modelToDoc(this.model),
-				plugins: [
-					history(),
-					...this.inserts.plugins(),
-					noteNumberingPlugin(),
-					sectionBreaksPlugin(),
-					fieldGuardPlugin(),
-					keymap({
-						'Mod-Alt-f': () => (this.parts.insertNote('footnote', this.canvas, this.paper), true),
-						'Mod-Alt-d': () => (this.parts.insertNote('endnote', this.canvas, this.paper), true),
-					}),
-					runStylesPlugin(() => this.model),
-					paragraphStylesPlugin(() => this.model),
-					trackChangesPlugin(
-						() => this._reviewAuthor,
-						() => Boolean(this.model.trackChanges),
-					),
-					reviewDisplayPlugin(() => this.reviewDisplayMode),
-					editorKeymap(() => this.showSearch()),
-					...(this.collab.client ? [this.collab.client.plugin] : []),
-					...(this.collab.presence ? [this.collab.presence.client.plugin] : []),
-				],
+				plugins: bodyPlugins({
+					model: () => this.model,
+					reviewAuthor: () => this._reviewAuthor,
+					reviewDisplayMode: () => this.reviewDisplayMode,
+					insertNote: (kind) => this.parts.insertNote(kind, this.canvas, this.paper),
+					showSearch: () => this.showSearch(),
+					extraPlugins: this.inserts.plugins(),
+					collaborationPlugins: [
+						...(this.collab.client ? [this.collab.client.plugin] : []),
+						...(this.collab.presence ? [this.collab.presence.client.plugin] : []),
+					],
+				}),
 			});
 		this.view = new EditorView(this.paper, {
 			state,

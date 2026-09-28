@@ -3,11 +3,8 @@ import type { Block, DocumentModel, Paragraph, SectionProperties } from './model
 import { children, first, getW, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
 import { writeParagraphProperties } from './write-paragraph-properties.js';
 import { orderParagraphProperties, writeTabStops } from './tab-stops.js';
-import {
-	commentContinuations,
-	continuationKey,
-	type CommentContinuation,
-} from './comment-spans.js';
+import { commentContinuations, continuationKey } from './comment-spans.js';
+import { newMoveRangeIds, type CommentSpans } from './write-ranges.js';
 import { writeNumberingProperties } from './numbering-write.js';
 import { writeTable as writeTableContent } from './write-table.js';
 import { buildNewTableProperties } from './table-defaults.js';
@@ -136,41 +133,6 @@ function createParagraph(
 ): XmlElement {
 	const node = makeW(doc, 'p');
 	return writeParagraphImpl(doc, paragraph, node, undefined, allocator, spans);
-}
-
-/** Comment range continuations in the blocks being written and in the part as loaded. */
-interface CommentSpans {
-	next: Map<string, CommentContinuation>;
-	original: Map<string, CommentContinuation>;
-	/** Fresh `w:id`s for move ranges created in the editor (their runs carry no range id yet). */
-	rangeIds: Map<string, string>;
-}
-
-/** Numbers new move ranges after the largest `w:id` in the part or among the model's revisions. */
-function newMoveRangeIds(doc: XmlDocument, blocks: Block[]): Map<string, string> {
-	const missing = new Set<string>();
-	let next = 0;
-	const reserve = (id: string | undefined) => {
-		const value = Number(id);
-		if (id && Number.isSafeInteger(value) && value >= next) next = value + 1;
-	};
-	const visit = (paragraph: Paragraph) => {
-		reserve(paragraph.markRevision?.id);
-		for (const run of paragraph.runs) {
-			reserve(run.revision?.id);
-			const move = run.revision?.move;
-			if (move && !move.rangeId) missing.add(`${run.revision!.kind}:${move.name}`);
-		}
-	};
-	for (const block of blocks)
-		if (block.type === 'paragraph') visit(block);
-		else for (const row of block.rows) for (const cell of row) cell.paragraphs.forEach(visit);
-	const ids = new Map<string, string>();
-	if (!missing.size) return ids;
-	for (const element of Array.from(doc.getElementsByTagNameNS(WORD_NS, '*')))
-		reserve(getW(element, 'id'));
-	for (const key of missing) ids.set(key, String(next++));
-	return ids;
 }
 
 function createTable(
