@@ -2,7 +2,7 @@ import { PageCursor } from './page-cursor.js';
 import { placeParagraph } from './flow-paragraph.js';
 import { placeTable } from './flow-table.js';
 import { layoutParagraph, type ParagraphLayoutResult } from './paragraph-layout.js';
-import { layoutRow } from './table-layout.js';
+import { layoutRow, stackParagraphs } from './table-layout.js';
 import { suppressesSpacing } from './keep-rules.js';
 import type { TextMeasurer } from './measure.js';
 import type { LayoutBlock, LayoutDocumentInput, LayoutSection } from './input.js';
@@ -132,6 +132,19 @@ class SectionFlow {
 			}
 			const spacingBeforePx = this.spacingBeforeFor(index);
 			const layout = this.wrappedLayout(index, spacingBeforePx) ?? this.paragraphLayout(index);
+			if (block.footnotes?.length)
+				this.cursor.holdFootnotes(
+					block.id,
+					block.footnotes.map((note) => {
+						const stacked = stackParagraphs(
+							note.paragraphs,
+							this.cursor.columnWidthPx,
+							this.measurer,
+							this.note,
+						);
+						return { id: note.id, yPx: 0, heightPx: stacked.heightPx, paragraphs: stacked.boxes };
+					}),
+				);
 			const requiredTogetherPx = block.keepNext
 				? this.requiredKeepHeight(index)
 				: block.keepLines

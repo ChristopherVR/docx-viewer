@@ -78,8 +78,11 @@ Still missing:
   and character styles and theme fonts. It uses metric-compatible substitutes (Carlito, Caladea,
   Arimo, Tinos, Cousine) when Word's fonts are missing, and re-paginates once web fonts load. Single
   line height comes from the font's ascent and descent. Kerning, per-script fonts (East Asian and
-  complex-script faces), footnote placement and comparisons against Word-rendered references are
-  still missing.
+  complex-script faces) and comparisons against Word-rendered references are still missing.
+- Print Layout places footnotes at the bottom of the page where their reference lands (reserving
+  the space, under Word's separator rule) and endnotes after the last paragraph; note references
+  and marks print as superscript numbers. Footnotes that do not fit are not continued onto the
+  next page, and multi-column pages put notes below the whole page, not under each column.
 - New documents carry Word's modern defaults (Calibri 11pt, 8pt after, 1.08 lines; Normal,
   Heading 1–3, Title, TOC 1–3 and Hyperlink styles) and save them in `styles.xml`, so they open in
   Word as edited. The editing surface and Print Layout apply the same spacing and line heights.

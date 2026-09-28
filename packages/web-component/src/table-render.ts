@@ -81,7 +81,11 @@ export function tableCellStyle(attrs: Record<string, unknown>): string {
 	const borders = parseBordersJson(attrs.borders);
 	// Word aligns cell content to the top unless `w:vAlign` says otherwise.
 	const verticalAlign =
-		attrs.verticalAlign === 'center' ? 'middle' : attrs.verticalAlign === 'bottom' ? 'bottom' : 'top';
+		attrs.verticalAlign === 'center'
+			? 'middle'
+			: attrs.verticalAlign === 'bottom'
+				? 'bottom'
+				: 'top';
 	const declarations = [
 		cellPadding(attrs.margins),
 		`vertical-align:${verticalAlign}`,

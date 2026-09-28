@@ -656,3 +656,25 @@ a.dve-link[data-anchor^='_Toc'] {
 .dve-tab-leader-heavy {
 	border-bottom-width: 2px;
 }
+
+/* Footnotes above the bottom margin; the separator is Word's 2-inch rule. */
+.dve-print-footnotes {
+	position: absolute;
+	z-index: 1;
+}
+.dve-print-footnote-separator {
+	position: absolute;
+	top: -7px;
+	left: 0;
+	width: 192px;
+	border-top: 1px solid currentColor;
+}
+.dve-print-footnote {
+	position: absolute;
+	left: 0;
+	width: 100%;
+}
+
+[data-print-view] .dve-notes-container {
+	display: none;
+}

@@ -17,10 +17,13 @@ export interface ParagraphLayoutResult {
 	columnBreakAfterLine: Set<number>;
 }
 
+/** Word draws superscript and subscript text at about two thirds of the run's size. */
+const SCRIPT_SCALE = 0.65;
+
 function fontOf(run: LayoutRun): LayoutFontSpec {
 	return {
 		family: run.fontFamily || DEFAULT_FONT_FAMILY,
-		sizePx: ptToPx(run.fontSizePt ?? DEFAULT_FONT_SIZE_PT),
+		sizePx: ptToPx(run.fontSizePt ?? DEFAULT_FONT_SIZE_PT) * (run.script ? SCRIPT_SCALE : 1),
 		bold: run.bold,
 		italic: run.italic,
 	};
@@ -212,6 +215,7 @@ export function layoutParagraph(
 				fontFamily: run?.fontFamily,
 				fontSizePt: run?.fontSizePt,
 				...(leader ? { leader } : {}),
+				...(run?.script ? { script: run.script } : {}),
 				...(run?.color ? { color: run.color } : {}),
 				...(run?.underline ? { underline: true } : {}),
 				...(run?.strike ? { strike: true } : {}),

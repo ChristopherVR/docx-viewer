@@ -158,6 +158,8 @@ export class PageController {
 		printLayout?.setActive(mode === 'print');
 		const paper = this.host.paper();
 		if (paper) paper.hidden = mode === 'print';
+		// Print Layout shows notes on their pages; the notes editing panel belongs to the editing view.
+		paper?.parentElement?.toggleAttribute('data-print-view', mode === 'print');
 		const toolbar = this.host.toolbar();
 		const select = toolbar && findLocalizedControl<HTMLSelectElement>(toolbar, 'Layout view');
 		if (select) select.value = mode;

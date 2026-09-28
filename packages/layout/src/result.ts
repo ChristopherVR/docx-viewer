@@ -13,6 +13,7 @@ export interface LayoutFragment {
 	color?: string;
 	underline?: boolean;
 	strike?: boolean;
+	script?: 'super' | 'sub';
 	/** A tab's leader fill (dots, hyphens, a line…) drawn across its width. */
 	leader?: 'dot' | 'hyphen' | 'underscore' | 'heavy' | 'middleDot';
 }
@@ -93,6 +94,16 @@ export interface LayoutPageBox {
 	columns: LayoutColumnBox[];
 	/** Floating pictures on this page, in page coordinates (CSS pixels from the sheet's top-left). */
 	floats?: LayoutFloatBox[];
+	/** Footnotes at the bottom of the page, in reference order; `yPx` values are within the area. */
+	footnotes?: LayoutFootnoteBox[];
+}
+
+export interface LayoutFootnoteBox {
+	id: string;
+	/** Top of this note within the footnote area (below the separator). */
+	yPx: number;
+	heightPx: number;
+	paragraphs: LayoutParagraphBox[];
 }
 
 export interface LayoutFloatBox {

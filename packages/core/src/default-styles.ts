@@ -22,6 +22,12 @@ const heading = (
 const toc = (level: number) =>
 	`<w:style w:type="paragraph" w:styleId="TOC${level}"><w:name w:val="toc ${level}"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:uiPriority w:val="39"/><w:unhideWhenUsed/><w:pPr><w:spacing w:after="100"/>${level > 1 ? `<w:ind w:left="${(level - 1) * 220}"/>` : ''}</w:pPr></w:style>`;
 
+/** Word's note text (10pt, single-spaced, no gap after) and superscript reference styles. */
+const noteStyles = (id: string, name: string) =>
+	`<w:style w:type="paragraph" w:styleId="${id}Text"><w:name w:val="${name} text"/><w:basedOn w:val="Normal"/><w:link w:val="${id}TextChar"/><w:uiPriority w:val="99"/><w:semiHidden/><w:unhideWhenUsed/><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:style>` +
+	`<w:style w:type="character" w:styleId="${id}TextChar"><w:name w:val="${name} Text Char"/><w:basedOn w:val="DefaultParagraphFont"/><w:link w:val="${id}Text"/><w:uiPriority w:val="99"/><w:semiHidden/><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:style>` +
+	`<w:style w:type="character" w:styleId="${id}Reference"><w:name w:val="${name} reference"/><w:basedOn w:val="DefaultParagraphFont"/><w:uiPriority w:val="99"/><w:semiHidden/><w:unhideWhenUsed/><w:rPr><w:vertAlign w:val="superscript"/></w:rPr></w:style>`;
+
 /** `word/styles.xml` for new documents: Word 2013+ docDefaults and its common built-in styles. */
 export const DEFAULT_STYLES_XML =
 	`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="${W}">` +
@@ -38,6 +44,8 @@ export const DEFAULT_STYLES_XML =
 	toc(1) +
 	toc(2) +
 	toc(3) +
+	noteStyles('Footnote', 'footnote') +
+	noteStyles('Endnote', 'endnote') +
 	'<w:style w:type="character" w:styleId="Hyperlink"><w:name w:val="Hyperlink"/><w:basedOn w:val="DefaultParagraphFont"/><w:uiPriority w:val="99"/><w:unhideWhenUsed/><w:rPr><w:color w:val="0563C1"/><w:u w:val="single"/></w:rPr></w:style>' +
 	'</w:styles>';
 

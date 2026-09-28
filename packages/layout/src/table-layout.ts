@@ -9,7 +9,8 @@ export interface RowLayout {
 	geometry: LayoutCellGeometry[];
 }
 
-function layoutCellParagraphs(
+/** Lays out paragraphs stacked top to bottom (a table cell's or a footnote's content). */
+export function stackParagraphs(
 	paragraphs: LayoutParagraph[],
 	widthPx: number,
 	measurer: TextMeasurer,
@@ -51,7 +52,7 @@ export function layoutRow(
 	const laidOut = row.cells.map((cell) => {
 		const widthPx = cell.widthPx ?? tableWidthPx / count;
 		const padding = cell.padding ?? { top: 0, right: 0, bottom: 0, left: 0 };
-		const content = layoutCellParagraphs(
+		const content = stackParagraphs(
 			cell.paragraphs,
 			Math.max(1, widthPx - padding.left - padding.right),
 			measurer,

@@ -81,7 +81,9 @@ function styleFragment(el: HTMLSpanElement, fragment: LayoutLine['fragments'][nu
 	if (fragment.italic) el.style.fontStyle = 'italic';
 	// The same metric-compatible stack the measurer used, so rendered text matches its line breaks.
 	el.style.fontFamily = cssFontStack(fragment.fontFamily);
-	el.style.fontSize = `${fragment.fontSizePt ?? DEFAULT_FONT_SIZE_PT}pt`;
+	// Superscripts sit at the top of the line already; subscripts drop toward the baseline.
+	el.style.fontSize = `${(fragment.fontSizePt ?? DEFAULT_FONT_SIZE_PT) * (fragment.script ? 0.65 : 1)}pt`;
+	if (fragment.script === 'sub') el.style.top = '0.6em';
 	if (fragment.color) el.style.color = fragment.color;
 	const lines = [fragment.underline && 'underline', fragment.strike && 'line-through'].filter(
 		Boolean,
@@ -145,6 +147,39 @@ function renderBlock(
 	);
 }
 
+/** The page's footnotes above its bottom margin, under Word's short separator rule. */
+function footnoteArea(
+	page: LayoutResult['pages'][number],
+	hitboxes: LineHitBox[],
+	pictureUrl: PictureUrl | undefined,
+): HTMLElement {
+	const notes = page.footnotes ?? [];
+	const heightPx = notes.reduce((sum, note) => sum + note.heightPx, 0);
+	const widthPx = page.widthPx - page.marginLeftPx - page.marginRightPx;
+	const area = document.createElement('div');
+	area.className = 'dve-print-footnotes';
+	area.setAttribute('aria-label', 'Footnotes');
+	Object.assign(area.style, {
+		left: `${page.marginLeftPx}px`,
+		width: `${widthPx}px`,
+		top: `${page.heightPx - page.marginBottomPx - heightPx}px`,
+		height: `${heightPx}px`,
+	});
+	const separator = document.createElement('div');
+	separator.className = 'dve-print-footnote-separator';
+	area.append(separator);
+	for (const note of notes) {
+		const noteEl = document.createElement('div');
+		noteEl.className = 'dve-print-footnote';
+		noteEl.dataset.noteId = note.id;
+		Object.assign(noteEl.style, { top: `${note.yPx}px`, height: `${note.heightPx}px` });
+		for (const paragraph of note.paragraphs)
+			noteEl.append(renderBlock(paragraph, hitboxes, pictureUrl, widthPx));
+		area.append(noteEl);
+	}
+	return area;
+}
+
 /** Pure, framework-neutral renderer: turns a `LayoutResult` into a DOM tree of page sheets. */
 export function renderPrintLayout(
 	result: LayoutResult,
@@ -170,6 +205,7 @@ export function renderPrintLayout(
 				columnEl.append(renderBlock(block, hitboxes, pictureUrl, column.widthPx));
 			sheet.append(columnEl);
 		}
+		if (page.footnotes?.length) sheet.append(footnoteArea(page, hitboxes, pictureUrl));
 		for (const float of page.floats ?? []) {
 			const picture = pictureElement(float, pictureUrl);
 			picture.classList.add('dve-print-float');

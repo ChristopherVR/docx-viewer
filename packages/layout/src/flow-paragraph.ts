@@ -61,7 +61,8 @@ export function placeParagraph(
 			// starts it at the top of a new column or page.
 			const gap = i === lineCursor && !firstSegment ? 0 : (layout.lines[i].gapBeforePx ?? 0);
 			const height = layout.lines[i].heightPx + gap;
-			if (cumulative + height > budget && end > lineCursor) break;
+			// A line that does not fit waits for the next column, unless the column is empty.
+			if (cumulative + height > budget && (end > lineCursor || !cursor.atColumnTop)) break;
 			cumulative += height;
 			end = i + 1;
 			if (layout.pageBreakAfterLine.has(i)) {

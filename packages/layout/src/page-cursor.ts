@@ -1,5 +1,13 @@
 import type { LayoutColumns, LayoutPageGeometry } from './input.js';
-import type { LayoutBlockBox, LayoutColumnBox, LayoutPageBox } from './result.js';
+import type {
+	LayoutBlockBox,
+	LayoutColumnBox,
+	LayoutFootnoteBox,
+	LayoutPageBox,
+} from './result.js';
+
+/** Space for the short rule above a page's footnotes. */
+export const FOOTNOTE_SEPARATOR_PX = 12;
 
 /**
  * Mutable fill-position bookkeeping for one section: which page/column is
@@ -17,6 +25,10 @@ export class PageCursor {
 	private yPx = 0;
 	private readonly sectionIndex: number;
 	private pageInSection = 0;
+	/** Height taken by footnotes (and their separator) at the bottom of the current page. */
+	private reservedPx = 0;
+	/** Footnotes of the paragraph about to be placed; they join the page its first box lands on. */
+	private pending?: { blockId: string; notes: LayoutFootnoteBox[]; heightPx: number };
 
 	constructor(
 		pages: LayoutPageBox[],
@@ -62,6 +74,7 @@ export class PageCursor {
 		});
 		this.columnIndex = 0;
 		this.yPx = 0;
+		this.reservedPx = 0;
 	}
 
 	get page(): LayoutPageBox {
@@ -77,7 +90,21 @@ export class PageCursor {
 		return this.yPx === 0;
 	}
 	remainingHeightPx(): number {
-		return this.columnHeightPx - this.yPx;
+		return this.columnHeightPx - this.yPx - this.reservedPx - this.pendingHeightPx();
+	}
+
+	private pendingHeightPx(): number {
+		if (!this.pending) return 0;
+		return this.pending.heightPx + (this.page.footnotes?.length ? 0 : FOOTNOTE_SEPARATOR_PX);
+	}
+
+	/**
+	 * Reserves room for a paragraph's footnotes on whichever page its first box is placed, so the
+	 * notes print on the same page as their reference, as Word does.
+	 */
+	holdFootnotes(blockId: string, notes: LayoutFootnoteBox[]): void {
+		const heightPx = notes.reduce((sum, note) => sum + note.heightPx, 0);
+		this.pending = notes.length ? { blockId, notes, heightPx } : undefined;
 	}
 
 	newPage(): void {
@@ -98,5 +125,15 @@ export class PageCursor {
 		box.yPx = this.yPx;
 		this.column.blocks.push(box);
 		this.yPx += advancePx;
+		if (this.pending && this.pending.blockId === box.blockId) {
+			this.reservedPx += this.pendingHeightPx();
+			const page = this.page;
+			let top = page.footnotes?.reduce((sum, note) => sum + note.heightPx, 0) ?? 0;
+			for (const note of this.pending.notes) {
+				(page.footnotes ??= []).push({ ...note, yPx: top });
+				top += note.heightPx;
+			}
+			this.pending = undefined;
+		}
 	}
 }

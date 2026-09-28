@@ -20,6 +20,8 @@ export interface LayoutRun {
 	object?: LayoutObject;
 	/** Generated text (a list label) that is not part of the paragraph's own characters. */
 	synthetic?: boolean;
+	/** Superscript or subscript: drawn smaller and raised or lowered (note marks are superscript). */
+	script?: 'super' | 'sub';
 	/** `#rrggbb`, display only. */
 	color?: string;
 	underline?: boolean;
@@ -53,6 +55,12 @@ export interface LayoutTabStop {
 	posPx: number;
 	align: 'left' | 'center' | 'right' | 'decimal' | 'bar' | 'clear' | 'start' | 'end' | 'num';
 	leader?: 'none' | 'dot' | 'hyphen' | 'underscore' | 'heavy' | 'middleDot';
+}
+
+/** A footnote's content, laid out in the page's footnote area. */
+export interface LayoutNote {
+	id: string;
+	paragraphs: LayoutParagraph[];
 }
 
 export type ParagraphAlign = 'left' | 'center' | 'right' | 'justify';
@@ -89,6 +97,8 @@ export interface LayoutParagraph {
 	floats?: LayoutFloat[];
 	/** Custom tab stops (`w:tabs`). */
 	tabStops?: LayoutTabStop[];
+	/** Footnotes referenced here; they go at the bottom of the page where the paragraph starts. */
+	footnotes?: LayoutNote[];
 }
 
 /** A resolved cell border, ready to draw. */

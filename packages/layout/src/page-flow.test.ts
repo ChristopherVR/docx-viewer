@@ -219,3 +219,15 @@ describe('layoutSections: odd/even section breaks and vertical alignment', () =>
 		expect(layout('bottom')).toBe(80);
 	});
 });
+
+describe('layoutSections: page bottom', () => {
+	it('moves a line that does not fit to the next page instead of overflowing the margin', () => {
+		// The 100px page holds five 20px lines; the five-line filler leaves no room.
+		const input: LayoutDocumentInput = {
+			sections: [{ page: geometry(200, 100), blocks: [para('filler', 5), para('next', 1)] }],
+		};
+		const result = layoutSections(input, measurer);
+		expect(result.pages).toHaveLength(2);
+		expect(result.pages[1].columns[0].blocks[0].blockId).toBe('next');
+	});
+});

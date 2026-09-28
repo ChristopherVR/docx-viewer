@@ -219,3 +219,32 @@ describe('Print Layout tables', () => {
 		expect([content.style.left, content.style.top]).toEqual(['7px', '40px']);
 	});
 });
+
+describe('Print Layout footnotes', () => {
+	it('draws the footnote area above the bottom margin with a separator rule', () => {
+		const result = sampleResult();
+		const line = {
+			yPx: 0,
+			heightPx: 20,
+			sourceStart: 0,
+			sourceEnd: 1,
+			fragments: [{ text: '1', xPx: 0, widthPx: 6, runIndex: 0, script: 'super' as const }],
+		};
+		result.pages[0].footnotes = [
+			{
+				id: '1',
+				yPx: 0,
+				heightPx: 20,
+				paragraphs: [{ kind: 'paragraph', blockId: 'n1', yPx: 0, heightPx: 20, lines: [line] }],
+			},
+		];
+		const { element } = renderPrintLayout(result);
+		const area = element.querySelector<HTMLElement>('.dve-print-footnotes')!;
+		// 200px page − 10px bottom margin − 20px of notes.
+		expect([area.style.top, area.style.left]).toEqual(['170px', '10px']);
+		expect(area.querySelector('.dve-print-footnote-separator')).not.toBeNull();
+		const mark = area.querySelector<HTMLElement>('.dve-print-line span')!;
+		expect(mark.textContent).toBe('1');
+		expect(mark.style.fontSize).toBe('7.15pt');
+	});
+});

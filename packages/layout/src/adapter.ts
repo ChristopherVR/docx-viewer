@@ -17,6 +17,7 @@ import {
 	resolveThemeColorReference,
 } from '@christophervr/docx-core';
 import { adaptTable } from './adapt-table.js';
+import { endnoteParagraphs, noteLabels, paragraphFootnotes } from './adapt-notes.js';
 import type {
 	LayoutBlock,
 	LayoutDocumentInput,
@@ -109,14 +110,32 @@ export function adaptDocumentModel(
 				: undefined);
 		return { formatting, family, color };
 	}
-	function adaptRun(run: TextRun, paragraphStyleId: string | undefined): LayoutRun {
+	const noteLabel = noteLabels(model);
+	function adaptRun(
+		run: TextRun,
+		paragraphStyleId: string | undefined,
+		markLabel?: string,
+	): LayoutRun {
 		const { formatting, family, color } = effective(run, paragraphStyleId);
 		// DATE and TIME update when Word paginates for display or printing.
 		const name = run.field ? fieldName(run.field.instr) : '';
+		// Note references and a note's own number mark show the note's number, raised.
+		const noteText = run.noteReference
+			? noteLabel(run.noteReference.kind, run.noteReference.id)
+			: run.noteMark
+				? (markLabel ?? '')
+				: undefined;
 		const text =
-			run.field && (name === 'DATE' || name === 'TIME')
+			noteText ??
+			(run.field && (name === 'DATE' || name === 'TIME')
 				? dateFieldResult(name, run.field.instr, now)
-				: run.text;
+				: run.text);
+		const script =
+			noteText !== undefined || formatting.verticalAlign === 'superscript'
+				? 'super'
+				: formatting.verticalAlign === 'subscript'
+					? 'sub'
+					: undefined;
 		const image = run.image;
 		const object =
 			image && !image.anchored
@@ -139,6 +158,7 @@ export function adaptDocumentModel(
 			...(formatting.underline ? { underline: true } : {}),
 			...(formatting.strike || formatting.doubleStrike ? { strike: true } : {}),
 			...(run.break ? { breakAfter: run.break } : {}),
+			...(script ? { script } : {}),
 		};
 	}
 	const labels = computeListLabels(model);
@@ -156,18 +176,20 @@ export function adaptDocumentModel(
 			...(first.color ? { color: first.color } : {}),
 		};
 	}
-	function adaptParagraph(paragraph: Paragraph): LayoutParagraph {
+	function adaptParagraph(paragraph: Paragraph, markLabel?: string): LayoutParagraph {
 		const resolved = catalog ? resolveParagraphFormatting(paragraph, catalog) : paragraph;
 		reportOnce(KEEP_TOGETHER_NOTE);
 		const label = labels.get(paragraph.id);
 		// Numbering level indents apply unless the paragraph or its style sets its own.
 		const ownFirstLine =
 			resolved.firstLineTwips !== undefined || resolved.hangingTwips !== undefined;
-		const runs = paragraph.runs.map((run) => adaptRun(run, paragraph.style));
+		const runs = paragraph.runs.map((run) => adaptRun(run, paragraph.style, markLabel));
+		const footnotes = paragraphFootnotes(paragraph, model, noteLabel, adaptParagraph);
 		return {
 			kind: 'paragraph',
 			id: paragraph.id,
 			runs: label ? [labelRun(paragraph, label), ...runs] : runs,
+			...(footnotes.length ? { footnotes } : {}),
 			...(paragraph.tabStops?.length
 				? {
 						tabStops: paragraph.tabStops.map((stop) => ({
@@ -201,7 +223,10 @@ export function adaptDocumentModel(
 		return adaptTable(block, model, adaptParagraph);
 	}
 
-	const blocks = model.blocks.map(adaptBlock);
+	const blocks = [
+		...model.blocks.map(adaptBlock),
+		...endnoteParagraphs(model, noteLabel, adaptParagraph),
+	];
 	const sections = model.sections;
 	if (!sections || !sections.length) {
 		return {
