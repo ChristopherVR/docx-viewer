@@ -310,6 +310,9 @@ export function applyModel(
 	}
 	for (const side of ['Top', 'Right', 'Bottom', 'Left'] as const)
 		setAttribute(margins, side.toLowerCase(), twips(model.page[`margin${side}`]));
+	// CT_PageMar requires header, footer and gutter; keep a source's values, else Word's defaults.
+	for (const [name, fallback] of [['header', '720'], ['footer', '720'], ['gutter', '0']] as const)
+		if (!margins.getAttributeNS(WORD_NS, name)) setAttribute(margins, name, fallback);
 	if (model.sections) applySectionEdits(doc, body, model.blocks, model.sections, baseSections);
 	return { newRelationships: allocator.newRelationships };
 }
