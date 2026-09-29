@@ -8,6 +8,7 @@ import {
 	fileNameLabel,
 	saveStateLabel,
 	setReadOnly,
+	insertTableOfSize,
 } from './helpers';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
@@ -124,8 +125,7 @@ test('ribbon edits preserve font properties and save table and page settings', a
 	await surface.click();
 	await page.keyboard.press('Control+End');
 	await page.keyboard.press('Enter');
-	await editor.getByRole('tab', { name: 'Insert', exact: true }).click();
-	await editor.getByRole('button', { name: 'Insert table', exact: true }).click();
+	await insertTableOfSize(page);
 	await expect(surface.locator('table')).toHaveCount(1);
 	await setReadOnly(page, true);
 	await editor.getByRole('tab', { name: 'View', exact: true }).click();

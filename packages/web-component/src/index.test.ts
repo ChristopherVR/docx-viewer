@@ -160,6 +160,7 @@ describe('DocxEditorElement', () => {
 			],
 		});
 		root.querySelector<HTMLButtonElement>('[aria-label="Insert table"]')!.click();
+		root.querySelector<HTMLElement>('.table-picker [data-rows="2"][data-columns="2"]')!.click();
 		const ids: string[] = [];
 		for (const block of editor.documentModel.blocks) {
 			if (block.type === 'paragraph') ids.push(block.id);

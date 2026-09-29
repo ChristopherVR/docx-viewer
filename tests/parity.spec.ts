@@ -6,6 +6,7 @@ import {
 	saveButton,
 	fileNameLabel,
 	setReadOnly,
+	insertTableOfSize,
 } from './helpers';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
@@ -63,8 +64,7 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		await surface.click();
 		// Table tools are contextual: no Table tab until the caret is in a table.
 		await expect(editor.getByRole('tab', { name: 'Table', exact: true })).toHaveCount(0);
-		await editor.getByRole('tab', { name: 'Insert', exact: true }).click();
-		await editor.getByRole('button', { name: 'Insert table', exact: true }).click();
+		await insertTableOfSize(page);
 		const table = surface.locator('table');
 		await expect(table.locator('tr')).toHaveCount(2);
 		await expect(table.locator('tr').first().locator('td')).toHaveCount(2);

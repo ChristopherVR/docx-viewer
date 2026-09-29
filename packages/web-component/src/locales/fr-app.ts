@@ -20,6 +20,7 @@ export const frApp: AppStrings = {
 	Open: 'Ouvrir',
 	'Save a copy as DOCX': 'Enregistrer une copie en DOCX',
 	'Blank document': 'Document vierge',
+	'table.size': 'Tableau {columns} × {rows}',
 	'Inspect document': 'Inspecter le document',
 	'Manage document': 'Gérer le document',
 	Properties: 'Propriétés',

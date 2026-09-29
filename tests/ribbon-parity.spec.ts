@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
-import { newDocument, saveButton } from './helpers';
+import { insertTableOfSize, newDocument, saveButton } from './helpers';
 
 test.describe('Word-style ribbon', () => {
 	test.beforeEach(async ({ page }) => {
@@ -180,8 +180,7 @@ test.describe('Word-style ribbon', () => {
 		const editor = page.locator('docx-editor');
 		await editor.locator('.ProseMirror').first().click();
 		await expect(editor.locator('#dve-tab-table')).toBeHidden();
-		await editor.locator('#dve-tab-insert').click();
-		await editor.getByRole('button', { name: 'Insert table', exact: true }).click();
+		await insertTableOfSize(page);
 		await editor.locator('.ProseMirror td').first().click();
 		await expect(editor.locator('#dve-tab-table')).toBeVisible();
 		await editor.locator('.ProseMirror').first().locator('p').first().click();
@@ -295,5 +294,26 @@ test.describe('Word-style ribbon', () => {
 		// The caret is now at the start of the heading, so typing lands there.
 		await page.keyboard.type('X');
 		await expect(surface.locator('p').first()).toHaveText('XChapter one');
+	});
+
+	test('Insert > Bookmark and Cover page reach the saved DOCX', async ({ page }) => {
+		const editor = page.locator('docx-editor');
+		const surface = editor.locator('.ProseMirror').first();
+		await surface.click();
+		await page.keyboard.type('Body paragraph');
+		await editor.locator('#dve-tab-insert').click();
+		await editor.getByRole('button', { name: 'Bookmark', exact: true }).click();
+		await editor.getByLabel('Bookmark name', { exact: true }).fill('KeyPoint');
+		await editor.locator('.dve-bookmark-dialog').getByRole('button', { name: 'Add' }).click();
+		await expect(editor.locator('.dve-bookmark-dialog')).toBeHidden();
+		await editor.getByRole('button', { name: 'Cover page', exact: true }).click();
+		await expect(surface.locator('p').nth(1)).toHaveText('Document title');
+		const pending = page.waitForEvent('download');
+		await saveButton(page).click();
+		const zip = await JSZip.loadAsync(await readFile((await (await pending).path())!));
+		const xml = await zip.file('word/document.xml')!.async('string');
+		expect(xml).toContain('w:name="KeyPoint"');
+		expect(xml).toContain('Document title');
+		expect(xml).toContain('<w:pageBreakBefore/>');
 	});
 });

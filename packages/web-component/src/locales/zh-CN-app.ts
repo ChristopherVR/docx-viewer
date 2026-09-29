@@ -26,6 +26,7 @@ export const zhCNApp: AppStrings = {
 	Open: '打开',
 	'Save a copy as DOCX': '另存副本为 DOCX',
 	'Blank document': '空白文档',
+	'table.size': '{columns} × {rows} 表格',
 	'Inspect document': '检查文档',
 	'Manage document': '管理文档',
 	Properties: '属性',

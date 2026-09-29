@@ -61,3 +61,13 @@ export async function setReadOnly(page: Page, readOnly: boolean) {
 		.locator('.dve-mode-select')
 		.selectOption(readOnly ? 'viewing' : 'editing');
 }
+
+/** Insert > Table: opens the size picker and picks `columns` x `rows` from its grid. */
+export async function insertTableOfSize(page: Page, rows = 2, columns = 2) {
+	const editor = page.locator('docx-editor');
+	await editor.locator('#dve-tab-insert').click();
+	await editor.getByRole('button', { name: 'Insert table', exact: true }).click();
+	await editor
+		.locator(`.table-picker [role="gridcell"][data-rows="${rows}"][data-columns="${columns}"]`)
+		.click();
+}

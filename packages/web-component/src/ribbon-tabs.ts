@@ -41,7 +41,7 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 	panels.get('Insert')!.append(
 		group(
 			'Tables',
-			tool('Insert table', 'table', { type: 'table' }, { large: true, caption: 'Table' }),
+			tool('Insert table', 'table', { type: 'tablePicker' }, { large: true, caption: 'Table' }),
 		),
 		group(
 			'Illustrations',
@@ -58,9 +58,14 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				{ large: true, caption: 'Format' },
 			),
 		),
-		group('Links', tool('Insert link', 'link', { type: 'link' }, { large: true, caption: 'Link' })),
+		group(
+			'Links',
+			tool('Insert link', 'link', { type: 'link' }, { large: true, caption: 'Link' }),
+			tool('Bookmark', 'bookmark', { type: 'formatDialog', kind: 'bookmark' }, { large: true }),
+		),
 		group(
 			'Breaks',
+			tool('Cover page', 'coverPage', { type: 'coverPage' }, { large: true }),
 			tool('Blank page', 'blankPage', { type: 'blankPage' }, { large: true }),
 			tool(
 				'Insert page break',

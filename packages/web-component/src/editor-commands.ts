@@ -152,7 +152,11 @@ export function runRibbonCommand(
 	else if (action.type === 'changeCase') changeCase(view, action.value);
 	else if (action.type === 'fontStep') stepFontSize(view, action.direction);
 	else if (action.type === 'clear') clearFormatting(view);
-	else if (action.type === 'table') insertTable(view, nextId);
+	else if (action.type === 'table')
+		insertTable(view, nextId, {
+			...(action.rows === undefined ? {} : { rows: action.rows }),
+			...(action.columns === undefined ? {} : { columns: action.columns }),
+		});
 	else if (action.type === 'insertBreak')
 		insertBreakCommand(action.kind)(view.state, view.dispatch, view);
 	else if (action.type === 'paragraph') updateParagraphs(view, action.key, action.value);

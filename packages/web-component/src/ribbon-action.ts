@@ -11,7 +11,9 @@ export type RibbonAction =
 	| { type: 'history'; key: 'undo' | 'redo' }
 	| { type: 'align'; value: 'left' | 'center' | 'right' | 'justify' }
 	| { type: 'font'; key: 'family' | 'size' | 'color' | 'highlight'; value: string }
-	| { type: 'clear' | 'table' }
+	| { type: 'clear' }
+	| { type: 'table'; rows?: number; columns?: number }
+	| { type: 'tablePicker' }
 	| { type: 'clipboard'; key: 'cut' | 'copy' | 'paste' }
 	| { type: 'fontStep'; direction: 'grow' | 'shrink' }
 	| { type: 'insertBreak'; kind: 'page' | 'column' }
@@ -44,6 +46,7 @@ export type RibbonAction =
 	| { type: 'search'; focus?: 'find' | 'replace' }
 	| { type: 'changeCase'; value: 'sentence' | 'lower' | 'upper' | 'title' | 'toggle' }
 	| { type: 'formatPainter' }
+	| { type: 'coverPage' }
 	| { type: 'sort'; order: 'ascending' | 'descending' }
 	| { type: 'goTo' }
 	| { type: 'selectObjects' }
@@ -54,11 +57,20 @@ export type RibbonAction =
 	| { type: 'shading'; value: string }
 	| {
 			type: 'borders';
-			preset: 'none' | 'bottom' | 'top' | 'left' | 'right' | 'all' | 'outside' | 'insideH';
+			preset:
+				| 'none'
+				| 'bottom'
+				| 'top'
+				| 'left'
+				| 'right'
+				| 'all'
+				| 'outside'
+				| 'insideH'
+				| 'horizontal';
 	  }
 	| { type: 'pageNumber'; position: 'top' | 'bottom'; align: 'left' | 'center' | 'right' }
 	| { type: 'headerFooter'; kind: 'header' | 'footer' }
-	| { type: 'formatDialog'; kind: 'font' | 'paragraph' }
+	| { type: 'formatDialog'; kind: 'font' | 'paragraph' | 'bookmark' }
 	| { type: 'indent'; side: 'left' | 'right'; inches: number }
 	| { type: 'zoomFit'; mode: 'actual' | 'width' | 'page' }
 	| { type: 'wordCount' }

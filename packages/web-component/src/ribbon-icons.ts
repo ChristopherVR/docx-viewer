@@ -105,6 +105,8 @@ const paths = {
 	stylesMoreArrow: 'M6 9l6 6 6-6 M6 5h12',
 	stylesPane: 'M4 4h16v16H4z M14 4v16 M7 8h4 M7 12h4',
 	sort: 'M6 4v16 M3.5 17.5 6 20l2.5-2.5 M13 6h7 M13 12h5 M13 18h3',
+	bookmark: 'M7 3h10v18l-5-4-5 4z',
+	coverPage: 'M6 3h12v18H6z M9 8h6 M9 11h6 M9 17h6',
 	caret: 'M7 10l5 5 5-5',
 } as const;
 

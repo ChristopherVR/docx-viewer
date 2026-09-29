@@ -6,6 +6,8 @@ import { focusView } from './focus-view';
 import { copyOrCut, pasteText } from './context-menu-actions';
 import { translate } from './localization';
 import { emit } from './events';
+import { insertCoverPage } from './cover-page';
+import { openTablePicker } from './table-picker';
 import { openGoToPanel } from './go-to-panel';
 import { selectNextObject } from './go-to';
 import { closeRibbonPopover } from './ribbon-popover';
@@ -45,6 +47,34 @@ export function routeRibbonAction(core: EditorCore, action: RibbonAction): void 
 				? pages.insertPageNumber(action.position, action.align)
 				: pages.insertHeaderFooter(action.kind);
 		if (done) parts.render(shell.canvas, shell.paper);
+	} else if (action.type === 'coverPage' && target) {
+		const title = Object.values(core.model.paragraphStyles?.styles ?? {}).find(
+			(style) => style.id === 'Title' || style.name === 'Title',
+		);
+		insertCoverPage(
+			target,
+			{
+				title: translate(core.locale, 'Document title'),
+				subtitle: translate(core.locale, 'Document subtitle'),
+				author: core.reviewAuthor,
+				date: new Intl.DateTimeFormat(core.locale, { dateStyle: 'long' }).format(new Date()),
+			},
+			title?.id,
+		);
+		focusView(target);
+	} else if (action.type === 'tablePicker' && target) {
+		const anchor = shell.toolbar?.querySelector<HTMLElement>(
+			'[aria-label="Insert table"], [data-localearialabel="Insert table"]',
+		);
+		if (anchor)
+			openTablePicker(
+				anchor,
+				(rows, columns) => {
+					runRibbonCommand(target, { type: 'table', rows, columns }, core.collab.ids);
+					focusView(target);
+				},
+				closeRibbonPopover,
+			);
 	} else if (action.type === 'goTo' && target) {
 		const anchor = shell.toolbar?.querySelector<HTMLElement>(
 			'[aria-label="Find options"], [data-localearialabel="Find options"]',

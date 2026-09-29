@@ -14,6 +14,22 @@ export const deRibbon: RibbonStrings = {
 	Styles: 'Formatvorlagen',
 	Clipboard: 'Zwischenablage',
 	Table: 'Tabelle',
+	'Horizontal line': 'Horizontale Linie',
+	'Cover page': 'Deckblatt',
+	'Document title': 'Dokumenttitel',
+	'Document subtitle': 'Dokumentuntertitel',
+	'Bookmark name': 'Name der Textmarke',
+	Bookmarks: 'Textmarken',
+	Add: 'Hinzufügen',
+	'Type a name for the bookmark.': 'Geben Sie einen Namen für die Textmarke ein.',
+	'A bookmark name must begin with a letter.':
+		'Ein Textmarkenname muss mit einem Buchstaben beginnen.',
+	'A bookmark name can contain only letters, numbers and underscores.':
+		'Ein Textmarkenname darf nur Buchstaben, Ziffern und Unterstriche enthalten.',
+	'A bookmark name can be up to 40 characters.':
+		'Ein Textmarkenname darf höchstens 40 Zeichen lang sein.',
+	'Table size': 'Tabellengröße',
+	Rows: 'Zeilen',
 	Sort: 'Sortieren',
 	'Sort A to Z': 'Von A bis Z sortieren',
 	'Sort Z to A': 'Von Z bis A sortieren',

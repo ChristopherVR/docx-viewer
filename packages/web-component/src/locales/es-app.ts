@@ -26,6 +26,7 @@ export const esApp: AppStrings = {
 	Open: 'Abrir',
 	'Save a copy as DOCX': 'Guardar una copia como DOCX',
 	'Blank document': 'Documento en blanco',
+	'table.size': 'Tabla de {columns} × {rows}',
 	'Inspect document': 'Inspeccionar documento',
 	'Manage document': 'Administrar documento',
 	Properties: 'Propiedades',

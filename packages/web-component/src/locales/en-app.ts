@@ -19,6 +19,7 @@ export const enApp = {
 	Open: 'Open',
 	'Save a copy as DOCX': 'Save a copy as DOCX',
 	'Blank document': 'Blank document',
+	'table.size': '{columns} × {rows} Table',
 	'Inspect document': 'Inspect document',
 	'Manage document': 'Manage document',
 	Properties: 'Properties',

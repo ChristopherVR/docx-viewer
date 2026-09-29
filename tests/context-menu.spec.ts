@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { newDocument, openSample, setReadOnly } from './helpers';
+import { newDocument, openSample, setReadOnly, insertTableOfSize } from './helpers';
 
 const editor = (page: Page) => page.locator('docx-editor');
 const surface = (page: Page) => editor(page).locator('.ProseMirror');
@@ -14,8 +14,7 @@ async function startTyping(page: Page, text = 'Context text') {
 }
 
 async function insertTable(page: Page) {
-	await editor(page).getByRole('tab', { name: 'Insert', exact: true }).click();
-	await editor(page).getByRole('button', { name: 'Insert table', exact: true }).click();
+	await insertTableOfSize(page);
 	await expect(surface(page).locator('table')).toHaveCount(1);
 }
 

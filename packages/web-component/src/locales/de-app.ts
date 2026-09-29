@@ -26,6 +26,7 @@ export const deApp: AppStrings = {
 	Open: 'Öffnen',
 	'Save a copy as DOCX': 'Kopie als DOCX speichern',
 	'Blank document': 'Leeres Dokument',
+	'table.size': 'Tabelle {columns} × {rows}',
 	'Inspect document': 'Dokument prüfen',
 	'Manage document': 'Dokument verwalten',
 	Properties: 'Eigenschaften',

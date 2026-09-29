@@ -2,9 +2,10 @@ import type { DocumentModel } from '@christophervr/docx-core';
 import type { EditorView } from 'prosemirror-view';
 import { createFontDialog, type FormatDialog } from './font-dialog';
 import type { EditorLocale } from './localization';
+import { createBookmarkDialog } from './bookmark-dialog';
 import { createParagraphDialog } from './paragraph-dialog';
 
-export type FormatDialogKind = 'font' | 'paragraph';
+export type FormatDialogKind = 'font' | 'paragraph' | 'bookmark';
 
 export interface FormatDialogsHost {
 	view(): EditorView | undefined;
@@ -22,6 +23,7 @@ export class FormatDialogs {
 				() => host.view(),
 				() => host.model(),
 			),
+			bookmark: createBookmarkDialog(() => host.view()),
 		};
 	}
 

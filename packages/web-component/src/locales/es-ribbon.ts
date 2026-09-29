@@ -14,6 +14,22 @@ export const esRibbon: RibbonStrings = {
 	Styles: 'Estilos',
 	Clipboard: 'Portapapeles',
 	Table: 'Tabla',
+	'Horizontal line': 'Línea horizontal',
+	'Cover page': 'Portada',
+	'Document title': 'Título del documento',
+	'Document subtitle': 'Subtítulo del documento',
+	'Bookmark name': 'Nombre del marcador',
+	Bookmarks: 'Marcadores',
+	Add: 'Agregar',
+	'Type a name for the bookmark.': 'Escriba un nombre para el marcador.',
+	'A bookmark name must begin with a letter.':
+		'El nombre de un marcador debe empezar por una letra.',
+	'A bookmark name can contain only letters, numbers and underscores.':
+		'El nombre de un marcador solo puede contener letras, números y guiones bajos.',
+	'A bookmark name can be up to 40 characters.':
+		'El nombre de un marcador puede tener hasta 40 caracteres.',
+	'Table size': 'Tamaño de tabla',
+	Rows: 'Filas',
 	Sort: 'Ordenar',
 	'Sort A to Z': 'Ordenar de A a Z',
 	'Sort Z to A': 'Ordenar de Z a A',

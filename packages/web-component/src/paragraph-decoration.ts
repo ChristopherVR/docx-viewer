@@ -1,8 +1,10 @@
 import { closeHistory } from 'prosemirror-history';
-import type { EditorState } from 'prosemirror-state';
+import { TextSelection, type EditorState } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
+import { schema } from './schema';
 
 export type BorderPreset =
+	| 'horizontal'
 	| 'none'
 	| 'bottom'
 	| 'top'
@@ -19,7 +21,7 @@ type Borders = Partial<Record<Side, BorderSide>>;
 /** Word's default border pen: a single 0.5 pt automatic-colour line, 1 pt from the text. */
 const PEN: BorderSide = { style: 'single', sizeEighthPoints: 4, spacePoints: 1 };
 
-const SIDES_OF: Record<Exclude<BorderPreset, 'none'>, Side[]> = {
+const SIDES_OF: Record<Exclude<BorderPreset, 'none' | 'horizontal'>, Side[]> = {
 	bottom: ['bottom'],
 	top: ['top'],
 	left: ['left'],
@@ -61,11 +63,33 @@ export function setShading(view: EditorView, value: string | null): boolean {
 }
 
 /**
+ * Borders > Horizontal Line: a new empty paragraph with a bottom border after the current one,
+ * followed by an empty paragraph for the caret. It is saved as an ordinary paragraph border.
+ */
+export function insertHorizontalLine(view: EditorView): boolean {
+	if (!view.editable) return false;
+	const { $from } = view.state.selection;
+	const at = $from.parent.type.name === 'paragraph' ? $from.after() : view.state.doc.content.size;
+	const line = schema.nodes.paragraph!.create({
+		borders: { bottom: { ...PEN, sizeEighthPoints: 6 } },
+	});
+	const after = schema.nodes.paragraph!.create();
+	const tr = view.state.tr.insert(at, [line, after]);
+	view.dispatch(
+		closeHistory(
+			tr.setSelection(TextSelection.create(tr.doc, at + line.nodeSize + 1)),
+		).scrollIntoView(),
+	);
+	return true;
+}
+
+/**
  * Word's Borders menu. A side preset toggles: when every selected paragraph already has all of its
  * sides the borders are removed, otherwise they are added. `none` removes every border.
  */
 export function setBorders(view: EditorView, preset: BorderPreset): boolean {
 	if (!view.editable) return false;
+	if (preset === 'horizontal') return insertHorizontalLine(view);
 	const positions = selectedParagraphs(view.state);
 	const sides = preset === 'none' ? [] : SIDES_OF[preset];
 	const allHave =

@@ -39,7 +39,19 @@ export function clearFormatting(view: EditorView) {
 }
 
 let tableId = 0;
-export function insertTable(view: EditorView, idGenerator?: (kind: string) => string) {
+export const MAX_TABLE_ROWS = 100;
+export const MAX_TABLE_COLUMNS = 20;
+const clampSize = (value: number | undefined, max: number) =>
+	Number.isFinite(value) ? Math.min(max, Math.max(1, Math.floor(value as number))) : 2;
+
+/** Inserts a table of `size` (2 x 2 when unspecified, at most 100 rows and 20 columns). */
+export function insertTable(
+	view: EditorView,
+	idGenerator?: (kind: string) => string,
+	size: { rows?: number; columns?: number } = {},
+) {
+	const rowCount = clampSize(size.rows, MAX_TABLE_ROWS);
+	const columnCount = clampSize(size.columns, MAX_TABLE_COLUMNS);
 	const ids = new Set<string>();
 	view.state.doc.descendants((node) => {
 		if (typeof node.attrs.id === 'string' && node.attrs.id) ids.add(node.attrs.id);
@@ -54,10 +66,10 @@ export function insertTable(view: EditorView, idGenerator?: (kind: string) => st
 	const paragraph = () => schema.nodes.paragraph.create({ id: nextId('cell') });
 	const table = schema.nodes.table.create(
 		{ id: nextId('table'), borders: JSON.stringify(DEFAULT_TABLE_BORDERS) },
-		[0, 1].map(() =>
+		Array.from({ length: rowCount }, () =>
 			schema.nodes.tableRow.create(
 				null,
-				[0, 1].map(() => schema.nodes.tableCell.create(null, paragraph())),
+				Array.from({ length: columnCount }, () => schema.nodes.tableCell.create(null, paragraph())),
 			),
 		),
 	);

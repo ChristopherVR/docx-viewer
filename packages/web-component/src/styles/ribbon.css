@@ -970,3 +970,75 @@
 	color: var(--muted);
 	font-size: 12px;
 }
+
+/* Insert > Table size picker. */
+.ribbon-popover.table-picker {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 8px;
+	width: 206px;
+	padding: 10px;
+}
+.table-picker-caption {
+	color: var(--ink);
+	font:
+		12px 'Segoe UI',
+		Arial,
+		sans-serif;
+}
+.table-picker-grid {
+	display: grid;
+	grid-template-columns: repeat(10, 18px);
+	gap: 2px;
+	outline: none;
+}
+.table-picker-grid:focus-visible {
+	outline: 2px solid var(--blue);
+	outline-offset: 2px;
+}
+.table-picker-grid [role='gridcell'] {
+	width: 18px;
+	height: 18px;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	cursor: pointer;
+}
+.table-picker-grid [role='gridcell'].active {
+	border-color: var(--blue);
+	background: color-mix(in srgb, var(--blue) 22%, transparent);
+}
+.table-picker-custom {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 6px;
+	padding-top: 6px;
+	border-top: 1px solid var(--line);
+}
+.table-picker-custom label {
+	display: grid;
+	gap: 2px;
+	color: var(--muted);
+	font:
+		11px 'Segoe UI',
+		Arial,
+		sans-serif;
+}
+.table-picker-custom input {
+	height: 24px;
+	border: 1px solid var(--line);
+	border-radius: 3px;
+	background: var(--surface);
+	color: var(--ink);
+}
+.table-picker-insert {
+	grid-column: 1 / -1;
+	height: 26px;
+	border: 1px solid var(--line);
+	border-radius: 3px;
+	background: var(--surface);
+	color: var(--ink);
+	cursor: pointer;
+}
+.table-picker-insert:hover {
+	background: var(--accent-soft);
+}
