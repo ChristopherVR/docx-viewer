@@ -142,6 +142,10 @@ describe('UI customisation', () => {
 			'show-hidden-text',
 			'page-thumbnails',
 			'zoom',
+			'zoom-actual-size',
+			'one-page',
+			'page-width',
+			'gridlines',
 			'layout-view',
 		];
 		const hidden = (label: string) =>

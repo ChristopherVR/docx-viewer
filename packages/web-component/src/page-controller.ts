@@ -1,23 +1,17 @@
-import { ST_NumberFormat, type DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel } from '@christophervr/docx-core';
 import { emit } from './events';
 import type { EditorHost } from './editor-host';
 import { findLocalizedControl } from './localization';
 import type { PrintLayoutController } from './print-layout-view';
 import { applyPageStyles } from './ribbon-commands';
-import {
-	currentSectionIndex,
-	insertSectionBreak,
-	sectionsOf,
-	setColumns,
-	setMargins,
-	setOrientation,
-	setPageNumbering,
-	setTitlePage,
-	setVerticalAlign,
-} from './section-commands';
+import { currentSectionIndex, insertSectionBreak, sectionsOf } from './section-commands';
+import { newHeaderFooterId, withBlankHeaderFooter, withPageNumber } from './header-footer-commands';
+import { pageSetupChange } from './page-setup-change';
+import { pageSizeOf } from './page-size';
 import type { RibbonAction } from './ribbon';
 import { sectionLayoutJson } from './section-layout';
 import type { StatusBar } from './status-bar';
+import { fitZoomPercent, type ZoomFit } from './zoom-fit';
 
 export interface PageControllerHost extends EditorHost {
 	paper(): HTMLElement | undefined;
@@ -42,28 +36,7 @@ export class PageController {
 		const index = currentSectionIndex(view, model);
 		const section = sectionsOf(model)[index];
 		if (!section) return;
-		const next =
-			key === 'margin'
-				? setMargins(model, index, value)
-				: key === 'orientation'
-					? setOrientation(model, index, value === 'landscape' ? 'landscape' : 'portrait')
-					: key === 'columns'
-						? setColumns(model, index, Math.max(1, Number(value) || 1))
-						: key === 'numberFormat'
-							? setPageNumbering(model, index, {
-									format: ST_NumberFormat.find((item) => item === value) ?? 'decimal',
-								})
-							: key === 'numberStart'
-								? setPageNumbering(model, index, { restart: value === 'restart' })
-								: key === 'verticalAlign'
-									? setVerticalAlign(
-											model,
-											index,
-											(['top', 'center', 'both', 'bottom'] as const).find(
-												(item) => item === value,
-											) ?? 'top',
-										)
-									: setTitlePage(model, index, !section.titlePage);
+		const next = pageSetupChange(model, index, section, key, value);
 		this.dispatchSections(next);
 	}
 
@@ -80,6 +53,7 @@ export class PageController {
 			if (select) select.value = value;
 		};
 		setSelect('Orientation', section.orientation);
+		setSelect('Page size', pageSizeOf(section) ?? '');
 		setSelect('Vertical alignment', section.verticalAlign ?? 'top');
 		findLocalizedControl<HTMLButtonElement>(toolbar, 'Different odd and even pages')?.setAttribute(
 			'aria-pressed',
@@ -95,6 +69,33 @@ export class PageController {
 			'aria-pressed',
 			String(Boolean(section.titlePage)),
 		);
+	}
+
+	/** Insert > Page Number: a PAGE field in the header or footer, creating the part when needed. */
+	insertPageNumber(position: 'top' | 'bottom', align: 'left' | 'center' | 'right'): boolean {
+		return this.changeHeaderFooter((model) =>
+			withPageNumber(model, position, align, newHeaderFooterId),
+		);
+	}
+
+	/** Insert > Header / Footer: an empty part when the document has none. */
+	insertHeaderFooter(kind: 'header' | 'footer'): boolean {
+		return this.changeHeaderFooter((model) =>
+			withBlankHeaderFooter(model, kind === 'header' ? 'headers' : 'footers', newHeaderFooterId),
+		);
+	}
+
+	private changeHeaderFooter(change: (model: DocumentModel) => DocumentModel): boolean {
+		const view = this.host.view();
+		if (!view?.editable || !this.host.canEditOutsideBody()) return false;
+		const next = change(this.host.model());
+		// Header and footer content lives in the model, outside the editor document, so like in-place
+		// header edits this is not part of Ctrl+Z history. The layout is recorded without a history step
+		// so the document always has a `sections` attribute to rebuild the model from.
+		this.host.setModel(next);
+		this.dispatchSections(next, false);
+		this.host.edited();
+		return true;
 	}
 
 	/** Header & Footer > Different Odd & Even Pages (document-wide, undoable). */
@@ -117,12 +118,13 @@ export class PageController {
 	}
 
 	/** Records page geometry and section layout on the editor document as one undoable step. */
-	private dispatchSections(next: DocumentModel): void {
+	private dispatchSections(next: DocumentModel, undoable = true): void {
 		const view = this.host.view();
 		if (!view) return;
 		const { page } = next;
 		view.dispatch(
 			view.state.tr
+				.setMeta('addToHistory', undoable)
 				.setDocAttribute('pageWidth', page.width)
 				.setDocAttribute('pageHeight', page.height)
 				.setDocAttribute('marginTop', page.marginTop)
@@ -144,6 +146,27 @@ export class PageController {
 		const multiple = columns && columns.count > 1;
 		paper.style.columnCount = multiple ? String(columns.count) : '';
 		paper.style.columnGap = multiple ? `${((columns.spacingTwips ?? 720) / 15) * this.zoom}px` : '';
+	}
+
+	/** Zoom to 100%, the page width or a whole page, from the section holding the selection. */
+	zoomTo(mode: ZoomFit): void {
+		const canvas = this.host.paper()?.parentElement;
+		const view = this.host.view();
+		const model = this.host.model();
+		const section = view ? sectionsOf(model)[currentSectionIndex(view, model)] : undefined;
+		if (!canvas || !section) return this.setZoom(100);
+		const style = getComputedStyle(canvas);
+		const pad = (a: string, b: string) => (parseFloat(a) || 0) + (parseFloat(b) || 0);
+		this.setZoom(
+			fitZoomPercent(
+				mode,
+				{
+					width: canvas.clientWidth - pad(style.paddingLeft, style.paddingRight),
+					height: canvas.clientHeight - pad(style.paddingTop, style.paddingBottom),
+				},
+				{ width: section.pageWidthTwips / 15, height: section.pageHeightTwips / 15 },
+			),
+		);
 	}
 
 	setZoom(percent: number): void {

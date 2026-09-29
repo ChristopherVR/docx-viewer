@@ -1,6 +1,24 @@
 import { createMultilingualControls } from './multilingual-ribbon';
 import { createReviewControls } from './review-ribbon';
-import { button, group, select } from './ribbon-parts';
+import { buildParagraphSpacing } from './ribbon-home';
+import { SYMBOLS } from './insert-text-commands';
+import { PAGE_SIZE_OPTIONS } from './page-size';
+
+const ADD_TEXT_OPTIONS: Array<[string, string]> = [
+	['1', 'Level 1'],
+	['2', 'Level 2'],
+	['3', 'Level 3'],
+	['0', 'Do not show in table of contents'],
+];
+const PAGE_NUMBER_OPTIONS: Array<[string, string]> = [
+	['top:left', 'Top left'],
+	['top:center', 'Top center'],
+	['top:right', 'Top right'],
+	['bottom:left', 'Bottom left'],
+	['bottom:center', 'Bottom center'],
+	['bottom:right', 'Bottom right'],
+];
+import { group, menuSelect, select, stack, tool } from './ribbon-parts';
 
 /** The Insert, Layout, References, Review and View tabs. */
 export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
@@ -8,59 +26,185 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 	languageControls.setAttribute('role', 'group');
 	languageControls.setAttribute('aria-label', 'Language');
 	languageControls.dataset.label = 'Language';
-	panels.get('Review')!.append(languageControls, ...createReviewControls());
 	panels
-		.get('Insert')!
-		.append(
-			group('Tables', button('Insert table', '▦ Table', { type: 'table' })),
-			group(
-				'Illustrations',
-				button('Insert picture', 'Pictures', { type: 'insertPicture' }),
-				button('Format picture', 'Format', { type: 'formatPicture' }),
-			),
-			group('Links', button('Insert link', 'Link', { type: 'link' })),
-			group(
-				'Breaks',
-				button('Insert page break', 'Page break', { type: 'insertBreak', kind: 'page' }),
-				button('Insert column break', 'Column break', { type: 'insertBreak', kind: 'column' }),
-			),
-		);
-	panels
-		.get('References')!
+		.get('Review')!
 		.append(
 			group(
-				'Table of Contents',
-				button('Insert table of contents', 'Table of Contents', { type: 'toc', key: 'insert' }),
-				button('Update table of contents', 'Update Table', { type: 'toc', key: 'update' }),
+				'Proofing',
+				tool('Spelling', 'spelling', { type: 'spelling' }, { large: true }),
+				tool('Word count', 'wordCount', { type: 'wordCount' }, { large: true }),
+				tool('Read aloud', 'readAloud', { type: 'readAloud' }, { large: true }),
 			),
-			group(
-				'Footnotes',
-				button('Insert footnote', 'Footnote', { type: 'insertNote', kind: 'footnote' }),
-				button('Insert endnote', 'Endnote', { type: 'insertNote', kind: 'endnote' }),
-			),
+			...createReviewControls(),
+			languageControls,
 		);
+	panels.get('Insert')!.append(
+		group(
+			'Tables',
+			tool('Insert table', 'table', { type: 'table' }, { large: true, caption: 'Table' }),
+		),
+		group(
+			'Illustrations',
+			tool(
+				'Insert picture',
+				'picture',
+				{ type: 'insertPicture' },
+				{ large: true, caption: 'Pictures' },
+			),
+			tool(
+				'Format picture',
+				'formatPicture',
+				{ type: 'formatPicture' },
+				{ large: true, caption: 'Format' },
+			),
+		),
+		group('Links', tool('Insert link', 'link', { type: 'link' }, { large: true, caption: 'Link' })),
+		group(
+			'Breaks',
+			tool('Blank page', 'blankPage', { type: 'blankPage' }, { large: true }),
+			tool(
+				'Insert page break',
+				'pageBreak',
+				{ type: 'insertBreak', kind: 'page' },
+				{ large: true, caption: 'Page break' },
+			),
+			tool(
+				'Insert column break',
+				'columnBreak',
+				{ type: 'insertBreak', kind: 'column' },
+				{ large: true, caption: 'Column break' },
+			),
+		),
+		group(
+			'Header & Footer',
+			menuSelect(
+				'Header',
+				'header',
+				[['blank', 'Blank']],
+				() => ({ type: 'headerFooter', kind: 'header' }),
+				{
+					momentary: true,
+				},
+			),
+			menuSelect(
+				'Footer',
+				'footer',
+				[['blank', 'Blank']],
+				() => ({ type: 'headerFooter', kind: 'footer' }),
+				{
+					momentary: true,
+				},
+			),
+			menuSelect(
+				'Page number',
+				'pageNumberIcon',
+				PAGE_NUMBER_OPTIONS,
+				(value) => {
+					const [position, align] = value.split(':') as [
+						'top' | 'bottom',
+						'left' | 'center' | 'right',
+					];
+					return { type: 'pageNumber', position, align };
+				},
+				{ momentary: true },
+			),
+		),
+		group(
+			'Text',
+			menuSelect(
+				'Date and time',
+				'dateTime',
+				[
+					['long', 'long'],
+					['short', 'short'],
+					['time', 'time'],
+					['datetime', 'datetime'],
+				],
+				(value) => ({ type: 'insertDateTime', value: value as 'long' }),
+				{ momentary: true },
+			),
+		),
+		group(
+			'Symbols',
+			menuSelect(
+				'Symbol',
+				'symbol',
+				SYMBOLS.map((symbol) => [symbol, symbol]),
+				(value) => ({ type: 'insertSymbol', value }),
+				{ momentary: true },
+			),
+		),
+	);
+	panels.get('References')!.append(
+		group(
+			'Table of Contents',
+			tool(
+				'Insert table of contents',
+				'toc',
+				{ type: 'toc', key: 'insert' },
+				{ large: true, caption: 'Table of Contents' },
+			),
+			menuSelect(
+				'Add text',
+				'addText',
+				ADD_TEXT_OPTIONS,
+				(value) => ({ type: 'addText', level: Number(value) as 0 | 1 | 2 | 3 }),
+				{ momentary: true },
+			),
+			tool(
+				'Update table of contents',
+				'updateTable',
+				{ type: 'toc', key: 'update' },
+				{ large: true, caption: 'Update Table' },
+			),
+		),
+		group(
+			'Footnotes',
+			tool(
+				'Insert footnote',
+				'footnote',
+				{ type: 'insertNote', kind: 'footnote' },
+				{ large: true, caption: 'Footnote' },
+			),
+			tool(
+				'Insert endnote',
+				'endnote',
+				{ type: 'insertNote', kind: 'endnote' },
+				{ large: true, caption: 'Endnote' },
+			),
+		),
+	);
 	panels.get('Layout')!.append(
 		group(
 			'Page setup',
-			select(
+			menuSelect(
 				'Margins',
+				'margins',
 				[
 					['normal', 'Normal'],
 					['narrow', 'Narrow'],
+					['moderate', 'Moderate'],
 					['wide', 'Wide'],
 				],
 				(value) => ({ type: 'page', key: 'margin', value }),
 			),
-			select(
+			menuSelect('Page size', 'pageSize', PAGE_SIZE_OPTIONS, (value) => ({
+				type: 'page',
+				key: 'size',
+				value,
+			})),
+			menuSelect(
 				'Orientation',
+				'orientation',
 				[
 					['portrait', 'Portrait'],
 					['landscape', 'Landscape'],
 				],
 				(value) => ({ type: 'page', key: 'orientation', value }),
 			),
-			select(
+			menuSelect(
 				'Vertical alignment',
+				'verticalAlign',
 				[
 					['top', 'Top'],
 					['center', 'Center'],
@@ -69,8 +213,9 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				],
 				(value) => ({ type: 'page', key: 'verticalAlign', value }),
 			),
-			select(
+			menuSelect(
 				'Columns',
+				'columns',
 				[
 					['1', 'One column'],
 					['2', 'Two columns'],
@@ -81,8 +226,9 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 		),
 		group(
 			'Page numbers',
-			select(
+			menuSelect(
 				'Page number format',
+				'pageNumber',
 				[
 					['decimal', '1, 2, 3'],
 					['lowerRoman', 'i, ii, iii'],
@@ -92,44 +238,81 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				],
 				(value) => ({ type: 'page', key: 'numberFormat', value }),
 			),
-			select(
+			menuSelect(
 				'Page numbering',
+				'numbering2',
 				[
 					['continue', 'Continue from previous section'],
 					['restart', 'Start at 1'],
 				],
 				(value) => ({ type: 'page', key: 'numberStart', value }),
 			),
-			button('Different first page', 'Different first page', {
-				type: 'page',
-				key: 'titlePage',
-				value: 'toggle',
-			}),
-			button('Different odd and even pages', 'Different odd & even pages', {
-				type: 'evenOddHeaders',
-			}),
+			stack(
+				tool(
+					'Different first page',
+					'firstPage',
+					{ type: 'page', key: 'titlePage', value: 'toggle' },
+					{ inline: true },
+				),
+				tool(
+					'Different odd and even pages',
+					'oddEven',
+					{ type: 'evenOddHeaders' },
+					{ inline: true, caption: 'Different odd & even pages' },
+				),
+			),
 		),
 		group(
 			'Section breaks',
-			button('Next page section break', 'Next page', { type: 'sectionBreak', kind: 'nextPage' }),
-			button('Continuous section break', 'Continuous', {
-				type: 'sectionBreak',
-				kind: 'continuous',
-			}),
-			button('Even page section break', 'Even page', { type: 'sectionBreak', kind: 'evenPage' }),
-			button('Odd page section break', 'Odd page', { type: 'sectionBreak', kind: 'oddPage' }),
+			tool(
+				'Next page section break',
+				'sectionNext',
+				{ type: 'sectionBreak', kind: 'nextPage' },
+				{ inline: true, caption: 'Next page' },
+			),
+			tool(
+				'Continuous section break',
+				'sectionContinuous',
+				{ type: 'sectionBreak', kind: 'continuous' },
+				{ inline: true, caption: 'Continuous' },
+			),
+			tool(
+				'Even page section break',
+				'sectionEven',
+				{ type: 'sectionBreak', kind: 'evenPage' },
+				{ inline: true, caption: 'Even page' },
+			),
+			tool(
+				'Odd page section break',
+				'sectionOdd',
+				{ type: 'sectionBreak', kind: 'oddPage' },
+				{ inline: true, caption: 'Odd page' },
+			),
 		),
+		...buildParagraphSpacing(),
 	);
 	panels.get('View')!.append(
 		group(
 			'Show',
-			button('Show hidden text', 'Hidden text', { type: 'showHidden' }),
-			button('Page thumbnails', 'Thumbnails', { type: 'thumbnails' }),
+			tool(
+				'Show hidden text',
+				'hidden',
+				{ type: 'showHidden' },
+				{ large: true, caption: 'Hidden text' },
+			),
+			tool('Gridlines', 'gridlines', { type: 'gridlines' }, { large: true }),
+			tool(
+				'Page thumbnails',
+				'thumbnails',
+				{ type: 'thumbnails' },
+				{ large: true, caption: 'Thumbnails' },
+			),
 		),
 		group(
 			'Zoom',
-			select(
+			menuSelect(
 				'Zoom',
+				'zoom',
 				[
 					['50', '50%'],
 					['75', '75%'],
@@ -140,18 +323,27 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				],
 				(value) => ({ type: 'zoom', value: Number(value) }),
 			),
+			tool(
+				'Zoom to 100%',
+				'zoom100',
+				{ type: 'zoomFit', mode: 'actual' },
+				{ large: true, caption: '100%' },
+			),
+			tool('One page', 'onePage', { type: 'zoomFit', mode: 'page' }, { large: true }),
+			tool('Page width', 'pageWidth', { type: 'zoomFit', mode: 'width' }, { large: true }),
 		),
 		group(
 			'Layout view',
-			select(
+			menuSelect(
 				'Layout view',
+				'view',
 				[
 					['draft', 'Draft'],
 					['print', 'Print Layout'],
 				],
 				(value) => ({ type: 'view', value: value === 'print' ? 'print' : 'draft' }),
 			),
-			button('Print', 'Print', { type: 'print' }),
+			tool('Print', 'print', { type: 'print' }, { large: true }),
 		),
 	);
 }

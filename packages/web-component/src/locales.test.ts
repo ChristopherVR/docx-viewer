@@ -146,7 +146,7 @@ describe('localized rendering', () => {
 		const group = ribbon.querySelector<HTMLElement>('[data-label="Tables"]')!;
 		expect(group.getAttribute('aria-label')).toBe('Steuerelemente: Tabellen');
 		expect(ribbon.querySelector('[data-localearialabel="Insert table"]')!.textContent).toBe(
-			'▦ Tabelle',
+			'Tabelle',
 		);
 		const after = ribbon.querySelector<HTMLSelectElement>(
 			'[data-localearialabel="Spacing after"]',

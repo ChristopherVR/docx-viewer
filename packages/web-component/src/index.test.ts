@@ -145,9 +145,10 @@ describe('DocxEditorElement', () => {
 		const font = root.querySelector<HTMLSelectElement>('[aria-label="Font family"]')!;
 		font.value = 'Georgia';
 		font.dispatchEvent(new Event('change', { bubbles: true }));
-		const color = root.querySelector<HTMLSelectElement>('[aria-label="Font color"]')!;
-		color.value = '#c00000';
-		color.dispatchEvent(new Event('change', { bubbles: true }));
+		root
+			.querySelector<HTMLButtonElement>('[aria-label="Font color"] + [data-split-caret]')!
+			.click();
+		root.querySelector<HTMLButtonElement>('.ribbon-popover [aria-label="Red"]')!.click();
 		root.querySelector<HTMLButtonElement>('[aria-label="Align center"]')!.click();
 		const paragraph = editor.documentModel.blocks[0];
 		expect(paragraph).toMatchObject({

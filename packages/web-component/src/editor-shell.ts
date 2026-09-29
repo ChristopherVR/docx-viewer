@@ -125,6 +125,7 @@ export function buildShell(core: EditorCore, api: ShellApi): void {
 	shell.review = review;
 	review.setLocale(core.locale);
 	core.inserts.setLocale(core.locale);
+	core.formatDialogs.setLocale(core.locale);
 	const body = document.createElement('div');
 	body.className = 'dve-body';
 	body.append(shell.navigator.element, canvas, review.commentsPanel.element);
@@ -135,6 +136,7 @@ export function buildShell(core: EditorCore, api: ShellApi): void {
 	frame.append(
 		core.inserts.linkDialog.element,
 		core.inserts.pictureDialog.element,
+		...core.formatDialogs.elements,
 		core.inserts.pictureInput,
 	);
 	if (core.pendingFileName) chrome.fileName = core.pendingFileName;

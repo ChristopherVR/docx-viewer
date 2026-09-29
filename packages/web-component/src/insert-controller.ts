@@ -31,6 +31,8 @@ export class InsertController {
 	/** Bytes for pictures inserted since the document was loaded; passed to save. */
 	readonly pendingMedia = new Map<string, PendingMediaPart>();
 	private showHidden = false;
+	private showMarks = false;
+	private showGridlines = false;
 
 	constructor(private readonly host: InsertControllerHost) {
 		this.linkDialog = createLinkDialog({
@@ -62,7 +64,13 @@ export class InsertController {
 			if (view?.editable) applyCharacterStyle(view, action.value);
 			focusView(view);
 		} else if (action.type === 'showHidden') this.setShowHidden(!this.showHidden);
-		else if (action.type === 'toc') {
+		else if (action.type === 'gridlines') {
+			this.showGridlines = !this.showGridlines;
+			this.syncPaper();
+		} else if (action.type === 'showMarks') {
+			this.showMarks = !this.showMarks;
+			this.syncPaper();
+		} else if (action.type === 'toc') {
 			if (!view || !editable) return true;
 			try {
 				if (action.key === 'insert') insertTableOfContents(view, this.host.model());
@@ -112,7 +120,21 @@ export class InsertController {
 	/** Re-applies the hidden-text display state after the paper is rebuilt. */
 	syncPaper(): void {
 		const paper = this.host.paper();
-		if (paper) paper.toggleAttribute('data-show-hidden', this.showHidden);
+		if (paper) {
+			paper.toggleAttribute('data-show-hidden', this.showHidden);
+			paper.toggleAttribute('data-show-marks', this.showMarks);
+			paper.toggleAttribute('data-show-gridlines', this.showGridlines);
+		}
+		this.host
+			.toolbar()
+			?.querySelector(
+				'[aria-label="Show paragraph marks"], [data-localearialabel="Show paragraph marks"]',
+			)
+			?.setAttribute('aria-pressed', String(this.showMarks));
+		this.host
+			.toolbar()
+			?.querySelector('[aria-label="Gridlines"], [data-localearialabel="Gridlines"]')
+			?.setAttribute('aria-pressed', String(this.showGridlines));
 		this.host
 			.toolbar()
 			?.querySelector('[aria-label="Show hidden text"], [data-localearialabel="Show hidden text"]')

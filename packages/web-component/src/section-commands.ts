@@ -54,7 +54,7 @@ export function currentSectionIndex(view: EditorView, model: DocumentModel): num
 }
 
 /** Returns `model` with section `index` changed; the last section also drives `model.page`. */
-function withSection(
+export function withSection(
 	model: DocumentModel,
 	index: number,
 	change: (section: SectionProperties) => SectionProperties,
@@ -85,6 +85,14 @@ const MARGINS: Record<string, Twips> = {
 };
 
 export function setMargins(model: DocumentModel, index: number, preset: string): DocumentModel {
+	if (preset === 'moderate')
+		return withSection(model, index, (section) => ({
+			...section,
+			marginTopTwips: NORMAL_MARGIN,
+			marginBottomTwips: NORMAL_MARGIN,
+			marginLeftTwips: twips(1080),
+			marginRightTwips: twips(1080),
+		}));
 	const value = MARGINS[preset] ?? NORMAL_MARGIN;
 	return withSection(model, index, (section) => ({
 		...section,

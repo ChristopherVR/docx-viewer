@@ -14,7 +14,10 @@ import { appendInlineNode } from './run-adapter';
 
 type Theme = NonNullable<DocumentModel['theme']>;
 
-function themeFont(formatting: RunFormatting, theme: Theme | undefined): string | undefined {
+export function themeFontOf(
+	formatting: RunFormatting,
+	theme: Theme | undefined,
+): string | undefined {
 	const role = formatting.fontTheme?.ascii ?? formatting.fontTheme?.hAnsi;
 	return role && theme ? theme.fonts[role]?.latin : undefined;
 }
@@ -46,7 +49,7 @@ export function runFormattingCss(
 	if (formatting.smallCaps) css.push('font-variant:small-caps');
 	else if (direct.smallCaps) css.push('font-variant:normal');
 	if (formatting.fontSize) css.push(`font-size:${formatting.fontSize}pt`);
-	const family = formatting.fontFamily ?? themeFont(formatting, theme);
+	const family = formatting.fontFamily ?? themeFontOf(formatting, theme);
 	if (family) css.push(`font-family:${quoteFont(family)}`);
 	const color =
 		safeColor(formatting.color) ??
@@ -57,7 +60,8 @@ export function runFormattingCss(
 	return css.join(';');
 }
 
-function runAt(node: ProseMirrorNode): TextRun | undefined {
+/** The run a text node stands for, with its marks as direct formatting. */
+export function runOf(node: ProseMirrorNode): TextRun | undefined {
 	const runs: TextRun[] = [];
 	appendInlineNode(runs, node);
 	return runs[0];
@@ -95,7 +99,7 @@ export function runStylesPlugin(getModel: () => DocumentModel) {
 				) =>
 					paragraph.forEach((child, offset) => {
 						if (!child.isText) return;
-						const run = runAt(child);
+						const run = runOf(child);
 						if (!run) return;
 						const resolved = resolveRunFormatting(run, {
 							runCatalog: model.characterStyles,

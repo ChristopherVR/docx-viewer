@@ -143,6 +143,7 @@ export class DocxEditorElement extends DocxEditorApi {
 		review?.setLocale(core.locale);
 		chrome?.setLocale(core.locale);
 		core.inserts.setLocale(core.locale);
+		core.formatDialogs.setLocale(core.locale);
 		applyShellLabels(this, paper, core.locale);
 		core.refreshControls();
 		core.collab.presence?.relocalize();
@@ -271,6 +272,7 @@ export class DocxEditorElement extends DocxEditorApi {
 		core.loaded = session;
 		core.model = model;
 		core.inserts.reset();
+		core.formatDialogs.closeAll();
 		core.dirtyState.set(false);
 	}
 }

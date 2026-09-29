@@ -1,76 +1,146 @@
 import { lineSpacingOptions } from './line-spacing';
-import { button, group, row, select } from './ribbon-parts';
+import {
+	comboBox,
+	FONT_FAMILIES,
+	FONT_SIZES,
+	parseFontFamily,
+	parseFontSize,
+} from './ribbon-combo';
+import {
+	colorSplit,
+	group,
+	launcher,
+	menuSelect,
+	row,
+	select,
+	spinner,
+	stack,
+	tool,
+} from './ribbon-parts';
 
-/** The Home tab: styles, font, paragraph, lists and alignment, and editing. */
+const SHADINGS: Array<[string, string]> = [
+	['none', 'No color'],
+	['#ffff00', 'Yellow'],
+	['#00ff00', 'Green'],
+	['#00ffff', 'Cyan'],
+	['#ff00ff', 'Magenta'],
+	['#ff0000', 'Red'],
+	['#0000ff', 'Blue'],
+	['#ffc000', 'Gold'],
+	['#e36c09', 'Orange'],
+	['#c0c0c0', 'Light gray'],
+	['#808080', 'Dark gray'],
+];
+const BORDER_PRESETS: Array<[string, string]> = [
+	['bottom', 'Bottom border'],
+	['top', 'Top border'],
+	['left', 'Left border'],
+	['right', 'Right border'],
+	['none', 'No border'],
+	['all', 'All borders'],
+	['outside', 'Outside borders'],
+	['insideH', 'Inside horizontal border'],
+];
+const FONT_COLORS: Array<[string, string]> = [
+	['#000000', 'Black'],
+	['#c00000', 'Red'],
+	['#e36c09', 'Orange'],
+	['#ffc000', 'Gold'],
+	['#70ad47', 'Green'],
+	['#0070c0', 'Blue'],
+	['#7030a0', 'Purple'],
+];
+const HIGHLIGHTS: Array<[string, string]> = [
+	['none', 'No highlight'],
+	['yellow', 'Yellow'],
+	['green', 'Green'],
+	['cyan', 'Cyan'],
+	['magenta', 'Magenta'],
+	['blue', 'Blue'],
+	['red', 'Red'],
+	['darkBlue', 'Dark blue'],
+	['darkCyan', 'Dark cyan'],
+	['darkGreen', 'Dark green'],
+	['darkMagenta', 'Dark magenta'],
+	['darkRed', 'Dark red'],
+	['darkYellow', 'Dark yellow'],
+	['darkGray', 'Dark gray'],
+	['lightGray', 'Light gray'],
+	['black', 'Black'],
+	['white', 'White'],
+];
+
+/** The Home tab in Word's group order: Clipboard, Font, Paragraph, Styles (added on load), Editing. */
 export function buildHomePanel(panels: Map<string, HTMLElement>): void {
 	const home = panels.get('Home')!;
 	home.append(
 		group(
+			'Clipboard',
+			tool('Paste', 'paste', { type: 'clipboard', key: 'paste' }, { large: true }),
+			stack(
+				tool('Cut', 'cut', { type: 'clipboard', key: 'cut' }),
+				tool('Copy', 'copy', { type: 'clipboard', key: 'copy' }),
+				tool('Format painter', 'formatPainter', { type: 'formatPainter' }),
+			),
+		),
+		group(
 			'Font',
 			row(
-				select(
+				comboBox(
 					'Font family',
-					[
-						['Arial', 'Arial'],
-						['Calibri', 'Calibri'],
-						['Georgia', 'Georgia'],
-						['Times New Roman', 'Times New Roman'],
-						['Verdana', 'Verdana'],
-					],
+					FONT_FAMILIES,
+					parseFontFamily,
 					(value) => ({ type: 'font', key: 'family', value }),
+					{ preview: true, className: 'font-family-combo' },
 				),
-				select(
+				comboBox(
 					'Font size',
-					['8', '9', '10', '11', '12', '14', '16', '18', '20', '24', '28', '36', '48', '72'].map(
-						(v) => [v, v],
-					),
+					FONT_SIZES.map(String),
+					(text) => {
+						const size = parseFontSize(text);
+						return size === null ? null : String(size);
+					},
 					(value) => ({ type: 'font', key: 'size', value }),
+					{ className: 'font-size-combo' },
 				),
-				button('Bold', 'B', { type: 'format', key: 'bold' }, 'tool-bold'),
-				button('Italic', 'I', { type: 'format', key: 'italic' }, 'tool-italic'),
-				button('Underline', 'U', { type: 'format', key: 'underline' }, 'tool-underline'),
-				button('Strikethrough', 'S̶', { type: 'format', key: 'strike' }, 'tool-strike'),
+				tool('Grow font', 'fontGrow', { type: 'fontStep', direction: 'grow' }),
+				tool('Shrink font', 'fontShrink', { type: 'fontStep', direction: 'shrink' }),
+				menuSelect(
+					'Change case',
+					'changeCase',
+					[
+						['sentence', 'Sentence case'],
+						['lower', 'lowercase'],
+						['upper', 'UPPERCASE'],
+						['title', 'Capitalize Each Word'],
+						['toggle', 'tOGGLE cASE'],
+					],
+					(value) => ({ type: 'changeCase', value: value as 'sentence' }),
+					{ compact: true, momentary: true },
+				),
+				tool('Clear formatting', 'clear', { type: 'clear' }),
 			),
 			row(
-				button('Superscript', 'x²', { type: 'format', key: 'superscript' }),
-				button('Subscript', 'x₂', { type: 'format', key: 'subscript' }),
-				select(
-					'Font color',
-					[
-						['#000000', 'Black'],
-						['#c00000', 'Red'],
-						['#e36c09', 'Orange'],
-						['#ffc000', 'Gold'],
-						['#70ad47', 'Green'],
-						['#0070c0', 'Blue'],
-						['#7030a0', 'Purple'],
-					],
-					(value) => ({ type: 'font', key: 'color', value }),
-				),
-				select(
+				tool('Bold', 'bold', { type: 'format', key: 'bold' }),
+				tool('Italic', 'italic', { type: 'format', key: 'italic' }),
+				tool('Underline', 'underline', { type: 'format', key: 'underline' }),
+				tool('Strikethrough', 'strike', { type: 'format', key: 'strike' }),
+				tool('Subscript', 'subscript', { type: 'format', key: 'subscript' }),
+				tool('Superscript', 'superscript', { type: 'format', key: 'superscript' }),
+				colorSplit(
 					'Text highlight',
-					[
-						['none', 'No highlight'],
-						['yellow', 'Yellow'],
-						['green', 'Green'],
-						['cyan', 'Cyan'],
-						['magenta', 'Magenta'],
-						['blue', 'Blue'],
-						['red', 'Red'],
-						['darkBlue', 'Dark blue'],
-						['darkCyan', 'Dark cyan'],
-						['darkGreen', 'Dark green'],
-						['darkMagenta', 'Dark magenta'],
-						['darkRed', 'Dark red'],
-						['darkYellow', 'Dark yellow'],
-						['darkGray', 'Dark gray'],
-						['lightGray', 'Light gray'],
-						['black', 'Black'],
-						['white', 'White'],
-					],
+					'highlight',
+					HIGHLIGHTS,
 					(value) => ({ type: 'font', key: 'highlight', value }),
+					'yellow',
 				),
-				button('Clear formatting', 'Clear', { type: 'clear' }),
+				colorSplit(
+					'Font color',
+					'fontColor',
+					FONT_COLORS,
+					(value) => ({ type: 'font', key: 'color', value }),
+					'#c00000',
+				),
 			),
 		),
 	);
@@ -79,79 +149,145 @@ export function buildHomePanel(panels: Map<string, HTMLElement>): void {
 		.append(
 			group(
 				'Table',
-				button('Insert row above', '↑ Row', { type: 'tableEdit', key: 'rowBefore' }),
-				button('Insert row below', '↓ Row', { type: 'tableEdit', key: 'rowAfter' }),
-				button('Delete row', '− Row', { type: 'tableEdit', key: 'deleteRow' }),
-				button('Insert column left', '← Column', { type: 'tableEdit', key: 'columnBefore' }),
-				button('Insert column right', '→ Column', { type: 'tableEdit', key: 'columnAfter' }),
-				button('Delete column', '− Column', { type: 'tableEdit', key: 'deleteColumn' }),
-				button('Delete table', 'Delete table', { type: 'tableEdit', key: 'deleteTable' }),
+				tool(
+					'Insert row above',
+					'rowAbove',
+					{ type: 'tableEdit', key: 'rowBefore' },
+					{ large: true },
+				),
+				tool(
+					'Insert row below',
+					'rowBelow',
+					{ type: 'tableEdit', key: 'rowAfter' },
+					{ large: true },
+				),
+				tool('Delete row', 'deleteRow', { type: 'tableEdit', key: 'deleteRow' }, { large: true }),
+				tool(
+					'Insert column left',
+					'columnLeft',
+					{ type: 'tableEdit', key: 'columnBefore' },
+					{ large: true },
+				),
+				tool(
+					'Insert column right',
+					'columnRight',
+					{ type: 'tableEdit', key: 'columnAfter' },
+					{ large: true },
+				),
+				tool(
+					'Delete column',
+					'deleteColumn',
+					{ type: 'tableEdit', key: 'deleteColumn' },
+					{ large: true },
+				),
+				tool(
+					'Delete table',
+					'deleteTable',
+					{ type: 'tableEdit', key: 'deleteTable' },
+					{ large: true },
+				),
 			),
 		);
 	home.append(
 		group(
 			'Paragraph',
 			row(
-				button('Decrease indent', '⇤', { type: 'paragraph', key: 'indent', value: 'decrease' }),
-				button('Increase indent', '⇥', { type: 'paragraph', key: 'indent', value: 'increase' }),
-				select(
-					'Spacing after',
-					[
-						['inherit', 'After: style default'],
-						['0', 'After: no paragraph space'],
-						['120', 'After: 6 pt'],
-						['240', 'After: 12 pt'],
-						['360', 'After: 18 pt'],
-					],
-					(value) => ({ type: 'paragraph', key: 'spacingAfter', value }),
-				),
+				tool('Bulleted list', 'bullets', { type: 'list', key: 'bullet' }),
+				tool('Numbered list', 'numbering', { type: 'list', key: 'number' }),
+				tool('Decrease list level', 'outdent', { type: 'list', key: 'decreaseLevel' }),
+				tool('Increase list level', 'indent', { type: 'list', key: 'increaseLevel' }),
+				tool('Remove list', 'removeList', { type: 'list', key: 'remove' }),
+				tool('Decrease indent', 'outdent', { type: 'paragraph', key: 'indent', value: 'decrease' }),
+				tool('Increase indent', 'indent', { type: 'paragraph', key: 'indent', value: 'increase' }),
+				tool('Show paragraph marks', 'paragraphMarks', { type: 'showMarks' }),
 			),
 			row(
-				select(
-					'Spacing before',
-					[
-						['inherit', 'Before: style default'],
-						['0', 'Before: no paragraph space'],
-						['120', 'Before: 6 pt'],
-						['240', 'Before: 12 pt'],
-						['360', 'Before: 18 pt'],
-					],
-					(value) => ({ type: 'paragraph', key: 'spacingBefore', value }),
+				tool('Align left', 'alignLeft', { type: 'align', value: 'left' }),
+				tool('Align center', 'alignCenter', { type: 'align', value: 'center' }),
+				tool('Align right', 'alignRight', { type: 'align', value: 'right' }),
+				tool('Justify', 'justify', { type: 'align', value: 'justify' }),
+				menuSelect(
+					'Line spacing',
+					'lineSpacing',
+					lineSpacingOptions,
+					(value) => ({ type: 'paragraph', key: 'lineSpacing', value }),
+					{ compact: true },
 				),
-				select('Line spacing', lineSpacingOptions, (value) => ({
-					type: 'paragraph',
-					key: 'lineSpacing',
-					value,
-				})),
+				colorSplit(
+					'Shading',
+					'shading',
+					SHADINGS,
+					(value) => ({ type: 'shading', value }),
+					'#ffff00',
+				),
+				menuSelect(
+					'Borders',
+					'borders',
+					BORDER_PRESETS,
+					(value) => ({ type: 'borders', preset: value as 'none' }),
+					{ compact: true, momentary: true },
+				),
 			),
 		),
-	);
-	home.append(
 		group(
-			'Alignment',
-			row(
-				button('Bulleted list', '•', { type: 'list', key: 'bullet' }, 'tool-list-bullet'),
-				button('Numbered list', '1.', { type: 'list', key: 'number' }, 'tool-list-number'),
-				button('Decrease list level', '⇤≡', { type: 'list', key: 'decreaseLevel' }),
-				button('Increase list level', '⇥≡', { type: 'list', key: 'increaseLevel' }),
-				button('Remove list', '✕≡', { type: 'list', key: 'remove' }),
-			),
-			row(
-				...(
-					[
-						['left', 'Align left'],
-						['center', 'Align center'],
-						['right', 'Align right'],
-						['justify', 'Justify'],
-					] as const
-				).map(([value, label]) =>
-					button(label, value === 'center' ? '≣' : value === 'justify' ? '☰' : '≡', {
-						type: 'align',
-						value,
-					}),
-				),
+			'Editing',
+			stack(
+				tool('Find and replace', 'find', { type: 'search' }, { inline: true, caption: 'Find' }),
+				tool('Replace', 'replace', { type: 'search', focus: 'replace' }, { inline: true }),
+				tool('Select all', 'select', { type: 'selectAll' }, { inline: true }),
 			),
 		),
 	);
-	home.append(group('Editing', button('Find and replace', 'Find and replace', { type: 'search' })));
+	home
+		.querySelector('[data-label="Font"]')
+		?.append(launcher('Font settings', { type: 'formatDialog', kind: 'font' }));
+	home
+		.querySelector('[data-label="Paragraph"]')
+		?.append(launcher('Paragraph settings', { type: 'formatDialog', kind: 'paragraph' }));
+}
+
+/** Layout > Paragraph: paragraph spacing before and after, as in Word's Layout tab. */
+export function buildParagraphSpacing(): HTMLElement[] {
+	return [
+		group(
+			'Indent',
+			spinner('Indent left', (inches) => ({ type: 'indent', side: 'left', inches }), SPIN),
+			spinner('Indent right', (inches) => ({ type: 'indent', side: 'right', inches }), SPIN),
+		),
+		spacingGroup(),
+	];
+}
+
+const SPIN = { min: 0, max: 22, step: 0.1 };
+
+function spacingGroup(): HTMLElement {
+	return group(
+		'Paragraph',
+		row(
+			menuSelect(
+				'Spacing before',
+				'spaceBefore',
+				[
+					['inherit', 'Before: style default'],
+					['0', 'Before: no paragraph space'],
+					['120', 'Before: 6 pt'],
+					['240', 'Before: 12 pt'],
+					['360', 'Before: 18 pt'],
+				],
+				(value) => ({ type: 'paragraph', key: 'spacingBefore', value }),
+			),
+			menuSelect(
+				'Spacing after',
+				'spaceAfter',
+				[
+					['inherit', 'After: style default'],
+					['0', 'After: no paragraph space'],
+					['120', 'After: 6 pt'],
+					['240', 'After: 12 pt'],
+					['360', 'After: 18 pt'],
+				],
+				(value) => ({ type: 'paragraph', key: 'spacingAfter', value }),
+			),
+		),
+	);
 }

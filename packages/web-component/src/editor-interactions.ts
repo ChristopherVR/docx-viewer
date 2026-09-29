@@ -89,6 +89,12 @@ export function attachEditorInteractions(core: EditorCore, frame: HTMLElement): 
 			close: () => core.inserts.pictureDialog.close(),
 			selfHandled: true,
 		},
+		...core.formatDialogs.list.map((dialog) => ({
+			element: dialog.element,
+			isOpen: () => dialog.isOpen,
+			close: () => dialog.close(),
+			selfHandled: true,
+		})),
 		{
 			element: shell.chrome?.backstage.element,
 			isOpen: () => Boolean(shell.chrome?.backstage.isOpen),
@@ -138,7 +144,10 @@ export function attachEditorInteractions(core: EditorCore, frame: HTMLElement): 
 			const region = REGIONS[next];
 			if (region) focusRegion(region);
 		},
-		focusRibbon: () => focusRegion('ribbon'),
+		focusRibbon: () => {
+			focusRegion('ribbon');
+			shell.toolbar?.dispatchEvent(new CustomEvent('dve-keytips'));
+		},
 		contextMenu: () => {
 			if (currentRegion() === 'document') menu.openAtCaret();
 		},

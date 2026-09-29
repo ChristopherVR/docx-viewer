@@ -61,6 +61,79 @@ Still missing:
 - Paragraph keep options (`keepNext`, `keepLines`, `widowControl`, `contextualSpacing`) are modeled from styles and direct formatting, preserved through editing and used by Print Layout pagination (headings stay with the next paragraph); there are no editor controls for them yet.
 - Toggle properties follow ECMA-376: explicit offs (`w:val="0"`, `w:u w:val="none"`) are kept and cancel styles, styles inherit through basedOn and XOR across style types, and direct formatting is absolute. Bold, Italic, Underline and Strikethrough toggle what the text shows, writing an explicit off for style-inherited formatting as Word does (with a selection; a collapsed caret toggles the typing marks).
 
+### Ribbon parity with Word
+
+Every tab uses Word's layout language: SVG icons, large stacked buttons, inline icon-and-label
+buttons, dropdown commands (a transparent native `<select>` over an icon, caption and caret, so
+`select.value` and assistive technology keep working), split colour buttons with swatch popovers,
+editable font family and size combo boxes, a Styles gallery of preview tiles, group dialog
+launchers, contextual tabs, and one baseline for group captions. Toggle buttons reflect the
+selection (alignment, lists, bold and the rest), disabled controls look disabled, and tooltips
+carry the shortcut ("Bold (Ctrl+B)"). A Word command is shown only where a real command exists.
+
+What each tab offers that Word also has:
+
+- **Home:** Paste, Cut, Copy (disabled without a selection), Format Painter (character formatting
+  only), font family and size combo boxes showing the effective font (styles and theme included),
+  Grow/Shrink Font, Change Case, Clear Formatting, Bold through Superscript, Text Highlight, Font
+  Color, lists and levels, indents, Show/Hide paragraph marks (¶ only), alignment, Line Spacing,
+  Shading and Borders (written to `w:shd` and `w:pBdr`), the Styles gallery with a "more" menu and
+  a character-style menu, Find, Replace and Select All. The Font and Paragraph launchers open real
+  dialogs: Font (family, style, size, colour, underline style and colour, strikethrough, double
+  strikethrough, super/subscript, small and all caps, hidden, character spacing, with a preview)
+  and Paragraph (alignment, indents, first-line/hanging, spacing, line rule and amount, contextual
+  spacing, widow/orphan, keep with next, keep lines, page break before). Both apply only the
+  fields you changed and show mixed selections as blank or indeterminate.
+- **Insert:** Table, Pictures, Format picture, Link, Blank page, page and column breaks, Header,
+  Footer and Page Number (creates the part, relationship, content type and `sectPr` reference on
+  save, for existing packages and new documents), Date and Time (inserted as text in the display
+  locale, not an updating field) and Symbol (27 common glyphs, not the full Symbol dialog).
+- **Layout:** Margins (Normal, Narrow, Moderate, Wide), Size (Letter, Legal, Tabloid, Executive,
+  A3, A4, A5, B5), Orientation, Vertical alignment, Columns, page-number format and start,
+  different first page, odd and even, section breaks, Indent Left/Right (inches) and paragraph
+  Before/After spacing.
+- **References:** Table of Contents, Add Text (heading levels 1-3), Update Table, Footnote and
+  Endnote.
+- **Review:** Spelling (toggles the browser's spell checker; no bundled dictionary or grammar
+  checker), Word Count (selection or document), Read Aloud (the browser's speech synthesis),
+  tracked-change and comment commands, and the language and direction controls.
+- **View:** Hidden text, Gridlines, thumbnails, Zoom, Zoom to 100%, One page, Page width and Print
+  Layout.
+- **Table (contextual):** appears only while the selection is in a table, as in Word.
+- **Ribbon:** collapse (button, double-click a tab, or Ctrl+F1) with click-to-peek, and tab KeyTips
+  after Alt or F10 (H, N, P, S, R, W, T; F opens File).
+- **Shortcuts:** Ctrl+L, E, R, J (alignment), Ctrl+Shift+. and , (grow and shrink font), Ctrl+= and
+  Ctrl+Shift+= (sub and superscript) and Ctrl+Space (clear formatting), listed in the help dialog.
+
+Known limits of what is implemented:
+
+- Inserting a header, footer or page number is not undone by Ctrl+Z. Header and footer content lives
+  in the model outside the editor document, like in-place header edits, and the editor's history
+  records only the section layout. The first section's header and footer are the ones shown and
+  changed.
+- Page Number adds a PAGE field to the default header or footer; it does not offer Word's numbered
+  gallery styles, "Page X of Y" or first/odd/even variants.
+- Shading is a solid hex fill and Borders use Word's default 0.5 pt automatic pen; there are no line
+  styles, widths, colours, patterns or the Borders and Shading dialog.
+- The Font dialog has no Advanced tab (ligatures, kerning, scale, position) or text effects.
+
+Still not at parity:
+
+- **Home:** Text Effects, Sort, Multilevel List. Colour palettes are short lists, not Word's theme,
+  standard and More Colors grid. Line Spacing offers presets; the Paragraph dialog has the rest.
+- **Insert:** Cover Page, Shapes, Icons, 3D Models, SmartArt, Charts, Screenshot, Text Box, WordArt,
+  Drop Cap, Equation, Bookmark, Cross-reference, Comment gallery, Signature Line, Object.
+- **Layout and References:** Line Numbers, Hyphenation, Watermark, Page Color, Page Borders, Position
+  and Wrap Text, Citations, Bibliography, Captions, Index and Table of Authorities.
+- **Review and View:** Editor pane, Thesaurus, Translate, Accessibility, Compare, Protect, Ink;
+  Ruler, Navigation Pane headings, Read Mode, Web and Outline views, Multiple Pages, New Window,
+  Split and Macros.
+- **Dropdown galleries:** Margins, Size, Orientation, Columns and the others are text lists, not
+  Word's thumbnail galleries; Zoom is a percentage list, not the Zoom dialog.
+- **Ribbon:** no per-command KeyTips (only tabs), no overflow menus for narrow widths (panels
+  scroll horizontally), no customisation UI, no table-design or layout tools beyond row and column
+  commands.
+
 ### Fidelity
 
 - Print Layout recalculates PAGE, NUMPAGES, SECTIONPAGES, DATE and TIME (with `\@` pictures); TOC,

@@ -1,3 +1,4 @@
+import { FormatDialogs } from './format-dialogs';
 import type { EditorState, Transaction } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import type { DocumentModel } from '@christophervr/docx-core';
@@ -62,6 +63,7 @@ export class EditorCore {
 	readonly shell: ShellParts = {};
 	readonly collab: CollaborationSession;
 	readonly inserts: InsertController;
+	readonly formatDialogs: FormatDialogs;
 	readonly imageMedia: ImageMediaCache;
 	readonly host: EditorHost;
 	readonly parts: PartsController;
@@ -81,6 +83,10 @@ export class EditorCore {
 			paper: () => this.shell.paper,
 			toolbar: () => this.shell.toolbar,
 			reportError: (error) => emit(element, 'document-error', error),
+		});
+		this.formatDialogs = new FormatDialogs({
+			view: () => this.targetView(),
+			model: () => this.model,
 		});
 		this.imageMedia = new ImageMediaCache((partName) =>
 			this.inserts.media(partName, this.loaded?.media),
@@ -105,6 +111,7 @@ export class EditorCore {
 				this.shell.toolbar,
 				this.inserts.linkDialog.element,
 				this.inserts.pictureDialog.element,
+				...this.formatDialogs.elements,
 			],
 		});
 		this.pages = new PageController({

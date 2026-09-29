@@ -3,13 +3,18 @@ import { NodeSelection } from 'prosemirror-state';
 import type { DocumentModel } from '@christophervr/docx-core';
 import type { EditorLocale } from './localization';
 import { formatPageStatus, formatWordCount } from './localization';
-import { syncFontControls, syncParagraphControls, syncFormatControls } from './ribbon-controls';
+import { syncParagraphControls, syncFormatControls } from './ribbon-controls';
+import { syncFontControls } from './font-sync';
 import { syncMultilingualControls } from './multilingual-ribbon';
 import { syncStylePicker } from './paragraph-styles';
 import { syncCharacterStylePicker } from './character-style-picker';
 import { canExecuteTableCommand } from './table-commands';
 import type { RibbonAction } from './ribbon';
 import { countWords } from './word-count';
+import { syncSpellingButton } from './spelling';
+import { syncIndentInputs } from './indent-commands';
+import { syncParagraphToggles } from './paragraph-toggle-sync';
+import { syncContextualTabs } from './contextual-tabs';
 import { hasAnyChange, hasChangeAtCursor } from './review-commands';
 
 export function refreshEditorControls(
@@ -38,6 +43,16 @@ export function refreshEditorControls(
 					'Page thumbnails',
 					'Layout view',
 					'Print',
+					'Copy',
+					'Select all',
+					'Show paragraph marks',
+					'Zoom to 100%',
+					'Page width',
+					'One page',
+					'Word count',
+					'Spelling',
+					'Read aloud',
+					'Gridlines',
 				].includes(label ?? '');
 		});
 	if (!view) return undefined;
@@ -55,6 +70,10 @@ export function refreshEditorControls(
 		}
 		syncFontControls(toolbar, state);
 		syncParagraphControls(toolbar, state);
+		syncSpellingButton(toolbar, view);
+		syncIndentInputs(toolbar, state);
+		syncParagraphToggles(toolbar, view, model);
+		syncContextualTabs(toolbar, state);
 		const trackButton = toolbar.querySelector<HTMLButtonElement>('[aria-label="Track changes"]');
 		trackButton?.setAttribute('aria-pressed', String(Boolean(model.trackChanges)));
 		const commentsButton = toolbar.querySelector<HTMLButtonElement>('[aria-label="Comments"]');

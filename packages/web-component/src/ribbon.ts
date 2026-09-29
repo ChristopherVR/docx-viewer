@@ -1,7 +1,10 @@
+import { shortcutHint } from './binding-labels';
 import { emit } from './events';
+import { setComboValue, type ComboInput } from './ribbon-combo';
 import { localizeElement, normalizeEditorLocale } from './localization';
 import type { RibbonAction } from './ribbon-action';
 import { buildHomePanel } from './ribbon-home';
+import { attachRibbonBehavior } from './ribbon-behavior';
 import { buildOtherPanels } from './ribbon-tabs';
 
 export type { RibbonAction } from './ribbon-action';
@@ -35,6 +38,11 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 		panel.setAttribute('aria-labelledby', id);
 		panel.tabIndex = 0;
 		panel.hidden = name !== 'Home';
+		// Table tools are contextual: the tab appears only while the selection is in a table.
+		if (name === 'Table') {
+			tab.hidden = true;
+			tab.dataset.contextual = '';
+		}
 		tab.addEventListener('click', () => {
 			tabs.querySelectorAll('[role=tab]').forEach((item) => {
 				item.setAttribute('aria-selected', String(item === tab));
@@ -45,7 +53,9 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 			});
 		});
 		tab.addEventListener('keydown', (event) => {
-			const tabsList = [...tabs.querySelectorAll<HTMLButtonElement>('[role=tab]')];
+			const tabsList = [...tabs.querySelectorAll<HTMLButtonElement>('[role=tab]')].filter(
+				(item) => !item.hidden && !item.hasAttribute('data-dve-hidden'),
+			);
 			const current = tabsList.indexOf(tab);
 			const next =
 				event.key === 'ArrowRight'
@@ -70,13 +80,12 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 	buildHomePanel(panels);
 	buildOtherPanels(panels);
 	for (const panel of panels.values()) root.append(panel);
-	root.querySelector<HTMLSelectElement>('[aria-label="Font family"]')!.value = 'Calibri';
-	root.querySelector<HTMLSelectElement>('[aria-label="Font size"]')!.value = '11';
-	root.querySelector<HTMLSelectElement>('[aria-label="Font color"]')!.value = '#000000';
-	root.querySelector<HTMLSelectElement>('[aria-label="Text highlight"]')!.value = 'none';
+	setComboValue(root.querySelector<ComboInput>('[aria-label="Font family"]')!, 'Calibri');
+	setComboValue(root.querySelector<ComboInput>('[aria-label="Font size"]')!, '11');
 	root.querySelector<HTMLSelectElement>('[aria-label="Zoom"]')!.value = '100';
 	root.querySelector<HTMLSelectElement>('[aria-label="Layout view"]')!.value = 'draft';
 	root.prepend(tabs);
+	attachRibbonBehavior(root, tabs);
 	root.addEventListener('click', (event) => {
 		const target = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]');
 		if (!target) return;
@@ -102,7 +111,10 @@ export function syncSelectTitles(root: ParentNode): void {
 function syncButtonTitles(root: ParentNode): void {
 	for (const button of root.querySelectorAll('button')) {
 		const label = button.getAttribute('aria-label');
-		if (label && button.textContent?.trim() && button.title !== label) button.title = label;
+		if (!label) continue;
+		const hint = shortcutHint(button.dataset.localearialabel ?? label);
+		const title = hint ? `${label} (${hint})` : label;
+		if ((button.textContent?.trim() || hint) && button.title !== title) button.title = title;
 	}
 }
 

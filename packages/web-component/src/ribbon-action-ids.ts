@@ -1,3 +1,5 @@
+import type { LegacyRibbonLabel } from './ribbon-legacy-labels';
+
 /**
  * Stable, locale-independent ids of every ribbon control. `hiddenActions` is keyed on these ids;
  * the English labels below are only the keys the localizer uses to find a control's display text.
@@ -5,6 +7,37 @@
  * updating this list.
  */
 export const RIBBON_ACTION_IDS = [
+	'paste',
+	'add-text',
+	'blank-page',
+	'read-aloud',
+	'gridlines',
+	'shading',
+	'borders',
+	'header',
+	'footer',
+	'page-number',
+	'page-size',
+	'font-dialog',
+	'paragraph-dialog',
+	'indent-left',
+	'indent-right',
+	'zoom-actual-size',
+	'page-width',
+	'one-page',
+	'word-count',
+	'spelling',
+	'symbol',
+	'date-and-time',
+	'change-case',
+	'format-painter',
+	'show-paragraph-marks',
+	'select-all',
+	'replace',
+	'cut',
+	'copy',
+	'grow-font',
+	'shrink-font',
 	'font-family',
 	'font-size',
 	'bold',
@@ -89,6 +122,37 @@ export type RibbonActionId = (typeof RIBBON_ACTION_IDS)[number];
 
 /** English control label of each action, the lookup key into the locale strings. Display-only. */
 export const RIBBON_ACTION_LABELS: Readonly<Record<RibbonActionId, string>> = {
+	paste: 'Paste',
+	'add-text': 'Add text',
+	'blank-page': 'Blank page',
+	'read-aloud': 'Read aloud',
+	gridlines: 'Gridlines',
+	shading: 'Shading',
+	borders: 'Borders',
+	header: 'Header',
+	footer: 'Footer',
+	'page-number': 'Page number',
+	'page-size': 'Page size',
+	'font-dialog': 'Font settings',
+	'paragraph-dialog': 'Paragraph settings',
+	'indent-left': 'Indent left',
+	'indent-right': 'Indent right',
+	'zoom-actual-size': 'Zoom to 100%',
+	'page-width': 'Page width',
+	'one-page': 'One page',
+	'word-count': 'Word count',
+	spelling: 'Spelling',
+	symbol: 'Symbol',
+	'date-and-time': 'Date and time',
+	'change-case': 'Change case',
+	'format-painter': 'Format painter',
+	'show-paragraph-marks': 'Show paragraph marks',
+	'select-all': 'Select all',
+	replace: 'Replace',
+	cut: 'Cut',
+	copy: 'Copy',
+	'grow-font': 'Grow font',
+	'shrink-font': 'Shrink font',
 	'font-family': 'Font family',
 	'font-size': 'Font size',
 	bold: 'Bold',
@@ -169,89 +233,7 @@ export const RIBBON_ACTION_LABELS: Readonly<Record<RibbonActionId, string>> = {
 	'delete-table': 'Delete table',
 };
 
-/**
- * The English control labels `hiddenActions` accepted before ids existed. Deprecated: accepted for
- * one more release, mapped to ids, and reported through a `document-warning` event.
- */
-export type LegacyRibbonLabel =
-	| 'Font family'
-	| 'Font size'
-	| 'Bold'
-	| 'Italic'
-	| 'Underline'
-	| 'Strikethrough'
-	| 'Superscript'
-	| 'Subscript'
-	| 'Font color'
-	| 'Text highlight'
-	| 'Clear formatting'
-	| 'Decrease indent'
-	| 'Increase indent'
-	| 'Spacing after'
-	| 'Spacing before'
-	| 'Line spacing'
-	| 'Bulleted list'
-	| 'Numbered list'
-	| 'Decrease list level'
-	| 'Increase list level'
-	| 'Remove list'
-	| 'Align left'
-	| 'Align center'
-	| 'Align right'
-	| 'Justify'
-	| 'Find and replace'
-	| 'Insert table'
-	| 'Insert picture'
-	| 'Format picture'
-	| 'Insert link'
-	| 'Insert page break'
-	| 'Insert column break'
-	| 'Margins'
-	| 'Orientation'
-	| 'Vertical alignment'
-	| 'Columns'
-	| 'Page number format'
-	| 'Page numbering'
-	| 'Different first page'
-	| 'Different odd and even pages'
-	| 'Next page section break'
-	| 'Continuous section break'
-	| 'Even page section break'
-	| 'Odd page section break'
-	| 'Insert table of contents'
-	| 'Update table of contents'
-	| 'Insert footnote'
-	| 'Insert endnote'
-	| 'Paragraph direction'
-	| 'Text language'
-	| 'Custom text language tag'
-	| 'East Asian language'
-	| 'Custom east asian language tag'
-	| 'Complex script language'
-	| 'Custom complex script language tag'
-	| 'Run direction'
-	| 'Track changes'
-	| 'Display for review'
-	| 'Previous change'
-	| 'Next change'
-	| 'Accept'
-	| 'Reject'
-	| 'Accept all'
-	| 'Reject all'
-	| 'Add comment'
-	| 'Comments'
-	| 'Show hidden text'
-	| 'Page thumbnails'
-	| 'Zoom'
-	| 'Layout view'
-	| 'Print'
-	| 'Insert row above'
-	| 'Insert row below'
-	| 'Delete row'
-	| 'Insert column left'
-	| 'Insert column right'
-	| 'Delete column'
-	| 'Delete table';
+export type { LegacyRibbonLabel };
 
 /** A value `hiddenActions` accepts: a stable id, or (deprecated) the old English label. */
 export type RibbonActionInput = RibbonActionId | LegacyRibbonLabel;

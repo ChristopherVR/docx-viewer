@@ -3,14 +3,70 @@ import type { RibbonAction } from './ribbon';
 import { runRibbonCommand } from './editor-commands';
 import { runListAction } from './list-commands';
 import { focusView } from './focus-view';
+import { copyOrCut, pasteText } from './context-menu-actions';
+import { translate } from './localization';
+import { emit } from './events';
+import { setHeadingLevel } from './heading-commands';
+import { readAloudAvailable, textToRead, toggleReadAloud } from './read-aloud';
+import { showWordCount } from './word-count-panel';
+import { syncSpellingButton } from './spelling';
+import { selectAll } from 'prosemirror-commands';
+import { toggleFormatPainter } from './format-painter';
 
 /** Routes a ribbon action to the controller that owns it. */
 export function routeRibbonAction(core: EditorCore, action: RibbonAction): void {
 	const { inserts, pages, parts, shell } = core;
 	if (inserts.handle(action)) return;
 	const target = core.targetView();
-	if (action.type === 'search') shell.searchPanel?.open();
-	else if (action.type === 'thumbnails')
+	if (action.type === 'clipboard') {
+		if (!target || (action.key !== 'copy' && !target.editable)) return;
+		const done = action.key === 'paste' ? pasteText(target) : copyOrCut(target, action.key);
+		void done.then((ok) => {
+			if (!ok)
+				emit(core.element, 'document-warning', translate(core.locale, 'menu.clipboardDenied'));
+		});
+	} else if (action.type === 'search') shell.searchPanel?.open(action.focus);
+	else if (action.type === 'selectAll' && target) {
+		selectAll(target.state, target.dispatch);
+		focusView(target);
+	} else if (action.type === 'formatPainter' && target)
+		toggleFormatPainter(target, (on) =>
+			shell.toolbar
+				?.querySelector('[aria-label="Format painter"], [data-localearialabel="Format painter"]')
+				?.setAttribute('aria-pressed', String(on)),
+		);
+	else if (action.type === 'formatDialog') core.formatDialogs.open(action.kind);
+	else if (action.type === 'pageNumber' || action.type === 'headerFooter') {
+		const done =
+			action.type === 'pageNumber'
+				? pages.insertPageNumber(action.position, action.align)
+				: pages.insertHeaderFooter(action.kind);
+		if (done) parts.render(shell.canvas, shell.paper);
+	} else if (action.type === 'addText' && target) {
+		if (!setHeadingLevel(target, core.model, action.level))
+			emit(core.element, 'document-warning', 'This document has no heading styles to apply.');
+		focusView(target);
+	} else if (action.type === 'readAloud' && target) {
+		const button = () =>
+			shell.toolbar?.querySelector(
+				'[aria-label="Read aloud"], [data-localearialabel="Read aloud"]',
+			);
+		if (!readAloudAvailable())
+			emit(core.element, 'document-warning', 'This browser cannot read text aloud.');
+		else
+			toggleReadAloud(textToRead(target), (on) =>
+				button()?.setAttribute('aria-pressed', String(on)),
+			);
+	} else if (action.type === 'zoomFit') pages.zoomTo(action.mode);
+	else if (action.type === 'wordCount') {
+		const anchor = shell.toolbar?.querySelector<HTMLElement>(
+			'[aria-label="Word count"], [data-localearialabel="Word count"]',
+		);
+		if (anchor && target) showWordCount(anchor, target, core.locale);
+	} else if (action.type === 'spelling' && target) {
+		target.dom.spellcheck = !target.dom.spellcheck;
+		syncSpellingButton(shell.toolbar, target);
+	} else if (action.type === 'thumbnails')
 		core.element.toggleAttribute('show-thumbnails', !core.viewOptions.showThumbnails);
 	else if (action.type === 'zoom') pages.setZoom(action.value);
 	else if (action.type === 'list' && target) {

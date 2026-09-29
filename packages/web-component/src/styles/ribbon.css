@@ -52,7 +52,7 @@
 	display: flex;
 	flex-wrap: nowrap;
 	align-items: stretch;
-	gap: 10px;
+	gap: 6px;
 	padding: 8px 14px;
 	overflow-x: auto;
 	overflow-y: hidden;
@@ -66,7 +66,7 @@
 	display: flex;
 	flex: 0 0 auto;
 	flex-wrap: wrap;
-	align-content: flex-start;
+	align-content: space-between;
 	align-items: center;
 	min-width: 0;
 	max-width: 330px;
@@ -94,20 +94,14 @@
 	text-align: center;
 	content: attr(data-caption);
 }
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Clipboard'] {
+	width: 104px;
+}
 .ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Font'] {
-	width: 310px;
+	width: 335px;
 }
 .ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Paragraph'] {
-	width: 270px;
-}
-.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Alignment'] {
-	width: 180px;
-}
-.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Editing'] {
-	width: 140px;
-}
-.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Styles'] {
-	width: 150px;
+	width: 272px;
 }
 .ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Styles'] select {
 	width: 100%;
@@ -127,7 +121,7 @@
 	.ribbon-group[data-label='Editing'] {
 	width: 176px;
 }
-.ribbon-group[aria-label='Language'] {
+.ribbon-group[data-label='Language'] {
 	flex: 0 0 100%;
 }
 .ribbon-panel[data-panel='Review'] .ribbon-group[data-label='Tracking'],
@@ -244,4 +238,515 @@
 	padding: 30px clamp(16px, 5vw, 70px) 60px;
 	background: var(--canvas);
 	overscroll-behavior: contain;
+}
+
+/* Word-style icon commands: small icon buttons, large stacked buttons and split colour buttons. */
+.ribbon-group button.ribbon-small {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	min-width: 28px;
+	height: 28px;
+	padding: 0;
+}
+.ribbon-group button.ribbon-large {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 3px;
+	width: 62px;
+	height: 66px;
+	padding: 4px 2px;
+	font-size: 11px;
+	line-height: 1.15;
+	white-space: normal;
+	text-align: center;
+}
+.ribbon-large > span {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.ribbon-stack {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.ribbon-split {
+	display: inline-flex;
+	align-items: center;
+}
+.ribbon-group .ribbon-split button.ribbon-color {
+	position: relative;
+	width: 28px;
+	min-width: 28px;
+	border-radius: 4px 0 0 4px;
+}
+.ribbon-color::after {
+	position: absolute;
+	right: 6px;
+	bottom: 3px;
+	left: 6px;
+	height: 3px;
+	background: var(--bar, transparent);
+	outline: 1px solid var(--line);
+	content: '';
+}
+.ribbon-group .ribbon-split .ribbon-caret {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 14px;
+	min-width: 14px;
+	height: 28px;
+	padding: 0;
+	border-radius: 0 4px 4px 0;
+}
+.ribbon-popover {
+	position: fixed;
+	z-index: 1000;
+	display: grid;
+	grid-template-columns: repeat(6, 22px);
+	gap: 4px;
+	padding: 8px;
+	border: 1px solid var(--line);
+	border-radius: 6px;
+	background: var(--surface);
+	box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
+}
+.ribbon-popover .swatch {
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: 1px solid var(--line);
+	border-radius: 3px;
+	background: var(--swatch);
+	cursor: pointer;
+}
+.ribbon-popover .swatch:hover,
+.ribbon-popover .swatch:focus-visible {
+	outline: 2px solid var(--blue);
+	outline-offset: 1px;
+}
+.ribbon-popover .swatch-none {
+	background: linear-gradient(135deg, transparent 46%, #c00000 46% 54%, transparent 54%);
+}
+.ribbon-group button.ribbon-inline {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	padding: 0 8px 0 6px;
+	font-size: 12px;
+}
+.ribbon-group button.ribbon-large {
+	min-height: 66px;
+	overflow: hidden;
+}
+.ribbon-group:has(.ribbon-large) {
+	max-width: none;
+	flex-wrap: wrap;
+}
+.ribbon-group button.ribbon-inline {
+	font-weight: 400;
+}
+.ribbon-group button.ribbon-large {
+	width: 70px;
+}
+.ribbon-panel[data-panel='Table'] .ribbon-group button.ribbon-large {
+	width: 80px;
+}
+
+/* Word-style dropdown command: the native select is transparent and covers the whole control. */
+.ribbon-menu {
+	box-sizing: border-box;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 3px;
+	width: 70px;
+	height: 66px;
+	padding: 4px 2px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	color: var(--ink);
+	font-size: 11px;
+	line-height: 1.15;
+	text-align: center;
+}
+.ribbon-menu:hover {
+	border-color: var(--line);
+	background: var(--accent-soft);
+}
+.ribbon-menu:focus-within {
+	outline: 2px solid var(--blue);
+	outline-offset: -1px;
+}
+.ribbon-menu > span {
+	max-width: 100%;
+}
+.ribbon-menu > .ribbon-icon:last-of-type {
+	margin-top: -2px;
+}
+.ribbon-menu-compact {
+	flex-direction: row;
+	width: 44px;
+	height: 28px;
+	padding: 0 4px;
+	justify-content: center;
+	gap: 2px;
+}
+.ribbon-menu-compact > .ribbon-icon:last-of-type {
+	margin-top: 0;
+}
+.ribbon-group .ribbon-menu select.ribbon-menu-input {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	max-width: none;
+	height: 100%;
+	opacity: 0;
+	cursor: pointer;
+	border: 0;
+}
+.ribbon-menu[data-dve-hidden] {
+	display: none;
+}
+.ribbon-stack .ribbon-small,
+.ribbon-stack .ribbon-inline {
+	height: 22px;
+}
+.ribbon-stack .ribbon-inline {
+	justify-content: flex-start;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Editing'] {
+	width: auto;
+	min-width: 110px;
+}
+.dve-painting,
+.dve-painting * {
+	cursor: copy;
+}
+
+/* Styles gallery: a scrolling strip of tiles with a preview of each style. */
+.ribbon-gallery {
+	display: flex;
+	gap: 3px;
+	width: 262px;
+	height: 52px;
+	padding: 2px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scroll-snap-type: x proximity;
+	scrollbar-width: none;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+	background: var(--surface);
+}
+.ribbon-group .ribbon-gallery .style-tile {
+	flex: 0 0 82px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
+	height: 46px;
+	min-width: 0;
+	padding: 3px 2px;
+	border: 1px solid transparent;
+	scroll-snap-align: start;
+}
+.style-sample {
+	max-width: 100%;
+	overflow: hidden;
+	line-height: 1.1;
+	white-space: nowrap;
+}
+.style-name {
+	max-width: 100%;
+	overflow: hidden;
+	color: var(--muted);
+	font-size: 10px;
+	text-overflow: ellipsis;
+}
+.ribbon-group .ribbon-gallery .style-tile[aria-pressed='true'] {
+	border-color: var(--blue);
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Styles'] {
+	width: 328px;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Styles'] .ribbon-stack {
+	gap: 2px;
+}
+
+.ribbon-group[data-label='Section breaks'] {
+	width: 210px;
+}
+.ribbon-group[data-label='Page numbers'] {
+	width: 400px;
+}
+
+/* Language: labelled controls flow in short columns instead of one tall stack. */
+.ribbon-group[data-label='Language'] {
+	flex: 0 0 auto;
+	flex-direction: column;
+	flex-wrap: wrap;
+	align-content: flex-start;
+	max-height: 86px;
+	max-width: none;
+	column-gap: 12px;
+	overflow: hidden;
+}
+
+/* Collapse: panels hide; a click on a tab overlays its panel until dismissed. */
+.ribbon-tabs .ribbon-collapse {
+	flex: none;
+	align-self: center;
+	margin-left: auto;
+	width: 26px;
+	height: 26px;
+	padding: 0;
+	border: 0;
+	border-radius: 4px;
+	background: none;
+	color: var(--muted);
+	cursor: pointer;
+}
+.ribbon-tabs .ribbon-collapse:hover {
+	background: var(--accent-soft);
+}
+.ribbon-tabs .ribbon-collapse[aria-pressed='true'] svg {
+	transform: rotate(180deg);
+}
+.dve-ribbon[data-collapsed] {
+	position: relative;
+}
+.dve-ribbon[data-collapsed]:not([data-peek]) .ribbon-panel {
+	display: none;
+}
+.dve-ribbon[data-collapsed][data-peek] .ribbon-panel:not([hidden]) {
+	position: absolute;
+	top: 100%;
+	right: 0;
+	left: 0;
+	z-index: 60;
+	border-bottom: 1px solid var(--line);
+	background: var(--surface);
+	box-shadow: 0 6px 16px rgb(0 0 0 / 0.15);
+}
+.dve-keytip {
+	position: absolute;
+	bottom: -2px;
+	left: 50%;
+	z-index: 70;
+	transform: translateX(-50%);
+	min-width: 16px;
+	padding: 1px 4px;
+	border: 1px solid var(--line);
+	border-radius: 3px;
+	background: #1f1f1f;
+	color: #fff;
+	font:
+		600 11px/14px 'Segoe UI',
+		Arial,
+		sans-serif;
+	text-align: center;
+	pointer-events: none;
+}
+.dve-file-tab {
+	position: relative;
+}
+
+.ribbon-popover.dve-word-count {
+	grid-template-columns: auto auto;
+	gap: 4px 24px;
+	padding: 10px 14px;
+	color: var(--ink);
+	font:
+		12px 'Segoe UI',
+		Arial,
+		sans-serif;
+}
+.dve-word-count strong {
+	text-align: right;
+}
+
+.ribbon-spinner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	width: 170px;
+	font-size: 12px;
+	white-space: nowrap;
+}
+.ribbon-group .ribbon-spinner input {
+	width: 64px;
+	height: 24px;
+	border: 1px solid var(--line);
+	border-radius: 3px;
+	background: var(--surface);
+	color: var(--ink);
+	font:
+		12px 'Segoe UI',
+		Arial,
+		sans-serif;
+}
+
+/* Editable combo boxes (font family and size). */
+.ribbon-combo {
+	display: inline-flex;
+	align-items: stretch;
+	height: 26px;
+	border: 1px solid var(--line);
+	border-radius: 3px;
+	background: var(--surface);
+}
+.ribbon-combo:focus-within {
+	border-color: var(--blue);
+	outline: 1px solid var(--blue);
+}
+.ribbon-combo.font-family-combo {
+	width: 132px;
+}
+.ribbon-combo.font-size-combo {
+	width: 58px;
+}
+.ribbon-combo input {
+	flex: 1;
+	min-width: 0;
+	padding: 0 6px;
+	border: 0;
+	background: transparent;
+	color: var(--ink);
+	font:
+		12px 'Segoe UI',
+		Arial,
+		sans-serif;
+	outline: none;
+}
+.ribbon-group .ribbon-combo .ribbon-combo-caret {
+	width: 18px;
+	min-width: 18px;
+	height: 100%;
+	border-radius: 0;
+}
+.ribbon-popover.ribbon-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	min-width: 160px;
+	max-height: 280px;
+	overflow-y: auto;
+	padding: 4px 0;
+}
+.ribbon-list button[role='option'] {
+	padding: 4px 12px;
+	border: 0;
+	background: none;
+	color: var(--ink);
+	font:
+		14px 'Segoe UI',
+		Arial,
+		sans-serif;
+	text-align: left;
+	cursor: pointer;
+}
+.ribbon-list button[role='option']:hover,
+.ribbon-list button[role='option']:focus-visible {
+	background: var(--accent-soft);
+	outline: none;
+}
+.ribbon-list button[aria-selected='true'] {
+	color: var(--blue);
+	font-weight: 600;
+}
+
+.ribbon-combo[data-dve-hidden] {
+	display: none;
+}
+
+/* Tiles preview a style on paper, so a style's own colours stay legible in dark themes too. */
+.ribbon-group .ribbon-gallery .style-tile {
+	background: #fff;
+	color: #1f1f1f;
+}
+.ribbon-group .ribbon-gallery .style-tile:hover:not(:disabled) {
+	background: #f3f7fc;
+	border-color: #a8c4e6;
+}
+.ribbon-group .ribbon-gallery .style-tile[aria-pressed='true'] {
+	border-color: var(--blue);
+	background: #e8f0fa;
+}
+.ribbon-gallery .style-name {
+	color: #555;
+}
+.ribbon-group .ribbon-gallery .style-tile:disabled {
+	opacity: 0.6;
+}
+
+/* Disabled controls look disabled, and keyboard focus is always visible. */
+.ribbon-group button:disabled,
+.ribbon-group select:disabled,
+.ribbon-group input:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+.ribbon-menu:has(select:disabled),
+.ribbon-combo:has(input:disabled),
+.ribbon-spinner:has(input:disabled),
+.ribbon-split:has(button:disabled) {
+	opacity: 0.4;
+}
+.ribbon-menu:has(select:disabled):hover {
+	border-color: transparent;
+	background: none;
+}
+.ribbon-group button:focus-visible,
+.ribbon-tabs button:focus-visible {
+	outline: 2px solid var(--blue);
+	outline-offset: -2px;
+}
+.ribbon-menu:has(select:disabled) select,
+.ribbon-split:has(button:disabled) button:disabled {
+	opacity: 1;
+}
+
+/* A contextual tab (Table) is tinted so it reads as tools for the selection, as in Word. */
+.ribbon-tabs [role='tab'][data-contextual] {
+	color: #0f7b6c;
+}
+.ribbon-tabs [role='tab'][data-contextual][aria-selected='true'] {
+	color: #0f7b6c;
+}
+.ribbon-tabs [role='tab'][data-contextual][aria-selected='true']:after {
+	background: #0f7b6c;
+}
+.ribbon-tabs [role='tab'][hidden] {
+	display: none;
+}
+
+/* Dialog launcher: the small corner button of a group, as in Word. */
+.ribbon-group {
+	position: relative;
+}
+.ribbon-group .ribbon-launcher {
+	position: absolute;
+	right: 2px;
+	bottom: 0;
+	z-index: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 14px;
+	min-width: 14px;
+	height: 14px;
+	padding: 0;
+	color: var(--muted);
+}
+.ribbon-group .ribbon-launcher:hover:not(:disabled) {
+	color: var(--ink);
 }

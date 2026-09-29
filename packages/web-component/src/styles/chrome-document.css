@@ -125,3 +125,79 @@
 .dve-paper .dve-float-block-right {
 	margin-left: auto;
 }
+.dve-paper[data-show-marks] .ProseMirror p::after,
+.dve-paper[data-show-marks] .ProseMirror h1::after,
+.dve-paper[data-show-marks] .ProseMirror h2::after,
+.dve-paper[data-show-marks] .ProseMirror h3::after {
+	color: var(--blue);
+	content: '\00b6';
+	opacity: 0.7;
+	pointer-events: none;
+}
+
+/* Font and Paragraph dialogs */
+.dve-format-dialog {
+	top: 90px;
+	width: min(520px, calc(100% - 32px));
+	max-height: calc(100% - 120px);
+	overflow-y: auto;
+}
+.dve-format-dialog .dve-dialog-fieldset {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+	padding: 8px 10px 10px;
+	border: 1px solid var(--line);
+	border-radius: 6px;
+}
+.dve-format-dialog legend {
+	padding: 0 4px;
+	color: var(--muted);
+	font-size: 12px;
+}
+.dve-format-dialog .dve-dialog-cols {
+	grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+}
+.dve-format-dialog input[type='color'] {
+	padding: 2px;
+}
+.dve-format-dialog .dve-dialog-fieldset > .dve-dialog-check {
+	display: flex;
+}
+.dve-font-dialog .dve-dialog-fieldset:nth-of-type(1) {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.dve-format-preview {
+	display: grid;
+	min-height: 54px;
+	place-items: center;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+	background: #fff;
+	color: #000;
+	overflow: hidden;
+}
+.dve-dialog input[type='checkbox'] {
+	width: 16px;
+	height: 16px;
+	padding: 0;
+	margin: 0;
+	accent-color: var(--word);
+}
+.dve-format-dialog .dve-dialog-fieldset:has(> .dve-dialog-check):not(:has(> .dve-dialog-cols)) {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 6px 12px;
+}
+.dve-format-dialog
+	.dve-dialog-fieldset:has(> .dve-dialog-check):not(:has(> .dve-dialog-cols))
+	legend {
+	grid-column: 1 / -1;
+}
+
+/* View > Gridlines: a quarter-inch alignment grid over the page. */
+.dve-paper[data-show-gridlines] {
+	background-image:
+		linear-gradient(to right, #8ab4f855 1px, transparent 1px),
+		linear-gradient(to bottom, #8ab4f855 1px, transparent 1px);
+	background-size: 24px 24px;
+}

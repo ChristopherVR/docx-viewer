@@ -131,16 +131,13 @@
 		padding-right: 7px;
 	}
 	.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Font'] {
-		width: 310px;
+		width: 340px;
 	}
 	.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Paragraph'] {
-		width: 270px;
-	}
-	.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Alignment'] {
-		width: 180px;
+		width: 280px;
 	}
 	.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Editing'] {
-		width: 142px;
+		width: auto;
 	}
 	.ribbon-group button {
 		min-width: 34px;

@@ -27,6 +27,14 @@ export function applyRibbonVisibility(
 	};
 	for (const control of toolbar.querySelectorAll<HTMLElement>(`.ribbon-panel ${CONTROLS}`))
 		control.toggleAttribute(HIDDEN, hidden.has(ribbonControlId(control) ?? ''));
+	for (const menu of toolbar.querySelectorAll('.ribbon-menu'))
+		menu.toggleAttribute(HIDDEN, Boolean(menu.querySelector(`select[${HIDDEN}]`)));
+	for (const combo of toolbar.querySelectorAll('.ribbon-combo'))
+		combo.toggleAttribute(HIDDEN, Boolean(combo.querySelector(`input[${HIDDEN}]`)));
+	for (const split of toolbar.querySelectorAll('.ribbon-split'))
+		split
+			.querySelector('[data-split-caret]')
+			?.toggleAttribute(HIDDEN, Boolean(split.querySelector(`button[${HIDDEN}]`)));
 	for (const group of toolbar.querySelectorAll('.ribbon-group'))
 		group.toggleAttribute(HIDDEN, allHidden(group));
 	const tabs = [...toolbar.querySelectorAll<HTMLButtonElement>('[role="tab"]')];

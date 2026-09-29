@@ -1,5 +1,13 @@
 import { EditorState, Transaction } from 'prosemirror-state';
-import type { DocumentModel, Block, Paragraph, Table, TextRun } from '@christophervr/docx-core';
+import type {
+	DocumentModel,
+	Block,
+	Paragraph,
+	SectionProperties,
+	Table,
+	TextRun,
+} from '@christophervr/docx-core';
+import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import {
 	computeListLabels,
 	displayListLabel,
@@ -13,6 +21,7 @@ import { appendInlineNode, runToInlineNodes, type NoteNumberLookup } from './run
 import { convertMergedTable, convertSimpleTable, tableNode } from './table-model-adapter';
 import { parseBordersJson } from './table-render';
 import { sectionLayoutJson, sectionsFromLayout } from './section-layout';
+import { sectionsOf } from './section-commands';
 
 type ListLabels = ReturnType<typeof computeListLabels>;
 
@@ -103,6 +112,39 @@ function tableBordersFromNode(value: unknown): Partial<Table> {
 	const borders = parseBordersJson(value);
 	return borders ? { borders: borders as NonNullable<Table['borders']> } : {};
 }
+/**
+ * A document with no recorded section layout (a new document nobody changed page setup on) has no
+ * sections of its own, but header/footer content added since must survive: one section is
+ * synthesized from the page geometry and keeps that content.
+ */
+function keepHeaderFooterSections(
+	prior: SectionProperties[] | undefined,
+	blocks: Block[],
+	doc: ProseMirrorNode,
+): { sections?: SectionProperties[] } {
+	const source = prior?.find((section) => section.headers || section.footers);
+	if (!source) return {};
+	const page = {
+		width: doc.attrs.pageWidth,
+		height: doc.attrs.pageHeight,
+		marginTop: doc.attrs.marginTop,
+		marginRight: doc.attrs.marginRight,
+		marginBottom: doc.attrs.marginBottom,
+		marginLeft: doc.attrs.marginLeft,
+	};
+	const [section] = sectionsOf({ blocks, page } as DocumentModel);
+	if (!section) return {};
+	return {
+		sections: [
+			{
+				...section,
+				...(source.headers ? { headers: source.headers } : {}),
+				...(source.footers ? { footers: source.footers } : {}),
+			},
+		],
+	};
+}
+
 export function docToModel(
 	doc: ReturnType<typeof modelToDoc>,
 	prior: DocumentModel,
@@ -214,7 +256,7 @@ export function docToModel(
 		...(doc.attrs.evenAndOddHeaders ? { evenAndOddHeaders: true } : {}),
 		...(typeof doc.attrs.sections === 'string'
 			? { sections: sectionsFromLayout(doc.attrs.sections, priorSections, blocks) }
-			: {}),
+			: keepHeaderFooterSections(priorSections, blocks, doc)),
 		page: {
 			width: doc.attrs.pageWidth,
 			height: doc.attrs.pageHeight,

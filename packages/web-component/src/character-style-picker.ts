@@ -3,6 +3,7 @@ import type { EditorView } from 'prosemirror-view';
 import type { DocumentModel } from '@christophervr/docx-core';
 import { translate, type EditorLocale } from './localization';
 import { schema } from './schema';
+import { menuAround } from './ribbon-parts';
 
 /** The character style (`w:rStyle`) at the start of the selection, or '' when none applies. */
 export function characterStyleAtSelection(view: EditorView): string {
@@ -40,7 +41,7 @@ export function syncCharacterStylePicker(
 	model: DocumentModel,
 	locale: EditorLocale,
 ) {
-	const group = toolbar.querySelector('[data-paragraph-styles]')?.parentElement;
+	const group = toolbar.querySelector('[data-paragraph-styles]')?.closest('.ribbon-group');
 	if (!group) return;
 	let select = group.querySelector<HTMLSelectElement>('[data-character-styles]');
 	if (!select) {
@@ -50,7 +51,11 @@ export function syncCharacterStylePicker(
 		select.addEventListener('change', () =>
 			emit(select!, 'ribbon-action', { type: 'characterStyle', value: select!.value }),
 		);
-		group.append(select);
+		group
+			.querySelector('.ribbon-stack')
+			?.append(
+				menuAround(select, translate(locale, 'Character style'), 'charStyle', { compact: true }),
+			);
 	}
 	select.setAttribute('aria-label', translate(locale, 'Character style'));
 	const definitions = Object.values(model.characterStyles?.styles ?? {}).filter(

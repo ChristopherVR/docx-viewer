@@ -18,8 +18,8 @@ describe('shared editor localization', () => {
 	it('localizes ribbon labels while keeping action payloads and control state intact', () => {
 		const ribbon = createRibbon();
 		const format = ribbon.querySelector<HTMLButtonElement>('[aria-label="Bold"]')!;
-		const highlight = ribbon.querySelector<HTMLSelectElement>('[aria-label="Text highlight"]')!;
-		highlight.value = 'cyan';
+		const zoom = ribbon.querySelector<HTMLSelectElement>('[aria-label="Zoom"]')!;
+		zoom.value = '125';
 		setRibbonLocale(ribbon, 'fr');
 		expect(ribbon.getAttribute('aria-label')).toBe('Mise en forme du document');
 		expect(ribbon.querySelector('[role="tab"]')?.textContent).toBe('Accueil');
@@ -29,12 +29,20 @@ describe('shared editor localization', () => {
 			'Police',
 		);
 		expect(JSON.parse(format.dataset.action!).key).toBe('bold');
-		expect(highlight.value).toBe('cyan');
-		expect(at(highlight.options, 0).textContent).toBe('Sans surlignage');
+		expect(zoom.value).toBe('125');
+		expect(ribbon.querySelector<HTMLElement>('[data-label="Clipboard"]')?.dataset.caption).toBe(
+			'Presse-papiers',
+		);
+		expect(ribbon.querySelector('[data-label="Clipboard"] .ribbon-large')?.textContent).toBe(
+			'Coller',
+		);
+		expect(ribbon.querySelector('.ribbon-split [data-split-caret]')?.getAttribute('title')).toBe(
+			'Options de surlignage',
+		);
 		setRibbonLocale(ribbon, 'en');
 		expect(format.getAttribute('aria-label')).toBe('Bold');
 		expect(ribbon.querySelector<HTMLElement>('[data-label="Font"]')?.dataset.caption).toBe('Font');
-		expect(highlight.value).toBe('cyan');
+		expect(zoom.value).toBe('125');
 	});
 
 	it('localizes find status and labels without changing document-language content', () => {

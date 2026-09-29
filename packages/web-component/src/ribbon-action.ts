@@ -12,6 +12,8 @@ export type RibbonAction =
 	| { type: 'align'; value: 'left' | 'center' | 'right' | 'justify' }
 	| { type: 'font'; key: 'family' | 'size' | 'color' | 'highlight'; value: string }
 	| { type: 'clear' | 'table' }
+	| { type: 'clipboard'; key: 'cut' | 'copy' | 'paste' }
+	| { type: 'fontStep'; direction: 'grow' | 'shrink' }
 	| { type: 'insertBreak'; kind: 'page' | 'column' }
 	| { type: 'tableEdit'; key: TableCommand }
 	| {
@@ -23,7 +25,8 @@ export type RibbonAction =
 				| 'numberFormat'
 				| 'numberStart'
 				| 'titlePage'
-				| 'verticalAlign';
+				| 'verticalAlign'
+				| 'size';
 			value: string;
 	  }
 	| { type: 'sectionBreak'; kind: 'nextPage' | 'continuous' | 'evenPage' | 'oddPage' }
@@ -38,7 +41,29 @@ export type RibbonAction =
 	| { type: 'view'; value: 'draft' | 'print' }
 	| { type: 'print' }
 	| MultilingualAction
-	| { type: 'search' }
+	| { type: 'search'; focus?: 'find' | 'replace' }
+	| { type: 'changeCase'; value: 'sentence' | 'lower' | 'upper' | 'title' | 'toggle' }
+	| { type: 'formatPainter' }
+	| { type: 'addText'; level: 0 | 1 | 2 | 3 }
+	| { type: 'blankPage' }
+	| { type: 'readAloud' }
+	| { type: 'gridlines' }
+	| { type: 'shading'; value: string }
+	| {
+			type: 'borders';
+			preset: 'none' | 'bottom' | 'top' | 'left' | 'right' | 'all' | 'outside' | 'insideH';
+	  }
+	| { type: 'pageNumber'; position: 'top' | 'bottom'; align: 'left' | 'center' | 'right' }
+	| { type: 'headerFooter'; kind: 'header' | 'footer' }
+	| { type: 'formatDialog'; kind: 'font' | 'paragraph' }
+	| { type: 'indent'; side: 'left' | 'right'; inches: number }
+	| { type: 'zoomFit'; mode: 'actual' | 'width' | 'page' }
+	| { type: 'wordCount' }
+	| { type: 'spelling' }
+	| { type: 'insertSymbol'; value: string }
+	| { type: 'insertDateTime'; value: 'long' | 'short' | 'time' | 'datetime' }
+	| { type: 'showMarks' }
+	| { type: 'selectAll' }
 	| {
 			type: 'review';
 			key:

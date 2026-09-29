@@ -25,7 +25,8 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		await page.keyboard.type('Parity formatting');
 		await page.keyboard.press('Control+a');
 		await editor.getByRole('button', { name: 'Strikethrough', exact: true }).click();
-		await editor.getByLabel('Text highlight', { exact: true }).selectOption('cyan');
+		await editor.getByRole('button', { name: 'Text highlight options' }).click();
+		await editor.getByRole('menuitem', { name: 'Cyan', exact: true }).click();
 		await editor.getByRole('button', { name: 'Superscript', exact: true }).click();
 		await editor.getByRole('button', { name: 'Subscript', exact: true }).click();
 		await expect(surface.locator('s')).toHaveText('Parity formatting');
@@ -60,10 +61,8 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		// Insert and structurally edit a 2x2 table, exercising history and read-only state.
 		await newDocument(page);
 		await surface.click();
-		await editor.getByRole('tab', { name: 'Table', exact: true }).click();
-		await expect(
-			editor.getByRole('button', { name: 'Insert row below', exact: true }),
-		).toBeDisabled();
+		// Table tools are contextual: no Table tab until the caret is in a table.
+		await expect(editor.getByRole('tab', { name: 'Table', exact: true })).toHaveCount(0);
 		await editor.getByRole('tab', { name: 'Insert', exact: true }).click();
 		await editor.getByRole('button', { name: 'Insert table', exact: true }).click();
 		const table = surface.locator('table');

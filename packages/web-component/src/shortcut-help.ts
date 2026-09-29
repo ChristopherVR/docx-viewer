@@ -1,4 +1,5 @@
 /** The keyboard shortcut help dialog: lists the shortcut registry plus the editor's own key bindings. */
+import { EDITOR_BINDING_LABELS } from './binding-labels';
 import { editorBindings } from './editor-commands';
 import { formatKeys, type ShortcutRegistry } from './keyboard';
 import { translate, type EditorLocale, type LocalizationKey } from './localization';
@@ -7,20 +8,6 @@ export interface ShortcutRow {
 	keys: string;
 	label: LocalizationKey;
 }
-
-/** Labels for ProseMirror bindings; a binding without a label here is deliberately not listed. */
-const EDITOR_BINDING_LABELS: Record<string, LocalizationKey> = {
-	'Mod-z': 'Undo',
-	'Mod-y': 'Redo',
-	'Mod-Shift-z': 'Redo',
-	'Mod-b': 'Bold',
-	'Mod-i': 'Italic',
-	'Mod-u': 'Underline',
-	'Shift-Enter': 'shortcut.lineBreak',
-	Tab: 'Increase list level',
-	'Shift-Tab': 'Decrease list level',
-	'Mod-Enter': 'Insert page break',
-};
 
 /** Only bindings that exist in the editor's keymap are listed, grouped by action. */
 export function editorShortcutRows(

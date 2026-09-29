@@ -4,62 +4,16 @@ import { schema } from './schema';
 import { lineSpacingLabel, lineSpacingValue } from './line-spacing';
 import { findLocalizedControl } from './localization';
 
-export function syncFontControls(toolbar: HTMLElement, state: EditorState) {
-	const type = schema.marks.font;
-	const defaults = { family: 'Calibri', size: 11, color: '#000000' };
-	const values: Record<'family' | 'size' | 'color', Array<string | number>> = {
-		family: [],
-		size: [],
-		color: [],
-	};
-	const addMarks = (marks: readonly Mark[]) => {
-		const font = marks.find((mark) => mark.type === type);
-		for (const key of Object.keys(values) as Array<keyof typeof values>)
-			values[key].push(font?.attrs[key] ?? defaults[key]);
-	};
-	if (state.selection.empty) addMarks(state.storedMarks || state.selection.$from.marks());
-	else {
-		let found = false;
-		state.doc.nodesBetween(state.selection.from, state.selection.to, (node) => {
-			if (!node.isText) return;
-			found = true;
-			addMarks(node.marks);
-		});
-		if (!found) addMarks(state.selection.$from.marks());
-	}
-	for (const key of Object.keys(values) as Array<keyof typeof values>) {
-		const label = key === 'family' ? 'Font family' : key === 'size' ? 'Font size' : 'Font color';
-		const select = findLocalizedControl<HTMLSelectElement>(toolbar, label);
-		if (!select) continue;
-		const distinct = [...new Set(values[key].map(String))];
-		if (distinct.length !== 1) {
-			select.selectedIndex = -1;
-			continue;
-		}
-		const value = distinct[0];
-		if (value === undefined) continue;
-		if (![...select.options].some((option) => option.value === value)) {
-			const option = document.createElement('option');
-			option.value = value;
-			option.textContent = value;
-			select.append(option);
-		}
-		select.value = value;
-	}
-}
-
-/** Synchronize inline-format buttons and the highlight picker with the current selection. */
+/** Synchronize the inline-format toggle buttons with the current selection. */
 export function syncFormatControls(toolbar: HTMLElement, state: EditorState) {
 	const marked = new Map<string, Set<boolean>>();
 	for (const key of ['bold', 'italic', 'underline', 'strike', 'verticalAlign'])
 		marked.set(key, new Set());
-	const highlights = new Set<string>();
 	const addMarks = (marks: readonly Mark[]) => {
 		for (const key of ['bold', 'italic', 'underline', 'strike'])
 			marked.get(key)!.add(marks.some((mark) => mark.type.name === key));
 		const align = marks.find((mark) => mark.type.name === 'verticalAlign');
 		marked.get('verticalAlign')!.add(Boolean(align));
-		highlights.add(marks.find((mark) => mark.type.name === 'highlight')?.attrs.color || 'none');
 	};
 	if (state.selection.empty) addMarks(state.storedMarks || state.selection.$from.marks());
 	else {
@@ -105,11 +59,6 @@ export function syncFormatControls(toolbar: HTMLElement, state: EditorState) {
 	}
 	superButton?.setAttribute('aria-pressed', String(aligns.size === 1 && aligns.has('superscript')));
 	subButton?.setAttribute('aria-pressed', String(aligns.size === 1 && aligns.has('subscript')));
-	const highlight = findLocalizedControl<HTMLSelectElement>(toolbar, 'Text highlight');
-	const onlyHighlight = [...highlights][0];
-	if (highlight && highlights.size === 1 && onlyHighlight !== undefined)
-		highlight.value = onlyHighlight;
-	else if (highlight) highlight.selectedIndex = -1;
 }
 
 export function syncParagraphControls(toolbar: HTMLElement, state: EditorState) {

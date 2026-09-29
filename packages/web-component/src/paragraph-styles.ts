@@ -8,6 +8,8 @@ import {
 } from '@christophervr/docx-core';
 import { paragraphStyle } from './schema';
 import { translate, translateTemplate, type EditorLocale } from './localization';
+import { menuAround, row, stack } from './ribbon-parts';
+import { syncStyleGallery } from './style-gallery';
 
 /** Derived display formatting stays out of document attributes and collaboration steps. */
 export function paragraphStylesPlugin(getModel: () => DocumentModel) {
@@ -60,11 +62,32 @@ export function syncStylePicker(
 			'aria-label',
 			translateTemplate(locale, 'ribbon.groupControls', { group: group.dataset.caption }),
 		);
-		group.append(select);
-		toolbar.querySelector('#dve-panel-home')?.prepend(group);
-		select.addEventListener('change', () => {
+		const gallery = document.createElement('div');
+		gallery.className = 'ribbon-gallery';
+		gallery.setAttribute('role', 'group');
+		gallery.dataset.styleGallery = '';
+		gallery.addEventListener(
+			'wheel',
+			(event) => {
+				if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+				gallery.scrollLeft += event.deltaY;
+				event.preventDefault();
+			},
+			{ passive: false },
+		);
+		group.append(
+			row(
+				gallery,
+				stack(
+					menuAround(select, translate(locale, 'styles.label'), 'moreStyles', { compact: true }),
+				),
+			),
+		);
+		const home = toolbar.querySelector('#dve-panel-home');
+		home?.insertBefore(group, home.querySelector('.ribbon-group[data-label="Editing"]'));
+		select.addEventListener('change', () => apply(select!.value));
+		const apply = (value: string) => {
 			if (!view.editable) return;
-			const value = select!.value;
 			if (value && !model.paragraphStyles?.styles[value]) return;
 			let tr = view.state.tr;
 			view.state.doc.nodesBetween(
@@ -76,7 +99,10 @@ export function syncStylePicker(
 			);
 			if (tr.docChanged) view.dispatch(tr);
 			view.focus();
-		});
+		};
+		gallery.addEventListener('dve-choose-style', (event) =>
+			apply((event as CustomEvent<string>).detail),
+		);
 	}
 	// Replace the listener closure on each new view through a view-scoped picker.
 	select.setAttribute('aria-label', translate(locale, 'styles.label'));
@@ -88,8 +114,29 @@ export function syncStylePicker(
 	select.replaceChildren(...options.map((style) => new Option(style.name || style.id, style.id)));
 	select.value = selected;
 	select.disabled = !view.editable || !definitions.length;
+	const gallery = toolbar.querySelector<HTMLElement>('[data-style-gallery]');
+	if (gallery) {
+		const normal = definitions.find((style) => style.isDefault);
+		const tiles = [
+			{ id: '', name: normal?.name || translate(locale, 'styles.inherit') },
+			...definitions
+				.filter((style) => !style.isDefault)
+				.map((style) => ({ id: style.id, name: style.name || style.id })),
+		];
+		syncStyleGallery(
+			gallery,
+			tiles,
+			selected,
+			model,
+			(id) => {
+				select.value = id;
+				gallery.dispatchEvent(new CustomEvent('dve-choose-style', { detail: id }));
+			},
+			select.disabled,
+		);
+	}
 }
 
 export function resetStylePicker(toolbar?: HTMLElement) {
-	toolbar?.querySelector('[data-paragraph-styles]')?.parentElement?.remove();
+	toolbar?.querySelector('[data-paragraph-styles]')?.closest('.ribbon-group')?.remove();
 }

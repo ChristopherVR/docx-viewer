@@ -99,9 +99,12 @@ test('ribbon edits preserve font properties and save table and page settings', a
 	await surface.click();
 	await page.keyboard.type('Ribbon document');
 	await page.keyboard.press('Control+a');
-	await editor.getByLabel('Font family', { exact: true }).selectOption('Georgia');
-	await editor.getByLabel('Font size', { exact: true }).selectOption('18');
-	await editor.getByLabel('Font color', { exact: true }).selectOption('#0070c0');
+	await editor.getByLabel('Font family', { exact: true }).fill('Georgia');
+	await page.keyboard.press('Enter');
+	await editor.getByLabel('Font size', { exact: true }).fill('18');
+	await page.keyboard.press('Enter');
+	await editor.getByRole('button', { name: 'Font color options' }).click();
+	await editor.getByRole('menuitem', { name: 'Blue', exact: true }).click();
 	await expect(surface.locator('span').filter({ hasText: 'Ribbon document' }).last()).toHaveCSS(
 		'font-family',
 		'Georgia',
