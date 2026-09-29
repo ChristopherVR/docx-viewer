@@ -8,6 +8,8 @@ import type { LegacyRibbonLabel } from './ribbon-legacy-labels';
  */
 export const RIBBON_ACTION_IDS = [
 	'paste',
+	'insert-caption',
+	'cross-reference',
 	'ruler',
 	'page-setup-dialog',
 	'cover-page',
@@ -130,6 +132,8 @@ export type RibbonActionId = (typeof RIBBON_ACTION_IDS)[number];
 /** English control label of each action, the lookup key into the locale strings. Display-only. */
 export const RIBBON_ACTION_LABELS: Readonly<Record<RibbonActionId, string>> = {
 	paste: 'Paste',
+	'insert-caption': 'Insert caption',
+	'cross-reference': 'Cross-reference',
 	ruler: 'Ruler',
 	'page-setup-dialog': 'Page setup settings',
 	'cover-page': 'Cover page',

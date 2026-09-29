@@ -4,6 +4,12 @@ import { buildParagraphSpacing } from './ribbon-home';
 import { SYMBOLS } from './insert-text-commands';
 import { PAGE_SIZE_OPTIONS } from './page-size';
 
+const TOC_OPTIONS: Array<[string, string]> = [
+	['3', 'Table of contents, levels 1 to 3'],
+	['2', 'Table of contents, levels 1 to 2'],
+	['5', 'Table of contents, levels 1 to 5'],
+	['remove', 'Remove table of contents'],
+];
 const ADD_TEXT_OPTIONS: Array<[string, string]> = [
 	['1', 'Level 1'],
 	['2', 'Level 2'],
@@ -143,11 +149,15 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 	panels.get('References')!.append(
 		group(
 			'Table of Contents',
-			tool(
+			menuSelect(
 				'Insert table of contents',
 				'toc',
-				{ type: 'toc', key: 'insert' },
-				{ large: true, caption: 'Table of Contents' },
+				TOC_OPTIONS,
+				(value) =>
+					value === 'remove'
+						? { type: 'toc', key: 'remove' }
+						: { type: 'toc', key: 'insert', levels: Number(value) },
+				{ momentary: true },
 			),
 			menuSelect(
 				'Add text',
@@ -161,6 +171,16 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				'updateTable',
 				{ type: 'toc', key: 'update' },
 				{ large: true, caption: 'Update Table' },
+			),
+		),
+		group(
+			'Captions',
+			tool('Insert caption', 'caption', { type: 'formatDialog', kind: 'caption' }, { large: true }),
+			tool(
+				'Cross-reference',
+				'crossReference',
+				{ type: 'formatDialog', kind: 'crossReference' },
+				{ large: true },
 			),
 		),
 		group(

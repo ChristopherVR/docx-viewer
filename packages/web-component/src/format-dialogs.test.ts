@@ -272,7 +272,14 @@ describe('dialog launchers', () => {
 		const { dialogs } = setup({});
 		dialogs.open('font');
 		dialogs.open('paragraph');
-		expect(dialogs.elements.map((element) => element.hidden)).toEqual([true, false, true, true]);
+		expect(dialogs.elements.map((element) => element.hidden)).toEqual([
+			true,
+			false,
+			true,
+			true,
+			true,
+			true,
+		]);
 		dialogs.closeAll();
 		expect(dialogs.elements.every((element) => element.hidden)).toBe(true);
 	});

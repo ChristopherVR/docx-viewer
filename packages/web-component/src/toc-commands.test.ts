@@ -6,7 +6,12 @@ import { EditorState, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { fieldsBalanced } from './field-guard';
 import { docToModel, modelToDoc } from './model-adapter';
-import { blockPageNumbers, insertTableOfContents, updateTableOfContents } from './toc-commands';
+import {
+	blockPageNumbers,
+	insertTableOfContents,
+	removeTableOfContents,
+	updateTableOfContents,
+} from './toc-commands';
 
 function sample(): DocumentModel {
 	const model = createDocument();
@@ -81,5 +86,42 @@ describe('table of contents commands', () => {
 		view.updateState(EditorState.create({ doc: modelToDoc(current) }));
 		expect(updateTableOfContents(view, current, createFakeMeasurer())).toBe(true);
 		expect(entryText(docToModel(view.state.doc, current))).toEqual(['Overview\t1', 'Specifics\t2']);
+	});
+
+	it('limits the entries to the requested heading depth', () => {
+		const model = sample();
+		const view = viewFor(model);
+		insertTableOfContents(view, model, createFakeMeasurer(), 1);
+		const next = docToModel(view.state.doc, model);
+		expect(entryText(next).slice(0, 1)).toEqual(['Overview	1']);
+		expect(next.blocks.map((block) => block.id)).not.toContain('missing');
+		expect((next.blocks[0] as Paragraph).runs.some((run) => run.fieldCode?.includes('"1-1"'))).toBe(
+			true,
+		);
+		expect(next.blocks.filter((block) => (block as Paragraph).style === 'TOC2')).toHaveLength(0);
+	});
+
+	it('removes the table of contents and keeps the other blocks', () => {
+		const model = sample();
+		const view = viewFor(model);
+		insertTableOfContents(view, model, createFakeMeasurer());
+		const withToc = docToModel(view.state.doc, model);
+		expect(removeTableOfContents(view, withToc)).toBe(true);
+		const next = docToModel(view.state.doc, withToc);
+		expect(next.blocks.map((block) => block.id)).toEqual(['h1', 'b1', 'h2']);
+		expect(fieldsBalanced(view.state.doc)).toBe(true);
+	});
+
+	it('reports there is nothing to remove, and refuses a read-only view', () => {
+		const model = sample();
+		expect(removeTableOfContents(viewFor(model), model)).toBe(false);
+		const view = viewFor(model);
+		insertTableOfContents(view, model, createFakeMeasurer());
+		const withToc = docToModel(view.state.doc, model);
+		const locked = new EditorView(document.createElement('div'), {
+			state: view.state,
+			editable: () => false,
+		});
+		expect(removeTableOfContents(locked, withToc)).toBe(false);
 	});
 });

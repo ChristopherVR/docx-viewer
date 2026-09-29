@@ -3,11 +3,20 @@ import type { EditorView } from 'prosemirror-view';
 import { createFontDialog, type FormatDialog } from './font-dialog';
 import type { EditorLocale } from './localization';
 import { createBookmarkDialog } from './bookmark-dialog';
+import { createCaptionDialog } from './caption-dialog';
+import { createCrossReferenceDialog } from './cross-reference-dialog';
+import { blockPageNumbers } from './toc-commands';
 import { focusView } from './focus-view';
 import { createPageSetupDialog, type PageSetupHost } from './page-setup-dialog';
 import { createParagraphDialog } from './paragraph-dialog';
 
-export type FormatDialogKind = 'font' | 'paragraph' | 'bookmark' | 'pageSetup';
+export type FormatDialogKind =
+	| 'font'
+	| 'paragraph'
+	| 'bookmark'
+	| 'pageSetup'
+	| 'caption'
+	| 'crossReference';
 
 export interface FormatDialogsHost {
 	view(): EditorView | undefined;
@@ -28,6 +37,15 @@ export class FormatDialogs {
 				() => host.model(),
 			),
 			bookmark: createBookmarkDialog(() => host.view()),
+			caption: createCaptionDialog(
+				() => host.view(),
+				() => host.model(),
+			),
+			crossReference: createCrossReferenceDialog(
+				() => host.view(),
+				() => host.model(),
+				(id) => blockPageNumbers(host.model()).get(id),
+			),
 			pageSetup: createPageSetupDialog({
 				...(host.pageSetup ?? { section: () => undefined, canEdit: () => false, apply: () => {} }),
 				restoreFocus: () => focusView(host.view()),

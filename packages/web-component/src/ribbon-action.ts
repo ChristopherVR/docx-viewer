@@ -71,7 +71,10 @@ export type RibbonAction =
 	  }
 	| { type: 'pageNumber'; position: 'top' | 'bottom'; align: 'left' | 'center' | 'right' }
 	| { type: 'headerFooter'; kind: 'header' | 'footer' }
-	| { type: 'formatDialog'; kind: 'font' | 'paragraph' | 'bookmark' | 'pageSetup' }
+	| {
+			type: 'formatDialog';
+			kind: 'font' | 'paragraph' | 'bookmark' | 'pageSetup' | 'caption' | 'crossReference';
+	  }
 	| { type: 'indent'; side: 'left' | 'right'; inches: number }
 	| { type: 'zoomFit'; mode: 'actual' | 'width' | 'page' }
 	| { type: 'wordCount' }
@@ -100,4 +103,4 @@ export type RibbonAction =
 	| { type: 'showHidden' }
 	| { type: 'thumbnails' }
 	| { type: 'insertNote'; kind: 'footnote' | 'endnote' }
-	| { type: 'toc'; key: 'insert' | 'update' };
+	| { type: 'toc'; key: 'insert' | 'update' | 'remove'; levels?: number };

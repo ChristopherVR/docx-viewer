@@ -86,7 +86,7 @@ test('inserts a table of contents from the References tab and saves it as a TOC 
 	const body = editor.locator('.ProseMirror').first();
 	await body.locator('p').first().click();
 	await editor.getByRole('tab', { name: 'References', exact: true }).click();
-	await editor.getByRole('button', { name: 'Insert table of contents', exact: true }).click();
+	await editor.getByRole('combobox', { name: 'Insert table of contents' }).selectOption('3');
 	await expect(body.locator('p').first()).toHaveText(/^Overview\s+1$/);
 	await expect(body.locator('p').nth(1)).toHaveText(/^Details\s+2$/);
 	// The editing surface sizes the tab to the right-aligned stop: the page number ends at the

@@ -108,6 +108,8 @@ const paths = {
 	bookmark: 'M7 3h10v18l-5-4-5 4z',
 	coverPage: 'M6 3h12v18H6z M9 8h6 M9 11h6 M9 17h6',
 	ruler: 'M3 8h18v8H3z M7 8v3 M11 8v4 M15 8v3 M19 8v4',
+	caption: 'M4 5h16v11H4z M4 19h10 M8 9l2 3 2-3',
+	crossReference: 'M9 15l6-6 M8 8H5a3 3 0 0 0 0 6h3 M16 16h3a3 3 0 0 0 0-6h-3',
 	caret: 'M7 10l5 5 5-5',
 } as const;
 

@@ -13,7 +13,11 @@ import { insertPicture, PICTURE_TYPES, stagePicture } from './picture-commands';
 import type { RibbonAction } from './ribbon';
 import { translate, type EditorLocale } from './localization';
 import { focusView } from './focus-view';
-import { insertTableOfContents, updateTableOfContents } from './toc-commands';
+import {
+	insertTableOfContents,
+	removeTableOfContents,
+	updateTableOfContents,
+} from './toc-commands';
 
 export interface InsertControllerHost {
 	view(): EditorView | undefined;
@@ -79,8 +83,12 @@ export class InsertController {
 		} else if (action.type === 'toc') {
 			if (!view || !editable) return true;
 			try {
-				if (action.key === 'insert') insertTableOfContents(view, this.host.model());
-				else if (!updateTableOfContents(view, this.host.model()))
+				if (action.key === 'insert')
+					insertTableOfContents(view, this.host.model(), undefined, action.levels ?? 3);
+				else if (action.key === 'remove') {
+					if (!removeTableOfContents(view, this.host.model()))
+						this.host.reportError(new Error('This document has no table of contents to remove.'));
+				} else if (!updateTableOfContents(view, this.host.model()))
 					this.host.reportError(new Error('This document has no table of contents to update.'));
 			} catch (error) {
 				this.host.reportError(error instanceof Error ? error : new Error(String(error)));

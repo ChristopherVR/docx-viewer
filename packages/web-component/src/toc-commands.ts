@@ -104,13 +104,16 @@ export function insertTableOfContents(
 	view: EditorView,
 	model: DocumentModel,
 	measurer?: TextMeasurer,
+	levels = 3,
 ): void {
 	const { $from } = view.state.selection;
 	const index = $from.index(0);
 	const current = view.state.doc.maybeChild(index);
 	const replace = current?.type.name === 'paragraph' && current.content.size === 0;
 	const end = replace ? index : index - 1;
-	replaceBlocks(view, model, index, end, tocParagraphs(model, index, end, undefined, measurer));
+	const depth = Math.min(9, Math.max(1, Math.floor(levels)));
+	const instruction = ` TOC \\o "1-${depth}" \\h \\z \\u `;
+	replaceBlocks(view, model, index, end, tocParagraphs(model, index, end, instruction, measurer));
 }
 
 /** Rebuilds the document's TOC with current headings and page numbers; false when there is none. */
@@ -128,5 +131,31 @@ export function updateTableOfContents(
 	firstParagraph.runs.unshift(...found.before);
 	lastParagraph.runs.push(...found.after);
 	replaceBlocks(view, model, found.start, found.end, toc);
+	return true;
+}
+
+/**
+ * Removes the document's table of contents (Word's Remove Table of Contents). Text that shared a
+ * paragraph with the field is kept. Returns false when there is no TOC to remove.
+ */
+export function removeTableOfContents(view: EditorView, model: DocumentModel): boolean {
+	const found = findTableOfContents(model.blocks);
+	if (!found || !view.editable) return false;
+	const { doc } = view.state;
+	let from = 0;
+	for (let index = 0; index < found.start; index++) from += doc.child(index).nodeSize;
+	let to = from;
+	for (let index = found.start; index <= found.end; index++) to += doc.child(index).nodeSize;
+	const leftover = [...found.before, ...found.after].filter((run) => run.text);
+	const content = leftover.length
+		? modelToDoc({
+				...model,
+				blocks: [{ type: 'paragraph', id: '', runs: leftover } as Paragraph],
+			}).content
+		: undefined;
+	const tr = content
+		? view.state.tr.replaceWith(from, to, content)
+		: view.state.tr.delete(from, to);
+	view.dispatch(closeHistory(tr).scrollIntoView());
 	return true;
 }
