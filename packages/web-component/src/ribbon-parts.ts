@@ -54,6 +54,30 @@ export const menuSelect = (
 	options: { compact?: boolean; momentary?: boolean } = {},
 ) => menuAround(select(label, values, action), label, icon, options);
 
+/**
+ * A row-height command with its own dropdown, like Word's Find and Select: the main button runs
+ * `main`; the caret opens a menu of related commands (a transparent select over the caret).
+ */
+export const splitInline = (
+	main: HTMLButtonElement,
+	menuLabel: string,
+	values: Array<[string, string]>,
+	action: (value: string) => RibbonAction,
+) => {
+	const wrap = document.createElement('div');
+	wrap.className = 'ribbon-split-inline';
+	const control = select(menuLabel, values, action);
+	control.title = menuLabel;
+	control.classList.add('ribbon-menu-input');
+	control.selectedIndex = -1;
+	control.addEventListener('change', () => (control.selectedIndex = -1));
+	const caret = document.createElement('span');
+	caret.className = 'ribbon-menu ribbon-menu-caret';
+	caret.append(ribbonIcon('caret', 12), control);
+	wrap.append(main, caret);
+	return wrap;
+};
+
 /** Wraps an existing select in the dropdown-command look (see `menuSelect`). */
 export const menuAround = (
 	control: HTMLSelectElement,

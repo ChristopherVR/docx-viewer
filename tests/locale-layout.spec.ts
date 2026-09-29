@@ -21,6 +21,8 @@ async function clippedControls(page: Page, tab: string): Promise<string[]> {
 			el.tagName;
 		for (const el of panel.querySelectorAll<HTMLElement>('button, select, .ribbon-group')) {
 			if (el.getClientRects().length === 0) continue;
+			// Dropdown commands keep a transparent select over an icon and caption; it shows no text.
+			if (el.classList.contains('ribbon-menu-input')) continue;
 			if (el instanceof HTMLSelectElement) {
 				// A select's scrollWidth ignores clipped text, so measure the selected label itself.
 				const style = getComputedStyle(el);

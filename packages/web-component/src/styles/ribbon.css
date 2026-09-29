@@ -95,7 +95,7 @@
 	content: attr(data-caption);
 }
 .ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Clipboard'] {
-	width: 104px;
+	width: 92px;
 }
 .ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Font'] {
 	width: 335px;
@@ -749,4 +749,224 @@
 }
 .ribbon-group .ribbon-launcher:hover:not(:disabled) {
 	color: var(--ink);
+}
+
+/* Styles group: gallery, previous/next/more strip, expanded gallery and pane. */
+.style-strip {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	width: 16px;
+}
+.ribbon-group .style-strip .style-strip-button {
+	flex: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	min-width: 16px;
+	height: 16px;
+	min-height: 0;
+	padding: 0;
+	border-radius: 2px;
+}
+.ribbon-popover.styles-popover {
+	display: block;
+	max-height: min(70vh, 520px);
+	max-width: 420px;
+	overflow-y: auto;
+	padding: 8px;
+}
+.styles-section-title {
+	margin: 4px 2px 6px;
+	color: var(--muted);
+	font:
+		600 11px 'Segoe UI',
+		Arial,
+		sans-serif;
+}
+.styles-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 88px);
+	gap: 4px;
+}
+.styles-popover .style-tile,
+.dve-styles-pane .style-tile {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
+	height: 50px;
+	padding: 4px 2px;
+	border: 1px solid #d5d8dc;
+	background: #fff;
+	color: #1f1f1f;
+	cursor: pointer;
+}
+.styles-popover .style-tile[aria-pressed='true'],
+.dve-styles-pane .style-tile[aria-pressed='true'] {
+	border-color: var(--blue);
+	background: #e8f0fa;
+}
+.styles-popover .style-tile:hover:not(:disabled),
+.dve-styles-pane .style-tile:hover:not(:disabled) {
+	border-color: #a8c4e6;
+	background: #f3f7fc;
+}
+.styles-commands {
+	display: grid;
+	gap: 2px;
+	margin-top: 8px;
+	padding-top: 6px;
+	border-top: 1px solid var(--line);
+}
+.styles-command {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px;
+	border: 0;
+	border-radius: 3px;
+	background: none;
+	color: var(--ink);
+	font:
+		12px 'Segoe UI',
+		Arial,
+		sans-serif;
+	text-align: left;
+	cursor: pointer;
+}
+.styles-command:hover:not(:disabled) {
+	background: var(--accent-soft);
+}
+.styles-command:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+.dve-styles-pane {
+	flex: none;
+	width: 260px;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 10px 12px;
+	border-left: 1px solid var(--line);
+	background: var(--surface);
+	color: var(--ink);
+}
+.dve-styles-pane[hidden] {
+	display: none;
+}
+.dve-styles-pane-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+.dve-styles-pane h2 {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 600;
+}
+.dve-styles-pane h3 {
+	margin: 14px 0 6px;
+	color: var(--muted);
+	font:
+		600 11px 'Segoe UI',
+		Arial,
+		sans-serif;
+}
+.dve-styles-pane-header button {
+	border: 0;
+	background: none;
+	color: var(--muted);
+	font-size: 18px;
+	cursor: pointer;
+}
+.dve-styles-pane-list {
+	display: grid;
+	gap: 4px;
+}
+.dve-styles-pane .style-tile {
+	flex-direction: row;
+	justify-content: space-between;
+	height: 34px;
+	padding: 2px 10px;
+}
+.dve-styles-pane .style-name {
+	color: #555;
+}
+
+/* Editing: a row-height command with a caret menu, and the Go To panel. */
+.ribbon-split-inline {
+	display: flex;
+	align-items: center;
+	height: 22px;
+}
+.ribbon-group .ribbon-split-inline .ribbon-inline {
+	flex: 1;
+	width: auto;
+}
+.ribbon-menu.ribbon-menu-caret {
+	flex: none;
+	width: 18px;
+	height: 22px;
+	padding: 0;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	gap: 0;
+}
+.ribbon-menu.ribbon-menu-caret > .ribbon-icon:last-of-type {
+	margin-top: 0;
+}
+.ribbon-popover.go-to-panel {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 8px;
+	width: 280px;
+	padding: 10px;
+}
+.go-to-panel label {
+	display: grid;
+	gap: 4px;
+	color: var(--muted);
+	font:
+		11px 'Segoe UI',
+		Arial,
+		sans-serif;
+}
+.go-to-panel select {
+	height: 28px;
+	border: 1px solid var(--line);
+	border-radius: 3px;
+	background: var(--surface);
+	color: var(--ink);
+}
+.go-to-list {
+	display: flex;
+	flex-direction: column;
+	max-height: 220px;
+	overflow-y: auto;
+}
+.go-to-list button {
+	overflow: hidden;
+	padding: 5px 8px;
+	border: 0;
+	background: none;
+	color: var(--ink);
+	font:
+		13px 'Segoe UI',
+		Arial,
+		sans-serif;
+	text-align: left;
+	text-overflow: ellipsis;
+	cursor: pointer;
+}
+.go-to-list button:hover,
+.go-to-list button:focus-visible {
+	background: var(--accent-soft);
+}
+.go-to-list p {
+	margin: 6px 8px;
+	color: var(--muted);
+	font-size: 12px;
 }

@@ -6,6 +6,9 @@ import { focusView } from './focus-view';
 import { copyOrCut, pasteText } from './context-menu-actions';
 import { translate } from './localization';
 import { emit } from './events';
+import { openGoToPanel } from './go-to-panel';
+import { selectNextObject } from './go-to';
+import { closeRibbonPopover } from './ribbon-popover';
 import { setHeadingLevel } from './heading-commands';
 import { readAloudAvailable, textToRead, toggleReadAloud } from './read-aloud';
 import { showWordCount } from './word-count-panel';
@@ -42,6 +45,13 @@ export function routeRibbonAction(core: EditorCore, action: RibbonAction): void 
 				? pages.insertPageNumber(action.position, action.align)
 				: pages.insertHeaderFooter(action.kind);
 		if (done) parts.render(shell.canvas, shell.paper);
+	} else if (action.type === 'goTo' && target) {
+		const anchor = shell.toolbar?.querySelector<HTMLElement>(
+			'[aria-label="Find options"], [data-localearialabel="Find options"]',
+		);
+		if (anchor) openGoToPanel(anchor, target, core.model, closeRibbonPopover);
+	} else if (action.type === 'selectObjects' && target) {
+		selectNextObject(target);
 	} else if (action.type === 'addText' && target) {
 		if (!setHeadingLevel(target, core.model, action.level))
 			emit(core.element, 'document-warning', 'This document has no heading styles to apply.');

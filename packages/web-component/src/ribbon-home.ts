@@ -14,6 +14,7 @@ import {
 	row,
 	select,
 	spinner,
+	splitInline,
 	stack,
 	tool,
 } from './ribbon-parts';
@@ -232,9 +233,25 @@ export function buildHomePanel(panels: Map<string, HTMLElement>): void {
 		group(
 			'Editing',
 			stack(
-				tool('Find and replace', 'find', { type: 'search' }, { inline: true, caption: 'Find' }),
+				splitInline(
+					tool('Find and replace', 'find', { type: 'search' }, { inline: true, caption: 'Find' }),
+					'Find options',
+					[
+						['find', 'Find'],
+						['goto', 'Go to'],
+					],
+					(value) => (value === 'goto' ? { type: 'goTo' } : { type: 'search' }),
+				),
 				tool('Replace', 'replace', { type: 'search', focus: 'replace' }, { inline: true }),
-				tool('Select all', 'select', { type: 'selectAll' }, { inline: true }),
+				splitInline(
+					tool('Select all', 'select', { type: 'selectAll' }, { inline: true, caption: 'Select' }),
+					'Select options',
+					[
+						['all', 'Select all'],
+						['objects', 'Select objects'],
+					],
+					(value) => (value === 'objects' ? { type: 'selectObjects' } : { type: 'selectAll' }),
+				),
 			),
 		),
 	);

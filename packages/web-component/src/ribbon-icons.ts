@@ -100,6 +100,10 @@ const paths = {
 	blankPage: 'M6 3h9l3 3v15H6z',
 	readAloud: 'M4 9v6h4l5 4V5L8 9z M16 9a4 4 0 0 1 0 6 M18.5 6.5a8 8 0 0 1 0 11',
 	gridlines: 'M4 4h16v16H4z M4 9h16 M4 14h16 M9 4v16 M14 4v16',
+	chevronLeft: 'M14 6l-6 6 6 6',
+	chevronRight: 'M10 6l6 6-6 6',
+	stylesMoreArrow: 'M6 9l6 6 6-6 M6 5h12',
+	stylesPane: 'M4 4h16v16H4z M14 4v16 M7 8h4 M7 12h4',
 	caret: 'M7 10l5 5 5-5',
 } as const;
 

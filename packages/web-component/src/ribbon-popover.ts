@@ -3,12 +3,22 @@ import { swatchColor } from './ribbon-colors';
 
 let close: (() => void) | undefined;
 
+/** Closes whichever ribbon popover is open. */
+export function closeRibbonPopover(): void {
+	close?.();
+}
+
 /**
  * Shows `pop` under `anchor` and wires dismissal: Escape, a pointer press elsewhere, or `close()`.
  * Fixed positioning keeps it clear of the ribbon's overflow clipping. Returns false (and closes) when
  * the same anchor was already open, so the caret works as a toggle.
  */
-function mountPopover(anchor: HTMLElement, pop: HTMLElement, expanded: HTMLElement): boolean {
+export function mountPopover(
+	anchor: HTMLElement,
+	pop: HTMLElement,
+	expanded: HTMLElement,
+	align: 'start' | 'end' = 'start',
+): boolean {
 	const wasOpen = expanded.getAttribute('aria-expanded') === 'true';
 	close?.();
 	if (wasOpen) return false;
@@ -17,6 +27,11 @@ function mountPopover(anchor: HTMLElement, pop: HTMLElement, expanded: HTMLEleme
 	pop.style.top = `${box.bottom + 2}px`;
 	const root = anchor.getRootNode();
 	(root instanceof ShadowRoot ? root : document.body).append(pop);
+	if (align === 'end') pop.style.left = `${Math.max(4, box.right - pop.offsetWidth)}px`;
+	// Keep the whole popover on screen, whichever side of its anchor it opens toward.
+	const left = parseFloat(pop.style.left) || 0;
+	const limit = window.innerWidth - pop.offsetWidth - 8;
+	if (pop.offsetWidth && left > limit) pop.style.left = `${Math.max(4, limit)}px`;
 	expanded.setAttribute('aria-expanded', 'true');
 	const outside = (event: Event) => {
 		if (!event.composedPath().includes(pop) && !event.composedPath().includes(anchor)) close?.();
