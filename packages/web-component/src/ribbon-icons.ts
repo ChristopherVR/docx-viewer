@@ -110,6 +110,7 @@ const paths = {
 	ruler: 'M3 8h18v8H3z M7 8v3 M11 8v4 M15 8v3 M19 8v4',
 	caption: 'M4 5h16v11H4z M4 19h10 M8 9l2 3 2-3',
 	crossReference: 'M9 15l6-6 M8 8H5a3 3 0 0 0 0 6h3 M16 16h3a3 3 0 0 0 0-6h-3',
+	deleteComment: 'M4 5h16v11H10l-4 4v-4H4z M9 8.5l5 5 M14 8.5l-5 5',
 	caret: 'M7 10l5 5 5-5',
 } as const;
 

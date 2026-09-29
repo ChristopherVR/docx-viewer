@@ -2,7 +2,9 @@ import type { EditorView } from 'prosemirror-view';
 import type { Comment, DocumentModel } from '@christophervr/docx-core';
 import {
 	addComment,
+	commentIdsAtSelection,
 	deleteComment,
+	goToComment,
 	removeCommentAnchor,
 	replyToComment,
 	resolveComment,
@@ -52,11 +54,7 @@ export class ReviewController {
 				),
 			onResolve: (id, resolved) =>
 				this.updateComments(resolveComment(host.getModel().comments ?? [], id, resolved)),
-			onDelete: (id) => {
-				const view = host.getView();
-				if (view) removeCommentAnchor(view, id);
-				this.updateComments(deleteComment(host.getModel().comments ?? [], id));
-			},
+			onDelete: (id) => this.deleteById(id),
 			onClose: () => host.getView()?.focus(),
 		});
 	}
@@ -65,6 +63,13 @@ export class ReviewController {
 	}
 	setLocale(locale: string): void {
 		this.commentsPanel.setLocale(locale);
+	}
+
+	/** Removes a comment, its replies and its anchored range in one go. */
+	private deleteById(id: string) {
+		const view = this.host.getView();
+		if (view) removeCommentAnchor(view, id);
+		this.updateComments(deleteComment(this.host.getModel().comments ?? [], id));
 	}
 
 	private updateComments(next: Comment[]) {
@@ -106,7 +111,17 @@ export class ReviewController {
 		};
 		byKey[key]?.(view);
 	}
-	handleComments(key: 'toggle' | 'add'): void {
+	handleComments(key: 'toggle' | 'add' | 'delete' | 'previous' | 'next'): void {
+		const view = this.host.getView();
+		if (key === 'delete') {
+			const id = view && commentIdsAtSelection(view)[0];
+			if (id) this.deleteById(id);
+			return;
+		}
+		if (key === 'previous' || key === 'next') {
+			if (view) goToComment(view, key);
+			return;
+		}
 		if (key === 'toggle') {
 			if (this.commentsPanel.isOpen) this.commentsPanel.close();
 			else this.commentsPanel.open();

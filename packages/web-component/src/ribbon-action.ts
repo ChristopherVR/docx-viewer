@@ -95,7 +95,7 @@ export type RibbonAction =
 				| 'next';
 	  }
 	| { type: 'reviewDisplay'; value: ReviewDisplayMode }
-	| { type: 'comments'; key: 'toggle' | 'add' }
+	| { type: 'comments'; key: 'toggle' | 'add' | 'delete' | 'previous' | 'next' }
 	| { type: 'insertPicture' }
 	| { type: 'formatPicture' }
 	| { type: 'link' }

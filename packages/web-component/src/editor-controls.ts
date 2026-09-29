@@ -17,6 +17,7 @@ import { syncParagraphToggles } from './paragraph-toggle-sync';
 import { syncContextualTabs } from './contextual-tabs';
 import { syncRuler } from './ruler-sync';
 import { hasAnyChange, hasChangeAtCursor } from './review-commands';
+import { commentAnchors, commentIdsAtSelection } from './comment-commands';
 
 export function refreshEditorControls(
 	toolbar: HTMLElement | undefined,
@@ -91,6 +92,9 @@ export function refreshEditorControls(
 			['Previous change', anyChange],
 			['Next change', anyChange],
 			['Add comment', !state.selection.empty],
+			['Delete comment', commentIdsAtSelection(view).length > 0],
+			['Previous comment', commentAnchors(view).length > 0],
+			['Next comment', commentAnchors(view).length > 0],
 			[
 				'Format picture',
 				state.selection instanceof NodeSelection && state.selection.node.type.name === 'image',

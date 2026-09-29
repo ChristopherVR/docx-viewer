@@ -45,6 +45,9 @@ export function createReviewControls(): HTMLElement[] {
 	const comments = group(
 		'Comments',
 		tool('Add comment', 'comment', { type: 'comments', key: 'add' }, big),
+		tool('Delete comment', 'deleteComment', { type: 'comments', key: 'delete' }, big),
+		tool('Previous comment', 'previous', { type: 'comments', key: 'previous' }, big),
+		tool('Next comment', 'next', { type: 'comments', key: 'next' }, big),
 		tool('Comments', 'comments', { type: 'comments', key: 'toggle' }, big),
 	);
 	return [tracking, changes, comments];

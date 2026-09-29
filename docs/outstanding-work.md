@@ -106,13 +106,18 @@ What each tab offers that Word also has:
   A3, A4, A5, B5), Orientation, Vertical alignment, Columns, page-number format and start,
   different first page, odd and even, section breaks, Indent Left/Right (inches) and paragraph
   Before/After spacing.
-- **References:** Table of Contents, Add Text (heading levels 1-3), Update Table, Footnote and
-  Endnote.
+- **References:** Table of Contents (levels 1-3, 1-2 or 1-5, or Remove), Add Text (heading levels
+  1-3), Update Table, Insert Caption (a `SEQ` field; every caption of a label is renumbered when
+  one is added, and the Caption style is used when the document has one), Cross-reference (`REF` or
+  `PAGEREF` fields to headings, bookmarks and captions; hidden `_Ref` bookmarks are added as
+  needed and the result text is computed when inserted, not updated later), Footnote and Endnote.
 - **Review:** Spelling (toggles the browser's spell checker; no bundled dictionary or grammar
   checker), Word Count (selection or document), Read Aloud (the browser's speech synthesis),
-  tracked-change and comment commands, and the language and direction controls.
-- **View:** Hidden text, Gridlines, thumbnails, Zoom, Zoom to 100%, One page, Page width and Print
-  Layout.
+  tracked-change commands, comments (New, Delete, Previous, Next, Show), and the language and
+  direction controls.
+- **View:** Ruler (inch ticks from the left margin, shaded margins and the current paragraph's
+  indent markers; it displays them and does not yet let you drag a marker), Hidden text, Gridlines,
+  thumbnails, Zoom, Zoom to 100%, One page, Page width and Print Layout.
 - **Table (contextual):** appears only while the selection is in a table, as in Word.
 - **Ribbon:** collapse (button, double-click a tab, or Ctrl+F1) with click-to-peek, and tab KeyTips
   after Alt or F10 (H, N, P, S, R, W, T; F opens File).
@@ -135,12 +140,14 @@ Still not at parity:
 
 - **Home:** Text Effects, Sort, Multilevel List. Colour palettes are short lists, not Word's theme,
   standard and More Colors grid. Line Spacing offers presets; the Paragraph dialog has the rest.
-- **Insert:** Cover Page, Shapes, Icons, 3D Models, SmartArt, Charts, Screenshot, Text Box, WordArt,
-  Drop Cap, Equation, Bookmark, Cross-reference, Comment gallery, Signature Line, Object.
+- **Insert:** Cover Page galleries (one plain design exists), Shapes, Icons, 3D Models, SmartArt,
+  Charts, Screenshot, Text Box, WordArt, Drop Cap, Equation, Signature Line, Object.
 - **Layout and References:** Line Numbers, Hyphenation, Watermark, Page Color, Page Borders, Position
-  and Wrap Text, Citations, Bibliography, Captions, Index and Table of Authorities.
+  and Wrap Text, Citations, Bibliography, Table of Figures, Index and Table of Authorities, and
+  automatic updating of `REF`, `PAGEREF` and `SEQ` results (they are computed when inserted; captions
+  renumber immediately, cross-references do not).
 - **Review and View:** Editor pane, Thesaurus, Translate, Accessibility, Compare, Protect, Ink;
-  Ruler, Navigation Pane headings, Read Mode, Web and Outline views, Multiple Pages, New Window,
+  a draggable Ruler, Navigation Pane headings, Read Mode, Web and Outline views, Multiple Pages, New Window,
   Split and Macros.
 - **Dropdown galleries:** Margins, Size, Orientation, Columns and the others are text lists, not
   Word's thumbnail galleries; Zoom is a percentage list, not the Zoom dialog.

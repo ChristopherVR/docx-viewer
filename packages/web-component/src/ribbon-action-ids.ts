@@ -8,6 +8,9 @@ import type { LegacyRibbonLabel } from './ribbon-legacy-labels';
  */
 export const RIBBON_ACTION_IDS = [
 	'paste',
+	'delete-comment',
+	'previous-comment',
+	'next-comment',
 	'insert-caption',
 	'cross-reference',
 	'ruler',
@@ -132,6 +135,9 @@ export type RibbonActionId = (typeof RIBBON_ACTION_IDS)[number];
 /** English control label of each action, the lookup key into the locale strings. Display-only. */
 export const RIBBON_ACTION_LABELS: Readonly<Record<RibbonActionId, string>> = {
 	paste: 'Paste',
+	'delete-comment': 'Delete comment',
+	'previous-comment': 'Previous comment',
+	'next-comment': 'Next comment',
 	'insert-caption': 'Insert caption',
 	'cross-reference': 'Cross-reference',
 	ruler: 'Ruler',
