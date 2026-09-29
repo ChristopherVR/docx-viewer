@@ -157,6 +157,8 @@ export function applyModel(
 	baseSections: SectionProperties[] = [],
 	/** Package-wide `wp:docPr` id allocator shared with header, footer and note parts. */
 	docPrIds?: DocPrIdAllocator,
+	/** Relationship ids of header/footer parts created for this save, by part name. */
+	headerFooterReferences: ReadonlyMap<string, string> = new Map(),
 ): ApplyModelResult {
 	const body = Array.from(doc.getElementsByTagNameNS(WORD_NS, 'body'))[0];
 	if (!body) throw new Error('DOCX document.xml has no w:body');
@@ -204,6 +206,14 @@ export function applyModel(
 	] as const)
 		if (!margins.getAttributeNS(WORD_NS, name)) setAttribute(margins, name, fallback);
 	orderSectionProperties(section);
-	if (model.sections) applySectionEdits(doc, body, model.blocks, model.sections, baseSections);
+	if (model.sections)
+		applySectionEdits(
+			doc,
+			body,
+			model.blocks,
+			model.sections,
+			baseSections,
+			headerFooterReferences,
+		);
 	return { newRelationships: allocator.newRelationships };
 }

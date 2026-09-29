@@ -7,7 +7,7 @@ import { applyModel } from './write.js';
 import { DocPrIdAllocator } from './docpr-ids.js';
 import { assertValidDocumentModel } from './validate-model.js';
 import { applyNumberingCatalog } from './numbering-package.js';
-import { applyHeaderFooterEdits } from './write-header-footer.js';
+import { applyHeaderFooterEdits, createHeaderFooterParts } from './write-header-footer.js';
 import { applyNoteEdits } from './write-notes.js';
 import { writeNewRelationships } from './part-relationships.js';
 import { applySettingsFlag, applyTrackChangesSetting } from './settings.js';
@@ -70,10 +70,6 @@ export async function saveDocx(
 		throw new Error(
 			'Creating or editing paragraph styles is not supported by the standalone DOCX writer; new documents use the built-in default styles.',
 		);
-	if (!binding && model.sections?.some((section) => section.headers || section.footers))
-		throw new Error(
-			'Headers and footers are not supported by the standalone DOCX writer; they would be silently dropped.',
-		);
 	if (
 		binding &&
 		JSON.stringify(model.characterStyles) !== JSON.stringify(binding.base.characterStyles)
@@ -93,16 +89,6 @@ export async function saveDocx(
 	const document = binding ? parseXml(binding.context.sourceXml) : newDocument();
 	const docPrIds = new DocPrIdAllocator();
 	await docPrIds.reserveFromPackage(zip);
-	const existingRelationships = parseRelationships(await zip.file(RELS_PART)?.async('string'));
-	const { newRelationships } = applyModel(
-		document,
-		model,
-		binding?.base.blocks ?? [],
-		existingRelationships.keys(),
-		binding?.base.sections ?? [],
-		docPrIds,
-	);
-	zip.file('word/document.xml', buildXml(document));
 	if (!binding) {
 		zip.file(
 			'[Content_Types].xml',
@@ -113,8 +99,27 @@ export async function saveDocx(
 			'<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
 		);
 	}
+	// Header/footer parts the model added exist (with their relationships) before the body is written.
+	const headerFooterIds = await createHeaderFooterParts(zip, model, binding?.base);
+	const existingRelationships = parseRelationships(await zip.file(RELS_PART)?.async('string'));
+	const { newRelationships } = applyModel(
+		document,
+		model,
+		binding?.base.blocks ?? [],
+		existingRelationships.keys(),
+		binding?.base.sections ?? [],
+		docPrIds,
+		headerFooterIds,
+	);
+	zip.file('word/document.xml', buildXml(document));
 	await writeNewRelationships(zip, 'word/document.xml', newRelationships, pendingMedia);
-	if (binding) await applyHeaderFooterEdits(zip, model, binding.base, pendingMedia, docPrIds);
+	await applyHeaderFooterEdits(
+		zip,
+		model,
+		binding?.base ?? { ...model, sections: [] },
+		pendingMedia,
+		docPrIds,
+	);
 	// A new document starts without notes, so every note is created along with its part.
 	await applyNoteEdits(
 		zip,

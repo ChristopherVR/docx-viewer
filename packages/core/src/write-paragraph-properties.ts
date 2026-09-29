@@ -1,4 +1,5 @@
 import type { Paragraph } from './model.js';
+import { writeParagraphDecoration } from './write-paragraph-decoration.js';
 import { children, first, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
 
 function setAttribute(element: XmlElement, local: string, value: string): void {
@@ -127,6 +128,7 @@ export function writeParagraphProperties(
 	updatePageBreakBefore(doc, props, paragraph, base);
 	updateKeepOptions(doc, props, paragraph, base);
 	updateDirection(doc, props, paragraph, base);
+	writeParagraphDecoration(doc, props, paragraph, base);
 	const spacingKeys = [
 		'spacingBeforeTwips',
 		'spacingAfterTwips',

@@ -2,7 +2,7 @@
 // Writes section edits: page size/orientation, margins, columns and break type for changed
 // sections, new section breaks (a paragraph-level w:sectPr copied from the following section,
 // as Word does) and removed breaks. Other section properties stay protected.
-import type { Block, SectionProperties } from './model.js';
+import type { Block, HeaderFooterSlots, SectionProperties } from './model.js';
 import { orderSectionProperties } from './element-order.js';
 import { orderParagraphProperties } from './tab-stops.js';
 import { children, first, makeW, WORD_NS, type XmlDocument, type XmlElement } from './xml.js';
@@ -151,6 +151,37 @@ function assertWritable(section: SectionProperties, base: SectionProperties | un
 			);
 }
 
+const REL_NAMESPACE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+
+/**
+ * Adds `w:headerReference` / `w:footerReference` for header and footer parts this section gained
+ * (`references` maps each new part to its relationship id). Existing references stay as they are.
+ */
+function writeNewReferences(
+	doc: XmlDocument,
+	sectPr: XmlElement,
+	section: SectionProperties,
+	previous: SectionProperties | undefined,
+	references: ReadonlyMap<string, string>,
+): void {
+	for (const [kind, name] of [
+		['headers', 'headerReference'],
+		['footers', 'footerReference'],
+	] as const)
+		for (const [slot, content] of Object.entries(section[kind] ?? {}) as Array<
+			[keyof HeaderFooterSlots, HeaderFooterSlots[keyof HeaderFooterSlots]]
+		>) {
+			const id = content?.partName ? references.get(content.partName) : undefined;
+			if (!id || previous?.[kind]?.[slot]?.partName === content?.partName) continue;
+			for (const old of children(sectPr, name))
+				if (old.getAttributeNS(WORD_NS, 'type') === slot) sectPr.removeChild(old);
+			const reference = makeW(doc, name);
+			setW(reference, 'type', slot);
+			reference.setAttributeNS(REL_NAMESPACE, 'r:id', id);
+			sectPr.appendChild(reference);
+		}
+}
+
 /** The paragraph-level w:sectPr of a top-level paragraph, if any. */
 const paragraphSection = (node: XmlElement | undefined) =>
 	node?.localName === 'p' ? first(first(node, 'pPr'), 'sectPr') : undefined;
@@ -165,6 +196,8 @@ export function applySectionEdits(
 	blocks: Block[],
 	sections: SectionProperties[],
 	base: SectionProperties[],
+	/** Relationship ids of header/footer parts created for this save, by part name. */
+	references: ReadonlyMap<string, string> = new Map(),
 ): void {
 	if (!sections.length) {
 		if (base.length)
@@ -214,6 +247,7 @@ export function applySectionEdits(
 		assertWritable(section, previous);
 		if (!previous || JSON.stringify(previous) !== JSON.stringify(section)) {
 			writeSectionProperties(doc, sectPr, section);
+			writeNewReferences(doc, sectPr, section, previous, references);
 			orderSectionProperties(sectPr);
 		}
 		following = sectPr;
