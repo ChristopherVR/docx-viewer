@@ -8,6 +8,7 @@ import type { LegacyRibbonLabel } from './ribbon-legacy-labels';
  */
 export const RIBBON_ACTION_IDS = [
 	'paste',
+	'sort',
 	'find-options',
 	'select-options',
 	'add-text',
@@ -125,6 +126,7 @@ export type RibbonActionId = (typeof RIBBON_ACTION_IDS)[number];
 /** English control label of each action, the lookup key into the locale strings. Display-only. */
 export const RIBBON_ACTION_LABELS: Readonly<Record<RibbonActionId, string>> = {
 	paste: 'Paste',
+	sort: 'Sort',
 	'find-options': 'Find options',
 	'select-options': 'Select options',
 	'add-text': 'Add text',

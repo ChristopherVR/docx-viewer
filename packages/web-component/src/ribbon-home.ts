@@ -200,6 +200,16 @@ export function buildHomePanel(panels: Map<string, HTMLElement>): void {
 				tool('Remove list', 'removeList', { type: 'list', key: 'remove' }),
 				tool('Decrease indent', 'outdent', { type: 'paragraph', key: 'indent', value: 'decrease' }),
 				tool('Increase indent', 'indent', { type: 'paragraph', key: 'indent', value: 'increase' }),
+				menuSelect(
+					'Sort',
+					'sort',
+					[
+						['ascending', 'Sort A to Z'],
+						['descending', 'Sort Z to A'],
+					],
+					(value) => ({ type: 'sort', order: value as 'ascending' }),
+					{ compact: true, momentary: true },
+				),
 				tool('Show paragraph marks', 'paragraphMarks', { type: 'showMarks' }),
 			),
 			row(

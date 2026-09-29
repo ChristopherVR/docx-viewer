@@ -15,6 +15,7 @@ import { applyMultilingualAction } from './multilingual-ribbon';
 import { stepFontSize } from './font-step';
 import { changeCase } from './change-case';
 import { setIndent } from './indent-commands';
+import { sortParagraphs } from './sort-commands';
 import { setBorders, setShading } from './paragraph-decoration';
 import { formatDateTime, insertPlainText } from './insert-text-commands';
 import { selectAll } from 'prosemirror-commands';
@@ -125,6 +126,12 @@ export function runRibbonCommand(
 		if (action.key === 'highlight') applyHighlight(view, action.value);
 		else applyFont(view, action.key, action.value);
 	} else if (action.type === 'tableEdit' && !nextId) executeTableCommand(view, action.key);
+	else if (action.type === 'sort')
+		sortParagraphs(
+			view,
+			action.order,
+			view.dom.closest('[lang]')?.getAttribute('lang') ?? undefined,
+		);
 	else if (action.type === 'blankPage') {
 		// Word's Blank Page is two page breaks: one ends this page, one ends the empty page.
 		insertPageBreak(view.state, view.dispatch, view);
