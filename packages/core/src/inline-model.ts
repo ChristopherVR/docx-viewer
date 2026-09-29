@@ -11,6 +11,7 @@ export interface InlineImage {
 	contentType: string;
 	/** An SVG original (`asvg:svgBlip`) shown instead of the raster `partName`, which is its PNG fallback. */
 	svgPartName?: string;
+	/** Display size in CSS pixels (96 dpi), derived from the drawing extent in EMU (may be fractional). */
 	widthPx: number;
 	heightPx: number;
 	/** From `wp:docPr/@descr`. */

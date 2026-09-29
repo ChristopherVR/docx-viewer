@@ -3,6 +3,7 @@ import { defaultStyleCatalogs } from './default-styles.js';
 import type { StJcTable, StNumberFormat } from './generated/wml-simple-types.js';
 import type { ParagraphStyleCatalog } from './model-paragraph.js';
 import type { NumberingCatalog } from './numbering-model.js';
+import type { SignedTwips, Twips } from './units.js';
 export type { Revision, TextRun } from './model-run.js';
 export type {
 	Paragraph,
@@ -72,12 +73,12 @@ export interface Table {
 	structureEditable?: boolean;
 	rows: TableCell[][];
 	/** `w:tblGrid/w:gridCol` widths in twips, one per grid column. */
-	grid?: number[];
-	widthTwips?: number;
+	grid?: Twips[];
+	widthTwips?: Twips;
 	alignment?: 'left' | 'center' | 'right';
 	/** The exact `w:tblPr/w:jc` value (`ST_JcTable`, including `start`/`end`); `alignment` is derived from it. */
 	justification?: StJcTable;
-	indentTwips?: number;
+	indentTwips?: SignedTwips;
 	borders?: import('./table-model.js').TableBorders;
 	/** `w:tblStyle/@w:val`; conditional formatting resolves through `tableStyles` without flattening. */
 	style?: string;

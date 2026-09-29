@@ -1,5 +1,6 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import type { StNumberFormat } from './generated/wml-simple-types.js';
+import type { SignedTwips, Twips } from './units.js';
 /** A single `w:lvl` definition, fully resolved from an abstractNum (and any lvlOverride). */
 export interface NumberingLevelDefinition {
 	/** 0-based `w:ilvl`. */
@@ -10,9 +11,9 @@ export interface NumberingLevelDefinition {
 	/** Raw `w:lvlText/@w:val`, with `%1`..`%9` placeholders (1-based ancestor levels) or a bullet glyph. */
 	lvlText: string;
 	lvlJc?: 'left' | 'center' | 'right';
-	indentLeftTwips?: number;
-	hangingTwips?: number;
-	firstLineTwips?: number;
+	indentLeftTwips?: SignedTwips;
+	hangingTwips?: Twips;
+	firstLineTwips?: Twips;
 	/** `w:isLgl`: render every placeholder in this level's marker as Decimal Number regardless of format. */
 	isLgl?: boolean;
 	/** `w:lvlRestart/@w:val`: the shallowest level (0-based) whose increment restarts this level's counter. */
@@ -46,7 +47,7 @@ export interface ParagraphListLabel {
 	/** Marker text with `%n` placeholders already substituted (no trailing suffix). */
 	text: string;
 	suffix: 'tab' | 'space' | 'none';
-	indentLeftTwips?: number;
-	hangingTwips?: number;
-	firstLineTwips?: number;
+	indentLeftTwips?: SignedTwips;
+	hangingTwips?: Twips;
+	firstLineTwips?: Twips;
 }

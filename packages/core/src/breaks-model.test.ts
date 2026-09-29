@@ -1,3 +1,4 @@
+import { twips } from './units.js';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx } from './index.js';
@@ -50,7 +51,7 @@ describe('page and column breaks', () => {
 		const loaded = await loadDocx(bytes);
 		const paragraph = expectParagraph(loaded.model.blocks[0]);
 		expect(paragraph.runs).toMatchObject([{ text: '', break: 'column' }]);
-		paragraph.spacingBeforeTwips = 240;
+		paragraph.spacingBeforeTwips = twips(240);
 		const xml = await documentXml(await loaded.save());
 		expect(xml).toContain('<w:br w:type="column"/>');
 	});

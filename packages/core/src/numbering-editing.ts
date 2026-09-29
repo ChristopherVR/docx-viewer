@@ -6,6 +6,7 @@ import type {
 	NumDefinition,
 } from './numbering-model.js';
 import { expectDefined } from './expect-defined.js';
+import { signedTwips, twips } from './units.js';
 
 export type ListKind = 'bullet' | 'decimal';
 
@@ -34,8 +35,8 @@ function buildLevels(kind: ListKind): Record<number, NumberingLevelDefinition> {
 				kind === 'bullet'
 					? expectDefined(BULLET_GLYPHS[level % BULLET_GLYPHS.length], 'bullet glyph')
 					: `%${level + 1}.`,
-			indentLeftTwips: 720 * (level + 1),
-			hangingTwips: 360,
+			indentLeftTwips: signedTwips(720 * (level + 1)),
+			hangingTwips: twips(360),
 			suffix: 'tab',
 		};
 		levels[level] = base;

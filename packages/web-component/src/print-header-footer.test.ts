@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { signedTwips, twips } from '@christophervr/docx-core';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import {
@@ -37,13 +38,13 @@ function section(overrides: Partial<SectionProperties>): SectionProperties {
 	return {
 		endsAtBlockId: 'p1',
 		type: 'nextPage',
-		pageWidthTwips: 12240,
-		pageHeightTwips: 15840,
+		pageWidthTwips: twips(12240),
+		pageHeightTwips: twips(15840),
 		orientation: 'portrait',
-		marginTopTwips: 1440,
-		marginRightTwips: 1440,
-		marginBottomTwips: 1440,
-		marginLeftTwips: 1440,
+		marginTopTwips: signedTwips(1440),
+		marginRightTwips: twips(1440),
+		marginBottomTwips: signedTwips(1440),
+		marginLeftTwips: twips(1440),
 		columns: { count: 1, equalWidth: true },
 		...overrides,
 	};

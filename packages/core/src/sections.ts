@@ -4,9 +4,11 @@ import { children, first, getW, isElement, named, type XmlElement } from './xml.
 import { getRelationshipId } from './relationships.js';
 import { isStNumberFormat, isStSectionMark, isStVerticalJc } from './generated/wml-simple-types.js';
 import { enumValue } from './parse-diagnostics.js';
-import { parseOnOff, parseSignedTwips, parseUnsignedInteger } from './simple-types.js';
+import { twips } from './units.js';
+import { parseOnOff, parseSignedTwips, parseTwips, parseUnsignedInteger } from './simple-types.js';
 
-const twipInt = parseSignedTwips;
+const twipInt = parseTwips;
+const signedTwipInt = parseSignedTwips;
 
 export interface RawHeaderFooterRef {
 	slot: 'default' | 'even' | 'first';
@@ -31,7 +33,7 @@ function parseColumns(section: XmlElement): SectionColumns {
 		? colChildren.map((column) => {
 				const space = twipInt(getW(column, 'space'));
 				return {
-					widthTwips: twipInt(getW(column, 'w')) ?? 0,
+					widthTwips: twipInt(getW(column, 'w')) ?? twips(0),
 					...(space !== undefined && { spacingTwips: space }),
 				};
 			})
@@ -71,13 +73,13 @@ function parseOneSection(section: XmlElement, endsAtBlockId: string): RawSection
 	return {
 		endsAtBlockId,
 		type: typeValue ?? 'nextPage',
-		pageWidthTwips: twipInt(getW(size, 'w')) ?? 12240,
-		pageHeightTwips: twipInt(getW(size, 'h')) ?? 15840,
+		pageWidthTwips: twipInt(getW(size, 'w')) ?? twips(12240),
+		pageHeightTwips: twipInt(getW(size, 'h')) ?? twips(15840),
 		orientation: getW(size, 'orient') === 'landscape' ? 'landscape' : 'portrait',
-		marginTopTwips: twipInt(getW(margins, 'top')) ?? 1440,
-		marginRightTwips: twipInt(getW(margins, 'right')) ?? 1440,
-		marginBottomTwips: twipInt(getW(margins, 'bottom')) ?? 1440,
-		marginLeftTwips: twipInt(getW(margins, 'left')) ?? 1440,
+		marginTopTwips: signedTwipInt(getW(margins, 'top')) ?? twips(1440),
+		marginRightTwips: twipInt(getW(margins, 'right')) ?? twips(1440),
+		marginBottomTwips: signedTwipInt(getW(margins, 'bottom')) ?? twips(1440),
+		marginLeftTwips: twipInt(getW(margins, 'left')) ?? twips(1440),
 		...(headerDistance !== undefined ? { headerDistanceTwips: headerDistance } : {}),
 		...(footerDistance !== undefined ? { footerDistanceTwips: footerDistance } : {}),
 		...(gutter !== undefined ? { gutterTwips: gutter } : {}),

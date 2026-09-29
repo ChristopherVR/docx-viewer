@@ -1,11 +1,18 @@
 import { Plugin } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 import type { EditorView } from 'prosemirror-view';
-import type { DocumentModel, SectionProperties } from '@christophervr/docx-core';
+import {
+	signedTwipsFromPixels,
+	twips,
+	twipsFromPixels,
+	twipsToPixels,
+	type DocumentModel,
+	type SectionProperties,
+	type Twips,
+} from '@christophervr/docx-core';
 import { expectDefined } from './defined';
 
-const px = (twips: number) => twips / 15;
-const twips = (pixels: number) => Math.round(pixels * 15);
+const px = twipsToPixels;
 
 /** The document's sections, creating one from the page settings for documents without any. */
 export function sectionsOf(model: DocumentModel): SectionProperties[] {
@@ -15,17 +22,17 @@ export function sectionsOf(model: DocumentModel): SectionProperties[] {
 		{
 			endsAtBlockId: model.blocks.at(-1)?.id ?? '',
 			type: 'nextPage',
-			pageWidthTwips: twips(page.width),
-			pageHeightTwips: twips(page.height),
+			pageWidthTwips: twipsFromPixels(page.width),
+			pageHeightTwips: twipsFromPixels(page.height),
 			orientation: page.width > page.height ? 'landscape' : 'portrait',
-			marginTopTwips: twips(page.marginTop),
-			marginRightTwips: twips(page.marginRight),
-			marginBottomTwips: twips(page.marginBottom),
-			marginLeftTwips: twips(page.marginLeft),
-			headerDistanceTwips: 720,
-			footerDistanceTwips: 720,
-			gutterTwips: 0,
-			columns: { count: 1, spacingTwips: 720, equalWidth: true },
+			marginTopTwips: signedTwipsFromPixels(page.marginTop),
+			marginRightTwips: twipsFromPixels(page.marginRight),
+			marginBottomTwips: signedTwipsFromPixels(page.marginBottom),
+			marginLeftTwips: twipsFromPixels(page.marginLeft),
+			headerDistanceTwips: twips(720),
+			footerDistanceTwips: twips(720),
+			gutterTwips: twips(0),
+			columns: { count: 1, spacingTwips: twips(720), equalWidth: true },
 		},
 	];
 }
@@ -70,8 +77,12 @@ function withSection(
 	};
 }
 
-const NORMAL_MARGIN = 1440;
-const MARGINS: Record<string, number> = { normal: NORMAL_MARGIN, narrow: 720, wide: 2160 };
+const NORMAL_MARGIN = twips(1440);
+const MARGINS: Record<string, Twips> = {
+	normal: NORMAL_MARGIN,
+	narrow: twips(720),
+	wide: twips(2160),
+};
 
 export function setMargins(model: DocumentModel, index: number, preset: string): DocumentModel {
 	const value = MARGINS[preset] ?? NORMAL_MARGIN;
@@ -90,8 +101,9 @@ export function setOrientation(
 	orientation: 'portrait' | 'landscape',
 ): DocumentModel {
 	return withSection(model, index, (section) => {
-		const long = Math.max(section.pageWidthTwips, section.pageHeightTwips);
-		const short = Math.min(section.pageWidthTwips, section.pageHeightTwips);
+		const { pageWidthTwips: width, pageHeightTwips: height } = section;
+		const long = width >= height ? width : height;
+		const short = width >= height ? height : width;
 		return {
 			...section,
 			orientation,
@@ -104,7 +116,7 @@ export function setOrientation(
 export function setColumns(model: DocumentModel, index: number, count: number): DocumentModel {
 	return withSection(model, index, (section) => ({
 		...section,
-		columns: { count, spacingTwips: section.columns.spacingTwips ?? 720, equalWidth: true },
+		columns: { count, spacingTwips: section.columns.spacingTwips ?? twips(720), equalWidth: true },
 	}));
 }
 

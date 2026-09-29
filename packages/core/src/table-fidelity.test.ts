@@ -1,3 +1,4 @@
+import { twips } from './units.js';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, parseTableStyleCatalog, resolveTableStyleFormatting } from './index.js';
@@ -82,7 +83,7 @@ describe('table grid, merge, border, shading and style fidelity', () => {
 
 	it('rejects silently dropping a direct edit to table-level descriptive properties', async () => {
 		const { table, loaded } = await loadTable();
-		table.widthTwips = 9999;
+		table.widthTwips = twips(9999);
 		await expect(loaded.save()).rejects.toThrow('Cannot edit table grid widths, width, alignment');
 	});
 

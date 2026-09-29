@@ -7,9 +7,16 @@ import type {
 import { first, getW, named, parseXml, type XmlDocument, type XmlElement } from './xml.js';
 import { parseParagraphBorders, parseShadingFill } from './table-borders.js';
 import { alignFromJustification, parseJustification } from './paragraph-alignment.js';
-import { onOffElement, parseInteger, parseOnOff, parseSignedTwips } from './simple-types.js';
+import {
+	onOffElement,
+	parseInteger,
+	parseOnOff,
+	parseSignedTwips,
+	parseTwips,
+} from './simple-types.js';
 
-const integer = parseSignedTwips;
+const signedTwipValue = parseSignedTwips;
+const twipValue = parseTwips;
 const enabled = onOffElement;
 
 /** Pagination toggles whose element names match their model keys. */
@@ -37,9 +44,9 @@ export function parseFormatting(pPr: XmlElement | undefined): ParagraphFormattin
 	const shading = parseShadingFill(first(pPr, 'shd'));
 	if (shading) result.shadingFill = shading;
 	const spacing = first(pPr, 'spacing');
-	const before = integer(getW(spacing, 'before'));
-	const after = integer(getW(spacing, 'after'));
-	const line = integer(getW(spacing, 'line'));
+	const before = twipValue(getW(spacing, 'before'));
+	const after = twipValue(getW(spacing, 'after'));
+	const line = signedTwipValue(getW(spacing, 'line'));
 	if (before !== undefined) result.spacingBeforeTwips = before;
 	if (after !== undefined) result.spacingAfterTwips = after;
 	if (line !== undefined) result.lineSpacingTwips = line;
@@ -52,10 +59,15 @@ export function parseFormatting(pPr: XmlElement | undefined): ParagraphFormattin
 		['right', 'indentRightTwips'],
 		['start', 'indentStartTwips'],
 		['end', 'indentEndTwips'],
+	] as const) {
+		const value = signedTwipValue(getW(ind, xml));
+		if (value !== undefined) result[key] = value;
+	}
+	for (const [xml, key] of [
 		['firstLine', 'firstLineTwips'],
 		['hanging', 'hangingTwips'],
 	] as const) {
-		const value = integer(getW(ind, xml));
+		const value = twipValue(getW(ind, xml));
 		if (value !== undefined) result[key] = value;
 	}
 	return result;

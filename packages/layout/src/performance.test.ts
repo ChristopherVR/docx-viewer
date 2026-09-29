@@ -1,3 +1,4 @@
+import { twips } from '@christophervr/docx-core';
 import { describe, expect, it } from 'vitest';
 import { layoutSections } from './page-flow.js';
 import { createFakeMeasurer } from './measure.js';
@@ -13,7 +14,7 @@ describe('layoutSections performance smoke test', () => {
 					text: `Paragraph number ${i} with enough words to wrap across more than one line in a normal US Letter page column.`,
 				},
 			],
-			spacingAfterTwips: 120,
+			spacingAfterTwips: twips(120),
 		}));
 		const input: LayoutDocumentInput = {
 			sections: [

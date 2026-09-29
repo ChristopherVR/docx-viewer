@@ -1,3 +1,4 @@
+import { signedTwips, twips } from './units.js';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { createDocument, loadDocx, saveDocx } from './index.js';
@@ -32,7 +33,7 @@ describe('DOCX paragraph formatting', () => {
 		const reopened = expectParagraph(loaded.model.blocks[0]);
 		expect(reopened.lineSpacingRule).toBe('atLeast');
 		expect(reopened.lineSpacingTwips).toBeUndefined();
-		reopened.spacingBeforeTwips = 100;
+		reopened.spacingBeforeTwips = twips(100);
 		const xml = await documentXml(await loaded.save());
 		expect(xml).toContain('w:lineRule="atLeast"');
 		expect(xml).not.toContain('w:line=');
@@ -78,12 +79,12 @@ describe('DOCX paragraph formatting', () => {
 			inherit?.type !== 'paragraph'
 		)
 			throw new Error('Expected paragraph fixtures');
-		auto.lineSpacingTwips = 480;
+		auto.lineSpacingTwips = signedTwips(480);
 		auto.lineSpacingRule = 'exact';
 		exact.lineSpacingRule = 'atLeast';
 		delete atLeast.lineSpacingTwips;
 		delete atLeast.lineSpacingRule;
-		inherit.lineSpacingTwips = 300;
+		inherit.lineSpacingTwips = signedTwips(300);
 		inherit.lineSpacingRule = 'auto';
 		const xml = await documentXml(await loaded.save());
 		expect(xml).toContain('w:line="480" w:lineRule="exact"');
@@ -116,7 +117,7 @@ describe('DOCX paragraph formatting', () => {
 	it('writes explicit left alignment and removes it when cleared', async () => {
 		const { loaded } = await loadedFixture();
 		const paragraph = expectParagraph(loaded.model.blocks[0]);
-		paragraph.spacingBeforeTwips = 120;
+		paragraph.spacingBeforeTwips = twips(120);
 		let xml = await documentXml(await loaded.save());
 		expect(xml).toContain('<w:jc w:val="left"');
 		delete paragraph.align;
@@ -139,7 +140,7 @@ describe('DOCX paragraph formatting', () => {
 				'Some non-line breaks other than page and column breaks are not distinguished from line breaks in the document model; edits to paragraphs containing them are rejected to preserve the original XML.',
 			);
 			const paragraph = expectParagraph(loaded.model.blocks[0]);
-			paragraph.spacingBeforeTwips = 120;
+			paragraph.spacingBeforeTwips = twips(120);
 			await expect(loaded.save()).rejects.toThrow('contains inline OOXML');
 		},
 	);
@@ -156,7 +157,7 @@ describe('DOCX paragraph formatting', () => {
 			const loaded = await loadDocx(bytes);
 			expect(await loaded.save()).toEqual(bytes);
 			const paragraph = expectParagraph(loaded.model.blocks[0]);
-			paragraph.spacingBeforeTwips = 120;
+			paragraph.spacingBeforeTwips = twips(120);
 			await expect(loaded.save()).rejects.toThrow('contains inline OOXML');
 		},
 	);
@@ -169,7 +170,7 @@ describe('DOCX paragraph formatting', () => {
 		);
 		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
 		const paragraph = expectParagraph(loaded.model.blocks[0]);
-		paragraph.spacingBeforeTwips = 120;
+		paragraph.spacingBeforeTwips = twips(120);
 		const xml = await documentXml(await loaded.save());
 		expect(xml).toContain('<w:br/>');
 		expect(xml).toContain('w:before="120"');

@@ -15,7 +15,10 @@ import {
 	resolveParagraphFormatting,
 	resolveRunFormatting,
 	resolveThemeColorReference,
+	twips,
+	twipsToPixels,
 } from '@christophervr/docx-core';
+import { floatsOf } from './adapt-floats.js';
 import { definedProps } from './defined-props.js';
 import { adaptTable } from './adapt-table.js';
 import { groupParagraphBorders, paragraphBox } from './adapt-paragraph-box.js';
@@ -23,7 +26,6 @@ import { endnoteParagraphs, noteLabels, paragraphFootnotes } from './adapt-notes
 import type {
 	LayoutBlock,
 	LayoutDocumentInput,
-	LayoutFloat,
 	LayoutParagraph,
 	LayoutParagraphBorders,
 	LayoutRun,
@@ -37,7 +39,7 @@ const VERTICAL_MERGE_NOTE =
 	'Vertically merged table cells are drawn as one cell, but their text stays in the first row of the merge.';
 const NEXT_COLUMN_NOTE = 'A "next column" section break is laid out as a continuous section break.';
 
-const twipsToPx = (twips: number): number => twips / 15;
+const twipsToPx = twipsToPixels;
 
 function sectionBreak(
 	type: SectionProperties['type'],
@@ -48,35 +50,6 @@ function sectionBreak(
 		return 'continuous';
 	}
 	return type;
-}
-
-/** Floating pictures anchored in a paragraph, with their `wp:positionH`/`wp:positionV` placement. */
-export function paragraphFloats(paragraph: Paragraph): LayoutFloat[] {
-	const floats: LayoutFloat[] = [];
-	for (const run of paragraph.runs) {
-		const image = run.image;
-		if (!image?.anchored || !image.partName) continue;
-		const placement = image.placement;
-		floats.push({
-			partName: image.partName,
-			contentType: image.contentType,
-			widthPx: image.widthPx,
-			heightPx: image.heightPx,
-			...(placement?.relativeFrom ? { relativeFromH: placement.relativeFrom } : {}),
-			...(placement?.align ? { alignH: placement.align } : {}),
-			...(placement?.offsetXPx !== undefined ? { offsetXPx: placement.offsetXPx } : {}),
-			...(placement?.relativeFromV ? { relativeFromV: placement.relativeFromV } : {}),
-			...(placement?.alignV ? { alignV: placement.alignV } : {}),
-			...(placement?.offsetYPx !== undefined ? { offsetYPx: placement.offsetYPx } : {}),
-			...(placement?.behindText ? { behindText: true } : {}),
-			...(placement?.wrap ? { wrap: placement.wrap } : {}),
-		});
-	}
-	return floats;
-}
-function floatsOf(paragraph: Paragraph): { floats?: LayoutFloat[] } {
-	const floats = paragraphFloats(paragraph);
-	return floats.length ? { floats } : {};
 }
 
 /** Converts a `docx-core` `DocumentModel` into this engine's own input contract. */
@@ -290,7 +263,7 @@ export function adaptDocumentModel(
 				? {
 						columns: {
 							count: section.columns.count,
-							gapPx: twipsToPx(section.columns.spacingTwips ?? 720),
+							gapPx: twipsToPx(section.columns.spacingTwips ?? twips(720)),
 						},
 					}
 				: {}),

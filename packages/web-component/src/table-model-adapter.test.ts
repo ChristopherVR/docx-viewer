@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { twips } from '@christophervr/docx-core';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { createDocument, loadDocx, type DocumentModel, type Table } from '@christophervr/docx-core';
@@ -12,7 +13,7 @@ function mergedTableModel(): DocumentModel {
 		type: 'table',
 		id: 'tbl',
 		structureEditable: false,
-		grid: [1000, 2000],
+		grid: [twips(1000), twips(2000)],
 		rows: [
 			[
 				{

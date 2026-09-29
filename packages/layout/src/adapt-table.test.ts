@@ -1,3 +1,4 @@
+import { eighthPoints, twips } from '@christophervr/docx-core';
 import { describe, expect, it } from 'vitest';
 import { createDocument, type DocumentModel, type Table } from '@christophervr/docx-core';
 import { adaptDocumentModel } from './adapter.js';
@@ -18,11 +19,11 @@ function model(table: Table): DocumentModel {
 }
 
 // Parsed documents store colors with their `#`.
-const single = { style: 'single', sizeEighthPoints: 8, color: '#FF0000' } as const;
+const single = { style: 'single', sizeEighthPoints: eighthPoints(8), color: '#FF0000' } as const;
 const table: Table = {
 	type: 'table',
 	id: 't',
-	grid: [1500, 1500, 3000],
+	grid: [twips(1500), twips(1500), twips(3000)],
 	alignment: 'center',
 	borders: {
 		top: single,
@@ -36,7 +37,7 @@ const table: Table = {
 		[cell('a', { gridSpan: 2, verticalMerge: 'restart' }), cell('b', { shadingFill: '#FFFF00' })],
 		[
 			cell('', { gridSpan: 2, verticalMerge: 'continue' }),
-			cell('c', { verticalAlign: 'bottom', margins: { left: 300 } }),
+			cell('c', { verticalAlign: 'bottom', margins: { left: twips(300) } }),
 		],
 	],
 };
@@ -88,11 +89,11 @@ describe('table rows in Print Layout', () => {
 		const tall: Table = {
 			type: 'table',
 			id: 'tall',
-			grid: [3000],
-			cellMargins: { left: 0, right: 0 },
+			grid: [twips(3000)],
+			cellMargins: { left: twips(0), right: twips(0) },
 			rowProperties: [
-				{ header: true, heightTwips: 600, heightRule: 'exact' },
-				{ heightTwips: 900 },
+				{ header: true, heightTwips: twips(600), heightRule: 'exact' },
+				{ heightTwips: twips(900) },
 			],
 			rows,
 		};

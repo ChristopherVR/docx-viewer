@@ -5,6 +5,7 @@ import {
 	tocBookmarks,
 	tocEntries,
 	tocHyperlinks,
+	twipsFromPixels,
 	type Block,
 	type DocumentModel,
 	type Paragraph,
@@ -38,7 +39,7 @@ export function blockPageNumbers(
 }
 
 const contentWidthTwips = (model: DocumentModel) =>
-	Math.round((model.page.width - model.page.marginLeft - model.page.marginRight) * 15);
+	twipsFromPixels(model.page.width - model.page.marginLeft - model.page.marginRight);
 
 /**
  * Builds TOC paragraphs to place at `start..end` (inclusive, or `end = start - 1` to insert),

@@ -1,3 +1,4 @@
+import { signedTwips, twips } from '@christophervr/docx-core';
 import { describe, expect, it } from 'vitest';
 import { layoutParagraph } from './paragraph-layout.js';
 import type { LayoutParagraph, LayoutRun } from './input.js';
@@ -70,7 +71,7 @@ describe('layoutParagraph alignment', () => {
 
 	it('applies firstLineTwips only to the paragraph’s first line', () => {
 		const result = layoutParagraph(
-			paragraph([{ text: 'AB\nCD' }], { align: 'right', firstLineTwips: 150 }),
+			paragraph([{ text: 'AB\nCD' }], { align: 'right', firstLineTwips: twips(150) }),
 			100,
 			measurer,
 			noop,
@@ -82,7 +83,7 @@ describe('layoutParagraph alignment', () => {
 
 	it('applies hangingTwips as a first-line outdent', () => {
 		const result = layoutParagraph(
-			paragraph([{ text: 'AB\nCD' }], { align: 'right', hangingTwips: 150 }),
+			paragraph([{ text: 'AB\nCD' }], { align: 'right', hangingTwips: twips(150) }),
 			100,
 			measurer,
 			noop,
@@ -94,7 +95,10 @@ describe('layoutParagraph alignment', () => {
 
 	it('offsets left-aligned lines by the left indent and first-line indent', () => {
 		const result = layoutParagraph(
-			paragraph([{ text: 'AB\nCD' }], { indentLeftTwips: 300, firstLineTwips: 150 }),
+			paragraph([{ text: 'AB\nCD' }], {
+				indentLeftTwips: signedTwips(300),
+				firstLineTwips: twips(150),
+			}),
 			100,
 			measurer,
 			noop,
@@ -107,7 +111,7 @@ describe('layoutParagraph alignment', () => {
 describe('layoutParagraph line spacing rules', () => {
 	it('scales natural height by the auto multiple', () => {
 		const result = layoutParagraph(
-			paragraph([{ text: 'x' }], { lineSpacingTwips: 360, lineSpacingRule: 'auto' }),
+			paragraph([{ text: 'x' }], { lineSpacingTwips: signedTwips(360), lineSpacingRule: 'auto' }),
 			200,
 			measurer,
 			noop,
@@ -117,7 +121,7 @@ describe('layoutParagraph line spacing rules', () => {
 
 	it('uses the exact height regardless of natural line height', () => {
 		const result = layoutParagraph(
-			paragraph([{ text: 'x' }], { lineSpacingTwips: 300, lineSpacingRule: 'exact' }),
+			paragraph([{ text: 'x' }], { lineSpacingTwips: signedTwips(300), lineSpacingRule: 'exact' }),
 			200,
 			measurer,
 			noop,
@@ -127,14 +131,20 @@ describe('layoutParagraph line spacing rules', () => {
 
 	it('uses at-least as a floor over the natural height', () => {
 		const tall = layoutParagraph(
-			paragraph([{ text: 'x' }], { lineSpacingTwips: 450, lineSpacingRule: 'atLeast' }),
+			paragraph([{ text: 'x' }], {
+				lineSpacingTwips: signedTwips(450),
+				lineSpacingRule: 'atLeast',
+			}),
 			200,
 			measurer,
 			noop,
 		);
 		expect(at(tall.lines, 0).heightPx).toBe(30);
 		const short = layoutParagraph(
-			paragraph([{ text: 'x' }], { lineSpacingTwips: 150, lineSpacingRule: 'atLeast' }),
+			paragraph([{ text: 'x' }], {
+				lineSpacingTwips: signedTwips(150),
+				lineSpacingRule: 'atLeast',
+			}),
 			200,
 			measurer,
 			noop,
@@ -158,7 +168,7 @@ describe('layoutParagraph baselines', () => {
 					{ text: 'small', fontSizePt: 12 },
 				],
 				{
-					lineSpacingTwips: 480,
+					lineSpacingTwips: signedTwips(480),
 					lineSpacingRule: 'auto',
 				},
 			),

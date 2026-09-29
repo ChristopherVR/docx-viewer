@@ -9,7 +9,8 @@ import type {
 import { children, first, getW, named, parseXml, type XmlElement } from './xml.js';
 import { isStNumberFormat } from './generated/wml-simple-types.js';
 import { enumValue } from './parse-diagnostics.js';
-import { onOffElement, parseInteger } from './simple-types.js';
+import { onOffElement, parseInteger, parseSignedTwips, parseTwips } from './simple-types.js';
+import { signedTwips, twips } from './units.js';
 
 const integer = (value: string | undefined, fallback: number): number =>
 	parseInteger(value) ?? fallback;
@@ -32,11 +33,11 @@ export function parseNumberingLevel(lvl: XmlElement): NumberingLevelDefinition {
 	const result: NumberingLevelDefinition = { level, start, numFmt, lvlText };
 	if (jc === 'left' || jc === 'center' || jc === 'right') result.lvlJc = jc;
 	const left = getW(ind, 'left') ?? getW(ind, 'start');
-	if (left !== undefined) result.indentLeftTwips = integer(left, 0);
+	if (left !== undefined) result.indentLeftTwips = parseSignedTwips(left) ?? signedTwips(0);
 	const hanging = getW(ind, 'hanging');
-	if (hanging !== undefined) result.hangingTwips = integer(hanging, 0);
+	if (hanging !== undefined) result.hangingTwips = parseTwips(hanging) ?? twips(0);
 	const firstLine = getW(ind, 'firstLine');
-	if (firstLine !== undefined) result.firstLineTwips = integer(firstLine, 0);
+	if (firstLine !== undefined) result.firstLineTwips = parseTwips(firstLine) ?? twips(0);
 	if (flag(first(lvl, 'isLgl'))) result.isLgl = true;
 	const restart = getW(first(lvl, 'lvlRestart'), 'val');
 	if (restart !== undefined) result.lvlRestart = integer(restart, 0);

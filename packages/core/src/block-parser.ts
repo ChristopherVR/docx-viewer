@@ -21,7 +21,7 @@ import { resolveHyperlink, parseSimpleHyperlinkField } from './hyperlink.js';
 import { paragraphBookmarkNames } from './bookmarks.js';
 import { parseTabStops } from './tab-stops.js';
 import { parseJustification } from './paragraph-alignment.js';
-import { onOffElement, parseInteger, parseSignedTwips } from './simple-types.js';
+import { onOffElement, parseInteger, parseSignedTwips, parseTwips } from './simple-types.js';
 import { PAGINATION_KEYS } from './paragraph-styles.js';
 import { parseParagraphBorders, parseShadingFill } from './table-borders.js';
 import { createFieldTracker } from './field-runs.js';
@@ -33,7 +33,8 @@ import {
 	runFormatRevision,
 } from './parse-revisions.js';
 
-const twipValue = parseSignedTwips;
+const signedTwipValue = parseSignedTwips;
+const twipValue = parseTwips;
 
 const FIELD_PLACEHOLDERS: Record<string, string> = {
 	PAGE: '[Page #]',
@@ -188,7 +189,7 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 	const spacing = first(props, 'spacing');
 	const before = twipValue(getW(spacing, 'before'));
 	const after = twipValue(getW(spacing, 'after'));
-	const line = twipValue(getW(spacing, 'line'));
+	const line = signedTwipValue(getW(spacing, 'line'));
 	if (before !== undefined) paragraph.spacingBeforeTwips = before;
 	if (after !== undefined) paragraph.spacingAfterTwips = after;
 	if (line !== undefined) {
@@ -198,10 +199,10 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 	if (rule === 'auto' || rule === 'exact' || rule === 'atLeast') paragraph.lineSpacingRule = rule;
 	else if (line !== undefined) paragraph.lineSpacingRule = 'auto';
 	const indent = first(props, 'ind');
-	const indentLeft = twipValue(getW(indent, 'left'));
-	const indentRight = twipValue(getW(indent, 'right'));
-	const indentStart = twipValue(getW(indent, 'start'));
-	const indentEnd = twipValue(getW(indent, 'end'));
+	const indentLeft = signedTwipValue(getW(indent, 'left'));
+	const indentRight = signedTwipValue(getW(indent, 'right'));
+	const indentStart = signedTwipValue(getW(indent, 'start'));
+	const indentEnd = signedTwipValue(getW(indent, 'end'));
 	const firstLine = twipValue(getW(indent, 'firstLine'));
 	const hanging = twipValue(getW(indent, 'hanging'));
 	if (indentLeft !== undefined) paragraph.indentLeftTwips = indentLeft;

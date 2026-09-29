@@ -1,3 +1,4 @@
+import { signedTwips, twips } from './units.js';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, saveDocx } from './index.js';
@@ -43,9 +44,9 @@ describe('DOCX core', () => {
 			indentRightTwips: 360,
 			firstLineTwips: 240,
 		});
-		styled.spacingAfterTwips = 480;
-		styled.indentLeftTwips = 960;
-		untouched.spacingAfterTwips = 240;
+		styled.spacingAfterTwips = twips(480);
+		styled.indentLeftTwips = signedTwips(960);
+		untouched.spacingAfterTwips = twips(240);
 		const saved = await JSZip.loadAsync(await loaded.save());
 		const xml = (await saved.file('word/document.xml')?.async('string')) ?? '';
 		expect(xml).toContain('w:after="480"');

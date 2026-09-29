@@ -1,18 +1,23 @@
 // Framework-neutral pagination engine; conversions match the CSS-pixel-at-96dpi
 // convention already used by @christophervr/docx-core's DocumentModel.page.
-/** Twentieths of a point (Word's native unit for spacing/indents). */
-export function twipsToPx(twips: number): number {
-	return (twips * 96) / 1440;
+import { roundSignedTwips, twips, type SignedTwips } from '@christophervr/docx-core';
+
+/** Twentieths of a point (Word's native unit for spacing/indents) to CSS pixels. */
+export function twipsToPx(value: SignedTwips): number {
+	return (value * 96) / 1440;
 }
-export function pxToTwips(px: number): number {
-	return (px * 1440) / 96;
+/** Zero twips, the default for absent spacing and indents. */
+export const NO_TWIPS = twips(0);
+/** CSS pixels to whole twips (rounded half away from zero; may be negative). */
+export function pxToTwips(px: number): SignedTwips {
+	return roundSignedTwips((px * 1440) / 96);
 }
 /** Points (Word's native unit for font sizes). */
 export function ptToPx(pt: number): number {
 	return (pt * 96) / 72;
 }
 /** Default tab stop interval: every half inch when no custom `w:tabs` are modeled. */
-export const DEFAULT_TAB_STOP_PX = twipsToPx(720);
+export const DEFAULT_TAB_STOP_PX = twipsToPx(twips(720));
 /** Word's default body font when a run specifies neither family nor size. */
 export const DEFAULT_FONT_FAMILY = 'Calibri';
 export const DEFAULT_FONT_SIZE_PT = 11;

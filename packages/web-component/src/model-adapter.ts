@@ -7,6 +7,7 @@ import {
 	numberNotesInOrder,
 } from '@christophervr/docx-core';
 import { schema } from './schema';
+import { paragraphTwipsFromAttrs } from './attr-units';
 import { sameJson, sameRuns } from './run-compare';
 import { appendInlineNode, runToInlineNodes, type NoteNumberLookup } from './run-adapter';
 import { convertMergedTable, convertSimpleTable, tableNode } from './table-model-adapter';
@@ -157,30 +158,10 @@ export function docToModel(
 			...(node.attrs.align != null ? { align: node.attrs.align } : {}),
 			...(node.attrs.direction != null ? { direction: node.attrs.direction } : {}),
 			...(node.attrs.style ? { style: node.attrs.style } : {}),
-			...(node.attrs.spacingBeforeTwips != null
-				? { spacingBeforeTwips: node.attrs.spacingBeforeTwips }
-				: {}),
-			...(node.attrs.spacingAfterTwips != null
-				? { spacingAfterTwips: node.attrs.spacingAfterTwips }
-				: {}),
-			...(node.attrs.lineSpacingTwips != null
-				? { lineSpacingTwips: node.attrs.lineSpacingTwips }
-				: {}),
+			...paragraphTwipsFromAttrs(node.attrs),
 			...(node.attrs.lineSpacingRule != null
 				? { lineSpacingRule: node.attrs.lineSpacingRule }
 				: {}),
-			...(node.attrs.indentLeftTwips != null
-				? { indentLeftTwips: node.attrs.indentLeftTwips }
-				: {}),
-			...(node.attrs.indentRightTwips != null
-				? { indentRightTwips: node.attrs.indentRightTwips }
-				: {}),
-			...(node.attrs.indentStartTwips != null
-				? { indentStartTwips: node.attrs.indentStartTwips }
-				: {}),
-			...(node.attrs.indentEndTwips != null ? { indentEndTwips: node.attrs.indentEndTwips } : {}),
-			...(node.attrs.firstLineTwips != null ? { firstLineTwips: node.attrs.firstLineTwips } : {}),
-			...(node.attrs.hangingTwips != null ? { hangingTwips: node.attrs.hangingTwips } : {}),
 			...(node.attrs.numId != null
 				? { numbering: { numId: node.attrs.numId, level: node.attrs.ilvl ?? 0 } }
 				: {}),

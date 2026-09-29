@@ -4,6 +4,7 @@ import { closeHistory } from 'prosemirror-history';
 import { DEFAULT_TABLE_BORDERS } from '@christophervr/docx-core';
 import { schema } from './schema';
 import { parseLineSpacingValue } from './line-spacing';
+import { twipsAttr } from './attr-units';
 
 export function applyFont(view: EditorView, key: 'family' | 'size' | 'color', value: string) {
 	const attr = key === 'family' ? 'family' : key === 'size' ? 'size' : 'color';
@@ -99,12 +100,12 @@ export function updateParagraphs(
 		} else if (key === 'spacingAfter') {
 			transaction = transaction.setNodeMarkup(pos, undefined, {
 				...node.attrs,
-				spacingAfterTwips: value === 'inherit' ? null : Number(value),
+				spacingAfterTwips: value === 'inherit' ? null : (twipsAttr(Number(value)) ?? null),
 			});
 		} else if (key === 'spacingBefore') {
 			transaction = transaction.setNodeMarkup(pos, undefined, {
 				...node.attrs,
-				spacingBeforeTwips: value === 'inherit' ? null : Number(value),
+				spacingBeforeTwips: value === 'inherit' ? null : (twipsAttr(Number(value)) ?? null),
 			});
 		} else {
 			const lineSpacing = value === 'inherit' ? null : parseLineSpacingValue(value);

@@ -1,10 +1,13 @@
 import {
 	resolveCellVisuals,
 	resolveThemeColorReference,
+	twips,
+	twipsToPixels,
 	type DocumentModel,
 	type Paragraph,
 	type Table,
 	type TableBorderSide,
+	type TableCellMargins,
 } from '@christophervr/docx-core';
 import { expectDefined } from './expect-defined.js';
 import type {
@@ -17,9 +20,14 @@ import type {
 	LayoutTableRow,
 } from './input.js';
 
-const twipsToPx = (twips: number): number => twips / 15;
+const twipsToPx = twipsToPixels;
 /** Word's default table cell margins (`w:tblCellMar`): 108 twips (0.075in) left and right. */
-const DEFAULT_PADDING_TWIPS = { top: 0, right: 108, bottom: 0, left: 108 };
+const DEFAULT_PADDING_TWIPS: Required<TableCellMargins> = {
+	top: twips(0),
+	right: twips(108),
+	bottom: twips(0),
+	left: twips(108),
+};
 
 /** `#rrggbb` from a model color, which the parser stores with or without its `#`. */
 export function cssHex(value: string | undefined): string | undefined {

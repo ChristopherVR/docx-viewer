@@ -2,6 +2,7 @@
 // Sections, headers/footers and footnotes/endnotes.
 import type { Block } from './model.js';
 import type { StNumberFormat, StSectionMark, StVerticalJc } from './generated/wml-simple-types.js';
+import type { SignedTwips, Twips } from './units.js';
 
 /** Header/footer content, parsed with the same paragraph/table parser as the body. */
 export interface HeaderFooterContent {
@@ -16,13 +17,13 @@ export interface HeaderFooterSlots {
 	first?: HeaderFooterContent;
 }
 export interface SectionColumn {
-	widthTwips: number;
-	spacingTwips?: number;
+	widthTwips: Twips;
+	spacingTwips?: Twips;
 }
 /** `w:cols`: newspaper-style column layout for the section. */
 export interface SectionColumns {
 	count: number;
-	spacingTwips?: number;
+	spacingTwips?: Twips;
 	equalWidth: boolean;
 	separator?: boolean;
 	/** Present only when `equalWidth` is false and individual `w:col` widths were given. */
@@ -41,16 +42,16 @@ export interface SectionProperties {
 	/** Id of the last block (paragraph or table) this section covers. */
 	endsAtBlockId: string;
 	type: StSectionMark;
-	pageWidthTwips: number;
-	pageHeightTwips: number;
+	pageWidthTwips: Twips;
+	pageHeightTwips: Twips;
 	orientation: 'portrait' | 'landscape';
-	marginTopTwips: number;
-	marginRightTwips: number;
-	marginBottomTwips: number;
-	marginLeftTwips: number;
-	headerDistanceTwips?: number;
-	footerDistanceTwips?: number;
-	gutterTwips?: number;
+	marginTopTwips: SignedTwips;
+	marginRightTwips: Twips;
+	marginBottomTwips: SignedTwips;
+	marginLeftTwips: Twips;
+	headerDistanceTwips?: Twips;
+	footerDistanceTwips?: Twips;
+	gutterTwips?: Twips;
 	columns: SectionColumns;
 	/** `w:titlePg`: the section's first page uses distinct first-page headers/footers. */
 	titlePage?: boolean;

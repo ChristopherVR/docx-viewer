@@ -1,10 +1,11 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import type { StJc, StTabJc, StTabTlc } from './generated/wml-simple-types.js';
 import type { Revision, TextRun } from './model-run.js';
+import type { SignedTwips, Twips } from './units.js';
 
 /** A paragraph tab stop (`w:tab`): position from the text margin, alignment and leader fill. */
 export interface TabStop {
-	posTwips: number;
+	posTwips: SignedTwips;
 	align: StTabJc;
 	leader?: StTabTlc;
 }
@@ -24,17 +25,17 @@ export interface Paragraph {
 	direction?: 'ltr' | 'rtl';
 	style?: string;
 	/** Word paragraph spacing and indentation values, kept in their native twip units (1/20 pt). */
-	spacingBeforeTwips?: number;
-	spacingAfterTwips?: number;
-	lineSpacingTwips?: number;
+	spacingBeforeTwips?: Twips;
+	spacingAfterTwips?: Twips;
+	lineSpacingTwips?: SignedTwips;
 	/** `auto` uses 240ths of a line; `exact` and `atLeast` use twips. */
 	lineSpacingRule?: 'auto' | 'exact' | 'atLeast';
-	indentLeftTwips?: number;
-	indentRightTwips?: number;
-	indentStartTwips?: number;
-	indentEndTwips?: number;
-	firstLineTwips?: number;
-	hangingTwips?: number;
+	indentLeftTwips?: SignedTwips;
+	indentRightTwips?: SignedTwips;
+	indentStartTwips?: SignedTwips;
+	indentEndTwips?: SignedTwips;
+	firstLineTwips?: Twips;
+	hangingTwips?: Twips;
 	/** Direct `w:numPr` on this paragraph; undefined may still inherit numbering through `style`. */
 	numbering?: { numId: number; level: number };
 	/** `w:pPr/w:pageBreakBefore`: forces this paragraph to start a new page. */

@@ -11,7 +11,14 @@ import { children, first, getW, type XmlElement, WORD_NS } from './xml.js';
 import { canEditTableStructure } from './write-table.js';
 import { isStJcTable, isStVerticalJc } from './generated/wml-simple-types.js';
 import { enumValue } from './parse-diagnostics.js';
-import { onOffAttribute, onOffElement, parseTwips, parseUnsignedInteger } from './simple-types.js';
+import {
+	onOffAttribute,
+	onOffElement,
+	parseSignedTwips,
+	parseTwips,
+	parseUnsignedInteger,
+} from './simple-types.js';
+import type { Twips } from './units.js';
 import { parseShadingFill, parseShadingThemeFill, parseTableBorders } from './table-borders.js';
 
 const dxa = parseTwips;
@@ -124,7 +131,7 @@ export function parseTable(
 	const table: Table = { type: 'table', id, rows, structureEditable: canEditTableStructure(node) };
 	const gridElement = first(node, 'tblGrid');
 	const grid = gridElement
-		? children(gridElement, 'gridCol').flatMap((column): number[] => {
+		? children(gridElement, 'gridCol').flatMap((column): Twips[] => {
 				const width = dxa(getW(column, 'w'));
 				return width === undefined ? [] : [width];
 			})
@@ -148,7 +155,7 @@ export function parseTable(
 						: 'right'
 					: justification;
 	}
-	const indent = dxa(getW(first(tblPr, 'tblInd'), 'w'));
+	const indent = parseSignedTwips(getW(first(tblPr, 'tblInd'), 'w'));
 	if (indent !== undefined) table.indentTwips = indent;
 	const borders = parseTableBorders(first(tblPr, 'tblBorders'));
 	if (borders) table.borders = borders;

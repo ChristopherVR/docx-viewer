@@ -3,6 +3,7 @@
 // refreshes an existing TOC field that spans body paragraphs.
 import { expectDefined } from './expect-defined.js';
 import { fieldName } from './field-runs.js';
+import { signedTwips, twips, type Twips } from './units.js';
 import type { Block, DocumentModel, Paragraph, ParagraphStyleCatalog, TextRun } from './model.js';
 
 export const DEFAULT_TOC_INSTRUCTION = ' TOC \\o "1-3" \\h \\z \\u ';
@@ -68,7 +69,7 @@ export interface TocOptions {
 	/** Page number text per heading block id, from pagination; entries without one show no number. */
 	pageNumbers?: ReadonlyMap<string, string>;
 	/** Text width in twips, for the right-aligned page-number tab stop. */
-	contentWidthTwips?: number;
+	contentWidthTwips?: Twips;
 	/** Creates unique paragraph ids. */
 	newId: () => string;
 	/**
@@ -167,7 +168,7 @@ export function withTocBookmarks(
 export function buildTableOfContents(model: DocumentModel, options: TocOptions): Paragraph[] {
 	const instruction = options.instruction ?? DEFAULT_TOC_INSTRUCTION;
 	const field = { instr: instruction.trim() };
-	const width = options.contentWidthTwips ?? 9360;
+	const width = options.contentWidthTwips ?? twips(9360);
 	const styles = model.paragraphStyles?.styles ?? {};
 	const entries = tocEntries(model, instruction);
 	const paragraphs: Paragraph[] = (entries.length ? entries : [undefined]).map((entry) => {
@@ -186,7 +187,10 @@ export function buildTableOfContents(model: DocumentModel, options: TocOptions):
 			runs,
 			...(styles[style]
 				? { style }
-				: { ...(level > 1 ? { indentLeftTwips: (level - 1) * 220 } : {}), spacingAfterTwips: 100 }),
+				: {
+						...(level > 1 ? { indentLeftTwips: signedTwips((level - 1) * 220) } : {}),
+						spacingAfterTwips: twips(100),
+					}),
 			tabStops: [{ posTwips: width, align: 'right', leader: 'dot' }],
 		};
 	});

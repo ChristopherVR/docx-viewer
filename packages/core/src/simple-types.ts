@@ -4,9 +4,11 @@
 import {
 	eighthPoints,
 	halfPoints,
+	signedTwips,
 	twips,
 	type EighthPoints,
 	type HalfPoints,
+	type SignedTwips,
 	type Twips,
 } from './units.js';
 import { getW, type XmlElement } from './xml.js';
@@ -67,16 +69,16 @@ export function universalMeasureToTwips(value: string): number | undefined {
 }
 
 /** `ST_SignedTwipsMeasure`: an integer or a universal measure, in twips. */
-export function parseSignedTwips(value: string | null | undefined): Twips | undefined {
+export function parseSignedTwips(value: string | null | undefined): SignedTwips | undefined {
 	if (value === null || value === undefined) return undefined;
 	const text = value.trim();
 	const parsed = SAFE_INTEGER.test(text) ? parseInteger(text) : universalMeasureToTwips(text);
-	return parsed === undefined ? undefined : twips(parsed);
+	return parsed === undefined ? undefined : signedTwips(parsed);
 }
 /** `ST_TwipsMeasure`: like `parseSignedTwips` but negative values are rejected. */
 export function parseTwips(value: string | null | undefined): Twips | undefined {
 	const parsed = parseSignedTwips(value);
-	return parsed !== undefined && parsed >= 0 ? parsed : undefined;
+	return parsed !== undefined && parsed >= 0 ? twips(parsed) : undefined;
 }
 
 /** `ST_HpsMeasure`: non-negative half-points, or a positive universal measure (`12pt`). */

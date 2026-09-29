@@ -7,6 +7,8 @@
  * fallback, so the pipeline keeps compiling as other agents add model
  * fields, and nothing here ever reads `(x as any)`.
  */
+import type { SignedTwips, Twips } from '@christophervr/docx-core';
+
 export interface LayoutRun {
 	text: string;
 	bold?: boolean;
@@ -83,16 +85,16 @@ export interface LayoutParagraph {
 	runs: LayoutRun[];
 	align?: ParagraphAlign;
 	direction?: 'ltr' | 'rtl';
-	spacingBeforeTwips?: number;
-	spacingAfterTwips?: number;
-	lineSpacingTwips?: number;
+	spacingBeforeTwips?: Twips;
+	spacingAfterTwips?: Twips;
+	lineSpacingTwips?: SignedTwips;
 	lineSpacingRule?: LineSpacingRule;
-	indentLeftTwips?: number;
-	indentRightTwips?: number;
-	indentStartTwips?: number;
-	indentEndTwips?: number;
-	firstLineTwips?: number;
-	hangingTwips?: number;
+	indentLeftTwips?: SignedTwips;
+	indentRightTwips?: SignedTwips;
+	indentStartTwips?: SignedTwips;
+	indentEndTwips?: SignedTwips;
+	firstLineTwips?: Twips;
+	hangingTwips?: Twips;
 	/** `w:contextualSpacing`: suppress spacing between paragraphs sharing `styleId`. */
 	contextualSpacing?: boolean;
 	styleId?: string;

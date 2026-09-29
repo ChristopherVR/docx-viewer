@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { signedTwips, twips } from '@christophervr/docx-core';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createDocument } from '@christophervr/docx-core';
 import { TextSelection } from 'prosemirror-state';
@@ -24,9 +25,9 @@ function mountTableEditor() {
 								type: 'paragraph',
 								id: 'first-cell',
 								runs: [{ text: 'first cell' }],
-								lineSpacingTwips: 301,
+								lineSpacingTwips: signedTwips(301),
 								lineSpacingRule: 'exact',
-								spacingBeforeTwips: 80,
+								spacingBeforeTwips: twips(80),
 								align: 'center',
 							},
 						],
@@ -37,10 +38,10 @@ function mountTableEditor() {
 								type: 'paragraph',
 								id: 'second-cell',
 								runs: [{ text: 'second cell' }],
-								lineSpacingTwips: 360,
+								lineSpacingTwips: signedTwips(360),
 								lineSpacingRule: 'atLeast',
-								spacingAfterTwips: 100,
-								indentLeftTwips: 120,
+								spacingAfterTwips: twips(100),
+								indentLeftTwips: signedTwips(120),
 							},
 						],
 					},

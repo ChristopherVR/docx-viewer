@@ -1,3 +1,4 @@
+import { signedTwips, twips } from './units.js';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, type DocumentModel, type Paragraph } from './index.js';
@@ -37,8 +38,8 @@ describe('numbering.xml element order', () => {
 			lvlRestart: 0,
 			lvlJc: 'right',
 			suffix: 'space',
-			indentLeftTwips: 720,
-			hangingTwips: 360,
+			indentLeftTwips: signedTwips(720),
+			hangingTwips: twips(360),
 		};
 		model.numberingCatalog = catalog;
 		(model.blocks[0] as Paragraph).numbering = { numId, level: 0 };

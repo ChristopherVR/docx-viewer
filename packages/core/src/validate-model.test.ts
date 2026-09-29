@@ -1,3 +1,4 @@
+import { signedTwips, twips } from './units.js';
 import { describe, expect, it } from 'vitest';
 import {
 	createDocument,
@@ -22,13 +23,13 @@ function section(extra: Partial<SectionProperties> = {}): SectionProperties {
 	return {
 		endsAtBlockId: 'p1',
 		type: 'nextPage',
-		pageWidthTwips: 12240,
-		pageHeightTwips: 15840,
+		pageWidthTwips: twips(12240),
+		pageHeightTwips: twips(15840),
 		orientation: 'portrait',
-		marginTopTwips: 1440,
-		marginRightTwips: 1440,
-		marginBottomTwips: 1440,
-		marginLeftTwips: 1440,
+		marginTopTwips: signedTwips(1440),
+		marginRightTwips: twips(1440),
+		marginBottomTwips: signedTwips(1440),
+		marginLeftTwips: twips(1440),
 		columns: { count: 1, equalWidth: true },
 		...extra,
 	};
@@ -79,13 +80,13 @@ const rules: Rule[] = [
 		name: 'fontSize rejects NaN',
 		field: 'fontSize',
 		valid: withRun({ fontSize: 12 }),
-		invalid: withRun({ fontSize: Number.NaN }),
+		invalid: withRun({ fontSize: Number.NaN as never }),
 	},
 	{
 		name: 'fontSize rejects Infinity',
 		field: 'fontSize',
 		valid: withRun({ fontSize: 12 }),
-		invalid: withRun({ fontSize: Infinity }),
+		invalid: withRun({ fontSize: Infinity as never }),
 	},
 	{
 		name: 'color is ST_HexColor',
@@ -184,38 +185,38 @@ const rules: Rule[] = [
 	{
 		name: 'spacingBeforeTwips is unsigned',
 		field: 'spacingBeforeTwips',
-		valid: withParagraph({ spacingBeforeTwips: 0 }),
-		invalid: withParagraph({ spacingBeforeTwips: -20 }),
+		valid: withParagraph({ spacingBeforeTwips: twips(0) }),
+		invalid: withParagraph({ spacingBeforeTwips: -20 as never }),
 	},
 	{
 		name: 'spacingAfterTwips is an integer',
 		field: 'spacingAfterTwips',
-		valid: withParagraph({ spacingAfterTwips: 120 }),
-		invalid: withParagraph({ spacingAfterTwips: 12.5 }),
+		valid: withParagraph({ spacingAfterTwips: twips(120) }),
+		invalid: withParagraph({ spacingAfterTwips: 12.5 as never }),
 	},
 	{
 		name: 'hangingTwips is unsigned',
 		field: 'hangingTwips',
-		valid: withParagraph({ hangingTwips: 360 }),
-		invalid: withParagraph({ hangingTwips: -360 }),
+		valid: withParagraph({ hangingTwips: twips(360) }),
+		invalid: withParagraph({ hangingTwips: -360 as never }),
 	},
 	{
 		name: 'firstLineTwips is unsigned',
 		field: 'firstLineTwips',
-		valid: withParagraph({ firstLineTwips: 360 }),
-		invalid: withParagraph({ firstLineTwips: Number.NaN }),
+		valid: withParagraph({ firstLineTwips: twips(360) }),
+		invalid: withParagraph({ firstLineTwips: Number.NaN as never }),
 	},
 	{
 		name: 'indentLeftTwips is a signed integer',
 		field: 'indentLeftTwips',
-		valid: withParagraph({ indentLeftTwips: -720 }),
-		invalid: withParagraph({ indentLeftTwips: 1.5 }),
+		valid: withParagraph({ indentLeftTwips: signedTwips(-720) }),
+		invalid: withParagraph({ indentLeftTwips: 1.5 as never }),
 	},
 	{
 		name: 'indentRightTwips is a signed integer',
 		field: 'indentRightTwips',
-		valid: withParagraph({ indentRightTwips: -1 }),
-		invalid: withParagraph({ indentRightTwips: Infinity }),
+		valid: withParagraph({ indentRightTwips: signedTwips(-1) }),
+		invalid: withParagraph({ indentRightTwips: Infinity as never }),
 	},
 	{
 		name: 'lineSpacingRule is ST_LineSpacingRule',
@@ -232,14 +233,14 @@ const rules: Rule[] = [
 	{
 		name: 'tab stop pos is an integer',
 		field: 'posTwips',
-		valid: withParagraph({ tabStops: [{ posTwips: 4680, align: 'left' }] }),
-		invalid: withParagraph({ tabStops: [{ posTwips: 46.8, align: 'left' }] }),
+		valid: withParagraph({ tabStops: [{ posTwips: signedTwips(4680), align: 'left' }] }),
+		invalid: withParagraph({ tabStops: [{ posTwips: 46.8 as never, align: 'left' }] }),
 	},
 	{
 		name: 'tab stop align is ST_TabJc',
 		field: 'align',
-		valid: withParagraph({ tabStops: [{ posTwips: 1, align: 'decimal' }] }),
-		invalid: withParagraph({ tabStops: [{ posTwips: 1, align: 'middle' as never }] }),
+		valid: withParagraph({ tabStops: [{ posTwips: signedTwips(1), align: 'decimal' }] }),
+		invalid: withParagraph({ tabStops: [{ posTwips: signedTwips(1), align: 'middle' as never }] }),
 	},
 	{
 		name: 'table border style is ST_Border',
@@ -328,14 +329,14 @@ const rules: Rule[] = [
 	{
 		name: 'section page size is an integer',
 		field: 'pageWidthTwips',
-		valid: withSection({ pageWidthTwips: 11906 }),
-		invalid: withSection({ pageWidthTwips: 11906.5 }),
+		valid: withSection({ pageWidthTwips: twips(11906) }),
+		invalid: withSection({ pageWidthTwips: 11906.5 as never }),
 	},
 	{
 		name: 'section margins are integers',
 		field: 'marginLeftTwips',
-		valid: withSection({ marginLeftTwips: 0 }),
-		invalid: withSection({ marginLeftTwips: Number.NaN }),
+		valid: withSection({ marginLeftTwips: twips(0) }),
+		invalid: withSection({ marginLeftTwips: Number.NaN as never }),
 	},
 	{
 		name: 'section type is ST_SectionMark',
@@ -474,7 +475,7 @@ describe('saveDocx validation', () => {
 	it('throws a typed error listing every issue and writes nothing', async () => {
 		const model = base();
 		Object.assign(at((at(model.blocks, 0) as Paragraph).runs, 0), { fontSize: -3, color: 'blue' });
-		(model.blocks[0] as Paragraph).spacingAfterTwips = 1.5;
+		(model.blocks[0] as Paragraph).spacingAfterTwips = 1.5 as never;
 		const error = await saveDocx(model).then(
 			() => undefined,
 			(caught: unknown) => caught,

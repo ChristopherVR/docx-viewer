@@ -4,9 +4,10 @@
 import type { Table } from './model.js';
 import type { StJcTable } from './generated/wml-simple-types.js';
 import type { TableBorderSide, TableBorders, TableCellMargins } from './table-model.js';
+import { eighthPoints } from './units.js';
 import { makeW, WORD_NS, type XmlDocument, type XmlElement } from './xml.js';
 
-const SINGLE: TableBorderSide = { style: 'single', sizeEighthPoints: 4 };
+const SINGLE: TableBorderSide = { style: 'single', sizeEighthPoints: eighthPoints(4) };
 
 /** Word's default borders for a newly inserted table (single 1/2 pt lines, automatic color). */
 export const DEFAULT_TABLE_BORDERS: TableBorders = {

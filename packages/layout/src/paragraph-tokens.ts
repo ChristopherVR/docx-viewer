@@ -3,7 +3,7 @@ import type { LayoutFontSpec } from './measure.js';
 import type { LayoutFragment } from './result.js';
 import { appendBreakMarker, tokenizeRun, type BreakToken } from './text-breaks.js';
 import type { LayoutParagraph, LayoutRun } from './input.js';
-import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE_PT, ptToPx, twipsToPx } from './units.js';
+import { NO_TWIPS, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE_PT, ptToPx, twipsToPx } from './units.js';
 
 /** Word draws superscript and subscript text at about two thirds of the run's size. */
 export const SCRIPT_SCALE = 0.65;
@@ -25,17 +25,21 @@ export function resolveIndents(paragraph: LayoutParagraph): {
 	const startTwips =
 		paragraph.indentStartTwips ??
 		(rtl ? paragraph.indentRightTwips : paragraph.indentLeftTwips) ??
-		0;
+		NO_TWIPS;
 	const endTwips =
-		paragraph.indentEndTwips ?? (rtl ? paragraph.indentLeftTwips : paragraph.indentRightTwips) ?? 0;
+		paragraph.indentEndTwips ??
+		(rtl ? paragraph.indentLeftTwips : paragraph.indentRightTwips) ??
+		NO_TWIPS;
 	const leftTwips = rtl ? endTwips : startTwips;
 	const rightTwips = rtl ? startTwips : endTwips;
-	const firstLineExtra =
-		paragraph.hangingTwips != null ? -paragraph.hangingTwips : (paragraph.firstLineTwips ?? 0);
+	const firstLineExtraPx =
+		paragraph.hangingTwips != null
+			? -twipsToPx(paragraph.hangingTwips)
+			: twipsToPx(paragraph.firstLineTwips ?? NO_TWIPS);
 	return {
 		leftPx: twipsToPx(leftTwips),
 		rightPx: twipsToPx(rightTwips),
-		firstLineExtraPx: twipsToPx(firstLineExtra),
+		firstLineExtraPx,
 	};
 }
 

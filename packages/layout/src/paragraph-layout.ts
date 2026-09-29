@@ -2,7 +2,7 @@ import type { TextMeasurer } from './measure.js';
 import type { BreakToken } from './text-breaks.js';
 import type { LayoutFragment, LayoutLine, LayoutParagraphFrame } from './result.js';
 import type { LayoutParagraph } from './input.js';
-import { twipsToPx } from './units.js';
+import { NO_TWIPS, twipsToPx } from './units.js';
 import { placeTab } from './tab-stops.js';
 import { fontOf, resolveIndents, tokenizeParagraph, type PlacedToken } from './paragraph-tokens.js';
 import { lineMetrics, tokenExtent } from './line-metrics.js';
@@ -244,8 +244,8 @@ export function layoutParagraph(
 
 	return {
 		lines,
-		spacingBeforePx: twipsToPx(paragraph.spacingBeforeTwips ?? 0),
-		spacingAfterPx: twipsToPx(paragraph.spacingAfterTwips ?? 0),
+		spacingBeforePx: twipsToPx(paragraph.spacingBeforeTwips ?? NO_TWIPS),
+		spacingAfterPx: twipsToPx(paragraph.spacingAfterTwips ?? NO_TWIPS),
 		contentHeightPx: y + insetBottomPx,
 		insetTopPx,
 		insetBottomPx,

@@ -1,3 +1,4 @@
+import { twips } from './units.js';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadDocx, type DocumentModel } from './index.js';
@@ -27,7 +28,11 @@ describe('section editing', () => {
 		const last = at(model.sections, 0);
 		model.sections = [
 			{ ...structuredClone(last), endsAtBlockId: at(model.blocks, 0).id },
-			{ ...last, type: 'continuous', columns: { count: 2, spacingTwips: 720, equalWidth: true } },
+			{
+				...last,
+				type: 'continuous',
+				columns: { count: 2, spacingTwips: twips(720), equalWidth: true },
+			},
 		];
 		const saved = await loaded.save(model);
 		const xml = await documentXml(saved);

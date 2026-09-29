@@ -1,3 +1,4 @@
+import { eighthPoints, signedTwips, twips } from './units.js';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { createDocument, loadDocx, saveDocx, type DocumentModel, type Table } from './index.js';
@@ -27,12 +28,14 @@ describe('new table cell properties', () => {
 					[
 						{
 							paragraphs: [para('a')],
-							widthTwips: 3000,
+							widthTwips: twips(3000),
 							gridSpan: 2,
 							verticalMerge: 'restart',
-							borders: { top: { style: 'double', sizeEighthPoints: 6, color: '#112233' } },
+							borders: {
+								top: { style: 'double', sizeEighthPoints: eighthPoints(6), color: '#112233' },
+							},
 							shadingFill: '#D9D9D9',
-							margins: { top: 10, left: 20, bottom: 30, right: 40 },
+							margins: { top: twips(10), left: twips(20), bottom: twips(30), right: twips(40) },
 							verticalAlign: 'center',
 						},
 					],
@@ -74,7 +77,7 @@ describe('new table cell properties', () => {
 						gridSpan: 2,
 						shadingFill: 'D9D9D9',
 						verticalAlign: 'bottom',
-						widthTwips: 4000,
+						widthTwips: twips(4000),
 					},
 				],
 				[{ paragraphs: [para('b')] }, { paragraphs: [para('c')] }],
@@ -93,9 +96,11 @@ describe('new table cell properties', () => {
 		const xml = await tableXml(
 			modelWith({
 				rows: [[{ paragraphs: [para('a')] }]],
-				rowProperties: [{ heightTwips: 400, heightRule: 'exact', cantSplit: true, header: true }],
-				indentTwips: 120,
-				cellMargins: { left: 108, right: 108 },
+				rowProperties: [
+					{ heightTwips: twips(400), heightRule: 'exact', cantSplit: true, header: true },
+				],
+				indentTwips: signedTwips(120),
+				cellMargins: { left: twips(108), right: twips(108) },
 				alignment: 'right',
 				justification: 'end',
 			}),

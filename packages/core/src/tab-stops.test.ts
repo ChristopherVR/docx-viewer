@@ -1,3 +1,4 @@
+import { signedTwips, twips } from './units.js';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { createDocument, loadDocx, saveDocx, type Paragraph } from './index.js';
@@ -17,8 +18,8 @@ describe('paragraph properties', () => {
 				align: 'center',
 				style: 'Heading1',
 				pageBreakBefore: true,
-				spacingAfterTwips: 120,
-				tabStops: [{ posTwips: 4680, align: 'center' }],
+				spacingAfterTwips: twips(120),
+				tabStops: [{ posTwips: signedTwips(4680), align: 'center' }],
 			},
 		];
 		expect(await documentXml(await saveDocx(model))).toContain(
@@ -40,7 +41,10 @@ describe('paragraph properties', () => {
 		expect(xml).toContain(
 			'<w:tabs><w:tab w:val="right" w:leader="dot" w:pos="9000"/><w:tab w:val="bogus" w:pos="1"/></w:tabs><w:jc w:val="right"/>',
 		);
-		const moved = { ...paragraph, tabStops: [{ posTwips: 500, align: 'left' as const }] };
+		const moved = {
+			...paragraph,
+			tabStops: [{ posTwips: signedTwips(500), align: 'left' as const }],
+		};
 		expect(await documentXml(await loaded.save({ ...loaded.model, blocks: [moved] }))).toContain(
 			'<w:tabs><w:tab w:val="left" w:pos="500"/></w:tabs>',
 		);

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { eighthPoints } from '@christophervr/docx-core';
 import { afterEach, describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import {
@@ -39,9 +40,9 @@ describe('table rendering', () => {
 				Grid: {
 					id: 'Grid',
 					borders: {
-						top: { style: 'single', sizeEighthPoints: 8, color: '#000000' },
-						bottom: { style: 'single', sizeEighthPoints: 8, color: '#000000' },
-						insideH: { style: 'dashed', sizeEighthPoints: 4, color: '#999999' },
+						top: { style: 'single', sizeEighthPoints: eighthPoints(8), color: '#000000' },
+						bottom: { style: 'single', sizeEighthPoints: eighthPoints(8), color: '#000000' },
+						insideH: { style: 'dashed', sizeEighthPoints: eighthPoints(4), color: '#999999' },
 					},
 					conditional: { firstRow: { shadingFill: '#1f4e79' } },
 				},

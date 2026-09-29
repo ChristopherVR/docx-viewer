@@ -7,6 +7,7 @@ import type {
 	ThemeFontScript,
 	WordUnderlineStyle,
 } from './theme-model.js';
+import type { SignedTwips } from './units.js';
 
 /** A tracked-change revision recorded on a run or paragraph mark. */
 export interface Revision {
@@ -39,7 +40,7 @@ export interface TextRun {
 	bidiLanguage?: string;
 	/** Explicit run-level bidirectional override; `false` means direct off, undefined inherits. */
 	rtl?: boolean;
-	/** Font size in points. */
+	/** Font size in points (whole or half points, e.g. 10.5); `HalfPoints` is the on-disk `w:sz`. */
 	fontSize?: number;
 	fontFamily?: string;
 	/** Direct RGB color, e.g. #28665E. May coexist with `colorTheme` as Word's stored fallback. */
@@ -85,7 +86,7 @@ export interface TextRun {
 	underlineStyle?: WordUnderlineStyle;
 	underlineColor?: string;
 	/** `w:spacing/@w:val` character spacing, in twips (positive expands, negative condenses). */
-	characterSpacingTwips?: number;
+	characterSpacingTwips?: SignedTwips;
 	/** Direct `w:shd/@w:fill` run shading. */
 	shadingFill?: string;
 	/** Direct `w:shd` theme fill; kept alongside `shadingFill` without flattening. */

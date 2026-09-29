@@ -3,10 +3,12 @@ import type { Paragraph } from './model.js';
 import type { RunFormatting } from './run-style-model.js';
 import type { ThemeColorReference, ThemeColorToken } from './theme-model.js';
 import type { StBorder, StVerticalJc } from './generated/wml-simple-types.js';
+import type { EighthPoints, SignedTwips, Twips } from './units.js';
 
 export interface TableBorderSide {
 	style?: StBorder;
-	sizeEighthPoints?: number;
+	/** Border width in eighths of a point (`w:sz`). */
+	sizeEighthPoints?: EighthPoints;
 	color?: string;
 	themeColor?: ThemeColorToken;
 	/** Paragraph borders only: gap between the border and the text (`w:space`), in points. */
@@ -29,14 +31,14 @@ export interface TableBorders {
 	insideV?: TableBorderSide;
 }
 export interface TableCellMargins {
-	top?: number;
-	bottom?: number;
-	left?: number;
-	right?: number;
+	top?: SignedTwips;
+	bottom?: SignedTwips;
+	left?: SignedTwips;
+	right?: SignedTwips;
 }
 /** Row-level properties (`w:trPr`): height, keep-together and repeat-as-header. */
 export interface TableRowProperties {
-	heightTwips?: number;
+	heightTwips?: Twips;
 	/** `exact` fixes the height; `atLeast` (Word's `atLeast` and `auto`) is a minimum. */
 	heightRule?: 'atLeast' | 'exact';
 	/** `w:cantSplit`: the row is never split across pages. */
@@ -54,7 +56,7 @@ export interface TableCell {
 	gridSpan?: number;
 	/** `w:vMerge`; `restart` begins a vertical merge, `continue` extends the cell above. */
 	verticalMerge?: 'restart' | 'continue';
-	widthTwips?: number;
+	widthTwips?: Twips;
 	verticalAlign?: StVerticalJc;
 	shadingFill?: string;
 	shadingThemeFill?: ThemeColorReference;

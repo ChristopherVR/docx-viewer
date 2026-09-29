@@ -1,3 +1,4 @@
+import { eighthPoints, signedTwips, twips } from './units.js';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import {
@@ -28,12 +29,12 @@ function kitchenSink(): DocumentModel {
 			type: 'paragraph',
 			id: 'p1',
 			align: 'justify',
-			spacingBeforeTwips: 120,
-			lineSpacingTwips: 360,
+			spacingBeforeTwips: twips(120),
+			lineSpacingTwips: signedTwips(360),
 			lineSpacingRule: 'auto',
-			indentLeftTwips: 720,
-			hangingTwips: 360,
-			tabStops: [{ posTwips: 4680, align: 'right', leader: 'dot' }],
+			indentLeftTwips: signedTwips(720),
+			hangingTwips: twips(360),
+			tabStops: [{ posTwips: signedTwips(4680), align: 'right', leader: 'dot' }],
 			pageBreakBefore: true,
 			direction: 'rtl',
 			runs: [
@@ -53,7 +54,7 @@ function kitchenSink(): DocumentModel {
 					caps: true,
 					smallCaps: false,
 					vanish: false,
-					characterSpacingTwips: 20,
+					characterSpacingTwips: signedTwips(20),
 					shadingFill: '#FFFF00',
 					underlineStyle: 'double',
 					underlineColor: '#00FF00',
@@ -88,7 +89,7 @@ function kitchenSink(): DocumentModel {
 						gridSpan: 1,
 						verticalAlign: 'center',
 						shadingFill: 'D9D9D9',
-						widthTwips: 2000,
+						widthTwips: twips(2000),
 					},
 					{ paragraphs: [{ type: 'paragraph', id: 'c2p', runs: [{ text: 'B' }] }] },
 				],
@@ -304,27 +305,33 @@ const fixtures: Fixture[] = [
 			model.blocks.push({
 				type: 'table',
 				id: 'new-table',
-				widthTwips: 9000,
+				widthTwips: twips(9000),
 				alignment: 'right',
 				justification: 'end',
-				indentTwips: 100,
-				cellMargins: { left: 108, right: 108 },
-				borders: { top: { style: 'single', sizeEighthPoints: 4, themeColor: 'accent1' } },
-				rowProperties: [{ heightTwips: 500, heightRule: 'exact', cantSplit: true, header: true }],
+				indentTwips: signedTwips(100),
+				cellMargins: { left: twips(108), right: twips(108) },
+				borders: {
+					top: { style: 'single', sizeEighthPoints: eighthPoints(4), themeColor: 'accent1' },
+				},
+				rowProperties: [
+					{ heightTwips: twips(500), heightRule: 'exact', cantSplit: true, header: true },
+				],
 				rows: [
 					[
 						{
 							paragraphs: [cellParagraph('m1')],
 							gridSpan: 2,
 							verticalMerge: 'restart',
-							widthTwips: 6000,
+							widthTwips: twips(6000),
 							shadingFill: '#D9D9D9',
 							shadingThemeFill: { token: 'accent2', tint: 0.5 },
 							verticalAlign: 'center',
-							borders: { bottom: { style: 'double', sizeEighthPoints: 6, color: '#112233' } },
-							margins: { top: 10, left: 20, bottom: 30, right: 40 },
+							borders: {
+								bottom: { style: 'double', sizeEighthPoints: eighthPoints(6), color: '#112233' },
+							},
+							margins: { top: twips(10), left: twips(20), bottom: twips(30), right: twips(40) },
 						},
-						{ paragraphs: [cellParagraph('m2')], widthTwips: 3000 },
+						{ paragraphs: [cellParagraph('m2')], widthTwips: twips(3000) },
 					],
 					[
 						{ paragraphs: [cellParagraph('m3')], verticalMerge: 'continue', gridSpan: 2 },
@@ -354,7 +361,11 @@ const fixtures: Fixture[] = [
 			const last = at(model.sections, 0);
 			model.sections = [
 				{ ...structuredClone(last), endsAtBlockId: at(model.blocks, 0).id },
-				{ ...last, type: 'continuous', columns: { count: 2, spacingTwips: 720, equalWidth: true } },
+				{
+					...last,
+					type: 'continuous',
+					columns: { count: 2, spacingTwips: twips(720), equalWidth: true },
+				},
 			];
 			return loaded.save(model);
 		},

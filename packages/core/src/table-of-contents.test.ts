@@ -1,3 +1,4 @@
+import { twips } from './units.js';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import {
@@ -58,7 +59,11 @@ describe('table of contents', () => {
 			['h1', '1'],
 			['h2', '2'],
 		]);
-		const toc = buildTableOfContents(sample(), { newId, pageNumbers, contentWidthTwips: 9000 });
+		const toc = buildTableOfContents(sample(), {
+			newId,
+			pageNumbers,
+			contentWidthTwips: twips(9000),
+		});
 		expect(toc.map(text)).toEqual(['Introduction\t1', 'Scope and aims\t2']);
 		expect(at(toc, 0).runs.slice(0, 3)).toEqual([
 			{ text: '', fieldChar: 'begin' },

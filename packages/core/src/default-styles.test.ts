@@ -1,3 +1,4 @@
+import { twips } from './units.js';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { createDocument, loadDocx, saveDocx } from './index.js';
@@ -32,7 +33,8 @@ describe('new document styles', () => {
 
 	it('still refuses changed style catalogs in the standalone writer', async () => {
 		const model = createDocument();
-		must(model.paragraphStyles?.styles.Normal, 'Normal style').formatting.spacingAfterTwips = 0;
+		must(model.paragraphStyles?.styles.Normal, 'Normal style').formatting.spacingAfterTwips =
+			twips(0);
 		await expect(saveDocx(model)).rejects.toThrow(/built-in default styles/);
 	});
 });
