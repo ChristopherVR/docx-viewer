@@ -1,0 +1,66 @@
+Licence texts for the ECMA-376 schemas in this directory (every *.xsd except xml.xsd)
+==================================================================================
+
+Retrieved 2026-09-29. The ecma-international.org pages were not reachable from the environment
+that prepared this file, so both texts below come from third-party copies, pinned to a commit.
+Each is reproduced verbatim (the first converted from HTML to plain text only).
+
+1. Ecma's copyright notice and licence for its standards
+--------------------------------------------------------
+
+Source: tc39/ecmarkup, boilerplate/alternative-copyright.html
+https://raw.githubusercontent.com/tc39/ecmarkup/a1ee54b5dab16124dd6042152f79cf6a4aefbee4/boilerplate/alternative-copyright.html
+
+This is the notice Ecma's own tooling attaches to Ecma standards. "!YEAR!" and "!DOCUMENT!" are
+placeholders in the source; for these files they are 2016 and ECMA-376 5th edition, Part 4.
+It has not been compared with the notice inside the ECMA-376 download itself.
+
+ALTERNATIVE COPYRIGHT NOTICE AND COPYRIGHT LICENSE
+
+© !YEAR! Ecma International
+
+By obtaining and/or copying this work, you (the licensee) agree that you have read, understood, and will comply with the following terms and conditions.
+
+Permission under Ecma’s copyright to copy, modify, prepare derivative works of, and distribute this work, with or without modification, for any purpose and without fee or royalty is hereby granted, provided that you include the following on ALL copies of the work or portions thereof, including modifications:
+
+(i) The full text of this COPYRIGHT NOTICE AND COPYRIGHT LICENSE in a location viewable to users of the redistributed or derivative work.
+
+(ii) Any pre-existing intellectual property disclaimers, notices, or terms and conditions. If none exist, the Ecma alternative copyright notice should be included.
+
+(iii) Notice of any changes or modifications, through a copyright statement on the document such as “This document includes material copied from or derived from !DOCUMENT!.
+Copyright © Ecma International.”
+
+Disclaimers
+
+THIS WORK IS PROVIDED “AS IS,” AND COPYRIGHT HOLDERS MAKE NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO, WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR PURPOSE OR THAT THE USE OF THE DOCUMENT WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER RIGHTS.
+
+COPYRIGHT HOLDERS WILL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF ANY USE OF THE DOCUMENT.
+
+The name and trademarks of copyright holders may NOT be used in advertising or publicity pertaining to the work without specific, written prior permission. Title to copyright in this work will at all times remain with copyright holders.
+
+2. Availability of ECMA-376 (as recorded by Apache POI)
+-------------------------------------------------------
+
+Source: apache/poi, legal/LICENSE
+https://raw.githubusercontent.com/apache/poi/93b6a820f4aaefd7b062615f843799947872cb24/legal/LICENSE
+
+Office Open XML schemas (poi-ooxml-full-*.jar)
+
+    The Office Open XML schema definitions used by Apache POI are
+    a part of the Office Open XML ECMA Specification (ECMA-376, [1]).
+    As defined in section 9.4 of the ECMA bylaws [2], this specification
+    is available to all interested parties without restriction:
+
+        9.4 All documents when approved shall be made available to
+            all interested parties without restriction.
+
+    Furthermore, both Microsoft and Adobe have granted patent licenses
+    to this work [3,4,5].
+
+    [1] https://www.ecma-international.org/publications/standards/Ecma-376.htm
+    [2] https://www.ecma-international.org/memento/Ecmabylaws.htm
+    [3] https://www.microsoft.com/openspecifications/en/us/programs/osp/default.aspx
+    [4] https://www.ecma-international.org/publications/files/ECMA-ST/Ecma%20PATENT/
+        Patent%20statements%20ok/ECMA-376%20Edition%202%20Microsoft%20Patent%20Declaration.pdf
+    [5] https://www.ecma-international.org/publications/files/ECMA-ST/Ecma%20PATENT/
+        Patent%20statements%20ok/ECMA-376%20Adobe%20Patent%20Declaration.pdf

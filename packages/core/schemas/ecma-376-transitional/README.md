@@ -12,26 +12,25 @@ schemas' `xml.xsd` imports at the local copy.
 
 ## Licence and provenance
 
-Licence text is **not reproduced here**. When this section was written (2026-09-28) the licence
-pages could not be retrieved (the network egress proxy blocked www.w3.org and
-ecma-international.org), so nothing below is quoted from them. Consult the original sources.
+The licence texts are in two files next to this README:
 
-- **Header notices in the files.** None of the vendored `*.xsd` files, including `xml.xsd`,
-  contains a copyright or licence notice in its own text (checked by searching for "copyright",
-  "licen" and "ecma"). The notices therefore live only in the sources named below.
-- **ECMA-376 schemas** (every `*.xsd` except `xml.xsd`): copyright Ecma International. The terms
-  are those of the Ecma copyright notice that accompanies the ECMA-376 download above and of the
-  Ecma text copyright policy (https://ecma-international.org/policies/by-ipr/ecma-text-copyright-policy/).
-  Not retrieved; the exact wording has not been verified here. The files are vendored unmodified
-  solely as test fixtures for schema validation and are not shipped in the published packages.
-  Read the original terms before redistributing them for any other purpose.
-- **`xml.xsd`**: from the W3C (https://www.w3.org/2001/xml.xsd). W3C publishes its documents and
-  software under the W3C Software and Document Notice and License
-  (https://www.w3.org/copyright/software-license/). Not retrieved; the exact wording, and which
-  version applies to this file, has not been verified here.
+- **[`LICENSE-ECMA.txt`](LICENSE-ECMA.txt)**: every `*.xsd` except `xml.xsd`, copyright Ecma
+  International. It holds Ecma's copyright notice and licence for its standards, and the
+  statement that ECMA-376 is available to all interested parties without restriction (Ecma
+  bylaws, section 9.4).
+- **[`LICENSE-W3C.txt`](LICENSE-W3C.txt)**: `xml.xsd`, under the W3C Software and Document
+  Notice and License.
 
-TODO: fetch the exact licence texts from the URLs above and quote them, with URL and retrieval
-date, in place of these references.
+How they were obtained (2026-09-29): ecma-international.org and www.w3.org were not reachable
+from the environment that prepared them, so each text is a verbatim copy from a public
+repository, pinned to a commit and cited in the file. They have not been compared with the notice
+inside the ECMA-376 download, and it has not been confirmed which W3C licence version applies to
+the 2009 `xml.xsd`. Replace them with the texts from the primary sources when those are
+available.
+
+None of the vendored `*.xsd` files contains a copyright or licence notice in its own text. The
+files are vendored unmodified, only as test fixtures, and are not shipped in the published
+packages.
 
 No file was edited after download. If a file must change, record it here and update its checksum.
 
