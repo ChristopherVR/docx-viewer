@@ -141,3 +141,75 @@
 .dve-backstage-muted {
 	color: var(--muted);
 }
+
+.dve-backstage-separator {
+	height: 1px;
+	margin: 8px 22px;
+	background: color-mix(in srgb, var(--dve-primary-foreground) 35%, transparent);
+}
+.dve-backstage-title {
+	margin: 0 0 4px;
+	font-size: 26px;
+	font-weight: 400;
+	overflow-wrap: anywhere;
+}
+.dve-backstage-columns {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 300px;
+	gap: 40px;
+	align-items: start;
+}
+.dve-backstage-properties {
+	padding: 4px 0 0 24px;
+	border-left: 1px solid var(--line);
+}
+.dve-backstage-properties h3 {
+	margin-top: 0;
+}
+.dve-backstage-card {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	max-width: 760px;
+	margin-bottom: 12px;
+	padding: 14px 18px;
+	border: 1px solid var(--line);
+	border-radius: 6px;
+}
+.dve-backstage-card h3 {
+	margin: 0 0 4px;
+}
+.dve-backstage-card p {
+	margin: 0;
+}
+.dve-backstage-field {
+	display: grid;
+	gap: 4px;
+	max-width: 420px;
+	margin-bottom: 14px;
+	color: var(--muted);
+	font-size: 12px;
+}
+.dve-backstage-field input,
+.dve-backstage-field select {
+	height: 32px;
+	padding: 0 8px;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+	background: var(--surface);
+	color: var(--ink);
+	font:
+		14px 'Segoe UI',
+		Arial,
+		sans-serif;
+}
+@media (max-width: 760px) {
+	.dve-backstage-columns {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.dve-backstage-properties {
+		padding-left: 0;
+		border-left: 0;
+	}
+}

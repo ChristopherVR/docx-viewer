@@ -1,16 +1,20 @@
-import type { DocumentModel } from '@christophervr/docx-core';
 import { icon, type ChromeIcon } from './chrome-icons';
 import type { FileCommand } from './file-commands';
 import { translateUiText } from './localization';
+import {
+	renderExport,
+	renderInfo,
+	renderNew,
+	renderOpen,
+	renderOptions,
+	renderPrint,
+	renderSaveAs,
+	type BackstageHandlers,
+	type PageContext,
+} from './backstage-pages';
 
-export type BackstagePage = 'info' | 'new' | 'open';
-
-export interface BackstageHandlers {
-	fileCommand(command: FileCommand): void;
-	close(): void;
-	/** Current document facts for the Info page. */
-	summary(): { fileName: string; model: DocumentModel; words: number };
-}
+export type { BackstageHandlers } from './backstage-pages';
+export type BackstagePage = 'info' | 'new' | 'open' | 'saveAs' | 'print' | 'export' | 'options';
 
 export interface Backstage {
 	element: HTMLElement;
@@ -29,26 +33,31 @@ function navButton(iconName: ChromeIcon, label: string): HTMLButtonElement {
 	return button;
 }
 
-function heading(text: string): HTMLHeadingElement {
-	const element = document.createElement('h2');
-	element.textContent = text;
-	return element;
-}
+const PAGES: Array<[BackstagePage, ChromeIcon, string]> = [
+	['info', 'info', 'Info'],
+	['new', 'file', 'New'],
+	['open', 'folder', 'Open'],
+	['saveAs', 'copy', 'Save As'],
+	['print', 'print', 'Print'],
+	['export', 'file', 'Export'],
+	['options', 'settings', 'Options'],
+];
+const RENDERERS: Record<BackstagePage, (context: PageContext) => void> = {
+	info: renderInfo,
+	new: renderNew,
+	open: renderOpen,
+	saveAs: renderSaveAs,
+	print: renderPrint,
+	export: renderExport,
+	options: renderOptions,
+};
 
-function countBlocks(model: DocumentModel): { paragraphs: number; tables: number } {
-	let paragraphs = 0;
-	let tables = 0;
-	for (const block of model.blocks) {
-		if (block.type === 'paragraph') paragraphs++;
-		else {
-			tables++;
-			for (const row of block.rows) for (const cell of row) paragraphs += cell.paragraphs.length;
-		}
-	}
-	return { paragraphs, tables };
-}
-
-/** Word's File view: Info (properties and compatibility notes), New, Open, Save, copy, Print. */
+/**
+ * Word's File view. Left: Back, Info, New, Open, Save and its siblings (Save As, Print, Export)
+ * and Options; right: the selected page. Info shows properties and compatibility notes, Save As
+ * takes a file name, Export offers PDF (through printing), DOCX and plain text, and Options sets
+ * the editor's language, theme and review author.
+ */
 export function createBackstage(handlers: BackstageHandlers): Backstage {
 	const element = document.createElement('section');
 	element.className = 'dve-backstage';
@@ -65,110 +74,42 @@ export function createBackstage(handlers: BackstageHandlers): Backstage {
 	const back = navButton('back', 'Back to document');
 	back.classList.add('dve-backstage-back');
 	back.addEventListener('click', () => handlers.close());
-	const pages: Record<BackstagePage, HTMLButtonElement> = {
-		info: navButton('info', 'Info'),
-		new: navButton('file', 'New'),
-		open: navButton('folder', 'Open'),
-	};
-	const commands: [ChromeIcon, string, FileCommand][] = [
-		['save', 'Save', 'save'],
-		['copy', 'Save a copy as DOCX', 'export'],
-		['print', 'Print', 'print'],
-	];
-	nav.append(back, pages.info, pages.new, pages.open);
-	for (const [iconName, label, command] of commands) {
-		const button = navButton(iconName, label);
-		button.addEventListener('click', () => {
-			handlers.close();
-			handlers.fileCommand(command);
-		});
-		nav.append(button);
-	}
-
-	const renderInfo = () => {
-		const { fileName, model, words } = handlers.summary();
-		const { paragraphs, tables } = countBlocks(model);
-		const facts = document.createElement('dl');
-		facts.className = 'dve-backstage-facts';
-		const rows: [string, string][] = [
-			['File name', fileName],
-			['Words', String(words)],
-			['Paragraphs', String(paragraphs)],
-			['Tables', String(tables)],
-		];
-		for (const [label, value] of rows) {
-			const term = document.createElement('dt');
-			term.textContent = t(label);
-			const detail = document.createElement('dd');
-			detail.textContent = value;
-			facts.append(term, detail);
-		}
-		const notesHeading = document.createElement('h3');
-		notesHeading.textContent = t('Compatibility notes');
-		const notes = document.createElement('ul');
-		notes.className = 'dve-compatibility-notes';
-		for (const warning of model.warnings) {
-			const item = document.createElement('li');
-			item.append(icon('warning'));
-			const text = document.createElement('span');
-			text.textContent = warning;
-			item.append(text);
-			notes.append(item);
-		}
-		if (!model.warnings.length) {
-			const item = document.createElement('li');
-			item.className = 'dve-compatibility-empty';
-			item.textContent = t('No compatibility notes for this document.');
-			notes.append(item);
-		}
-		const propertiesHeading = document.createElement('h3');
-		propertiesHeading.textContent = t('Document properties');
-		content.replaceChildren(heading(t('Info')), propertiesHeading, facts, notesHeading, notes);
-	};
-	const renderNew = () => {
-		const blank = document.createElement('button');
-		blank.type = 'button';
-		blank.className = 'dve-backstage-tile';
-		const preview = document.createElement('span');
-		preview.className = 'dve-backstage-tile-preview';
-		const label = document.createElement('span');
-		label.textContent = t('Blank document');
-		blank.append(preview, label);
-		blank.setAttribute('aria-label', t('Blank document'));
-		blank.addEventListener('click', () => {
-			handlers.close();
-			handlers.fileCommand('new');
-		});
-		content.replaceChildren(heading(t('New')), blank);
-	};
-	const renderOpen = () => {
-		const description = document.createElement('p');
-		description.textContent = t('Open a Word document (.docx or .doc) from this device.');
-		const browse = document.createElement('button');
-		browse.type = 'button';
-		browse.className = 'dve-backstage-primary';
-		browse.textContent = t('Browse…');
-		browse.addEventListener('click', () => {
-			handlers.close();
-			handlers.fileCommand('open');
-		});
-		const privacy = document.createElement('p');
-		privacy.className = 'dve-backstage-muted';
-		privacy.textContent = t('Files are processed entirely in the browser.');
-		content.replaceChildren(heading(t('Open')), description, browse, privacy);
-	};
-	const renderers: Record<BackstagePage, () => void> = {
-		info: renderInfo,
-		new: renderNew,
-		open: renderOpen,
+	const buttons = new Map<BackstagePage, HTMLButtonElement>();
+	let current: BackstagePage = 'info';
+	// A changed language or theme re-renders the open page so its text follows.
+	const pageHandlers: BackstageHandlers = {
+		...handlers,
+		setOption(key, value) {
+			handlers.setOption(key, value);
+			queueMicrotask(() => show(current));
+		},
 	};
 	const show = (page: BackstagePage) => {
-		for (const [key, button] of Object.entries(pages))
-			button.setAttribute('aria-current', String(key === page));
-		renderers[page]();
+		current = page;
+		for (const [key, button] of buttons) button.setAttribute('aria-current', String(key === page));
+		RENDERERS[page]({ handlers: pageHandlers, t, content });
 	};
-	for (const [key, button] of Object.entries(pages) as [BackstagePage, HTMLButtonElement][])
-		button.addEventListener('click', () => show(key));
+	const separator = () => {
+		const line = document.createElement('div');
+		line.className = 'dve-backstage-separator';
+		line.setAttribute('role', 'separator');
+		return line;
+	};
+	const save = navButton('save', 'Save');
+	save.addEventListener('click', () => {
+		handlers.close();
+		handlers.fileCommand('save' satisfies FileCommand);
+	});
+	nav.append(back);
+	for (const [page, iconName, label] of PAGES) {
+		const button = navButton(iconName, label);
+		button.addEventListener('click', () => show(page));
+		buttons.set(page, button);
+		nav.append(button);
+		// Save sits with Save As, Print and Export as in Word's list of file actions.
+		if (page === 'open') nav.append(separator(), save);
+		if (page === 'export') nav.append(separator());
+	}
 	element.addEventListener('keydown', (event) => {
 		if (event.key === 'Escape') handlers.close();
 	});

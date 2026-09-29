@@ -59,6 +59,9 @@ function createChrome(core: EditorCore, api: ShellApi): EditorChrome {
 		toggleComments: () => shell.review?.handleComments('toggle'),
 		setViewMode: (mode) => core.pages.setViewMode(mode),
 		setZoom: (percent) => core.pages.setZoom(percent),
+		options: () => ({ locale: core.locale, theme: core.theme, author: core.reviewAuthor }),
+		setOption: (key, value) =>
+			element.setAttribute(key === 'author' ? 'review-author' : key, value),
 		reportError: (error) => dispatchDocumentError(element, error),
 	});
 }

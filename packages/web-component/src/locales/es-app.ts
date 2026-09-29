@@ -26,6 +26,42 @@ export const esApp: AppStrings = {
 	Open: 'Abrir',
 	'Save a copy as DOCX': 'Guardar una copia como DOCX',
 	'Blank document': 'Documento en blanco',
+	'Inspect document': 'Inspeccionar documento',
+	'Manage document': 'Administrar documento',
+	Properties: 'Propiedades',
+	'Saved to this device': 'Guardado en este dispositivo',
+	On: 'Activado',
+	Off: 'Desactivado',
+	'Tracked changes': 'Cambios con seguimiento',
+	Characters: 'Caracteres',
+	Sections: 'Secciones',
+	Custom: 'Personalizado',
+	'Save As': 'Guardar como',
+	'Save a copy of this document to your device.':
+		'Guarde una copia de este documento en su dispositivo.',
+	'Word Document (*.docx)': 'Documento de Word (*.docx)',
+	'Word 97-2003 Document (*.doc)': 'Documento de Word 97-2003 (*.doc)',
+	'Paper size': 'Tamaño del papel',
+	'Printing uses the browser print dialog. Page breaks come from Print Layout, which approximates Word.':
+		'La impresión usa el cuadro de diálogo del navegador. Los saltos de página provienen del diseño de impresión, que aproxima a Word.',
+	Export: 'Exportar',
+	'Create a PDF': 'Crear un PDF',
+	'Opens the print dialog; choose Save as PDF as the destination.':
+		'Abre el cuadro de impresión; elija Guardar como PDF como destino.',
+	'Create PDF': 'Crear PDF',
+	'Download the document as a Word .docx file.':
+		'Descargue el documento como archivo .docx de Word.',
+	'Export as plain text': 'Exportar como texto sin formato',
+	'Download the text only, without formatting, pictures or notes.':
+		'Descargue solo el texto, sin formato, imágenes ni notas.',
+	Options: 'Opciones',
+	'Display language': 'Idioma de visualización',
+	Theme: 'Tema',
+	Light: 'Claro',
+	Dark: 'Oscuro',
+	'Author name': 'Nombre del autor',
+	'Options apply to this editor and are not stored between sessions.':
+		'Las opciones se aplican a este editor y no se conservan entre sesiones.',
 	'Browse…': 'Examinar…',
 	'Open a Word document (.docx or .doc) from this device.':
 		'Abra un documento de Word (.docx o .doc) desde este dispositivo.',

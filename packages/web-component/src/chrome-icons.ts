@@ -14,6 +14,8 @@ const paths = {
 	warning: 'M10 3 2 17h16z M10 8v4 M10 14.5v.5',
 	pageView: 'M5 3h10v14H5z M8 7h4 M8 10h4',
 	webView: 'M3 5h14v10H3z M3 8h14',
+	settings:
+		'M10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6z M10 2v2 M10 16v2 M2 10h2 M16 10h2 M4.3 4.3l1.4 1.4 M14.3 14.3l1.4 1.4 M15.7 4.3l-1.4 1.4 M5.7 14.3l-1.4 1.4',
 	minus: 'M5 10h10',
 	plus: 'M5 10h10 M10 5v10',
 } as const;

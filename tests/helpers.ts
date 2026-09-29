@@ -41,10 +41,14 @@ export async function fileInput(page: Page) {
 export const saveButton = (page: Page) =>
 	editor(page).locator('.dve-quick-access').getByRole('button', { name: 'Save', exact: true });
 
-/** File > Save a copy as DOCX. */
+/** File > Export > Save a copy as DOCX. */
 export async function saveCopyAsDocx(page: Page) {
 	await editor(page).locator('.dve-file-tab').click();
-	await editor(page).locator('.dve-backstage-nav-item', { hasText: 'Save a copy as DOCX' }).click();
+	await editor(page).locator('.dve-backstage-nav-item', { hasText: 'Export' }).click();
+	await editor(page)
+		.locator('.dve-backstage-content')
+		.getByRole('button', { name: 'Save a copy as DOCX' })
+		.click();
 }
 
 export const fileNameLabel = (page: Page) => editor(page).locator('.dve-filename');

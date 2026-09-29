@@ -26,6 +26,42 @@ export const deApp: AppStrings = {
 	Open: 'Öffnen',
 	'Save a copy as DOCX': 'Kopie als DOCX speichern',
 	'Blank document': 'Leeres Dokument',
+	'Inspect document': 'Dokument prüfen',
+	'Manage document': 'Dokument verwalten',
+	Properties: 'Eigenschaften',
+	'Saved to this device': 'Auf diesem Gerät gespeichert',
+	On: 'Ein',
+	Off: 'Aus',
+	'Tracked changes': 'Nachverfolgte Änderungen',
+	Characters: 'Zeichen',
+	Sections: 'Abschnitte',
+	Custom: 'Benutzerdefiniert',
+	'Save As': 'Speichern unter',
+	'Save a copy of this document to your device.':
+		'Speichern Sie eine Kopie dieses Dokuments auf Ihrem Gerät.',
+	'Word Document (*.docx)': 'Word-Dokument (*.docx)',
+	'Word 97-2003 Document (*.doc)': 'Word 97-2003-Dokument (*.doc)',
+	'Paper size': 'Papierformat',
+	'Printing uses the browser print dialog. Page breaks come from Print Layout, which approximates Word.':
+		'Der Druck verwendet den Druckdialog des Browsers. Seitenumbrüche stammen aus dem Seitenlayout, das Word nur annähert.',
+	Export: 'Exportieren',
+	'Create a PDF': 'PDF erstellen',
+	'Opens the print dialog; choose Save as PDF as the destination.':
+		'Öffnet den Druckdialog; wählen Sie „Als PDF speichern“ als Ziel.',
+	'Create PDF': 'PDF erstellen',
+	'Download the document as a Word .docx file.':
+		'Laden Sie das Dokument als Word-.docx-Datei herunter.',
+	'Export as plain text': 'Als Nur-Text exportieren',
+	'Download the text only, without formatting, pictures or notes.':
+		'Nur den Text herunterladen, ohne Formatierung, Bilder oder Notizen.',
+	Options: 'Optionen',
+	'Display language': 'Anzeigesprache',
+	Theme: 'Design',
+	Light: 'Hell',
+	Dark: 'Dunkel',
+	'Author name': 'Autorname',
+	'Options apply to this editor and are not stored between sessions.':
+		'Optionen gelten für diesen Editor und werden nicht zwischen Sitzungen gespeichert.',
 	'Browse…': 'Durchsuchen…',
 	'Open a Word document (.docx or .doc) from this device.':
 		'Öffnen Sie ein Word-Dokument (.docx oder .doc) von diesem Gerät.',

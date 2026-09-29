@@ -5,14 +5,25 @@
  */
 import { emit } from './events';
 
-export type FileCommand = 'new' | 'open' | 'save' | 'export' | 'print';
+export type FileCommand = 'new' | 'open' | 'save' | 'saveAs' | 'export' | 'exportText' | 'print';
 
 export interface FileCommandDetail {
 	command: FileCommand;
+	/** Save As: the name the user chose. */
+	fileName?: string;
 }
 
-export function announceFileCommand(host: HTMLElement, command: FileCommand): boolean {
-	return emit(host, 'file-command', { command }, { cancelable: true });
+export function announceFileCommand(
+	host: HTMLElement,
+	command: FileCommand,
+	fileName?: string,
+): boolean {
+	return emit(
+		host,
+		'file-command',
+		{ command, ...(fileName === undefined ? {} : { fileName }) },
+		{ cancelable: true },
+	);
 }
 
 const DOCX_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -30,6 +41,19 @@ export function wordBlob(bytes: Uint8Array, fileName: string): Blob {
 /** Starts a browser download of `bytes` named `fileName`. */
 export function downloadBytes(bytes: Uint8Array, fileName: string): void {
 	const url = URL.createObjectURL(wordBlob(bytes, fileName));
+	const anchor = document.createElement('a');
+	anchor.href = url;
+	anchor.download = fileName;
+	anchor.style.display = 'none';
+	document.body.append(anchor);
+	anchor.click();
+	anchor.remove();
+	setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** Starts a browser download of `text` as a UTF-8 plain-text file. */
+export function downloadText(text: string, fileName: string): void {
+	const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
 	const anchor = document.createElement('a');
 	anchor.href = url;
 	anchor.download = fileName;

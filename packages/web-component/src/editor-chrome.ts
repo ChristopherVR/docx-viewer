@@ -3,9 +3,11 @@ import { createBackstage, type Backstage } from './backstage';
 import {
 	announceFileCommand,
 	downloadBytes,
+	downloadText,
 	withExtension,
 	type FileCommand,
 } from './file-commands';
+import { documentStats, plainText } from './document-stats';
 import { localizeElement, translate, type EditorLocale } from './localization';
 import { createStatusBar, type StatusBar } from './status-bar';
 import { createTitleBar, type SaveState, type TitleBar } from './title-bar';
@@ -30,6 +32,9 @@ export interface ChromeHost {
 	reportError(error: Error): void;
 	/** Mirrors the title bar's save state into `element.dirty`. */
 	saveStateChanged?(state: SaveState): void;
+	/** Editor options shown on File > Options. */
+	options(): { locale: string; theme: string; author: string };
+	setOption(key: 'locale' | 'theme' | 'author', value: string): void;
 }
 
 export const DEFAULT_FILE_NAME = 'Document1.docx';
@@ -52,9 +57,17 @@ export class EditorChrome {
 			ribbon: () => host.ribbon(),
 		});
 		this.backstage = createBackstage({
-			fileCommand: (command) => void this.run(command),
+			fileCommand: (command, fileName) => void this.run(command, fileName),
 			close: () => this.closeBackstage(),
-			summary: () => ({ fileName: this._fileName, model: host.model(), words: host.wordCount() }),
+			summary: () => ({
+				fileName: this._fileName,
+				model: host.model(),
+				words: host.wordCount(),
+				stats: documentStats(host.model()),
+				saveState: this.state,
+			}),
+			options: () => host.options(),
+			setOption: (key, value) => host.setOption(key, value),
 		});
 		this.statusBar = createStatusBar({
 			setViewMode: (mode) => host.setViewMode(mode),
@@ -129,13 +142,22 @@ export class EditorChrome {
 	}
 
 	/** Runs a file command unless a host cancels the `file-command` event to handle it itself. */
-	async run(command: FileCommand): Promise<void> {
-		if (!announceFileCommand(this.host.element, command)) return;
+	async run(command: FileCommand, fileName?: string): Promise<void> {
+		if (!announceFileCommand(this.host.element, command, fileName)) return;
 		try {
 			if (command === 'new') this.newDocument();
 			else if (command === 'open') this.fileInput.click();
 			else if (command === 'print') this.host.print();
-			else if (command === 'save') {
+			else if (command === 'exportText')
+				downloadText(plainText(this.host.model()), withExtension(this._fileName, 'txt'));
+			else if (command === 'saveAs') {
+				const name = (fileName ?? '').trim();
+				if (!name) return;
+				// The bytes are in the format the document was opened in, so the extension follows it.
+				const extension = this._fileName.split('.').pop()?.toLowerCase() === 'doc' ? 'doc' : 'docx';
+				this.fileName = withExtension(name, extension);
+				await this.run('save');
+			} else if (command === 'save') {
 				this.setSaveState('saving');
 				downloadBytes(await this.host.save(), this._fileName);
 				this.setSaveState('saved-local');
