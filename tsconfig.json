@@ -48,5 +48,6 @@
 		"demos/**/*.ts",
 		"tests/**/*.ts",
 		"*.ts"
-	]
+	],
+	"exclude": ["packages/**/dist/**", "**/node_modules/**"]
 }

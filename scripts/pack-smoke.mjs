@@ -235,6 +235,26 @@ void [mountEditor, options, ReactEditor, VueEditor, WordEditorComponent, SolidEd
 		'utf8',
 	);
 	compile(viewerSvelte, { filename: 'WordEditor.svelte', generate: 'client' });
+	// Compiling does not resolve imports, so check the copied component's value imports exist.
+	const bindingExports = await import(path.join(scope, 'docx-bindings', 'dist', 'index.js'));
+	for (const [, names, source] of viewerSvelte.matchAll(
+		/import\s*\{([^}]*)\}\s*from\s*'([^']+)'/g,
+	)) {
+		assert.equal(
+			source,
+			'@christophervr/docx-bindings',
+			'viewer WordEditor.svelte must import the bindings package',
+		);
+		for (const name of names
+			.split(',')
+			.map((part) => part.trim())
+			.filter((part) => part && !part.startsWith('type ')))
+			assert.equal(
+				typeof bindingExports[name],
+				'function',
+				`bindings must export ${name} for the viewer Svelte component`,
+			);
+	}
 	const componentBundle = await readFile(
 		path.join(scope, 'docx-web-component', 'dist', 'index.js'),
 		'utf8',
