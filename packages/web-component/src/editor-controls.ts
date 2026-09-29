@@ -15,6 +15,7 @@ import { syncSpellingButton } from './spelling';
 import { syncIndentInputs } from './indent-commands';
 import { syncParagraphToggles } from './paragraph-toggle-sync';
 import { syncContextualTabs } from './contextual-tabs';
+import { syncRuler } from './ruler-sync';
 import { hasAnyChange, hasChangeAtCursor } from './review-commands';
 
 export function refreshEditorControls(
@@ -53,6 +54,7 @@ export function refreshEditorControls(
 					'Spelling',
 					'Read aloud',
 					'Gridlines',
+					'Ruler',
 				].includes(label ?? '');
 		});
 	if (!view) return undefined;
@@ -74,6 +76,7 @@ export function refreshEditorControls(
 		syncIndentInputs(toolbar, state);
 		syncParagraphToggles(toolbar, view, model);
 		syncContextualTabs(toolbar, state);
+		syncRuler(toolbar, view, model);
 		const trackButton = toolbar.querySelector<HTMLButtonElement>('[aria-label="Track changes"]');
 		trackButton?.setAttribute('aria-pressed', String(Boolean(model.trackChanges)));
 		const commentsButton = toolbar.querySelector<HTMLButtonElement>('[aria-label="Comments"]');

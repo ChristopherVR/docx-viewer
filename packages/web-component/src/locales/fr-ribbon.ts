@@ -8,6 +8,7 @@ export const frRibbon: RibbonStrings = {
 	Styles: 'Styles',
 	Clipboard: 'Presse-papiers',
 	Table: 'Tableau',
+	Ruler: 'Règle',
 	'Page setup settings': 'Paramètres de mise en page',
 	Gutter: 'Reliure',
 	'Header from edge': 'En-tête depuis le bord',

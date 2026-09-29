@@ -14,6 +14,7 @@ export const deRibbon: RibbonStrings = {
 	Styles: 'Formatvorlagen',
 	Clipboard: 'Zwischenablage',
 	Table: 'Tabelle',
+	Ruler: 'Lineal',
 	'Page setup settings': 'Seiteneinrichtung',
 	Gutter: 'Bundsteg',
 	'Header from edge': 'Kopfzeile ab Rand',

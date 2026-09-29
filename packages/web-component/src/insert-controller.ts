@@ -1,3 +1,5 @@
+import { createRuler } from './ruler';
+import { syncRuler } from './ruler-sync';
 import { keymap } from 'prosemirror-keymap';
 import type { Plugin } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
@@ -33,6 +35,7 @@ export class InsertController {
 	private showHidden = false;
 	private showMarks = false;
 	private showGridlines = false;
+	private showRuler = false;
 
 	constructor(private readonly host: InsertControllerHost) {
 		this.linkDialog = createLinkDialog({
@@ -64,7 +67,10 @@ export class InsertController {
 			if (view?.editable) applyCharacterStyle(view, action.value);
 			focusView(view);
 		} else if (action.type === 'showHidden') this.setShowHidden(!this.showHidden);
-		else if (action.type === 'gridlines') {
+		else if (action.type === 'ruler') {
+			this.showRuler = !this.showRuler;
+			this.syncPaper();
+		} else if (action.type === 'gridlines') {
 			this.showGridlines = !this.showGridlines;
 			this.syncPaper();
 		} else if (action.type === 'showMarks') {
@@ -124,6 +130,7 @@ export class InsertController {
 			paper.toggleAttribute('data-show-hidden', this.showHidden);
 			paper.toggleAttribute('data-show-marks', this.showMarks);
 			paper.toggleAttribute('data-show-gridlines', this.showGridlines);
+			this.syncRulerElement(paper);
 		}
 		this.host
 			.toolbar()
@@ -139,6 +146,20 @@ export class InsertController {
 			.toolbar()
 			?.querySelector('[aria-label="Show hidden text"], [data-localearialabel="Show hidden text"]')
 			?.setAttribute('aria-pressed', String(this.showHidden));
+	}
+
+	/** The ruler sits above the page in the canvas while View > Ruler is on. */
+	private syncRulerElement(paper: HTMLElement): void {
+		const canvas = paper.parentElement;
+		const existing = canvas?.querySelector('.dve-ruler');
+		if (this.showRuler && canvas && !existing) canvas.insertBefore(createRuler(), paper);
+		else if (!this.showRuler) existing?.remove();
+		const frame = this.host.toolbar()?.parentElement;
+		const button = frame?.querySelector('[aria-label="Ruler"], [data-localearialabel="Ruler"]');
+		button?.setAttribute('aria-pressed', String(this.showRuler));
+		const view = this.host.view();
+		const toolbar = this.host.toolbar();
+		if (this.showRuler && view && toolbar) syncRuler(toolbar, view, this.host.model());
 	}
 
 	private setShowHidden(show: boolean): void {

@@ -14,6 +14,7 @@ export const zhCNRibbon: RibbonStrings = {
 	Styles: '样式',
 	Clipboard: '剪贴板',
 	Table: '表格',
+	Ruler: '标尺',
 	'Page setup settings': '页面设置选项',
 	Gutter: '装订线',
 	'Header from edge': '页眉距边缘',

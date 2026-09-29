@@ -340,4 +340,26 @@ test.describe('Word-style ribbon', () => {
 		expect(xml).toContain('w:w="11906"');
 		expect(xml).toContain('w:left="720"');
 	});
+
+	test('View > Ruler shows the margins and follows the paragraph indent', async ({ page }) => {
+		const editor = page.locator('docx-editor');
+		await editor.locator('.ProseMirror').first().click();
+		await page.keyboard.type('Indented paragraph');
+		await editor.locator('#dve-tab-view').click();
+		await editor.getByRole('button', { name: 'Ruler', exact: true }).click();
+		const ruler = editor.locator('.dve-ruler');
+		await expect(ruler).toBeVisible();
+		const left = ruler.locator('.dve-ruler-marker-left');
+		const before = await left.evaluate((el) => parseFloat((el as HTMLElement).style.left));
+		await editor.locator('#dve-tab-layout').click();
+		const spinner = editor.getByLabel('Indent left', { exact: true });
+		await spinner.fill('1');
+		await spinner.dispatchEvent('change');
+		await expect
+			.poll(() => left.evaluate((el) => parseFloat((el as HTMLElement).style.left)))
+			.toBe(before + 96);
+		await editor.locator('#dve-tab-view').click();
+		await editor.getByRole('button', { name: 'Ruler', exact: true }).click();
+		await expect(ruler).toHaveCount(0);
+	});
 });

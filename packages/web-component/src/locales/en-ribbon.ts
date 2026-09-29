@@ -7,6 +7,7 @@ export const enRibbon = {
 	Styles: 'Styles',
 	Clipboard: 'Clipboard',
 	Table: 'Table',
+	Ruler: 'Ruler',
 	'Page setup settings': 'Page setup settings',
 	Gutter: 'Gutter',
 	'Header from edge': 'Header from edge',

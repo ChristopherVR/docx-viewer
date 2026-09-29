@@ -14,6 +14,7 @@ export const esRibbon: RibbonStrings = {
 	Styles: 'Estilos',
 	Clipboard: 'Portapapeles',
 	Table: 'Tabla',
+	Ruler: 'Regla',
 	'Page setup settings': 'Configuración de página',
 	Gutter: 'Encuadernación',
 	'Header from edge': 'Encabezado desde el borde',

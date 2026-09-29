@@ -107,6 +107,7 @@ const paths = {
 	sort: 'M6 4v16 M3.5 17.5 6 20l2.5-2.5 M13 6h7 M13 12h5 M13 18h3',
 	bookmark: 'M7 3h10v18l-5-4-5 4z',
 	coverPage: 'M6 3h12v18H6z M9 8h6 M9 11h6 M9 17h6',
+	ruler: 'M3 8h18v8H3z M7 8v3 M11 8v4 M15 8v3 M19 8v4',
 	caret: 'M7 10l5 5 5-5',
 } as const;
 

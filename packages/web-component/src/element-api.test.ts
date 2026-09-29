@@ -146,6 +146,7 @@ describe('UI customisation', () => {
 			'one-page',
 			'page-width',
 			'gridlines',
+			'ruler',
 			'layout-view',
 		];
 		const hidden = (label: string) =>

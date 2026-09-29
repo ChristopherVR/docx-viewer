@@ -46,6 +46,7 @@ export type RibbonAction =
 	| { type: 'search'; focus?: 'find' | 'replace' }
 	| { type: 'changeCase'; value: 'sentence' | 'lower' | 'upper' | 'title' | 'toggle' }
 	| { type: 'formatPainter' }
+	| { type: 'ruler' }
 	| { type: 'coverPage' }
 	| { type: 'sort'; order: 'ascending' | 'descending' }
 	| { type: 'goTo' }

@@ -305,6 +305,7 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				{ type: 'showHidden' },
 				{ large: true, caption: 'Hidden text' },
 			),
+			tool('Ruler', 'ruler', { type: 'ruler' }, { large: true }),
 			tool('Gridlines', 'gridlines', { type: 'gridlines' }, { large: true }),
 			tool(
 				'Page thumbnails',
