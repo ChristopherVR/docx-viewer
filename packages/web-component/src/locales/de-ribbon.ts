@@ -14,6 +14,17 @@ export const deRibbon: RibbonStrings = {
 	Styles: 'Formatvorlagen',
 	Clipboard: 'Zwischenablage',
 	Table: 'Tabelle',
+	'Page setup settings': 'Seiteneinrichtung',
+	Gutter: 'Bundsteg',
+	'Header from edge': 'Kopfzeile ab Rand',
+	'Footer from edge': 'Fußzeile ab Rand',
+	'Custom size': 'Benutzerdefinierte Größe',
+	'Enter measurements from 0 to 22 inches (a page must be larger than 0).':
+		'Geben Sie Maße von 0 bis 22 Zoll ein (eine Seite muss größer als 0 sein).',
+	'The margins leave less than 0.5 inch of text width. Reduce the left, right or gutter margin.':
+		'Die Ränder lassen weniger als 0,5 Zoll Textbreite. Verkleinern Sie den linken, rechten oder Bundsteg-Rand.',
+	'The margins leave less than 0.5 inch of text height. Reduce the top or bottom margin.':
+		'Die Ränder lassen weniger als 0,5 Zoll Texthöhe. Verkleinern Sie den oberen oder unteren Rand.',
 	'Horizontal line': 'Horizontale Linie',
 	'Cover page': 'Deckblatt',
 	'Document title': 'Dokumenttitel',

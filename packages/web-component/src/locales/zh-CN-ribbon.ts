@@ -14,6 +14,17 @@ export const zhCNRibbon: RibbonStrings = {
 	Styles: '样式',
 	Clipboard: '剪贴板',
 	Table: '表格',
+	'Page setup settings': '页面设置选项',
+	Gutter: '装订线',
+	'Header from edge': '页眉距边缘',
+	'Footer from edge': '页脚距边缘',
+	'Custom size': '自定义大小',
+	'Enter measurements from 0 to 22 inches (a page must be larger than 0).':
+		'请输入 0 到 22 英寸之间的尺寸（页面必须大于 0）。',
+	'The margins leave less than 0.5 inch of text width. Reduce the left, right or gutter margin.':
+		'页边距使文字宽度不足 0.5 英寸。请减小左、右或装订线边距。',
+	'The margins leave less than 0.5 inch of text height. Reduce the top or bottom margin.':
+		'页边距使文字高度不足 0.5 英寸。请减小上或下边距。',
 	'Horizontal line': '水平线',
 	'Cover page': '封面',
 	'Document title': '文档标题',

@@ -1,4 +1,5 @@
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel, SectionProperties } from '@christophervr/docx-core';
+import { applyPageSetup, type PageSetupValues } from './page-setup-model';
 import { emit } from './events';
 import type { EditorHost } from './editor-host';
 import { findLocalizedControl } from './localization';
@@ -69,6 +70,21 @@ export class PageController {
 			'aria-pressed',
 			String(Boolean(section.titlePage)),
 		);
+	}
+
+	/** The section holding the selection, for the Page Setup dialog. */
+	currentSection(): SectionProperties | undefined {
+		const view = this.host.view();
+		const model = this.host.model();
+		return view ? sectionsOf(model)[currentSectionIndex(view, model)] : undefined;
+	}
+
+	/** Applies the Page Setup dialog to the current section as one undoable step. */
+	applyPageSetupValues(values: PageSetupValues): void {
+		const view = this.host.view();
+		if (!view?.editable || !this.host.canEditOutsideBody()) return;
+		const model = this.host.model();
+		this.dispatchSections(applyPageSetup(model, currentSectionIndex(view, model), values));
 	}
 
 	/** Insert > Page Number: a PAGE field in the header or footer, creating the part when needed. */

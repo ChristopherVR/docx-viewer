@@ -7,6 +7,17 @@ export const enRibbon = {
 	Styles: 'Styles',
 	Clipboard: 'Clipboard',
 	Table: 'Table',
+	'Page setup settings': 'Page setup settings',
+	Gutter: 'Gutter',
+	'Header from edge': 'Header from edge',
+	'Footer from edge': 'Footer from edge',
+	'Custom size': 'Custom size',
+	'Enter measurements from 0 to 22 inches (a page must be larger than 0).':
+		'Enter measurements from 0 to 22 inches (a page must be larger than 0).',
+	'The margins leave less than 0.5 inch of text width. Reduce the left, right or gutter margin.':
+		'The margins leave less than 0.5 inch of text width. Reduce the left, right or gutter margin.',
+	'The margins leave less than 0.5 inch of text height. Reduce the top or bottom margin.':
+		'The margins leave less than 0.5 inch of text height. Reduce the top or bottom margin.',
 	'Horizontal line': 'Horizontal line',
 	'Cover page': 'Cover page',
 	'Document title': 'Document title',

@@ -87,6 +87,11 @@ export class EditorCore {
 		this.formatDialogs = new FormatDialogs({
 			view: () => this.targetView(),
 			model: () => this.model,
+			pageSetup: {
+				section: () => this.pages.currentSection(),
+				canEdit: () => !this.readOnly && !this.collab.client,
+				apply: (values) => this.pages.applyPageSetupValues(values),
+			},
 		});
 		this.imageMedia = new ImageMediaCache((partName) =>
 			this.inserts.media(partName, this.loaded?.media),

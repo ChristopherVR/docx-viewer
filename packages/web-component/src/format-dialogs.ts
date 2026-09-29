@@ -3,13 +3,17 @@ import type { EditorView } from 'prosemirror-view';
 import { createFontDialog, type FormatDialog } from './font-dialog';
 import type { EditorLocale } from './localization';
 import { createBookmarkDialog } from './bookmark-dialog';
+import { focusView } from './focus-view';
+import { createPageSetupDialog, type PageSetupHost } from './page-setup-dialog';
 import { createParagraphDialog } from './paragraph-dialog';
 
-export type FormatDialogKind = 'font' | 'paragraph' | 'bookmark';
+export type FormatDialogKind = 'font' | 'paragraph' | 'bookmark' | 'pageSetup';
 
 export interface FormatDialogsHost {
 	view(): EditorView | undefined;
 	model(): DocumentModel;
+	/** Page Setup edits the section holding the selection. */
+	pageSetup?: Omit<PageSetupHost, 'restoreFocus'>;
 }
 
 /** The Font and Paragraph dialogs opened from the ribbon's group launchers. */
@@ -24,6 +28,10 @@ export class FormatDialogs {
 				() => host.model(),
 			),
 			bookmark: createBookmarkDialog(() => host.view()),
+			pageSetup: createPageSetupDialog({
+				...(host.pageSetup ?? { section: () => undefined, canEdit: () => false, apply: () => {} }),
+				restoreFocus: () => focusView(host.view()),
+			}),
 		};
 	}
 

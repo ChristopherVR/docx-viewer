@@ -316,4 +316,28 @@ test.describe('Word-style ribbon', () => {
 		expect(xml).toContain('Document title');
 		expect(xml).toContain('<w:pageBreakBefore/>');
 	});
+
+	test('the Page Setup dialog changes margins and paper and saves them', async ({ page }) => {
+		const editor = page.locator('docx-editor');
+		await editor.locator('.ProseMirror').first().click();
+		await page.keyboard.type('Page setup text');
+		await editor.locator('#dve-tab-layout').click();
+		await editor.getByRole('button', { name: 'Page setup settings' }).click();
+		const dialog = editor.locator('.dve-page-setup-dialog');
+		await expect(dialog).toBeVisible();
+		await dialog.getByLabel('Left', { exact: true }).fill('0.5');
+		await dialog.getByLabel('Paper size', { exact: true }).selectOption('a4');
+		await dialog.getByRole('button', { name: 'OK', exact: true }).click();
+		await expect(dialog).toBeHidden();
+		const pageWidth = await editor
+			.getByLabel('Document page', { exact: true })
+			.evaluate((el) => Math.round(parseFloat(getComputedStyle(el).width)));
+		expect(pageWidth).toBe(794);
+		const pending = page.waitForEvent('download');
+		await saveButton(page).click();
+		const zip = await JSZip.loadAsync(await readFile((await (await pending).path())!));
+		const xml = await zip.file('word/document.xml')!.async('string');
+		expect(xml).toContain('w:w="11906"');
+		expect(xml).toContain('w:left="720"');
+	});
 });

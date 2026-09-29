@@ -70,7 +70,7 @@ export type RibbonAction =
 	  }
 	| { type: 'pageNumber'; position: 'top' | 'bottom'; align: 'left' | 'center' | 'right' }
 	| { type: 'headerFooter'; kind: 'header' | 'footer' }
-	| { type: 'formatDialog'; kind: 'font' | 'paragraph' | 'bookmark' }
+	| { type: 'formatDialog'; kind: 'font' | 'paragraph' | 'bookmark' | 'pageSetup' }
 	| { type: 'indent'; side: 'left' | 'right'; inches: number }
 	| { type: 'zoomFit'; mode: 'actual' | 'width' | 'page' }
 	| { type: 'wordCount' }

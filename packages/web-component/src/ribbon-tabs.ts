@@ -18,7 +18,7 @@ const PAGE_NUMBER_OPTIONS: Array<[string, string]> = [
 	['bottom:center', 'Bottom center'],
 	['bottom:right', 'Bottom right'],
 ];
-import { group, menuSelect, select, stack, tool } from './ribbon-parts';
+import { group, launcher, menuSelect, select, stack, tool } from './ribbon-parts';
 
 /** The Insert, Layout, References, Review and View tabs. */
 export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
@@ -351,4 +351,8 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 			tool('Print', 'print', { type: 'print' }, { large: true }),
 		),
 	);
+	panels
+		.get('Layout')!
+		.querySelector('[data-label="Page setup"]')
+		?.append(launcher('Page setup settings', { type: 'formatDialog', kind: 'pageSetup' }));
 }

@@ -201,3 +201,10 @@
 		linear-gradient(to bottom, #8ab4f855 1px, transparent 1px);
 	background-size: 24px 24px;
 }
+
+.dve-dialog-message {
+	min-height: 1.2em;
+	margin: 0;
+	color: #b3261e;
+	font-size: 12px;
+}

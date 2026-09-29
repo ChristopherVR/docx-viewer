@@ -14,6 +14,17 @@ export const esRibbon: RibbonStrings = {
 	Styles: 'Estilos',
 	Clipboard: 'Portapapeles',
 	Table: 'Tabla',
+	'Page setup settings': 'Configuración de página',
+	Gutter: 'Encuadernación',
+	'Header from edge': 'Encabezado desde el borde',
+	'Footer from edge': 'Pie de página desde el borde',
+	'Custom size': 'Tamaño personalizado',
+	'Enter measurements from 0 to 22 inches (a page must be larger than 0).':
+		'Introduzca medidas de 0 a 22 pulgadas (una página debe ser mayor que 0).',
+	'The margins leave less than 0.5 inch of text width. Reduce the left, right or gutter margin.':
+		'Los márgenes dejan menos de 0,5 pulgadas de ancho de texto. Reduzca el margen izquierdo, derecho o de encuadernación.',
+	'The margins leave less than 0.5 inch of text height. Reduce the top or bottom margin.':
+		'Los márgenes dejan menos de 0,5 pulgadas de alto de texto. Reduzca el margen superior o inferior.',
 	'Horizontal line': 'Línea horizontal',
 	'Cover page': 'Portada',
 	'Document title': 'Título del documento',

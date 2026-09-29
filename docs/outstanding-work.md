@@ -71,24 +71,38 @@ launchers, contextual tabs, and one baseline for group captions. Toggle buttons 
 selection (alignment, lists, bold and the rest), disabled controls look disabled, and tooltips
 carry the shortcut ("Bold (Ctrl+B)"). A Word command is shown only where a real command exists.
 
+The **File** tab follows Word's backstage: Info (file name and save state, compatibility notes,
+tracked-change and comment counts, and a properties panel of words, characters, paragraphs,
+tables, sections, page size and orientation), New, Open, Save, Save As (takes a file name and keeps
+the opened format), Print, Export (PDF through the print dialog, DOCX, plain text) and Options
+(display language, theme, review author). Not implemented: Home and recent files, Share, Account,
+Close, Protect Document, Version History, author/title/tags properties (the model has no core
+properties), and the page count on Info (pagination is a Print Layout result).
+
 What each tab offers that Word also has:
 
 - **Home:** Paste, Cut, Copy (disabled without a selection), Format Painter (character formatting
   only), font family and size combo boxes showing the effective font (styles and theme included),
   Grow/Shrink Font, Change Case, Clear Formatting, Bold through Superscript, Text Highlight, Font
-  Color, lists and levels, indents, Show/Hide paragraph marks (¶ only), alignment, Line Spacing,
-  Shading and Borders (written to `w:shd` and `w:pBdr`), the Styles gallery with a "more" menu and
-  a character-style menu, Find, Replace and Select All. The Font and Paragraph launchers open real
+  Color, lists and levels, indents, Sort (paragraphs, locale collation, numbers as numbers),
+  Show/Hide paragraph marks (¶ only), alignment, Line Spacing, Shading and Borders (written to
+  `w:shd` and `w:pBdr`, plus a Horizontal Line), a Styles gallery with previous/next/more controls,
+  an expanded gallery of recommended paragraph and character styles with Clear Formatting, and a
+  docked Styles pane listing every style; Find (with Go To headings, bookmarks, tables and
+  pictures), Replace, and Select (All, Objects). The Font and Paragraph launchers open real
   dialogs: Font (family, style, size, colour, underline style and colour, strikethrough, double
   strikethrough, super/subscript, small and all caps, hidden, character spacing, with a preview)
   and Paragraph (alignment, indents, first-line/hanging, spacing, line rule and amount, contextual
   spacing, widow/orphan, keep with next, keep lines, page break before). Both apply only the
   fields you changed and show mixed selections as blank or indeterminate.
-- **Insert:** Table, Pictures, Format picture, Link, Blank page, page and column breaks, Header,
+- **Insert:** Table (a size grid with keyboard control and typed rows and columns), Cover Page (one
+  plain design), Pictures, Format picture, Link, Bookmark (add, move, delete, go to, Word's naming
+  rule), Blank page, page and column breaks, Header,
   Footer and Page Number (creates the part, relationship, content type and `sectPr` reference on
   save, for existing packages and new documents), Date and Time (inserted as text in the display
   locale, not an updating field) and Symbol (27 common glyphs, not the full Symbol dialog).
-- **Layout:** Margins (Normal, Narrow, Moderate, Wide), Size (Letter, Legal, Tabloid, Executive,
+- **Layout:** a Page Setup dialog (custom margins, gutter, header and footer distances,
+  orientation, paper size and custom width and height, validated so text keeps room), Margins (Normal, Narrow, Moderate, Wide), Size (Letter, Legal, Tabloid, Executive,
   A3, A4, A5, B5), Orientation, Vertical alignment, Columns, page-number format and start,
   different first page, odd and even, section breaks, Indent Left/Right (inches) and paragraph
   Before/After spacing.

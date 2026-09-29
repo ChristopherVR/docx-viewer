@@ -8,6 +8,17 @@ export const frRibbon: RibbonStrings = {
 	Styles: 'Styles',
 	Clipboard: 'Presse-papiers',
 	Table: 'Tableau',
+	'Page setup settings': 'Paramètres de mise en page',
+	Gutter: 'Reliure',
+	'Header from edge': 'En-tête depuis le bord',
+	'Footer from edge': 'Pied de page depuis le bord',
+	'Custom size': 'Taille personnalisée',
+	'Enter measurements from 0 to 22 inches (a page must be larger than 0).':
+		'Saisissez des mesures de 0 à 22 pouces (une page doit être plus grande que 0).',
+	'The margins leave less than 0.5 inch of text width. Reduce the left, right or gutter margin.':
+		'Les marges laissent moins de 0,5 pouce de largeur de texte. Réduisez la marge gauche, droite ou de reliure.',
+	'The margins leave less than 0.5 inch of text height. Reduce the top or bottom margin.':
+		'Les marges laissent moins de 0,5 pouce de hauteur de texte. Réduisez la marge supérieure ou inférieure.',
 	'Horizontal line': 'Ligne horizontale',
 	'Cover page': 'Page de garde',
 	'Document title': 'Titre du document',
