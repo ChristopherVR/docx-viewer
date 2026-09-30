@@ -14,7 +14,7 @@ describe('style gallery', () => {
 		const gallery = document.createElement('div');
 		syncStyleGallery(gallery, styles, 'Heading1', model, () => {}, false);
 		const tiles = [...gallery.querySelectorAll<HTMLButtonElement>('.style-tile')];
-		expect(tiles.map((tile) => tile.getAttribute('aria-label'))).toEqual(['Normal', 'heading 1']);
+		expect(tiles.map((tile) => tile.getAttribute('aria-label'))).toEqual(['Normal', 'Heading 1']);
 		expect(tiles.map((tile) => tile.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
 		const heading = tiles[1]!.querySelector<HTMLElement>('.style-sample')!;
 		expect(parseFloat(heading.style.fontSize)).toBeGreaterThan(

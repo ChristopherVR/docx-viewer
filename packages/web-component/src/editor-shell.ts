@@ -4,6 +4,7 @@ import { createDocument } from '@christophervr/docx-core';
 import type { EditorCore } from './editor-core';
 import { emit, on } from './events';
 import { createRibbon } from './ribbon';
+import type { RibbonActionId } from './ribbon-action-ids';
 import { editorStyleText } from './styles';
 import { runRibbonCommand } from './editor-commands';
 import { createSearchPanel } from './search-panel';
@@ -28,6 +29,7 @@ export interface ShellApi {
 
 function createChrome(core: EditorCore, api: ShellApi): EditorChrome {
 	const { element, shell } = core;
+	const host = () => element as unknown as { hiddenActions: readonly RibbonActionId[] };
 	return new EditorChrome({
 		element,
 		model: () => core.model,
@@ -62,6 +64,11 @@ function createChrome(core: EditorCore, api: ShellApi): EditorChrome {
 		options: () => ({ locale: core.locale, theme: core.theme, author: core.reviewAuthor }),
 		setOption: (key, value) =>
 			element.setAttribute(key === 'author' ? 'review-author' : key, value),
+		hiddenActions: () => host().hiddenActions,
+		setHiddenActions: (ids) => {
+			host().hiddenActions = ids as RibbonActionId[];
+			emit(element, 'ribbon-customize', host().hiddenActions);
+		},
 		reportError: (error) => dispatchDocumentError(element, error),
 	});
 }

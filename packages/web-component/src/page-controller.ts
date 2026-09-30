@@ -54,6 +54,7 @@ export class PageController {
 			if (select) select.value = value;
 		};
 		setSelect('Orientation', section.orientation);
+		setSelect('Hyphenation', model.autoHyphenation ? 'auto' : 'none');
 		setSelect('Page size', pageSizeOf(section) ?? '');
 		setSelect('Vertical alignment', section.verticalAlign ?? 'top');
 		findLocalizedControl<HTMLButtonElement>(toolbar, 'Different odd and even pages')?.setAttribute(
@@ -114,6 +115,23 @@ export class PageController {
 		return true;
 	}
 
+	/** Layout > Page Color (document-wide, undoable): hex with or without `#`, or `none` to clear. */
+	setPageColor(value: string): void {
+		const view = this.host.view();
+		if (!view?.editable || !this.host.canEditOutsideBody()) return;
+		const hex = value.replace(/^#/, '').toUpperCase();
+		view.dispatch(
+			view.state.tr.setDocAttribute('pageColor', /^[0-9A-F]{6}$/.test(hex) ? hex : null),
+		);
+	}
+
+	/** Layout > Hyphenation: `auto` sets `w:autoHyphenation`, `none` clears it (document-wide, undoable). */
+	setHyphenation(value: string): void {
+		const view = this.host.view();
+		if (!view?.editable || !this.host.canEditOutsideBody()) return;
+		view.dispatch(view.state.tr.setDocAttribute('autoHyphenation', value === 'auto'));
+	}
+
 	/** Header & Footer > Different Odd & Even Pages (document-wide, undoable). */
 	toggleEvenOddHeaders(): void {
 		const view = this.host.view();
@@ -166,6 +184,7 @@ export class PageController {
 
 	/** Zoom to 100%, the page width or a whole page, from the section holding the selection. */
 	zoomTo(mode: ZoomFit): void {
+		if (mode === 'pages' && this.viewMode !== 'print') this.setViewMode('print');
 		const canvas = this.host.paper()?.parentElement;
 		const view = this.host.view();
 		const model = this.host.model();
@@ -182,11 +201,14 @@ export class PageController {
 				},
 				{ width: section.pageWidthTwips / 15, height: section.pageHeightTwips / 15 },
 			),
+			mode === 'pages',
 		);
 	}
 
-	setZoom(percent: number): void {
+	/** `sideBySide` lays Print Layout's pages out two across (View > Multiple Pages). */
+	setZoom(percent: number, sideBySide = false): void {
 		this.zoom = percent / 100;
+		this.host.paper()?.parentElement?.toggleAttribute('data-multipage', sideBySide);
 		this.refreshPageStyles();
 		const toolbar = this.host.toolbar();
 		const select = toolbar && findLocalizedControl<HTMLSelectElement>(toolbar, 'Zoom');

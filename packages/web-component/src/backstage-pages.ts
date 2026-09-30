@@ -4,6 +4,7 @@ import type { DocumentStats } from './document-stats';
 import type { FileCommand } from './file-commands';
 import { pageSizeOf } from './page-size';
 import { sectionsOf } from './section-commands';
+import { ribbonControlId } from './ribbon-visibility';
 
 /** What the File view needs from the editor; every value is read when a page opens. */
 export interface BackstageHandlers {
@@ -18,6 +19,10 @@ export interface BackstageHandlers {
 	};
 	options(): { locale: string; theme: string; author: string };
 	setOption(key: 'locale' | 'theme' | 'author', value: string): void;
+	/** The ribbon element, for listing its commands on Customize Ribbon. */
+	ribbon(): HTMLElement | undefined;
+	hiddenActions(): readonly string[];
+	setHiddenActions(ids: string[]): void;
 }
 
 export interface PageContext {
@@ -294,5 +299,63 @@ export function renderOptions({ handlers, t, content }: PageContext): void {
 			t('Options apply to this editor and are not stored between sessions.'),
 			'dve-backstage-muted',
 		),
+	);
+}
+
+/**
+ * Word's Customize Ribbon, reduced to showing and hiding: every tab, group and command with a
+ * checkbox. Unchecked commands go into `hiddenActions`; groups and tabs left empty disappear.
+ */
+export function renderCustomize({ handlers, t, content }: PageContext): void {
+	const ribbon = handlers.ribbon();
+	const hidden = new Set(handlers.hiddenActions());
+	const seen = new Set<string>();
+	const boxes: Array<{ id: string; input: HTMLInputElement }> = [];
+	const commit = () =>
+		handlers.setHiddenActions(boxes.filter((b) => !b.input.checked).map((b) => b.id));
+	const sections: HTMLElement[] = [];
+	for (const tab of ribbon?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []) {
+		const panel = ribbon?.querySelector(`#${tab.getAttribute('aria-controls')}`);
+		if (!panel) continue;
+		const tabSection = document.createElement('section');
+		tabSection.className = 'dve-customize-tab';
+		tabSection.append(heading(tab.textContent?.trim() ?? '', 'h3'));
+		for (const group of panel.querySelectorAll<HTMLElement>('.ribbon-group')) {
+			const list = document.createElement('fieldset');
+			list.className = 'dve-customize-group';
+			const legend = document.createElement('legend');
+			legend.textContent = group.dataset.caption ?? group.dataset.label ?? '';
+			list.append(legend);
+			for (const control of group.querySelectorAll<HTMLElement>(
+				'button[aria-label]:not(.ribbon-launcher):not(.ribbon-overflow-button):not(.style-tile), select[aria-label], input[aria-label]',
+			)) {
+				const id = ribbonControlId(control);
+				if (!id || seen.has(id)) continue;
+				seen.add(id);
+				const row = document.createElement('label');
+				row.className = 'dve-customize-row';
+				const input = document.createElement('input');
+				input.type = 'checkbox';
+				input.checked = !hidden.has(id);
+				input.addEventListener('change', commit);
+				const text = document.createElement('span');
+				text.textContent = control.getAttribute('aria-label') ?? id;
+				row.append(input, text);
+				list.append(row);
+				boxes.push({ id, input });
+			}
+			if (list.children.length > 1) tabSection.append(list);
+		}
+		if (tabSection.children.length > 1) sections.push(tabSection);
+	}
+	const reset = primary(t('Reset all customizations'), () => {
+		for (const box of boxes) box.input.checked = true;
+		commit();
+	});
+	content.replaceChildren(
+		heading(t('Customize Ribbon')),
+		paragraph(t('Choose which commands the ribbon shows.'), 'dve-backstage-muted'),
+		reset,
+		...sections,
 	);
 }

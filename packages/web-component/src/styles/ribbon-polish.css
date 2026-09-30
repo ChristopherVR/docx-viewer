@@ -1,0 +1,103 @@
+/* Ribbon polish: distinct pressed state and Word's accent hues on command icons. Loaded last. */
+:host {
+	--ribbon-accent-blue: #2b7cd3;
+	--ribbon-accent-green: #2f9e5f;
+	--ribbon-accent-red: #d13438;
+	--ribbon-accent-orange: #d9822b;
+}
+@media (prefers-color-scheme: dark) {
+	:host(:not([theme='light'])) {
+		--ribbon-accent-blue: #5ea5f0;
+		--ribbon-accent-green: #5cc98a;
+		--ribbon-accent-red: #f07a7d;
+		--ribbon-accent-orange: #f0a35e;
+	}
+}
+:host([theme='dark']) {
+	--ribbon-accent-blue: #5ea5f0;
+	--ribbon-accent-green: #5cc98a;
+	--ribbon-accent-red: #f07a7d;
+	--ribbon-accent-orange: #f0a35e;
+}
+
+/* Pressed reads darker than hover, and pressing a control gives immediate feedback. */
+.ribbon-group button[aria-pressed='true'] {
+	border-color: color-mix(in srgb, var(--blue) 45%, transparent);
+	background: color-mix(in srgb, var(--blue) 20%, transparent);
+}
+.ribbon-group button[aria-pressed='true']:hover:not(:disabled) {
+	background: color-mix(in srgb, var(--blue) 30%, transparent);
+}
+.ribbon-group button:active:not(:disabled),
+.ribbon-menu:active:not(:has(select:disabled)) {
+	background: color-mix(in srgb, var(--blue) 28%, transparent);
+}
+
+/* Accent hues (buttons only; a disabled control keeps its 0.4 opacity). */
+.ribbon-icon[data-icon='table'],
+.ribbon-icon[data-icon='find'],
+.ribbon-icon[data-icon='replace'],
+.ribbon-icon[data-icon='link'],
+.ribbon-icon[data-icon='crossReference'],
+.ribbon-icon[data-icon='toc'],
+.ribbon-icon[data-icon='updateTable'],
+.ribbon-icon[data-icon='header'],
+.ribbon-icon[data-icon='footer'],
+.ribbon-icon[data-icon='pageNumber'],
+.ribbon-icon[data-icon='pageNumberIcon'],
+.ribbon-icon[data-icon='margins'],
+.ribbon-icon[data-icon='orientation'],
+.ribbon-icon[data-icon='pageSize'],
+.ribbon-icon[data-icon='columns'],
+.ribbon-icon[data-icon='select'],
+.ribbon-icon[data-icon='paste'],
+.ribbon-icon[data-icon='borders'],
+.ribbon-icon[data-icon='rowAbove'],
+.ribbon-icon[data-icon='rowBelow'],
+.ribbon-icon[data-icon='columnLeft'],
+.ribbon-icon[data-icon='columnRight'] {
+	color: var(--ribbon-accent-blue);
+}
+.ribbon-icon[data-icon='picture'],
+.ribbon-icon[data-icon='formatPicture'],
+.ribbon-icon[data-icon='formatPainter'],
+.ribbon-icon[data-icon='accept'],
+.ribbon-icon[data-icon='acceptAll'],
+.ribbon-icon[data-icon='spelling'],
+.ribbon-icon[data-icon='readAloud'] {
+	color: var(--ribbon-accent-green);
+}
+.ribbon-icon[data-icon='reject'],
+.ribbon-icon[data-icon='rejectAll'],
+.ribbon-icon[data-icon='deleteRow'],
+.ribbon-icon[data-icon='deleteColumn'],
+.ribbon-icon[data-icon='deleteTable'],
+.ribbon-icon[data-icon='deleteComment'],
+.ribbon-icon[data-icon='clear'] {
+	color: var(--ribbon-accent-red);
+}
+.ribbon-icon[data-icon='comment'],
+.ribbon-icon[data-icon='comments'],
+.ribbon-icon[data-icon='bookmark'],
+.ribbon-icon[data-icon='caption'],
+.ribbon-icon[data-icon='footnote'],
+.ribbon-icon[data-icon='endnote'],
+.ribbon-icon[data-icon='coverPage'] {
+	color: var(--ribbon-accent-orange);
+}
+
+/* Icons never shrink to make room for a two-line caption, so every large icon is the same size. */
+.ribbon-menu > .ribbon-icon,
+.ribbon-large > .ribbon-icon {
+	flex: none;
+}
+
+/* A two-line caption plus the caret must still fit the dropdown command's box. */
+.ribbon-menu:not(.ribbon-menu-compact):not(.ribbon-menu-caret) {
+	gap: 1px;
+	height: 72px;
+	line-height: 1.1;
+}
+.ribbon-menu:not(.ribbon-menu-compact):not(.ribbon-menu-caret) > .ribbon-icon:last-of-type {
+	margin-top: -3px;
+}

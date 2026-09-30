@@ -118,6 +118,8 @@ export function routeRibbonAction(core: EditorCore, action: RibbonAction): void 
 	else if (action.type === 'page') pages.changePageSetup(action.key, action.value);
 	else if (action.type === 'sectionBreak') pages.insertSectionBreak(action.kind);
 	else if (action.type === 'evenOddHeaders') pages.toggleEvenOddHeaders();
+	else if (action.type === 'pageColor') pages.setPageColor(action.value);
+	else if (action.type === 'hyphenation') pages.setHyphenation(action.value);
 	else if (action.type === 'reviewDisplay') {
 		core.reviewDisplayMode = action.value;
 		core.view?.dispatch(core.view.state.tr);

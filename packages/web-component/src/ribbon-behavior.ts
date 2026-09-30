@@ -1,4 +1,5 @@
 import { ribbonIcon } from './ribbon-icons';
+import { showCommandTips } from './ribbon-keytips';
 
 /** Word's tab KeyTips (Alt, then a letter). File is handled by the chrome's own tab. */
 const KEY_TIPS: Record<string, string> = {
@@ -17,8 +18,8 @@ const KEY_TIPS: Record<string, string> = {
  * Collapse: double-clicking the selected tab, Ctrl+F1 or the collapse button hides the panels; a
  * click on a tab then shows its panel over the document until Escape, a command, or a click
  * elsewhere. KeyTips: when the ribbon is focused with Alt or F10 (the host fires `dve-keytips`),
- * tab badges appear and the matching letter opens that tab (`F` opens File). Only tab-level KeyTips
- * exist; Word's per-command KeyTips are not implemented.
+ * tab badges appear and the matching letter opens that tab (`F` opens File); the tab's commands
+ * then show their own tips (see ribbon-keytips.ts).
  */
 export function attachRibbonBehavior(root: HTMLElement, tabs: HTMLElement): void {
 	const collapse = document.createElement('button');
@@ -92,6 +93,9 @@ export function attachRibbonBehavior(root: HTMLElement, tabs: HTMLElement): void
 			event.stopPropagation();
 			match.tab.click();
 			match.tab.focus();
+			// Word's second level: the tab's commands get their own tips.
+			const panel = root.querySelector<HTMLElement>(`#${match.tab.getAttribute('aria-controls')}`);
+			if (panel) showCommandTips(root, panel, () => match.tab.focus());
 		};
 		const onFocusOut = (event: FocusEvent) => {
 			if (!event.relatedTarget || !root.contains(event.relatedTarget as Node)) stop();

@@ -87,3 +87,12 @@
 .dve-canvas:focus-visible {
 	outline-offset: -2px;
 }
+
+/* Command-level KeyTips sit on the control itself, fixed to the viewport. */
+.dve-keytip-command {
+	position: fixed;
+	bottom: auto;
+}
+.dve-keytip[hidden] {
+	display: none;
+}

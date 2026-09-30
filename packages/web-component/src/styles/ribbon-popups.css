@@ -1,0 +1,331 @@
+/* Editing: a row-height command with a caret menu, and the Go To panel. */
+.ribbon-split-inline {
+	display: flex;
+	align-items: center;
+	height: 22px;
+}
+.ribbon-group .ribbon-split-inline .ribbon-inline {
+	flex: 1;
+	width: auto;
+}
+.ribbon-menu.ribbon-menu-caret {
+	flex: none;
+	width: 18px;
+	height: 22px;
+	padding: 0;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	gap: 0;
+}
+.ribbon-menu.ribbon-menu-caret > .ribbon-icon:last-of-type {
+	margin-top: 0;
+}
+.ribbon-popover.go-to-panel {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 8px;
+	width: 280px;
+	padding: 10px;
+}
+.go-to-panel label {
+	display: grid;
+	gap: 4px;
+	color: var(--muted);
+	font:
+		11px 'Segoe UI',
+		Arial,
+		sans-serif;
+}
+.go-to-panel select {
+	height: 28px;
+	border: 1px solid var(--line);
+	border-radius: 3px;
+	background: var(--surface);
+	color: var(--ink);
+}
+.go-to-list {
+	display: flex;
+	flex-direction: column;
+	max-height: 220px;
+	overflow-y: auto;
+}
+.go-to-list button {
+	overflow: hidden;
+	padding: 5px 8px;
+	border: 0;
+	background: none;
+	color: var(--ink);
+	font:
+		13px 'Segoe UI',
+		Arial,
+		sans-serif;
+	text-align: left;
+	text-overflow: ellipsis;
+	cursor: pointer;
+}
+.go-to-list button:hover,
+.go-to-list button:focus-visible {
+	background: var(--accent-soft);
+}
+.go-to-list p {
+	margin: 6px 8px;
+	color: var(--muted);
+	font-size: 12px;
+}
+
+/* Insert > Table size picker. */
+.ribbon-popover.table-picker {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 8px;
+	width: 206px;
+	padding: 10px;
+}
+.table-picker-caption {
+	color: var(--ink);
+	font:
+		12px 'Segoe UI',
+		Arial,
+		sans-serif;
+}
+.table-picker-grid {
+	display: grid;
+	grid-template-columns: repeat(10, 18px);
+	gap: 2px;
+	outline: none;
+}
+.table-picker-grid:focus-visible {
+	outline: 2px solid var(--blue);
+	outline-offset: 2px;
+}
+.table-picker-grid [role='gridcell'] {
+	width: 18px;
+	height: 18px;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	cursor: pointer;
+}
+.table-picker-grid [role='gridcell'].active {
+	border-color: var(--blue);
+	background: color-mix(in srgb, var(--blue) 22%, transparent);
+}
+.table-picker-custom {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 6px;
+	padding-top: 6px;
+	border-top: 1px solid var(--line);
+}
+.table-picker-custom label {
+	display: grid;
+	gap: 2px;
+	color: var(--muted);
+	font:
+		11px 'Segoe UI',
+		Arial,
+		sans-serif;
+}
+.table-picker-custom input {
+	height: 24px;
+	border: 1px solid var(--line);
+	border-radius: 3px;
+	background: var(--surface);
+	color: var(--ink);
+}
+.table-picker-insert {
+	grid-column: 1 / -1;
+	height: 26px;
+	border: 1px solid var(--line);
+	border-radius: 3px;
+	background: var(--surface);
+	color: var(--ink);
+	cursor: pointer;
+}
+.table-picker-insert:hover {
+	background: var(--accent-soft);
+}
+
+/* Colour picker: Theme Colors (ten columns over five variants), Standard Colors, More Colors. */
+.ribbon-popover.color-grid {
+	display: block;
+	width: 236px;
+	padding: 8px 10px;
+}
+.color-grid-title {
+	margin: 6px 0 4px;
+	color: var(--muted);
+	font:
+		600 11px 'Segoe UI',
+		Arial,
+		sans-serif;
+}
+.color-grid-cells {
+	display: grid;
+	grid-template-columns: repeat(10, 20px);
+	gap: 2px 3px;
+}
+.color-grid .swatch {
+	width: 20px;
+	height: 20px;
+}
+.color-grid-command {
+	display: block;
+	width: 100%;
+	margin: 2px 0;
+	padding: 5px 6px;
+	border: 0;
+	border-radius: 3px;
+	background: none;
+	color: var(--ink);
+	font:
+		12px 'Segoe UI',
+		Arial,
+		sans-serif;
+	text-align: left;
+	cursor: pointer;
+}
+.color-grid-command:hover,
+.color-grid-command:focus-visible {
+	background: var(--accent-soft);
+}
+.color-grid-input {
+	position: absolute;
+	width: 0;
+	height: 0;
+	padding: 0;
+	border: 0;
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* Layout galleries: page thumbnails with a name and detail, for Margins, Size, Orientation, Columns. */
+.ribbon-menu-gallery select.ribbon-menu-input {
+	pointer-events: none;
+}
+.ribbon-popover.ribbon-gallery-menu {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	min-width: 220px;
+	max-height: min(70vh, 460px);
+	overflow-y: auto;
+	padding: 4px;
+}
+.ribbon-gallery-menu button {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 6px 10px;
+	border: 1px solid transparent;
+	border-radius: 3px;
+	background: none;
+	color: var(--ink);
+	font:
+		12px 'Segoe UI',
+		Arial,
+		sans-serif;
+	text-align: left;
+	cursor: pointer;
+}
+.ribbon-gallery-menu button:hover,
+.ribbon-gallery-menu button:focus-visible {
+	border-color: var(--line);
+	background: var(--accent-soft);
+	outline: none;
+}
+.ribbon-gallery-menu button[aria-checked='true'] {
+	border-color: var(--blue);
+}
+.gallery-words {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.gallery-name {
+	font-weight: 600;
+}
+.gallery-detail {
+	color: var(--muted);
+	font-size: 11px;
+}
+.gallery-thumb {
+	flex: none;
+}
+.gallery-thumb .thumb-page {
+	fill: #fff;
+	stroke: #8a8886;
+	stroke-width: 0.8;
+}
+.gallery-thumb .thumb-line {
+	stroke: #a19f9d;
+	stroke-width: 1.2;
+}
+
+/* Collapsed groups: a narrow ribbon folds its rightmost groups into one dropdown button each. */
+.ribbon-overflow-button {
+	display: none !important;
+}
+.ribbon-group[data-collapsed] {
+	width: auto !important;
+	min-width: 0;
+	max-width: none;
+	flex-wrap: nowrap;
+}
+.ribbon-group[data-collapsed] > :not(.ribbon-overflow-button) {
+	display: none !important;
+}
+.ribbon-group[data-collapsed] > .ribbon-overflow-button {
+	display: flex !important;
+}
+.ribbon-group button.ribbon-overflow-button[aria-expanded='true'] {
+	border-color: var(--line);
+	background: var(--accent-soft);
+}
+.ribbon-popover.ribbon-overflow-panel {
+	display: block;
+	padding: 6px 8px 2px;
+}
+.ribbon-overflow-panel .ribbon-group {
+	height: 84px;
+	max-width: none;
+	padding-right: 2px;
+	border: 0;
+}
+.ribbon-group[data-collapsed]::after {
+	display: none;
+}
+/* The Language group's tall stack of fields reads as one column inside its dropdown. */
+.ribbon-overflow-panel .ribbon-group.multilingual-controls {
+	width: 300px !important;
+	height: auto;
+	max-height: min(70vh, 420px);
+	flex-direction: column;
+	flex-wrap: nowrap;
+	align-items: stretch;
+	padding-bottom: 20px;
+	overflow-y: auto;
+}
+.gallery-thumb .thumb-edge-on {
+	stroke: var(--ink);
+	stroke-width: 1.6;
+}
+.gallery-thumb .thumb-edge-off {
+	stroke: var(--muted);
+	stroke-width: 1;
+	stroke-dasharray: 1.5 1.5;
+}
+.gallery-thumb .thumb-line-dark {
+	stroke: var(--ink);
+}
+.gallery-thumb .thumb-arrow {
+	fill: none;
+	stroke: var(--blue);
+	stroke-width: 1.2;
+}
+.ribbon-gallery-menu .gallery-command {
+	margin-top: 4px;
+	padding-top: 8px;
+	border-top: 1px solid var(--line);
+	border-radius: 0;
+}

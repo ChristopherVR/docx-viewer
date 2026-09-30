@@ -1,0 +1,70 @@
+/* Styles gallery: a scrolling strip of tiles with a preview of each style. */
+.ribbon-gallery {
+	display: flex;
+	gap: 3px;
+	width: 216px;
+	height: 66px;
+	padding: 2px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scroll-snap-type: x proximity;
+	scrollbar-width: none;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+	background: var(--surface);
+}
+.ribbon-group .ribbon-gallery .style-tile {
+	flex: 0 0 78px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
+	height: 58px;
+	min-width: 0;
+	padding: 3px 2px;
+	border: 1px solid transparent;
+	scroll-snap-align: start;
+}
+.style-sample {
+	max-width: 100%;
+	overflow: hidden;
+	line-height: 1.1;
+	white-space: nowrap;
+}
+.style-name {
+	max-width: 100%;
+	overflow: hidden;
+	color: var(--muted);
+	font-size: 10px;
+	text-overflow: ellipsis;
+}
+.ribbon-group .ribbon-gallery .style-tile[aria-pressed='true'] {
+	border-color: var(--blue);
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Styles'] {
+	width: 270px;
+	max-width: none;
+	flex-wrap: nowrap;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Styles'] .ribbon-stack {
+	gap: 2px;
+}
+
+.ribbon-group[data-label='Section breaks'] {
+	width: 210px;
+}
+.ribbon-group[data-label='Page numbers'] {
+	width: 400px;
+}
+
+/* Language: labelled controls flow in short columns instead of one tall stack. */
+.ribbon-group[data-label='Language'] {
+	flex: 0 0 auto;
+	flex-direction: column;
+	flex-wrap: wrap;
+	align-content: flex-start;
+	max-height: 86px;
+	max-width: none;
+	column-gap: 12px;
+	overflow: hidden;
+}

@@ -1,6 +1,7 @@
 import { emit } from './events';
 import type { RibbonAction } from './ribbon-action';
 import { ribbonIcon, type RibbonIcon } from './ribbon-icons';
+import { openColorGridPopover } from './ribbon-color-grid';
 import { openSwatchPopover } from './ribbon-popover';
 import { swatchColor } from './ribbon-colors';
 
@@ -189,6 +190,7 @@ export const colorSplit = (
 	choices: Array<[string, string]>,
 	action: (value: string) => RibbonAction,
 	initial: string,
+	grid?: { noneLabel?: string },
 ) => {
 	const wrap = document.createElement('div');
 	wrap.className = 'ribbon-split';
@@ -216,7 +218,9 @@ export const colorSplit = (
 	caret.title = `${label} options`;
 	caret.append(ribbonIcon('caret', 12));
 	caret.addEventListener('mousedown', (event) => event.preventDefault());
-	caret.addEventListener('click', () => openSwatchPopover(caret, choices, apply));
+	caret.addEventListener('click', () =>
+		grid ? openColorGridPopover(caret, apply, grid) : openSwatchPopover(caret, choices, apply),
+	);
 	wrap.append(main, caret);
 	return wrap;
 };

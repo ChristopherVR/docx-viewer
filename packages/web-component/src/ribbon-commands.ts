@@ -138,4 +138,10 @@ export function applyPageStyles(paper: HTMLElement, model: DocumentModel, zoom: 
 	paper.style.padding = `${page.marginTop}px ${page.marginRight}px ${page.marginBottom}px ${page.marginLeft}px`;
 	paper.style.transform = 'none';
 	paper.style.setProperty('--dve-zoom', String(zoom));
+	// Print Layout's pages sit beside the paper in the canvas, so they read the zoom from there.
+	paper.parentElement?.style.setProperty('--dve-zoom', String(zoom));
+	if (model.pageColor) paper.style.setProperty('--dve-page-color', `#${model.pageColor}`);
+	else paper.style.removeProperty('--dve-page-color');
+	// The browser hyphenates by the text's language; Print Layout's line breaker does not hyphenate.
+	paper.style.hyphens = model.autoHyphenation ? 'auto' : '';
 }

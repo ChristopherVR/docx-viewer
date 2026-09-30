@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openSample, fileInput, saveButton, fileNameLabel, setReadOnly } from './helpers';
+import { openSample, reveal, fileInput, saveButton, fileNameLabel, setReadOnly } from './helpers';
 import JSZip from 'jszip';
 import { readFile } from 'node:fs/promises';
 
@@ -52,6 +52,10 @@ for (const framework of frameworks) {
 		);
 		await expect(editor.getByRole('tab', { name: 'Accueil', exact: true })).toBeVisible();
 		await expect(editor.getByLabel('Style', { exact: true })).toHaveValue('Derived');
+		await reveal(
+			editor,
+			editor.getByRole('button', { name: 'Rechercher et remplacer', exact: true }),
+		);
 		await expect(
 			editor.getByRole('button', { name: 'Rechercher et remplacer', exact: true }),
 		).toBeVisible();

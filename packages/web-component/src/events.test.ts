@@ -52,6 +52,7 @@ describe('typed event contract', () => {
 			'document-warning': true,
 			'readonly-change': true,
 			'ribbon-action': true,
+			'ribbon-customize': true,
 			'file-command': true,
 			'page-change': true,
 			'dirty-change': true,

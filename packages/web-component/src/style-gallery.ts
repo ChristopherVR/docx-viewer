@@ -52,6 +52,10 @@ function previewStyle(
 }
 
 /** A tile previewing `style` on paper; `choose` receives the style id when it is clicked. */
+/** Word shows built-in style names capitalised ("Heading 1") although the file stores "heading 1". */
+export const displayStyleName = (name: string): string =>
+	name ? name.charAt(0).toUpperCase() + name.slice(1) : name;
+
 export function createStyleTile(
 	style: GalleryStyle,
 	model: DocumentModel,
@@ -63,8 +67,9 @@ export function createStyleTile(
 	tile.className = 'style-tile';
 	tile.dataset.styleId = style.id;
 	tile.dataset.styleKind = kind;
-	tile.setAttribute('aria-label', style.name);
-	tile.title = style.name;
+	const displayName = displayStyleName(style.name);
+	tile.setAttribute('aria-label', displayName);
+	tile.title = displayName;
 	tile.addEventListener('mousedown', (event) => event.preventDefault());
 	tile.addEventListener('click', () => choose(style.id));
 	const sample = document.createElement('span');
@@ -73,7 +78,7 @@ export function createStyleTile(
 	previewStyle(sample, style.id, model, kind);
 	const name = document.createElement('span');
 	name.className = 'style-name';
-	name.textContent = style.name;
+	name.textContent = displayName;
 	tile.append(sample, name);
 	return tile;
 }

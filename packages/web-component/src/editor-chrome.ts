@@ -35,6 +35,8 @@ export interface ChromeHost {
 	/** Editor options shown on File > Options. */
 	options(): { locale: string; theme: string; author: string };
 	setOption(key: 'locale' | 'theme' | 'author', value: string): void;
+	hiddenActions(): readonly string[];
+	setHiddenActions(ids: string[]): void;
 }
 
 export const DEFAULT_FILE_NAME = 'Document1.docx';
@@ -68,6 +70,9 @@ export class EditorChrome {
 			}),
 			options: () => host.options(),
 			setOption: (key, value) => host.setOption(key, value),
+			ribbon: () => host.ribbon(),
+			hiddenActions: () => host.hiddenActions(),
+			setHiddenActions: (ids) => host.setHiddenActions(ids),
 		});
 		this.statusBar = createStatusBar({
 			setViewMode: (mode) => host.setViewMode(mode),

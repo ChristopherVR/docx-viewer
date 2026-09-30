@@ -7,6 +7,7 @@ import {
 	renderNew,
 	renderOpen,
 	renderOptions,
+	renderCustomize,
 	renderPrint,
 	renderSaveAs,
 	type BackstageHandlers,
@@ -14,7 +15,15 @@ import {
 } from './backstage-pages';
 
 export type { BackstageHandlers } from './backstage-pages';
-export type BackstagePage = 'info' | 'new' | 'open' | 'saveAs' | 'print' | 'export' | 'options';
+export type BackstagePage =
+	| 'info'
+	| 'new'
+	| 'open'
+	| 'saveAs'
+	| 'print'
+	| 'export'
+	| 'options'
+	| 'customize';
 
 export interface Backstage {
 	element: HTMLElement;
@@ -41,6 +50,7 @@ const PAGES: Array<[BackstagePage, ChromeIcon, string]> = [
 	['print', 'print', 'Print'],
 	['export', 'file', 'Export'],
 	['options', 'settings', 'Options'],
+	['customize', 'settings', 'Customize Ribbon'],
 ];
 const RENDERERS: Record<BackstagePage, (context: PageContext) => void> = {
 	info: renderInfo,
@@ -50,6 +60,7 @@ const RENDERERS: Record<BackstagePage, (context: PageContext) => void> = {
 	print: renderPrint,
 	export: renderExport,
 	options: renderOptions,
+	customize: renderCustomize,
 };
 
 /**

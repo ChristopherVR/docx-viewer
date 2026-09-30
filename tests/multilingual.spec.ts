@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
 	openSample,
+	reveal,
 	newDocument,
 	fileInput,
 	saveButton,
@@ -25,6 +26,7 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 		await page.keyboard.press('Control+a');
 		await editor.getByRole('tab', { name: 'Review', exact: true }).click();
 		// Multilingual controls are shared by every framework adapter.
+		await reveal(editor, editor.getByLabel('Paragraph direction', { exact: true }));
 		await editor.getByLabel('Paragraph direction', { exact: true }).selectOption('rtl');
 		await editor.getByLabel('Text language', { exact: true }).selectOption('ar-SA');
 		await editor.getByLabel('Run direction', { exact: true }).selectOption('on');

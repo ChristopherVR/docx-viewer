@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /** Browser-contract helpers for the demo host and the editor's built-in Word chrome. */
 const editor = (page: Page) => page.locator('docx-editor');
@@ -70,4 +70,18 @@ export async function insertTableOfSize(page: Page, rows = 2, columns = 2) {
 	await editor
 		.locator(`.table-picker [role="gridcell"][data-rows="${rows}"][data-columns="${columns}"]`)
 		.click();
+}
+
+/**
+ * A narrow ribbon folds groups into dropdown buttons, as Word does. Opens whichever of them holds
+ * `target` (a no-op when it is already on the ribbon) so the test can use the control.
+ */
+export async function reveal(editor: Locator, target: Locator) {
+	if (await target.first().isVisible()) return;
+	const buttons = editor.locator('.ribbon-panel:not([hidden]) .ribbon-overflow-button');
+	for (let index = 0; index < (await buttons.count()); index++) {
+		await buttons.nth(index).click();
+		if (await target.first().isVisible()) return;
+		await editor.page().keyboard.press('Escape');
+	}
 }

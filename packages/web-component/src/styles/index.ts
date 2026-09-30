@@ -4,6 +4,12 @@ import type { EditorTheme } from '../theme/types';
 import aliases from './aliases.css?inline';
 import base from './base.css?inline';
 import ribbon from './ribbon.css?inline';
+import ribbonButtons from './ribbon-buttons.css?inline';
+import ribbonGallery from './ribbon-gallery.css?inline';
+import ribbonWidgets from './ribbon-widgets.css?inline';
+import ribbonStylesGroup from './ribbon-styles-group.css?inline';
+import ribbonPopups from './ribbon-popups.css?inline';
+import ribbonPolish from './ribbon-polish.css?inline';
 import documentCss from './document.css?inline';
 import print from './print.css?inline';
 import titlebar from './chrome-titlebar.css?inline';
@@ -32,6 +38,12 @@ export const editorStyleText = [
 	aliases,
 	base,
 	ribbon,
+	ribbonButtons,
+	ribbonGallery,
+	ribbonWidgets,
+	ribbonStylesGroup,
+	ribbonPopups,
+	ribbonPolish,
 	documentCss,
 	print,
 	titlebar,

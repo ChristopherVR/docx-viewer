@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { newDocument, openSample, setReadOnly } from './helpers';
+import { newDocument, openSample, reveal, setReadOnly } from './helpers';
 
 const editor = (page: Page) => page.locator('docx-editor');
 const surface = (page: Page) => editor(page).locator('.ProseMirror');
@@ -112,7 +112,11 @@ test('Ctrl+/ and F1 open a localized shortcut help dialog that Escape closes', a
 test('Escape closes the comments panel and returns focus to the document', async ({ page }) => {
 	await startTyping(page);
 	await editor(page).getByRole('tab', { name: 'Review', exact: true }).click();
-	await editor(page).getByRole('button', { name: 'Comments', exact: true }).first().click();
+	const comments = editor(page)
+		.locator('button[aria-label="Comments"]:not(.ribbon-overflow-button)')
+		.first();
+	await reveal(editor(page), comments);
+	await comments.click();
 	const panel = editor(page).getByRole('complementary', { name: 'Comments' });
 	await expect(panel).toBeVisible();
 	await editor(page).getByLabel('New comment', { exact: true }).focus();

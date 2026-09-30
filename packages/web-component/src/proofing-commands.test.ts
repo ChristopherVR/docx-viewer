@@ -36,6 +36,12 @@ describe('fitZoomPercent', () => {
 		expect(fitZoomPercent('width', { width: 10, height: 10 }, page)).toBe(10);
 		expect(fitZoomPercent('width', { width: 99999, height: 10 }, page)).toBe(500);
 	});
+	it('fits two pages side by side, with the gap between them', () => {
+		// (816 * 2 + 24) = 1656 px of pages across a 3312 px viewport is 200%.
+		expect(fitZoomPercent('pages', { width: 3312, height: 5000 }, page)).toBe(200);
+		// A short viewport is limited by the page height instead.
+		expect(fitZoomPercent('pages', { width: 3312, height: 528 }, page)).toBe(50);
+	});
 });
 
 describe('insert text commands', () => {

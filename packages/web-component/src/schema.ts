@@ -62,6 +62,10 @@ export const schema = new Schema({
 				marginLeft: { default: 96 },
 				/** Footnote/endnote number formats (`w:numFmt`), for reference labels. */
 				evenAndOddHeaders: { default: false },
+				/** Page colour (`w:background`) as hex without `#`. */
+				pageColor: { default: null },
+				/** `w:autoHyphenation` from settings.xml. */
+				autoHyphenation: { default: false },
 				footnoteNumFmt: { default: null },
 				endnoteNumFmt: { default: null },
 				/** Section layout (no header/footer content) as JSON, so page setup is undoable. */

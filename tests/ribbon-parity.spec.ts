@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
-import { insertTableOfSize, newDocument, saveButton } from './helpers';
+import { insertTableOfSize, newDocument, reveal, saveButton } from './helpers';
 
 test.describe('Word-style ribbon', () => {
 	test.beforeEach(async ({ page }) => {
@@ -105,6 +105,7 @@ test.describe('Word-style ribbon', () => {
 
 		await editor.locator('#dve-tab-layout').click();
 		const left = editor.getByLabel('Indent left', { exact: true });
+		await reveal(editor, left);
 		await left.fill('0.5');
 		await left.dispatchEvent('change');
 		await expect(surface.locator('p').first()).toHaveCSS('margin-left', '48px');
@@ -237,15 +238,15 @@ test.describe('Word-style ribbon', () => {
 		await surface.click();
 		await page.keyboard.type('Boxed and shaded');
 		await editor.getByRole('button', { name: 'Shading options' }).click();
-		await editor.getByRole('menuitem', { name: 'Cyan', exact: true }).click();
+		await editor.getByRole('menuitem', { name: 'Light Blue', exact: true }).click();
 		await editor.getByRole('combobox', { name: 'Borders' }).selectOption('all');
-		await expect(surface.locator('p').first()).toHaveCSS('background-color', 'rgb(0, 255, 255)');
+		await expect(surface.locator('p').first()).toHaveCSS('background-color', 'rgb(0, 176, 240)');
 		await expect(surface.locator('p').first()).toHaveCSS('border-bottom-style', 'solid');
 		const pending = page.waitForEvent('download');
 		await saveButton(page).click();
 		const zip = await JSZip.loadAsync(await readFile((await (await pending).path())!));
 		const xml = await zip.file('word/document.xml')!.async('string');
-		expect(xml).toContain('w:fill="00FFFF"');
+		expect(xml).toContain('w:fill="00B0F0"');
 		for (const side of ['top', 'left', 'bottom', 'right'])
 			expect(xml).toContain(`<w:${side} w:val="single"`);
 	});
@@ -353,6 +354,7 @@ test.describe('Word-style ribbon', () => {
 		const before = await left.evaluate((el) => parseFloat((el as HTMLElement).style.left));
 		await editor.locator('#dve-tab-layout').click();
 		const spinner = editor.getByLabel('Indent left', { exact: true });
+		await reveal(editor, spinner);
 		await spinner.fill('1');
 		await spinner.dispatchEvent('change');
 		await expect

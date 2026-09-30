@@ -24,7 +24,8 @@ const PAGE_NUMBER_OPTIONS: Array<[string, string]> = [
 	['bottom:center', 'Bottom center'],
 	['bottom:right', 'Bottom right'],
 ];
-import { group, launcher, menuSelect, select, stack, tool } from './ribbon-parts';
+import { menuGallery } from './ribbon-gallery-menu';
+import { colorSplit, group, launcher, menuSelect, select, stack, tool } from './ribbon-parts';
 
 /** The Insert, Layout, References, Review and View tabs. */
 export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
@@ -202,8 +203,9 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 	panels.get('Layout')!.append(
 		group(
 			'Page setup',
-			menuSelect(
+			menuGallery(
 				'Margins',
+				'margins',
 				'margins',
 				[
 					['normal', 'Normal'],
@@ -213,13 +215,14 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				],
 				(value) => ({ type: 'page', key: 'margin', value }),
 			),
-			menuSelect('Page size', 'pageSize', PAGE_SIZE_OPTIONS, (value) => ({
+			menuGallery('Page size', 'pageSize', 'size', PAGE_SIZE_OPTIONS, (value) => ({
 				type: 'page',
 				key: 'size',
 				value,
 			})),
-			menuSelect(
+			menuGallery(
 				'Orientation',
+				'orientation',
 				'orientation',
 				[
 					['portrait', 'Portrait'],
@@ -227,8 +230,9 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				],
 				(value) => ({ type: 'page', key: 'orientation', value }),
 			),
-			menuSelect(
+			menuGallery(
 				'Vertical alignment',
+				'verticalAlign',
 				'verticalAlign',
 				[
 					['top', 'Top'],
@@ -239,7 +243,17 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				(value) => ({ type: 'page', key: 'verticalAlign', value }),
 			),
 			menuSelect(
+				'Hyphenation',
+				'hyphenation',
+				[
+					['none', 'None'],
+					['auto', 'Automatic'],
+				],
+				(value) => ({ type: 'hyphenation', value }),
+			),
+			menuGallery(
 				'Columns',
+				'columns',
 				'columns',
 				[
 					['1', 'One column'],
@@ -314,6 +328,17 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				{ inline: true, caption: 'Odd page' },
 			),
 		),
+		group(
+			'Page background',
+			colorSplit(
+				'Page color',
+				'pageColor',
+				[],
+				(value) => ({ type: 'pageColor', value }),
+				'#e2efd9',
+				{ noneLabel: 'No Color' },
+			),
+		),
 		...buildParagraphSpacing(),
 	);
 	panels.get('View')!.append(
@@ -336,6 +361,12 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 		),
 		group(
 			'Zoom',
+			tool(
+				'Zoom dialog',
+				'zoom',
+				{ type: 'formatDialog', kind: 'zoom' },
+				{ large: true, caption: 'Zoom' },
+			),
 			menuSelect(
 				'Zoom',
 				'zoom',
@@ -356,6 +387,7 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				{ large: true, caption: '100%' },
 			),
 			tool('One page', 'onePage', { type: 'zoomFit', mode: 'page' }, { large: true }),
+			tool('Multiple pages', 'twoPages', { type: 'zoomFit', mode: 'pages' }, { large: true }),
 			tool('Page width', 'pageWidth', { type: 'zoomFit', mode: 'width' }, { large: true }),
 		),
 		group(

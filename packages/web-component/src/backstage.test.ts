@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { createDocument } from '@christophervr/docx-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createRibbon } from './ribbon';
 import { createBackstage, type BackstageHandlers } from './backstage';
 import { documentStats } from './document-stats';
 import { localizeElement } from './localization';
@@ -24,6 +25,9 @@ function setup(overrides: Partial<BackstageHandlers> = {}) {
 		}),
 		options: () => ({ locale: 'en', theme: 'auto', author: 'Ann' }),
 		setOption: (key, value) => options.push([key, value]),
+		ribbon: () => undefined,
+		hiddenActions: () => [],
+		setHiddenActions: () => {},
 		...overrides,
 	};
 	const backstage = createBackstage(handlers);
@@ -50,6 +54,7 @@ describe('File backstage', () => {
 			'Print',
 			'Export',
 			'Options',
+			'Customize Ribbon',
 		]);
 		expect(backstage.element.querySelectorAll('[role="separator"]')).toHaveLength(2);
 	});
@@ -145,5 +150,44 @@ describe('File backstage', () => {
 		expect(backstage.element.querySelector('.dve-backstage-nav')!.textContent).toContain(
 			'Exporter',
 		);
+	});
+});
+
+describe('Customize Ribbon', () => {
+	it('lists every command with a checkbox and reports the unchecked ones as hidden', () => {
+		const ribbon = createRibbon();
+		document.body.append(ribbon);
+		const hidden: string[][] = [];
+		const { backstage } = setup({
+			ribbon: () => ribbon,
+			hiddenActions: () => ['italic'],
+			setHiddenActions: (ids) => hidden.push(ids),
+		});
+		backstage.open('customize');
+		const boxes = [
+			...backstage.element.querySelectorAll<HTMLInputElement>('.dve-customize-row input'),
+		];
+		const named = (label: string) => boxes.find((b) => b.parentElement!.textContent === label)!;
+		expect(boxes.length).toBeGreaterThan(40);
+		expect(named('Bold').checked).toBe(true);
+		expect(named('Italic').checked).toBe(false);
+		named('Bold').click();
+		expect(hidden.at(-1)).toEqual(expect.arrayContaining(['bold', 'italic']));
+		click(backstage.element, 'Reset all customizations');
+		expect(hidden.at(-1)).toEqual([]);
+	});
+
+	it('shows the Customize Ribbon page in the display language', () => {
+		const ribbon = createRibbon();
+		document.body.append(ribbon);
+		const { backstage } = setup({
+			ribbon: () => ribbon,
+		});
+		backstage.element.dataset.editorLocale = 'fr';
+		backstage.open('customize');
+		const text = backstage.element.querySelector('.dve-backstage-content')!.textContent!;
+		expect(text).toContain('Personnaliser le ruban');
+		expect(text).toContain('Réinitialiser toutes les personnalisations');
+		expect(text).toContain('Choisissez les commandes affichées dans le ruban.');
 	});
 });

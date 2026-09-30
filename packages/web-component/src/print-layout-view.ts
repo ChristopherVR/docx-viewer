@@ -68,6 +68,8 @@ export function createPrintLayoutController(
 		lastModel = model;
 		result = layoutDocumentModel(model, measurer);
 		handle = renderPrintLayout(result, pictureUrl);
+		if (model.pageColor)
+			handle.element.style.setProperty('--dve-page-color', `#${model.pageColor}`);
 		decoratePages(
 			model,
 			result.pages,

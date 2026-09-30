@@ -17,6 +17,8 @@ export interface DocxEditorEventMap {
 	'readonly-change': CustomEvent<boolean>;
 	/** A ribbon control was activated. Bubbles from inside the shadow tree. */
 	'ribbon-action': CustomEvent<RibbonAction>;
+	/** The user changed which ribbon commands are shown (File > Customize Ribbon); persist the ids if you want them kept. */
+	'ribbon-customize': CustomEvent<readonly string[]>;
 	/** Cancelable: call `preventDefault()` to handle a File command (open/save/…) yourself. */
 	'file-command': CustomEvent<FileCommandDetail>;
 	/** Print Layout's current page or page count changed (approximate pagination, not Word's). */
@@ -41,6 +43,7 @@ export const DOCX_EDITOR_EVENTS = [
 	'document-warning',
 	'readonly-change',
 	'ribbon-action',
+	'ribbon-customize',
 	'file-command',
 	'page-change',
 	'dirty-change',

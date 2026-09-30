@@ -279,6 +279,7 @@ describe('dialog launchers', () => {
 			true,
 			true,
 			true,
+			true,
 		]);
 		dialogs.closeAll();
 		expect(dialogs.elements.every((element) => element.hidden)).toBe(true);

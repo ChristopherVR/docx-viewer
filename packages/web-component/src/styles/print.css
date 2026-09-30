@@ -12,7 +12,7 @@
 .dve-print-page {
 	position: relative;
 	flex: none;
-	background: #fff;
+	background: var(--dve-page-color, #fff);
 	color: #202124;
 	box-shadow:
 		0 1px 3px #20212430,
@@ -87,6 +87,8 @@
 		zoom: 1 !important;
 	}
 	.dve-print-page {
+		/* Like Word, page colours are not printed unless asked for. */
+		background: #fff !important;
 		box-shadow: none !important;
 		break-after: page;
 	}
@@ -185,4 +187,12 @@ a.dve-link[data-anchor^='_Toc'] {
 	position: absolute;
 	top: 0;
 	box-sizing: border-box;
+}
+
+/* View > Multiple Pages: Print Layout's sheets sit side by side and wrap, instead of one column. */
+.dve-canvas[data-multipage] .dve-print-pages {
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: center;
 }

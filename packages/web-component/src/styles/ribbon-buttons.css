@@ -1,0 +1,195 @@
+/* Word-style icon commands: small icon buttons, large stacked buttons and split colour buttons. */
+.ribbon-group button.ribbon-small {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	min-width: 28px;
+	height: 28px;
+	padding: 0;
+}
+.ribbon-group button.ribbon-large {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 3px;
+	width: 62px;
+	height: 66px;
+	padding: 4px 2px;
+	font-size: 11px;
+	line-height: 1.15;
+	white-space: normal;
+	text-align: center;
+}
+.ribbon-large > span {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.ribbon-stack {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.ribbon-split {
+	display: inline-flex;
+	align-items: center;
+}
+.ribbon-group .ribbon-split button.ribbon-color {
+	position: relative;
+	width: 28px;
+	min-width: 28px;
+	border-radius: 4px 0 0 4px;
+}
+.ribbon-color::after {
+	position: absolute;
+	right: 6px;
+	bottom: 3px;
+	left: 6px;
+	height: 3px;
+	background: var(--bar, transparent);
+	outline: 1px solid var(--line);
+	content: '';
+}
+.ribbon-group .ribbon-split .ribbon-caret {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 14px;
+	min-width: 14px;
+	height: 28px;
+	padding: 0;
+	border-radius: 0 4px 4px 0;
+}
+.ribbon-popover {
+	position: fixed;
+	z-index: 1000;
+	display: grid;
+	grid-template-columns: repeat(6, 22px);
+	gap: 4px;
+	padding: 8px;
+	border: 1px solid var(--line);
+	border-radius: 6px;
+	background: var(--surface);
+	box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
+}
+.ribbon-popover .swatch {
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: 1px solid var(--line);
+	border-radius: 3px;
+	background: var(--swatch);
+	cursor: pointer;
+}
+.ribbon-popover .swatch:hover,
+.ribbon-popover .swatch:focus-visible {
+	outline: 2px solid var(--blue);
+	outline-offset: 1px;
+}
+.ribbon-popover .swatch-none {
+	background: linear-gradient(135deg, transparent 46%, #c00000 46% 54%, transparent 54%);
+}
+.ribbon-group button.ribbon-inline {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	padding: 0 8px 0 6px;
+	font-size: 12px;
+}
+.ribbon-group button.ribbon-large {
+	min-height: 66px;
+	overflow: hidden;
+}
+.ribbon-group:has(.ribbon-large) {
+	max-width: none;
+	flex-wrap: wrap;
+}
+/* A row of stacked dropdown commands (Layout > Page Setup) stays on one line at the panel height. */
+.ribbon-group:has(> .ribbon-menu:not(.ribbon-menu-compact)) {
+	max-width: none;
+	flex-wrap: nowrap;
+}
+.ribbon-group button.ribbon-inline {
+	font-weight: 400;
+}
+.ribbon-group button.ribbon-large {
+	width: 70px;
+}
+.ribbon-panel[data-panel='Table'] .ribbon-group button.ribbon-large {
+	width: 80px;
+}
+
+/* Word-style dropdown command: the native select is transparent and covers the whole control. */
+.ribbon-menu {
+	box-sizing: border-box;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 3px;
+	width: 70px;
+	height: 66px;
+	padding: 4px 2px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	color: var(--ink);
+	font-size: 11px;
+	line-height: 1.15;
+	text-align: center;
+}
+.ribbon-menu:hover {
+	border-color: var(--line);
+	background: var(--accent-soft);
+}
+.ribbon-menu:focus-within {
+	outline: 2px solid var(--blue);
+	outline-offset: -1px;
+}
+.ribbon-menu > span {
+	max-width: 100%;
+}
+.ribbon-menu > .ribbon-icon:last-of-type {
+	margin-top: -2px;
+}
+.ribbon-menu-compact {
+	flex-direction: row;
+	width: 44px;
+	height: 28px;
+	padding: 0 4px;
+	justify-content: center;
+	gap: 2px;
+}
+.ribbon-menu-compact > .ribbon-icon:last-of-type {
+	margin-top: 0;
+}
+.ribbon-group .ribbon-menu select.ribbon-menu-input {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	max-width: none;
+	height: 100%;
+	opacity: 0;
+	cursor: pointer;
+	border: 0;
+}
+.ribbon-menu[data-dve-hidden] {
+	display: none;
+}
+.ribbon-stack .ribbon-small,
+.ribbon-stack .ribbon-inline {
+	height: 22px;
+}
+.ribbon-stack .ribbon-inline {
+	justify-content: flex-start;
+}
+.ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Editing'] {
+	width: auto;
+	min-width: 110px;
+}
+.dve-painting,
+.dve-painting * {
+	cursor: copy;
+}

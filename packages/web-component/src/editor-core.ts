@@ -87,6 +87,11 @@ export class EditorCore {
 		this.formatDialogs = new FormatDialogs({
 			view: () => this.targetView(),
 			model: () => this.model,
+			zoom: {
+				percent: () => Math.round(this.pages.zoom * 100),
+				setPercent: (percent) => this.pages.setZoom(percent),
+				fit: (mode) => this.pages.zoomTo(mode),
+			},
 			pageSetup: {
 				section: () => this.pages.currentSection(),
 				canEdit: () => !this.readOnly && !this.collab.client,

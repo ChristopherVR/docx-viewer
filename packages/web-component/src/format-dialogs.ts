@@ -9,6 +9,7 @@ import { blockPageNumbers } from './toc-commands';
 import { focusView } from './focus-view';
 import { createPageSetupDialog, type PageSetupHost } from './page-setup-dialog';
 import { createParagraphDialog } from './paragraph-dialog';
+import { createZoomDialog, type ZoomHost } from './zoom-dialog';
 
 export type FormatDialogKind =
 	| 'font'
@@ -16,13 +17,16 @@ export type FormatDialogKind =
 	| 'bookmark'
 	| 'pageSetup'
 	| 'caption'
-	| 'crossReference';
+	| 'crossReference'
+	| 'zoom';
 
 export interface FormatDialogsHost {
 	view(): EditorView | undefined;
 	model(): DocumentModel;
 	/** Page Setup edits the section holding the selection. */
 	pageSetup?: Omit<PageSetupHost, 'restoreFocus'>;
+	/** View > Zoom: the current zoom and how to change it. */
+	zoom?: Omit<ZoomHost, 'restoreFocus'>;
 }
 
 /** The Font and Paragraph dialogs opened from the ribbon's group launchers. */
@@ -46,6 +50,10 @@ export class FormatDialogs {
 				() => host.model(),
 				(id) => blockPageNumbers(host.model()).get(id),
 			),
+			zoom: createZoomDialog({
+				...(host.zoom ?? { percent: () => 100, setPercent: () => {}, fit: () => {} }),
+				restoreFocus: () => focusView(host.view()),
+			}),
 			pageSetup: createPageSetupDialog({
 				...(host.pageSetup ?? { section: () => undefined, canEdit: () => false, apply: () => {} }),
 				restoreFocus: () => focusView(host.view()),

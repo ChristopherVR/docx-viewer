@@ -1,4 +1,5 @@
 import { lineSpacingOptions } from './line-spacing';
+import { menuGallery } from './ribbon-gallery-menu';
 import {
 	comboBox,
 	FONT_FAMILIES,
@@ -80,9 +81,9 @@ export function buildHomePanel(panels: Map<string, HTMLElement>): void {
 			'Clipboard',
 			tool('Paste', 'paste', { type: 'clipboard', key: 'paste' }, { large: true }),
 			stack(
-				tool('Cut', 'cut', { type: 'clipboard', key: 'cut' }),
-				tool('Copy', 'copy', { type: 'clipboard', key: 'copy' }),
-				tool('Format painter', 'formatPainter', { type: 'formatPainter' }),
+				tool('Cut', 'cut', { type: 'clipboard', key: 'cut' }, { inline: true }),
+				tool('Copy', 'copy', { type: 'clipboard', key: 'copy' }, { inline: true }),
+				tool('Format painter', 'formatPainter', { type: 'formatPainter' }, { inline: true }),
 			),
 		),
 		group(
@@ -142,6 +143,7 @@ export function buildHomePanel(panels: Map<string, HTMLElement>): void {
 					FONT_COLORS,
 					(value) => ({ type: 'font', key: 'color', value }),
 					'#c00000',
+					{},
 				),
 			),
 		),
@@ -218,12 +220,21 @@ export function buildHomePanel(panels: Map<string, HTMLElement>): void {
 				tool('Align center', 'alignCenter', { type: 'align', value: 'center' }),
 				tool('Align right', 'alignRight', { type: 'align', value: 'right' }),
 				tool('Justify', 'justify', { type: 'align', value: 'justify' }),
-				menuSelect(
+				menuGallery(
 					'Line spacing',
+					'lineSpacing',
 					'lineSpacing',
 					lineSpacingOptions,
 					(value) => ({ type: 'paragraph', key: 'lineSpacing', value }),
-					{ compact: true },
+					{
+						compact: true,
+						commands: [
+							{
+								label: 'Line Spacing Options…',
+								action: { type: 'formatDialog', kind: 'paragraph' },
+							},
+						],
+					},
 				),
 				colorSplit(
 					'Shading',
@@ -231,9 +242,11 @@ export function buildHomePanel(panels: Map<string, HTMLElement>): void {
 					SHADINGS,
 					(value) => ({ type: 'shading', value }),
 					'#ffff00',
+					{ noneLabel: 'No Color' },
 				),
-				menuSelect(
+				menuGallery(
 					'Borders',
+					'borders',
 					'borders',
 					BORDER_PRESETS,
 					(value) => ({ type: 'borders', preset: value as 'none' }),

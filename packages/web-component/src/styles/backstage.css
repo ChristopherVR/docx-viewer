@@ -213,3 +213,27 @@
 		border-left: 0;
 	}
 }
+
+/* Customize Ribbon: one block per tab, one fieldset per group, a checkbox per command. */
+.dve-customize-tab h3 {
+	margin: 18px 0 6px;
+}
+.dve-customize-group {
+	margin: 0 0 8px;
+	padding: 6px 10px 8px;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+}
+.dve-customize-group legend {
+	padding: 0 4px;
+	color: var(--muted);
+	font-size: 12px;
+}
+.dve-customize-row {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 180px;
+	padding: 2px 8px 2px 0;
+	font-size: 13px;
+}

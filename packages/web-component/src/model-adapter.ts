@@ -100,6 +100,8 @@ export function modelToDoc(model: DocumentModel) {
 			marginLeft: model.page.marginLeft,
 			sections: model.sections ? sectionLayoutJson(model.sections) : null,
 			evenAndOddHeaders: Boolean(model.evenAndOddHeaders),
+			pageColor: model.pageColor ?? null,
+			autoHyphenation: Boolean(model.autoHyphenation),
 			footnoteNumFmt: model.footnoteNumFmt ?? null,
 			endnoteNumFmt: model.endnoteNumFmt ?? null,
 		},
@@ -249,11 +251,19 @@ export function docToModel(
 		}
 	});
 	// The editor document is the source of truth for section layout (so undo covers page setup).
-	const { sections: priorSections, evenAndOddHeaders: _evenOdd, ...rest } = prior;
+	const {
+		sections: priorSections,
+		evenAndOddHeaders: _evenOdd,
+		pageColor: _pageColor,
+		autoHyphenation: _hyphenation,
+		...rest
+	} = prior;
 	return {
 		...rest,
 		blocks,
 		...(doc.attrs.evenAndOddHeaders ? { evenAndOddHeaders: true } : {}),
+		...(doc.attrs.pageColor ? { pageColor: String(doc.attrs.pageColor) } : {}),
+		...(doc.attrs.autoHyphenation ? { autoHyphenation: true } : {}),
 		...(typeof doc.attrs.sections === 'string'
 			? { sections: sectionsFromLayout(doc.attrs.sections, priorSections, blocks) }
 			: keepHeaderFooterSections(priorSections, blocks, doc)),

@@ -87,6 +87,7 @@ const paths = {
 	dateTime: 'M4 5h16v15H4z M4 10h16 M8 3v4 M16 3v4 M12 13v3l2 1',
 	zoom100: 'M10 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12z M14.5 14.5 20 20 M8.5 8.5l1.5-1v5',
 	pageWidth: 'M3 6v12 M21 6v12 M7 12h10 M9 10l-2 2 2 2 M15 10l2 2-2 2',
+	twoPages: 'M3 5h8v14H3z M13 5h8v14h-8z M5.5 9h3 M15.5 9h3 M5.5 12h3 M15.5 12h3',
 	onePage: 'M7 3h10v18H7z M10 8h4 M10 12h4',
 	launcher: 'M14 4h6v6 M20 4l-7 7 M10 6H5v13h13v-5',
 	pageSize: 'M6 3h9l3 3v15H6z M9 11h6 M9 15h6 M4 9v8 M2.5 10.5 4 9l1.5 1.5',
@@ -111,6 +112,8 @@ const paths = {
 	caption: 'M4 5h16v11H4z M4 19h10 M8 9l2 3 2-3',
 	crossReference: 'M9 15l6-6 M8 8H5a3 3 0 0 0 0 6h3 M16 16h3a3 3 0 0 0 0-6h-3',
 	deleteComment: 'M4 5h16v11H10l-4 4v-4H4z M9 8.5l5 5 M14 8.5l-5 5',
+	pageColor: 'M6 3h9l3 3v15H6z M9 11h6v6H9z',
+	hyphenation: 'M4 6h16 M4 11h9 M16 11h4 M4 16h16 M13 11h3',
 	caret: 'M7 10l5 5 5-5',
 } as const;
 
@@ -120,19 +123,64 @@ export function isRibbonIcon(name: string): name is RibbonIcon {
 	return name in paths;
 }
 
+const NS = 'http://www.w3.org/2000/svg';
+const STROKE = 1.7;
+/** Below this rendered size icons keep the shared 24-unit frame; above it they are fitted to it. */
+const FIT_FROM = 20;
+const frames = new Map<RibbonIcon, { viewBox: string; stroke: number } | null>();
+
+/**
+ * The view box that makes an icon fill its slot the way its neighbours do. Each drawing occupies a
+ * different part of the 24-unit grid, so large icons would otherwise look uneven (a page outline
+ * against a wide table). The box is the drawing's measured extent plus its stroke, squared and
+ * centred; the stroke width is scaled with it so lines stay the same weight on screen. Measuring
+ * needs a browser, so where it is unavailable the plain grid is used.
+ */
+function frameOf(name: RibbonIcon): { viewBox: string; stroke: number } | null {
+	if (frames.has(name)) return frames.get(name) ?? null;
+	let frame: { viewBox: string; stroke: number } | null = null;
+	try {
+		const probe = document.createElementNS(NS, 'svg');
+		probe.setAttribute('viewBox', '0 0 24 24');
+		probe.style.cssText = 'position:absolute;visibility:hidden;width:24px;height:24px';
+		const path = document.createElementNS(NS, 'path');
+		path.setAttribute('d', paths[name]);
+		probe.append(path);
+		document.body.append(probe);
+		const box = path.getBBox();
+		probe.remove();
+		const extent = Math.max(box.width, box.height);
+		if (extent > 0) {
+			const size = Math.min(24, Math.max(18, extent + STROKE * 2 + 1));
+			const x = box.x + box.width / 2 - size / 2;
+			const y = box.y + box.height / 2 - size / 2;
+			frame = {
+				viewBox: `${+x.toFixed(2)} ${+y.toFixed(2)} ${+size.toFixed(2)} ${+size.toFixed(2)}`,
+				stroke: +((STROKE * size) / 24).toFixed(3),
+			};
+		}
+	} catch {
+		// No layout (server rendering, jsdom): keep the shared grid.
+	}
+	frames.set(name, frame);
+	return frame;
+}
+
 /** An `<svg>` for `name`; `size` is its rendered edge in CSS pixels. */
 export function ribbonIcon(name: RibbonIcon, size = 16): SVGSVGElement {
-	const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-	svg.setAttribute('viewBox', '0 0 24 24');
+	const svg = document.createElementNS(NS, 'svg');
+	const frame = size >= FIT_FROM ? frameOf(name) : null;
+	svg.setAttribute('viewBox', frame?.viewBox ?? '0 0 24 24');
 	svg.setAttribute('width', String(size));
 	svg.setAttribute('height', String(size));
 	svg.setAttribute('aria-hidden', 'true');
 	svg.classList.add('ribbon-icon');
-	const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+	svg.dataset.icon = name;
+	const path = document.createElementNS(NS, 'path');
 	path.setAttribute('d', paths[name]);
 	path.setAttribute('fill', 'none');
 	path.setAttribute('stroke', 'currentColor');
-	path.setAttribute('stroke-width', '1.7');
+	path.setAttribute('stroke-width', String(frame?.stroke ?? STROKE));
 	path.setAttribute('stroke-linecap', 'round');
 	path.setAttribute('stroke-linejoin', 'round');
 	svg.append(path);

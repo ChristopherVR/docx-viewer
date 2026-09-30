@@ -104,7 +104,9 @@ What each tab offers that Word also has:
 - **Layout:** a Page Setup dialog (custom margins, gutter, header and footer distances,
   orientation, paper size and custom width and height, validated so text keeps room), Margins (Normal, Narrow, Moderate, Wide), Size (Letter, Legal, Tabloid, Executive,
   A3, A4, A5, B5), Orientation, Vertical alignment, Columns, page-number format and start,
-  different first page, odd and even, section breaks, Indent Left/Right (inches) and paragraph
+  different first page, odd and even, section breaks, Page Color (the colour picker; written as
+  `w:background` with `displayBackgroundShape`, drawn on the editing surface and in Print Layout, not
+  printed, and undoable; theme and gradient page fills are not modeled), Indent Left/Right (inches) and paragraph
   Before/After spacing.
 - **References:** Table of Contents (levels 1-3, 1-2 or 1-5, or Remove), Add Text (heading levels
   1-3), Update Table, Insert Caption (a `SEQ` field; every caption of a label is renumbered when
@@ -120,11 +122,42 @@ What each tab offers that Word also has:
   thumbnails, Zoom, Zoom to 100%, One page, Page width and Print Layout.
 - **Table (contextual):** appears only while the selection is in a table, as in Word.
 - **Ribbon:** collapse (button, double-click a tab, or Ctrl+F1) with click-to-peek, and tab KeyTips
-  after Alt or F10 (H, N, P, S, R, W, T; F opens File).
+  after Alt or F10 (H, N, P, S, R, W, T; F opens File); choosing a tab shows a tip on each of its
+  commands (Alt, H, 1 is Bold), and Escape steps out.
 - **Shortcuts:** Ctrl+L, E, R, J (alignment), Ctrl+Shift+. and , (grow and shrink font), Ctrl+= and
   Ctrl+Shift+= (sub and superscript) and Ctrl+Space (clear formatting), listed in the help dialog.
 
+Ribbon layout: every panel is one fixed height (104 px, as Word's is), group captions are pinned
+to the bottom and rows sit at the top, Clipboard has Paste with labelled Cut, Copy and Format
+Painter beside it, and the Styles gallery shows the built-in names capitalised ("Heading 1").
+Font Color and Shading open Word's colour picker (Theme Colors as ten columns over five variants,
+Standard Colors, and More Colors through the browser's colour dialog; Shading adds No Color) using
+the Office theme palette, not the document's theme. Margins, Size, Orientation, Vertical alignment
+and Columns open galleries of page thumbnails with detail lines (inches for margins and paper); the
+native select stays underneath, so the keyboard and assistive technology still work. Icons carry
+Word's accent hues and a pressed control is darker than a hovered one. Styles live in
+`styles/ribbon*.css`, loaded in order.
+
+View > Zoom opens Word's Zoom dialog (200%, 100%, 75%, page width, whole page or a percentage, with
+a preview); Many pages, Text width and Wrap to window are not offered. Large icons are fitted to a
+common frame (measured from each drawing) so they fill their slot evenly.
+
+Layout > Hyphenation is None or Automatic (`w:autoHyphenation`, undoable): the editing surface asks the
+browser to hyphenate by the text's language, while Print Layout's line breaker does not hyphenate yet,
+so it lays lines out as if it were off. View > Multiple pages fits two Print Layout pages side by side
+(any other zoom returns to one column, and the Zoom dialog offers it as Two pages); zoom now also
+applies to Print Layout, which ignored it before.
+
 Known limits of what is implemented:
+
+- When a tab is wider than the window, its rightmost groups fold into one dropdown button each
+  (the group's live controls appear in a panel under it; a command closes the panel, Escape too),
+  and unfold when the window widens. Folding goes strictly right to left, with no priority order
+  or intermediate sizes as in Word (a group does not first shrink its buttons), and the panel only
+  scrolls when even folded groups do not fit.
+- Home fits at 1280 px only because the Styles gallery shows about three tiles (Word shows more);
+  in French and German the Editing group folds at that width.
+- Icons are one line-icon set with a tinted stroke; Word's are two-tone and drawn per command.
 
 - Inserting a header, footer or page number is not undone by Ctrl+Z. Header and footer content lives
   in the model outside the editor document, like in-place header edits, and the editor's history
@@ -138,21 +171,28 @@ Known limits of what is implemented:
 
 Still not at parity:
 
-- **Home:** Text Effects, Sort, Multilevel List. Colour palettes are short lists, not Word's theme,
-  standard and More Colors grid. Line Spacing offers presets; the Paragraph dialog has the rest.
+- **Home:** Text Effects, Multilevel List. Text Highlight keeps the 17-colour list (Word's is a short
+  list too). Line Spacing offers presets; the Paragraph dialog has the rest.
 - **Insert:** Cover Page galleries (one plain design exists), Shapes, Icons, 3D Models, SmartArt,
   Charts, Screenshot, Text Box, WordArt, Drop Cap, Equation, Signature Line, Object.
-- **Layout and References:** Line Numbers, Hyphenation, Watermark, Page Color, Page Borders, Position
+- **Layout and References:** Line Numbers, Manual Hyphenation and its options, Watermark, Page Borders, Position
   and Wrap Text, Citations, Bibliography, Table of Figures, Index and Table of Authorities, and
   automatic updating of `REF`, `PAGEREF` and `SEQ` results (they are computed when inserted; captions
   renumber immediately, cross-references do not).
 - **Review and View:** Editor pane, Thesaurus, Translate, Accessibility, Compare, Protect, Ink;
-  a draggable Ruler, Navigation Pane headings, Read Mode, Web and Outline views, Multiple Pages, New Window,
+  a draggable Ruler, Navigation Pane headings, Read Mode, Web and Outline views, New Window,
   Split and Macros.
-- **Dropdown galleries:** Margins, Size, Orientation, Columns and the others are text lists, not
-  Word's thumbnail galleries; Zoom is a percentage list, not the Zoom dialog.
-- **Ribbon:** no per-command KeyTips (only tabs), no overflow menus for narrow widths (panels
-  scroll horizontally), no customisation UI, no table-design or layout tools beyond row and column
+- **Dropdown galleries:** Margins, Size, Orientation, Vertical alignment, Columns, Borders and Line
+  spacing are galleries with thumbnails (Line spacing ends with Line Spacing Options, which opens the
+  Paragraph dialog; Borders has no Borders and Shading entry because that dialog does not exist).
+  Page number format, Sort, Change case and similar stay plain text lists, as Word's Change Case
+  does. Zoom is a percentage list next to a Zoom dialog. Margins has no Custom Margins entry (Page Setup
+  has it) and Columns has no Left, Right or More Columns.
+- **Ribbon:** command KeyTips use Word's keys for the commands that share a name with Word's (Bold `1`,
+  Paste `V`, Font Color `FC` and so on) and two letters from the label for the rest, so a few differ
+  from Word's; there are no group-level tips and they are not localised. Customisation is limited to showing and hiding commands (File > Customize Ribbon; no reordering,
+  custom tabs or groups, and nothing is stored between sessions unless the host saves the ids from
+  the `ribbon-customize` event), no table-design or layout tools beyond row and column
   commands.
 
 ### Fidelity

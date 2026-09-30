@@ -5,6 +5,7 @@ import { localizeElement, normalizeEditorLocale } from './localization';
 import type { RibbonAction } from './ribbon-action';
 import { buildHomePanel } from './ribbon-home';
 import { attachRibbonBehavior } from './ribbon-behavior';
+import { attachRibbonOverflow, fitPanel, refitRibbon } from './ribbon-overflow';
 import { buildOtherPanels } from './ribbon-tabs';
 
 export type { RibbonAction } from './ribbon-action';
@@ -51,6 +52,8 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 			panels.forEach((item, key) => {
 				item.hidden = key !== name;
 			});
+			// Fold groups now, so the new tab never shows a frame of clipped controls.
+			fitPanel(panel);
 		});
 		tab.addEventListener('keydown', (event) => {
 			const tabsList = [...tabs.querySelectorAll<HTMLButtonElement>('[role=tab]')].filter(
@@ -86,6 +89,7 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 	root.querySelector<HTMLSelectElement>('[aria-label="Layout view"]')!.value = 'draft';
 	root.prepend(tabs);
 	attachRibbonBehavior(root, tabs);
+	attachRibbonOverflow(root);
 	root.addEventListener('click', (event) => {
 		const target = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]');
 		if (!target) return;
@@ -124,4 +128,5 @@ export function setRibbonLocale(root: HTMLElement, value: string): void {
 	localizeElement(root, locale);
 	syncSelectTitles(root);
 	syncButtonTitles(root);
+	refitRibbon(root);
 }

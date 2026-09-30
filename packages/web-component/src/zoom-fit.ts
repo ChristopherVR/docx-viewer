@@ -1,4 +1,7 @@
-export type ZoomFit = 'actual' | 'width' | 'page';
+export type ZoomFit = 'actual' | 'width' | 'page' | 'pages';
+
+/** The gap between pages laid side by side in Print Layout, in CSS pixels. */
+export const PAGE_GAP = 24;
 
 /**
  * The zoom percentage that makes a page fit its viewport: 100% for `actual`, the viewport's width
@@ -12,6 +15,11 @@ export function fitZoomPercent(
 ): number {
 	if (mode === 'actual' || page.width <= 0 || page.height <= 0) return 100;
 	const byWidth = viewport.width / page.width;
-	const ratio = mode === 'width' ? byWidth : Math.min(byWidth, viewport.height / page.height);
+	const ratio =
+		mode === 'width'
+			? byWidth
+			: mode === 'pages'
+				? Math.min(viewport.width / (page.width * 2 + PAGE_GAP), viewport.height / page.height)
+				: Math.min(byWidth, viewport.height / page.height);
 	return Math.max(10, Math.min(500, Math.floor(ratio * 100)));
 }
