@@ -173,6 +173,7 @@ export const frRibbon: RibbonStrings = {
 	Spelling: 'Orthographe',
 	Symbol: 'Symbole',
 	'Date and time': 'Date et heure',
+	'Multilevel list': 'Liste à plusieurs niveaux',
 	'Drop cap': 'Lettrine',
 	Dropped: 'Dans le texte',
 	'In margin': 'Dans la marge',

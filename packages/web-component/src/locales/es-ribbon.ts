@@ -180,6 +180,7 @@ export const esRibbon: RibbonStrings = {
 	Spelling: 'Ortografía',
 	Symbol: 'Símbolo',
 	'Date and time': 'Fecha y hora',
+	'Multilevel list': 'Lista multinivel',
 	'Drop cap': 'Letra capital',
 	Dropped: 'En texto',
 	'In margin': 'En el margen',

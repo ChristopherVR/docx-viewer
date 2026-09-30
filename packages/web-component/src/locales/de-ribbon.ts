@@ -180,6 +180,7 @@ export const deRibbon: RibbonStrings = {
 	Spelling: 'Rechtschreibung',
 	Symbol: 'Symbol',
 	'Date and time': 'Datum und Uhrzeit',
+	'Multilevel list': 'Liste mit mehreren Ebenen',
 	'Drop cap': 'Initiale',
 	Dropped: 'Eingezogen',
 	'In margin': 'Im Rand',

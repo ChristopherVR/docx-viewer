@@ -8,7 +8,33 @@ import type {
 import { expectDefined } from './expect-defined.js';
 import { signedTwips, twips } from './units.js';
 
-export type ListKind = 'bullet' | 'decimal';
+/**
+ * `multilevel` numbers 1., 1.1., 1.1.1. (every level shows its ancestors); `outline` cycles
+ * 1., a), i. by level, like Word's plain outline lists.
+ */
+export type ListKind = 'bullet' | 'decimal' | 'multilevel' | 'outline';
+const OUTLINE_FORMATS = [
+	['decimal', '.'],
+	['lowerLetter', ')'],
+	['lowerRoman', '.'],
+] as const;
+
+function levelText(kind: ListKind, level: number): string {
+	if (kind === 'bullet')
+		return expectDefined(BULLET_GLYPHS[level % BULLET_GLYPHS.length], 'bullet glyph');
+	if (kind === 'multilevel')
+		return `${Array.from({ length: level + 1 }, (_, i) => `%${i + 1}`).join('.')}.`;
+	const [, close] = expectDefined(OUTLINE_FORMATS[level % 3], 'outline format');
+	return `%${level + 1}${close}`;
+}
+function levelFormat(kind: ListKind, level: number) {
+	if (kind === 'bullet') return 'bullet' as const;
+	if (kind === 'decimal')
+		return expectDefined(DECIMAL_FORMATS[level % DECIMAL_FORMATS.length], 'decimal format');
+	return kind === 'multilevel'
+		? ('decimal' as const)
+		: expectDefined(OUTLINE_FORMATS[level % 3], 'outline format')[0];
+}
 
 const BULLET_GLYPHS = ['•', '◦', '▪'];
 const DECIMAL_FORMATS = ['decimal', 'lowerLetter', 'lowerRoman'] as const;
@@ -27,16 +53,10 @@ function buildLevels(kind: ListKind): Record<number, NumberingLevelDefinition> {
 		const base: NumberingLevelDefinition = {
 			level,
 			start: 1,
-			numFmt:
-				kind === 'bullet'
-					? 'bullet'
-					: expectDefined(DECIMAL_FORMATS[level % DECIMAL_FORMATS.length], 'decimal format'),
-			lvlText:
-				kind === 'bullet'
-					? expectDefined(BULLET_GLYPHS[level % BULLET_GLYPHS.length], 'bullet glyph')
-					: `%${level + 1}.`,
+			numFmt: levelFormat(kind, level),
+			lvlText: kind === 'decimal' ? `%${level + 1}.` : levelText(kind, level),
 			indentLeftTwips: signedTwips(720 * (level + 1)),
-			hangingTwips: twips(360),
+			hangingTwips: twips(kind === 'multilevel' ? 720 : 360),
 			suffix: 'tab',
 		};
 		levels[level] = base;

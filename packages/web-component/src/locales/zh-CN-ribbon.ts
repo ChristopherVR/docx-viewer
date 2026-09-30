@@ -177,6 +177,7 @@ export const zhCNRibbon: RibbonStrings = {
 	Spelling: '拼写',
 	Symbol: '符号',
 	'Date and time': '日期和时间',
+	'Multilevel list': '多级列表',
 	'Drop cap': '首字下沉',
 	Dropped: '下沉',
 	'In margin': '悬挂',

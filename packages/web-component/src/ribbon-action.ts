@@ -41,7 +41,7 @@ export type RibbonAction =
 			value: string;
 	  }
 	| { type: 'zoom'; value: number }
-	| { type: 'list'; key: 'bullet' | 'number' | 'increaseLevel' | 'decreaseLevel' | 'remove' }
+	| { type: 'list'; key: 'bullet' | 'number' | 'multilevel' | 'outline' | 'increaseLevel' | 'decreaseLevel' | 'remove' }
 	| { type: 'view'; value: 'draft' | 'print' }
 	| { type: 'print' }
 	| MultilingualAction

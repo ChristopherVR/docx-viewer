@@ -198,6 +198,16 @@ export function buildHomePanel(panels: Map<string, HTMLElement>): void {
 			row(
 				tool('Bulleted list', 'bullets', { type: 'list', key: 'bullet' }),
 				tool('Numbered list', 'numbering', { type: 'list', key: 'number' }),
+				menuSelect(
+					'Multilevel list',
+					'multilevel',
+					[
+						['multilevel', '1. 1.1. 1.1.1.'],
+						['outline', '1. a) i.'],
+					],
+					(value) => ({ type: 'list', key: value as 'multilevel' }),
+					{ momentary: true },
+				),
 				tool('Decrease list level', 'outdent', { type: 'list', key: 'decreaseLevel' }),
 				tool('Increase list level', 'indent', { type: 'list', key: 'increaseLevel' }),
 				tool('Remove list', 'removeList', { type: 'list', key: 'remove' }),

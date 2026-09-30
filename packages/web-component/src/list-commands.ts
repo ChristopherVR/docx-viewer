@@ -152,7 +152,7 @@ function levelCommand(delta: 1 | -1): Command {
 export const indentListItem: Command = levelCommand(1);
 export const outdentListItem: Command = levelCommand(-1);
 
-export type ListAction = 'bullet' | 'number' | 'increaseLevel' | 'decreaseLevel' | 'remove';
+export type ListAction = 'bullet' | 'number' | 'multilevel' | 'outline' | 'increaseLevel' | 'decreaseLevel' | 'remove';
 
 /**
  * Runs a Home > Paragraph list command. Applying a new list adds a fresh numbering definition to
@@ -162,7 +162,14 @@ export function runListAction(view: EditorView, key: ListAction, model: Document
 	if (key === 'remove') removeList(view);
 	else if (key === 'increaseLevel') changeListLevel(view, 1);
 	else if (key === 'decreaseLevel') changeListLevel(view, -1);
-	else {
+	else if (key === 'multilevel' || key === 'outline') {
+		// A gallery choice always starts a new list of that style, like Word.
+		toggleList(view, false, () => {
+			const created = ensureListDefinition(model.numberingCatalog, key);
+			model.numberingCatalog = created.catalog;
+			return created.numId;
+		});
+	} else {
 		const kind = key === 'bullet' ? 'bullet' : 'decimal';
 		const already = selectionIsListKind(view, kind, model.numberingCatalog);
 		toggleList(view, already, () => {

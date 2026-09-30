@@ -177,7 +177,8 @@ Known limits of what is implemented:
 
 Still not at parity:
 
-- **Home:** Text Effects, Multilevel List. Text Highlight keeps the 17-colour list (Word's is a short
+- **Home:** Text Effects; Multilevel List offers two styles (1. 1.1. 1.1.1. and 1. a) i.), not Word's gallery of
+  heading-linked and bullet outlines, and has no Define New Multilevel List dialog. Text Highlight keeps the 17-colour list (Word's is a short
   list too). Line Spacing offers presets; the Paragraph dialog has the rest.
 - **Insert:** Cover Page galleries (one plain design exists), Shapes, Icons, 3D Models, SmartArt,
   Charts, Screenshot, inserting Text Boxes, WordArt, Equation, Signature Line, Object.

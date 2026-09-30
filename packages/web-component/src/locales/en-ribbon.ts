@@ -171,6 +171,7 @@ export const enRibbon = {
 	Spelling: 'Spelling',
 	Symbol: 'Symbol',
 	'Date and time': 'Date and time',
+	'Multilevel list': 'Multilevel list',
 	'Drop cap': 'Drop cap',
 	Dropped: 'Dropped',
 	'In margin': 'In margin',
