@@ -17,6 +17,7 @@ import { parseDocumentParts } from './document-parts.js';
 import { parseNumberingCatalog } from './numbering-parse.js';
 import { parseComments } from './comments.js';
 import { parseTrackChangesSetting } from './settings.js';
+import { parsePageBackground } from './page-background.js';
 import { parseRunStyleCatalog } from './character-styles.js';
 import { parseTableStyleCatalog } from './table-styles.js';
 import { parseTheme, parseColorSchemeMapping } from './theme.js';
@@ -148,6 +149,9 @@ export async function readPackage(input: Uint8Array | ArrayBuffer): Promise<{
 	if (parts.footnoteNumFmt) model.footnoteNumFmt = parts.footnoteNumFmt;
 	if (parts.endnoteNumFmt) model.endnoteNumFmt = parts.endnoteNumFmt;
 	if (parts.evenAndOddHeaders) model.evenAndOddHeaders = true;
+	if (parts.autoHyphenation) model.autoHyphenation = true;
+	const pageColor = parsePageBackground(document.documentElement);
+	if (pageColor) model.pageColor = pageColor;
 	model.warnings.push(...parts.warnings);
 	if (blocks.some((block) => block.type === 'table' && !block.structureEditable))
 		model.warnings.push(

@@ -4,6 +4,7 @@
 import type JSZip from 'jszip';
 import type { Block, HeaderFooterSlots, Note, SectionProperties } from './model.js';
 import { first, getW, parseXml, type XmlElement } from './xml.js';
+import { onOffElement } from './simple-types.js';
 import { isStNumberFormat, type StNumberFormat } from './generated/wml-simple-types.js';
 import { enumValue, withParseWarnings } from './parse-diagnostics.js';
 import { parseRelationships, resolvePartPath, type Relationship } from './relationships.js';
@@ -33,11 +34,12 @@ async function readPart(zip: JSZip, path: string): Promise<string | undefined> {
 
 interface SettingsInfo {
 	evenAndOddHeaders: boolean;
+	autoHyphenation: boolean;
 	footnoteNumFmt?: StNumberFormat;
 	endnoteNumFmt?: StNumberFormat;
 }
 function parseSettings(xml: string | undefined): SettingsInfo {
-	if (!xml) return { evenAndOddHeaders: false };
+	if (!xml) return { evenAndOddHeaders: false, autoHyphenation: false };
 	const root = parseXml(xml).documentElement;
 	const footnoteNumFmt = enumValue(
 		isStNumberFormat,
@@ -51,6 +53,7 @@ function parseSettings(xml: string | undefined): SettingsInfo {
 	);
 	return {
 		evenAndOddHeaders: Boolean(first(root, 'evenAndOddHeaders')),
+		autoHyphenation: onOffElement(first(root, 'autoHyphenation')) === true,
 		...(footnoteNumFmt ? { footnoteNumFmt } : {}),
 		...(endnoteNumFmt ? { endnoteNumFmt } : {}),
 	};
@@ -95,6 +98,7 @@ export interface DocumentPartsResult {
 	footnoteNumFmt?: StNumberFormat;
 	endnoteNumFmt?: StNumberFormat;
 	evenAndOddHeaders?: boolean;
+	autoHyphenation?: boolean;
 	warnings: string[];
 }
 
@@ -163,6 +167,7 @@ export async function parseDocumentParts(
 		...(settings.footnoteNumFmt ? { footnoteNumFmt: settings.footnoteNumFmt } : {}),
 		...(settings.endnoteNumFmt ? { endnoteNumFmt: settings.endnoteNumFmt } : {}),
 		...(settings.evenAndOddHeaders ? { evenAndOddHeaders: true } : {}),
+		...(settings.autoHyphenation ? { autoHyphenation: true } : {}),
 		warnings,
 	};
 }

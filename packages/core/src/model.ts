@@ -112,6 +112,10 @@ export interface DocumentModel {
 	sections?: SectionProperties[];
 	/** Whether `settings.xml` requests separate even-page headers/footers (`w:evenAndOddHeaders`). */
 	evenAndOddHeaders?: boolean;
+	/** `w:autoHyphenation` in settings.xml: Word hyphenates words at line ends. */
+	autoHyphenation?: boolean;
+	/** Page colour (`w:document/w:background`), six uppercase hex digits without `#`; unset for none. */
+	pageColor?: string;
 	footnotes?: Note[];
 	endnotes?: Note[];
 	/** Raw `w:footnotePr/w:numFmt` token from settings.xml; defaults to `decimal`. */

@@ -62,6 +62,7 @@ export function validateDocumentModel(model: DocumentModel): ValidationIssue[] {
 	model.comments?.forEach((comment, index) =>
 		path(`comments[${index}]`).dateTime('date', comment.date),
 	);
+	path('model').hex('pageColor', model.pageColor);
 	path('model').enum('footnoteNumFmt', model.footnoteNumFmt, isStNumberFormat, 'ST_NumberFormat');
 	path('model').enum('endnoteNumFmt', model.endnoteNumFmt, isStNumberFormat, 'ST_NumberFormat');
 	if (model.numberingCatalog)

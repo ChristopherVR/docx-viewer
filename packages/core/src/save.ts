@@ -11,6 +11,7 @@ import { applyHeaderFooterEdits, createHeaderFooterParts } from './write-header-
 import { applyNoteEdits } from './write-notes.js';
 import { writeNewRelationships } from './part-relationships.js';
 import { applySettingsFlag, applyTrackChangesSetting } from './settings.js';
+import { applyPageBackground } from './page-background.js';
 import { applyComments } from './write-comments.js';
 import { numberCommentIds } from './comment-spans.js';
 import { DEFAULT_STYLES_XML, hasDefaultStyles } from './default-styles.js';
@@ -111,6 +112,7 @@ export async function saveDocx(
 		docPrIds,
 		headerFooterIds,
 	);
+	if (model.pageColor !== binding?.base.pageColor) applyPageBackground(document, model.pageColor);
 	zip.file('word/document.xml', buildXml(document));
 	await writeNewRelationships(zip, 'word/document.xml', newRelationships, pendingMedia);
 	await applyHeaderFooterEdits(
@@ -131,6 +133,11 @@ export async function saveDocx(
 	await applyNumberingCatalog(zip, model, binding);
 	if (Boolean(model.evenAndOddHeaders) !== Boolean(binding?.base.evenAndOddHeaders))
 		await applySettingsFlag(zip, 'evenAndOddHeaders', Boolean(model.evenAndOddHeaders));
+	// Word shows a page colour only when settings.xml asks for background shapes.
+	if (model.pageColor !== binding?.base.pageColor)
+		await applySettingsFlag(zip, 'displayBackgroundShape', Boolean(model.pageColor));
+	if (Boolean(model.autoHyphenation) !== Boolean(binding?.base.autoHyphenation))
+		await applySettingsFlag(zip, 'autoHyphenation', Boolean(model.autoHyphenation));
 	if (model.trackChanges !== binding?.base.trackChanges)
 		await applyTrackChangesSetting(zip, model.trackChanges === true);
 	// New documents carry Word's modern defaults, so they open in Word as they were edited.
