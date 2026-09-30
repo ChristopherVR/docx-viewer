@@ -17,6 +17,20 @@
 	color: var(--muted);
 	font-size: 11px;
 }
+.dve-paper .dve-image-placeholder:has(.dve-textbox-line) {
+	place-items: start;
+	align-content: start;
+	overflow: hidden;
+	padding: 4px 6px;
+	box-sizing: border-box;
+	text-align: left;
+	border-style: solid;
+}
+.dve-paper .dve-textbox-line {
+	display: block;
+	color: var(--text, #1f1f1f);
+	font-size: 12px;
+}
 .dve-paper:not([data-show-hidden]) .dve-hidden-text {
 	display: none;
 }

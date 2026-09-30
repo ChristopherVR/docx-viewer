@@ -17,6 +17,8 @@ import { enumValue } from './parse-diagnostics.js';
 const WP_NS = 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing';
 const A_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
 const VML_NS = 'urn:schemas-microsoft-com:vml';
+const WPS_NS = 'http://schemas.microsoft.com/office/word/2010/wordprocessingShape';
+const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const PICTURE_GRAPHIC_URI = 'http://schemas.openxmlformats.org/drawingml/2006/picture';
 /** 914400 EMU per inch, 96 CSS px per inch. */
 export const EMU_PER_PIXEL = 9525;
@@ -94,7 +96,29 @@ function svgBlipRelId(blip: XmlElement): string | undefined {
 	const svgBlip = descendantNS(blip, SVG_NS, 'svgBlip');
 	return (svgBlip && getR(svgBlip, 'embed')) || undefined;
 }
+/** The text of each paragraph in a `wps:txbx` text box, or undefined when the shape has none. */
+function textBoxParagraphs(graphicData: XmlElement | undefined): string[] | undefined {
+	const box = descendantNS(graphicData, WPS_NS, 'txbx');
+	const content = descendantNS(box, W_NS, 'txbxContent');
+	if (!content) return undefined;
+	const paragraphs: string[] = [];
+	const visit = (node: XmlElement) => {
+		for (const child of Array.from(node.childNodes)) {
+			if (!isElement(child)) continue;
+			if (child.namespaceURI === W_NS && child.localName === 'p')
+				paragraphs.push(
+					Array.from(child.getElementsByTagNameNS(W_NS, 't'))
+						.map((t) => t.textContent ?? '')
+						.join(''),
+				);
+			else visit(child);
+		}
+	};
+	visit(content);
+	return paragraphs;
+}
 function unsupportedKindLabel(uri: string): string {
+	if (uri.includes('wordprocessingShape')) return 'Shape';
 	if (uri.includes('/chart')) return 'Chart';
 	if (uri.includes('/diagram')) return 'SmartArt';
 	if (uri.includes('/oleObject') || uri.includes('/ole')) return 'Embedded object';
@@ -129,6 +153,7 @@ function parseModernDrawing(node: XmlElement, context: DrawingContext): InlineIm
 			...(placement ? { placement } : {}),
 			...(svg ? { svgPartName: svg.partName } : {}),
 		};
+	const textBox = uri.includes('wordprocessingShape') ? textBoxParagraphs(graphicData) : undefined;
 	return {
 		relId: relId ?? '',
 		partName: '',
@@ -136,7 +161,8 @@ function parseModernDrawing(node: XmlElement, context: DrawingContext): InlineIm
 		widthPx,
 		heightPx,
 		...definedProps({ altText, title, anchored }),
-		unsupported: unsupportedKindLabel(uri),
+		unsupported: textBox ? 'Text box' : unsupportedKindLabel(uri),
+		...(textBox ? { textBoxText: textBox } : {}),
 	};
 }
 

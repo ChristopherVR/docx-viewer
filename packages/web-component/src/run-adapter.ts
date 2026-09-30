@@ -59,6 +59,7 @@ export function runToInlineNodes(run: TextRun, noteNumber?: NoteNumberLookup): P
 					placement: run.image.placement ? JSON.stringify(run.image.placement) : null,
 					svgPartName: run.image.svgPartName ?? null,
 					unsupported: run.image.unsupported ?? null,
+					textBoxText: run.image.textBoxText ? JSON.stringify(run.image.textBoxText) : null,
 				},
 				null,
 				marks,
@@ -202,6 +203,9 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 					? { placement: JSON.parse(child.attrs.placement) }
 					: {}),
 				...(child.attrs.unsupported ? { unsupported: child.attrs.unsupported } : {}),
+				...(typeof child.attrs.textBoxText === 'string'
+					? { textBoxText: JSON.parse(child.attrs.textBoxText) }
+					: {}),
 			},
 			...(imageLink && { link: imageLink }),
 		});

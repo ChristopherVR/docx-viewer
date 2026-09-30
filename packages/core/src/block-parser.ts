@@ -65,10 +65,24 @@ function runContent(node: XmlElement): XmlElement[] {
 		.filter((child) => child.localName !== 'rPr');
 }
 
+/** The run's drawing, looking inside `mc:AlternateContent` at the `mc:Choice` Word 2010+ reads. */
+function findDrawing(content: XmlElement[]): XmlElement | undefined {
+	for (const child of content) {
+		if (named(child, 'drawing') || named(child, 'pict')) return child;
+		if (child.localName !== 'AlternateContent') continue;
+		const choice = Array.from(child.childNodes)
+			.filter(isElement)
+			.find((node) => node.localName === 'Choice');
+		const found = choice && findDrawing(Array.from(choice.childNodes).filter(isElement));
+		if (found) return found;
+	}
+	return undefined;
+}
+
 function parseRun(node: XmlElement, revision?: Revision): TextRun {
 	const props = first(node, 'rPr');
 	const content = runContent(node);
-	const drawing = content.find((child) => named(child, 'drawing') || named(child, 'pict'));
+	const drawing = findDrawing(content);
 	if (drawing && activeContext) {
 		const run: TextRun = { text: '', image: parseDrawing(drawing, activeContext) };
 		const runRevision = revision ?? runFormatRevision(props);

@@ -1,4 +1,4 @@
-import type { NodeSpec, MarkSpec } from 'prosemirror-model';
+import type { DOMOutputSpec, NodeSpec, MarkSpec } from 'prosemirror-model';
 
 const safeAttrValue = (value: unknown): string => String(value ?? '').replace(/[;{}"]/g, '');
 
@@ -31,6 +31,19 @@ export function placementClass(value: unknown): string {
 	return '';
 }
 
+/** A text box's lines as read-only child spans of its placeholder. */
+function textBoxLines(value: unknown): DOMOutputSpec[] {
+	if (typeof value !== 'string') return [];
+	try {
+		const lines: unknown = JSON.parse(value);
+		return Array.isArray(lines)
+			? lines.map((line) => ['span', { class: 'dve-textbox-line' }, String(line)] as DOMOutputSpec)
+			: [];
+	} catch {
+		return [];
+	}
+}
+
 /** Inline picture atom: a placeholder span for unsupported drawings, an `<img>` for real pictures.
  * Actual `src` resolution from package media bytes happens in a node view (image-media.ts), not here. */
 export const imageNodeSpec: NodeSpec = {
@@ -52,6 +65,8 @@ export const imageNodeSpec: NodeSpec = {
 		/** SVG original shown instead of the PNG fallback in `partName`. */
 		svgPartName: { default: null },
 		unsupported: { default: null },
+		/** A text box's paragraphs as a JSON string array; shown read-only inside its placeholder. */
+		textBoxText: { default: null },
 	},
 	parseDOM: [
 		{
@@ -79,6 +94,7 @@ export const imageNodeSpec: NodeSpec = {
 						style: `width:${node.attrs.widthPx}px;height:${node.attrs.heightPx}px`,
 					},
 					node.attrs.unsupported,
+					...textBoxLines(node.attrs.textBoxText),
 				]
 			: [
 					'img',

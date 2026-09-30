@@ -24,6 +24,8 @@ export interface InlineImage {
 	placement?: PicturePlacement;
 	/** Set for non-picture drawings (chart, SmartArt, shape, unresolved legacy VML): rendered as a labeled placeholder with no editable bytes. */
 	unsupported?: string;
+	/** For a text box (`wps:txbx`): its paragraphs' text, shown read-only; the box XML is preserved on save. */
+	textBoxText?: string[];
 }
 /** How a floating picture sits relative to text. */
 export interface PicturePlacement {

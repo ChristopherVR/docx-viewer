@@ -40,6 +40,8 @@ const VERTICAL_MERGE_NOTE =
 	'Vertically merged table cells are drawn as one cell, but their text stays in the first row of the merge.';
 const DROP_CAP_NOTE =
 	'Drop caps are laid out as an enlarged first letter (a raised cap), not as a dropped cap.';
+const TEXT_BOX_NOTE =
+	'Text boxes are shown on the editing surface but are not drawn in Print Layout.';
 const NEXT_COLUMN_NOTE = 'A "next column" section break is laid out as a continuous section break.';
 
 const twipsToPx = twipsToPixels;
@@ -114,6 +116,7 @@ export function adaptDocumentModel(
 					? 'sub'
 					: undefined;
 		const image = run.image;
+		if (image?.unsupported === 'Text box') reportOnce(TEXT_BOX_NOTE);
 		const object =
 			image && !image.anchored
 				? {
