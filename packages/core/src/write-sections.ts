@@ -25,6 +25,8 @@ const WRITABLE = new Set([
 	'titlePage',
 	'verticalAlign',
 	'pageNumbering',
+	'lineNumbering',
+	'lineNumberSettings',
 	'headers',
 	'footers',
 ]);
@@ -77,6 +79,7 @@ const AFTER_COLS = [
 	'sectPrChange',
 ];
 const AFTER_PGNUMTYPE = ['cols', ...AFTER_COLS];
+const AFTER_LNNUM = ['pgNumType', ...AFTER_PGNUMTYPE];
 const AFTER_TITLEPG = [
 	'textDirection',
 	'bidi',
@@ -122,6 +125,19 @@ function writeSectionProperties(doc: XmlDocument, sectPr: XmlElement, section: S
 	else for (const vAlign of children(sectPr, 'vAlign')) sectPr.removeChild(vAlign);
 	if (section.titlePage) child(doc, sectPr, 'titlePg', AFTER_TITLEPG);
 	else for (const titlePg of children(sectPr, 'titlePg')) sectPr.removeChild(titlePg);
+	const line = section.lineNumberSettings;
+	if (line) {
+		const lnNum = child(doc, sectPr, 'lnNumType', AFTER_LNNUM);
+		if (line.countBy > 1) setW(lnNum, 'countBy', String(line.countBy));
+		else lnNum.removeAttributeNS(WORD_NS, 'countBy');
+		if (line.start !== 1) setW(lnNum, 'start', String(line.start));
+		else lnNum.removeAttributeNS(WORD_NS, 'start');
+		if (line.distanceTwips !== undefined) setW(lnNum, 'distance', String(line.distanceTwips));
+		else lnNum.removeAttributeNS(WORD_NS, 'distance');
+		if (line.restart !== 'continuous') setW(lnNum, 'restart', line.restart);
+		else lnNum.removeAttributeNS(WORD_NS, 'restart');
+	} else if (!section.lineNumbering)
+		for (const lnNum of children(sectPr, 'lnNumType')) sectPr.removeChild(lnNum);
 	const numbering = section.pageNumbering;
 	if (numbering?.format || numbering?.start !== undefined) {
 		const pgNumType = child(doc, sectPr, 'pgNumType', AFTER_PGNUMTYPE);

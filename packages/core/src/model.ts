@@ -18,6 +18,7 @@ import type { Note, SectionProperties } from './section-model.js';
 export type {
 	HeaderFooterContent,
 	HeaderFooterSlots,
+	LineNumberSettings,
 	Note,
 	SectionColumn,
 	SectionColumns,

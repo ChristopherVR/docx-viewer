@@ -196,3 +196,13 @@ a.dve-link[data-anchor^='_Toc'] {
 	align-items: flex-start;
 	justify-content: center;
 }
+
+/* Layout > Line Numbers: numbers in the left margin, one per printed line. */
+.dve-print-line-number {
+	position: absolute;
+	width: 40px;
+	text-align: right;
+	font: 10px 'Segoe UI', Arial, sans-serif;
+	color: #444;
+	pointer-events: none;
+}

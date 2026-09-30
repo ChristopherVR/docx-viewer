@@ -59,6 +59,24 @@ function parseHeaderFooterRefs(section: XmlElement, localName: string): RawHeade
 	return refs;
 }
 
+/** `lineNumbering` and its values from `w:lnNumType`. */
+function lineNumbering(
+	element: XmlElement | undefined,
+): Pick<RawSection, 'lineNumbering' | 'lineNumberSettings'> {
+	if (!element) return {};
+	const restart = getW(element, 'restart');
+	const distance = twipInt(getW(element, 'distance'));
+	return {
+		lineNumbering: true,
+		lineNumberSettings: {
+			countBy: Math.max(1, parseUnsignedInteger(getW(element, 'countBy')) ?? 1),
+			start: parseUnsignedInteger(getW(element, 'start')) ?? 1,
+			restart: restart === 'newPage' || restart === 'newSection' ? restart : 'continuous',
+			...(distance !== undefined ? { distanceTwips: distance } : {}),
+		},
+	};
+}
+
 function parseOneSection(section: XmlElement, endsAtBlockId: string): RawSection {
 	const size = first(section, 'pgSz');
 	const margins = first(section, 'pgMar');
@@ -94,7 +112,7 @@ function parseOneSection(section: XmlElement, endsAtBlockId: string): RawSection
 					},
 				}
 			: {}),
-		...(first(section, 'lnNumType') ? { lineNumbering: true } : {}),
+		...lineNumbering(first(section, 'lnNumType')),
 		...(first(section, 'pgBorders') ? { pageBorders: true } : {}),
 		headerRefs: parseHeaderFooterRefs(section, 'headerReference'),
 		footerRefs: parseHeaderFooterRefs(section, 'footerReference'),

@@ -44,7 +44,10 @@ Still missing:
 
 - Section editing covers size/orientation, margins, columns, vertical alignment, all four
   section-break types, a different first page, page numbering and the document-wide odd/even
-  headers setting; line numbering and page borders are still protected (only their presence is
+  headers setting and line numbering (Layout > Line Numbers: none, continuous, restart each page or
+  section; the count-by, start and distance values are read and kept but have no controls, and line
+  numbers are drawn in Print Layout only, counting every line of body paragraphs, tables excluded,
+  with no per-paragraph suppression); page borders are still protected (only their presence is
   modeled). The continuous surface shows columns only for single-section documents (Print Layout
   shows all); vertically justified sections lay out top-aligned.
 - Ctrl+Alt+F / Ctrl+Alt+D (insert footnote/endnote) are bound, but Windows browsers can report
@@ -184,7 +187,7 @@ Still not at parity:
   list too). Line Spacing offers presets; the Paragraph dialog has the rest.
 - **Insert:** Cover Page galleries (one plain design exists), Shapes, Icons, 3D Models, SmartArt,
   Charts, Screenshot, inserting Text Boxes, WordArt, Equation, Signature Line, Object.
-- **Layout and References:** Line Numbers, Manual Hyphenation and its options, Watermark, Page Borders, Position
+- **Layout and References:** Manual Hyphenation and its options, Watermark, Page Borders, Position
   and Wrap Text, Citations, Bibliography, Table of Figures, Index and Table of Authorities, and
   automatic updating of `REF`, `PAGEREF` and `SEQ` results (they are computed when inserted; captions
   renumber immediately, cross-references do not).

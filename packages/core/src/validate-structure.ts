@@ -109,6 +109,24 @@ export function validateSection(c: Checker, section: SectionProperties): void {
 		at.unsigned('widthTwips', column.widthTwips, 'ST_TwipsMeasure');
 		at.unsigned('spacingTwips', column.spacingTwips, 'ST_TwipsMeasure');
 	});
+	if (section.lineNumberSettings) {
+		const line = c.at('.lineNumberSettings');
+		const settings = section.lineNumberSettings;
+		line.check(
+			'countBy',
+			settings.countBy,
+			(v) => typeof v === 'number' && Number.isSafeInteger(v) && v >= 1,
+			'must be a positive integer (CT_LineNumber/@countBy)',
+		);
+		line.unsigned('start', settings.start, 'ST_DecimalNumber');
+		line.check(
+			'restart',
+			settings.restart,
+			(v) => v === 'newPage' || v === 'newSection' || v === 'continuous',
+			'must be "newPage", "newSection" or "continuous" (ST_LineNumberRestart)',
+		);
+		line.unsigned('distanceTwips', settings.distanceTwips, 'ST_TwipsMeasure');
+	}
 	if (section.pageNumbering) {
 		const numbering = c.at('.pageNumbering');
 		numbering.enum('format', section.pageNumbering.format, isStNumberFormat, 'ST_NumberFormat');

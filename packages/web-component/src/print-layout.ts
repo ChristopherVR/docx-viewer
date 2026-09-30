@@ -201,14 +201,66 @@ function footnoteArea(
 	return area;
 }
 
+/** Line numbering of a section, as the section model gives it. */
+export interface PrintLineNumbering {
+	countBy: number;
+	start: number;
+	restart: 'newPage' | 'newSection' | 'continuous';
+	distanceTwips?: number;
+}
+
+export interface PrintLayoutOptions {
+	/** Line numbering by section index; sections without an entry print no numbers. */
+	lineNumbers?: ReadonlyArray<PrintLineNumbering | undefined>;
+}
+
+/** The shown line numbers for a page, advancing `counter` across pages as the restart rule says. */
+function lineNumberLabels(
+	page: LayoutResult['pages'][number],
+	settings: PrintLineNumbering,
+	counter: { next: number; section: number },
+): HTMLElement[] {
+	const newSection = counter.section !== page.sectionIndex;
+	if (
+		counter.section === -1 ||
+		settings.restart === 'newPage' ||
+		(newSection && settings.restart === 'newSection')
+	)
+		counter.next = settings.start;
+	counter.section = page.sectionIndex;
+	const labels: HTMLElement[] = [];
+	const gap = (settings.distanceTwips ?? 360) / 15;
+	for (const column of page.columns)
+		for (const block of column.blocks) {
+			if (block.kind !== 'paragraph') continue;
+			for (const line of block.lines) {
+				const number = counter.next++;
+				if ((number - settings.start + 1) % settings.countBy !== 0) continue;
+				const label = document.createElement('span');
+				label.className = 'dve-print-line-number';
+				label.textContent = String(number);
+				Object.assign(label.style, {
+					left: `${page.marginLeftPx + column.xPx - gap - 40}px`,
+					top: `${page.marginTopPx + block.yPx + line.yPx}px`,
+					height: `${line.heightPx}px`,
+					lineHeight: `${line.heightPx}px`,
+				});
+				labels.push(label);
+			}
+		}
+	return labels;
+}
+
 /** Pure, framework-neutral renderer: turns a `LayoutResult` into a DOM tree of page sheets. */
 export function renderPrintLayout(
 	result: LayoutResult,
 	pictureUrl?: PictureUrl,
+	options: PrintLayoutOptions = {},
 ): PrintLayoutHandle {
 	const container = document.createElement('div');
 	container.className = 'dve-print-pages';
 	const hitboxes: LineHitBox[] = [];
+	const counter = { next: 1, section: -1 };
 	result.pages.forEach((page, pageIndex) => {
 		const sheet = document.createElement('div');
 		sheet.className = 'dve-print-page';
@@ -226,6 +278,8 @@ export function renderPrintLayout(
 				columnEl.append(renderBlock(block, hitboxes, pictureUrl, column.widthPx));
 			sheet.append(columnEl);
 		}
+		const numbering = options.lineNumbers?.[page.sectionIndex];
+		if (numbering) sheet.append(...lineNumberLabels(page, numbering, counter));
 		if (page.footnotes?.length) sheet.append(footnoteArea(page, hitboxes, pictureUrl));
 		for (const float of page.floats ?? []) {
 			const picture = pictureElement(float, pictureUrl);

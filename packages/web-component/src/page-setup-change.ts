@@ -7,6 +7,7 @@ import { setPageSize } from './page-size';
 import type { RibbonAction } from './ribbon-action';
 import {
 	setColumns,
+	setLineNumbering,
 	setMargins,
 	setOrientation,
 	setPageNumbering,
@@ -43,6 +44,12 @@ export function pageSetupChange(
 			return setPageNumbering(model, index, { restart: value === 'restart' });
 		case 'verticalAlign':
 			return setVerticalAlign(model, index, ALIGNMENTS.find((item) => item === value) ?? 'top');
+		case 'lineNumbers':
+			return setLineNumbering(
+				model,
+				index,
+				value === 'continuous' || value === 'newPage' || value === 'newSection' ? value : 'none',
+			);
 		case 'titlePage':
 			return setTitlePage(model, index, !section.titlePage);
 	}

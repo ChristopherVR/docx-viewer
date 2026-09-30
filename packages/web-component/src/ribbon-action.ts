@@ -28,6 +28,7 @@ export type RibbonAction =
 				| 'numberStart'
 				| 'titlePage'
 				| 'verticalAlign'
+				| 'lineNumbers'
 				| 'size';
 			value: string;
 	  }

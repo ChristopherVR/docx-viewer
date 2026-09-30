@@ -134,7 +134,7 @@ describe('header and footer editing', () => {
 		});
 		expect(at(reloaded.model.sections, 1)).toMatchObject({ pageWidthTwips: 12240 });
 		const titled = JSON.parse(JSON.stringify(loaded.model)) as DocumentModel;
-		at(titled.sections, 0).lineNumbering = true;
-		await expect(loaded.save(titled)).rejects.toThrow(/lineNumbering/);
+		at(titled.sections, 0).pageBorders = true;
+		await expect(loaded.save(titled)).rejects.toThrow(/pageBorders/);
 	});
 });

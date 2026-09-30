@@ -67,7 +67,9 @@ export function createPrintLayoutController(
 	function relayout(model: DocumentModel) {
 		lastModel = model;
 		result = layoutDocumentModel(model, measurer);
-		handle = renderPrintLayout(result, pictureUrl);
+		handle = renderPrintLayout(result, pictureUrl, {
+			lineNumbers: (model.sections ?? []).map((section) => section.lineNumberSettings),
+		});
 		if (model.pageColor)
 			handle.element.style.setProperty('--dve-page-color', `#${model.pageColor}`);
 		decoratePages(

@@ -62,6 +62,10 @@ export class PageController {
 			String(Boolean(model.evenAndOddHeaders)),
 		);
 		setSelect('Columns', String(section.columns.count));
+		setSelect(
+			'Line numbers',
+			section.lineNumberSettings ? section.lineNumberSettings.restart : 'none',
+		);
 		setSelect('Page number format', section.pageNumbering?.format ?? 'decimal');
 		setSelect(
 			'Page numbering',

@@ -231,3 +231,25 @@ export function sectionBreaksPlugin() {
 		},
 	});
 }
+
+/** Layout > Line Numbers: off, or on with the restart rule; other line-number values are kept. */
+export function setLineNumbering(
+	model: DocumentModel,
+	index: number,
+	mode: 'none' | 'continuous' | 'newPage' | 'newSection',
+): DocumentModel {
+	return withSection(model, index, (section) => {
+		const { lineNumbering: _on, lineNumberSettings: previous, ...rest } = section;
+		if (mode === 'none') return rest;
+		return {
+			...rest,
+			lineNumbering: true,
+			lineNumberSettings: {
+				countBy: previous?.countBy ?? 1,
+				start: previous?.start ?? 1,
+				restart: mode,
+				...(previous?.distanceTwips !== undefined ? { distanceTwips: previous.distanceTwips } : {}),
+			},
+		};
+	});
+}

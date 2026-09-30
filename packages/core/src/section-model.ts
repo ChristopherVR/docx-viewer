@@ -38,6 +38,16 @@ export interface SectionPageNumbering {
  * One `w:sectPr` (paragraph-level section break or the final body section), in native Word
  * units. The pagination engine is the primary consumer; this package does not lay out pages.
  */
+export interface LineNumberSettings {
+	/** Show a number on every n-th line (`w:countBy`, at least 1). */
+	countBy: number;
+	/** First number of a restart (`w:start`, default 1). */
+	start: number;
+	/** `w:restart`: start over each page, each section, or never. */
+	restart: 'newPage' | 'newSection' | 'continuous';
+	/** Gap between the number and the text (`w:distance`); undefined lets the renderer choose. */
+	distanceTwips?: number;
+}
 export interface SectionProperties {
 	/** Id of the last block (paragraph or table) this section covers. */
 	endsAtBlockId: string;
@@ -57,8 +67,10 @@ export interface SectionProperties {
 	titlePage?: boolean;
 	verticalAlign?: StVerticalJc;
 	pageNumbering?: SectionPageNumbering;
-	/** `w:lnNumType` presence; line numbering values themselves are not modeled. */
+	/** `w:lnNumType` is present (line numbers are on for this section). */
 	lineNumbering?: boolean;
+	/** The `w:lnNumType` values behind `lineNumbering`. */
+	lineNumberSettings?: LineNumberSettings;
 	/** `w:pgBorders` presence; border styling itself is not modeled. */
 	pageBorders?: boolean;
 	headers?: HeaderFooterSlots;

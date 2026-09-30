@@ -267,6 +267,17 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				],
 				(value) => ({ type: 'hyphenation', value }),
 			),
+			menuSelect(
+				'Line numbers',
+				'lineNumbers',
+				[
+					['none', 'None'],
+					['continuous', 'Continuous'],
+					['newPage', 'Restart Each Page'],
+					['newSection', 'Restart Each Section'],
+				],
+				(value) => ({ type: 'page', key: 'lineNumbers', value }),
+			),
 			menuGallery(
 				'Columns',
 				'columns',

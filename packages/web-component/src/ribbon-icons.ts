@@ -20,6 +20,7 @@ const paths = {
 		'M11 6h9 M11 12h9 M11 18h9 M4 4.5l1.5-1V9 M4 14.5c.5-1.5 3-1.5 3 .3 0 1-1.5 1.6-3 3.2h3',
 	outdent: 'M8 6h12 M12 11h8 M12 16h8 M8 21h12 M7 9l-4 3 4 3z',
 	indent: 'M8 6h12 M12 11h8 M12 16h8 M8 21h12 M3 9l4 3-4 3z',
+	lineNumbers: 'M3 6h2 M3 12h2 M3 18h2 M8 6h13 M8 12h13 M8 18h13',
 	multilevel: 'M4 6h3 M10 6h10 M7 12h3 M13 12h7 M10 18h3 M16 18h4',
 	removeList: 'M9 6h11 M9 12h6 M9 18h11 M4 4l5 5 M9 4 4 9',
 	alignLeft: 'M4 6h16 M4 10h10 M4 14h16 M4 18h10',
