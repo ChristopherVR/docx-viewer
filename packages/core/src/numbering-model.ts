@@ -47,6 +47,8 @@ export interface ParagraphListLabel {
 	/** Marker text with `%n` placeholders already substituted (no trailing suffix). */
 	text: string;
 	suffix: 'tab' | 'space' | 'none';
+	/** Alignment of the marker around the paragraph's first-line position. */
+	alignment?: 'left' | 'center' | 'right';
 	indentLeftTwips?: SignedTwips;
 	hangingTwips?: Twips;
 	firstLineTwips?: Twips;

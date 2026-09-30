@@ -12,10 +12,27 @@ import { paragraphStyle } from './schema';
 import { translate, translateTemplate, type EditorLocale } from './localization';
 import { menuAround, row, stack } from './ribbon-parts';
 import { syncStyleGallery } from './style-gallery';
+import { listMarkerDisplay } from './list-marker-display';
+import { scaleMeasurer } from './run-scale';
 
 /** Derived display formatting stays out of document attributes and collaboration steps. */
 export function paragraphStylesPlugin(getModel: () => DocumentModel) {
+	let measurer = scaleMeasurer();
 	return new Plugin({
+		view(view) {
+			const reload = () => {
+				measurer = scaleMeasurer();
+				view.dispatch(
+					view.state.tr.setMeta('list-marker-fonts', true).setMeta('addToHistory', false),
+				);
+			};
+			document.fonts?.addEventListener('loadingdone', reload);
+			return {
+				destroy() {
+					document.fonts?.removeEventListener('loadingdone', reload);
+				},
+			};
+		},
 		props: {
 			decorations(state) {
 				const model = getModel();
@@ -55,6 +72,13 @@ export function paragraphStylesPlugin(getModel: () => DocumentModel) {
 					} as Paragraph;
 					const effective = catalog ? resolveParagraphFormatting(paragraph, catalog) : paragraph;
 					const label = labels.get(String(node.attrs.id));
+					const marker = listMarkerDisplay(
+						node,
+						{ ...paragraph, ...effective },
+						label,
+						model,
+						measurer,
+					);
 					const list = label
 						? {
 								listIndentLeftTwips: label.indentLeftTwips ?? null,
@@ -64,7 +88,8 @@ export function paragraphStylesPlugin(getModel: () => DocumentModel) {
 						: { listIndentLeftTwips: null, listHangingTwips: null, listFirstLineTwips: null };
 					decorations.push(
 						Decoration.node(pos, pos + node.nodeSize, {
-							style: paragraphStyle({ ...effective, ...list }),
+							style: `${paragraphStyle({ ...effective, ...list })};${marker.css}`,
+							...marker.attributes,
 							...(label || node.attrs.listLabelText != null
 								? {
 										'data-list-label': label

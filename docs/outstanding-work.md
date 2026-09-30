@@ -264,8 +264,15 @@ and preservation of the imported abstract definition. Live editing markers also 
 list commands and history changes, including in header/footer/note editors. Word COM verified
 the exported markers, start 4, never restart, right alignment, 0.25-inch number position,
 1-inch text position and space suffix. The dialog fits a 1280×720 viewport with its action
-buttons visible. Number alignment is saved for Word; the editing surface still renders markers
-inline and does not reproduce Word's aligned marker boxes.
+buttons visible. For left-to-right paragraphs, the editor and Print Layout now place left,
+center and right markers around the defined number position, with tab/space/nothing separators
+and continuation lines at the text indent. Print Layout keeps a marker such as "Part 12."
+indivisible and does not repeat it on a continuation page. Editor markers are generated CSS,
+so they never become editable characters. Browser contracts compare editor and Print Layout
+positions and verify typing at the paragraph start in all six bindings. The editor refreshes
+its marker font measurements when web fonts load. Right-to-left marker placement and precise
+editor positioning at center/right/decimal custom tabs remain approximate; marker-font
+definitions and inherited numbering fonts still need the controls and preservation work below.
 
 Still not at parity:
 

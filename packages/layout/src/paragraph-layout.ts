@@ -197,6 +197,16 @@ export function layoutParagraph(
 		}
 		let leader: LayoutFragment['leader'];
 		let width = expectDefined(widths[tokenIndex], 'token width');
+		const marker = paragraph.runs[token.runIndex]?.marker;
+		const markerFactor =
+			marker && token.kind === 'word' && tokenIndex === 0
+				? marker.alignment === 'right'
+					? 1
+					: marker.alignment === 'center'
+						? 0.5
+						: 0
+				: 0;
+		const advance = width * (1 - markerFactor);
 		if (token.kind === 'tab') {
 			const { followingPx, beforeDecimalPx } = segmentAfter(tokenIndex);
 			const tab = placeTab(
@@ -215,7 +225,9 @@ export function layoutParagraph(
 		// internal (i.e. this token fits after it); a trailing space at an actual
 		// wrap point is trimmed in flushLine instead, so it must not be
 		// pre-subtracted here.
-		const wouldFit = lineWidthPx + width <= limit || placed.length === 0;
+		const wouldFit =
+			lineWidthPx + (token.kind === 'tab' ? width : advance) <= limit ||
+			placed.every((placed) => paragraph.runs[placed.token.runIndex]?.synthetic);
 		if (!wouldFit && token.kind !== 'space') {
 			tokenCursor = tokenIndex;
 			flushLine(false, undefined);
@@ -229,8 +241,13 @@ export function layoutParagraph(
 		}
 		if (token.kind === 'space' && placed.length === 0) continue; // leading space at wrap point is dropped
 		if (!placed.length) firstToken = tokenIndex;
-		placed.push({ token, widthPx: width, ...(leader ? { leader } : {}) });
-		lineWidthPx += width;
+		placed.push({
+			token,
+			widthPx: width,
+			...(leader ? { leader } : {}),
+			...(markerFactor ? { xOffsetPx: -width * markerFactor, advancePx: advance } : {}),
+		});
+		lineWidthPx += token.kind === 'tab' ? width : advance;
 	}
 	flushLine(lines.length === 0, undefined);
 

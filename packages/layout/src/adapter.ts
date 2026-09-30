@@ -164,6 +164,7 @@ export function adaptDocumentModel(
 		return {
 			text: `${displayListLabel(label.text)}${suffix}`,
 			synthetic: true,
+			marker: { length: displayListLabel(label.text).length, alignment: label.alignment ?? 'left' },
 			...definedProps({
 				bold: first.bold,
 				italic: first.italic,

@@ -28,6 +28,8 @@ export interface LayoutRun {
 	object?: LayoutObject;
 	/** Generated text (a list label) that is not part of the paragraph's own characters. */
 	synthetic?: boolean;
+	/** Generated list marker; the remaining characters in this run are its separator. */
+	marker?: { length: number; alignment: 'left' | 'center' | 'right' };
 	/** Superscript or subscript: drawn smaller and raised or lowered (note marks are superscript). */
 	script?: 'super' | 'sub';
 	/** `#rrggbb`, display only. */

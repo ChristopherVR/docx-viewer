@@ -9,12 +9,12 @@ export function buildFragments(
 ): LayoutFragment[] {
 	const fragments: LayoutFragment[] = [];
 	let x = 0;
-	for (const { token, widthPx, leader } of tokensOnLine) {
+	for (const { token, widthPx, leader, xOffsetPx, advancePx } of tokensOnLine) {
 		const run = paragraph.runs[token.runIndex];
 		const text = token.kind === 'word' || token.kind === 'space' ? token.text : '';
 		fragments.push({
 			text,
-			xPx: x,
+			xPx: x + (xOffsetPx ?? 0),
 			widthPx,
 			runIndex: token.runIndex,
 			...definedProps({
@@ -34,7 +34,7 @@ export function buildFragments(
 			...(run?.strike ? { strike: true } : {}),
 			...(token.kind === 'object' && run?.object ? { object: run.object } : {}),
 		});
-		x += widthPx;
+		x += advancePx ?? widthPx;
 	}
 	return fragments;
 }

@@ -72,7 +72,17 @@ export function tokenizeParagraph(paragraph: LayoutParagraph): {
 	paragraph.runs.forEach((run, runIndex) => {
 		runOffsets.push(cursor);
 		if (run.object) tokens.push({ kind: 'object', runIndex, sourceStart: 0 });
-		else tokens.push(...tokenizeRun(run.text, runIndex));
+		else if (run.marker) {
+			// A marker such as "Chapter 1.2" is indivisible; its separator still acts
+			// as a real tab or space after the aligned glyphs.
+			tokens.push({
+				kind: 'word',
+				runIndex,
+				sourceStart: 0,
+				text: run.text.slice(0, run.marker.length),
+			});
+			tokens.push(...tokenizeRun(run.text.slice(run.marker.length), runIndex));
+		} else tokens.push(...tokenizeRun(run.text, runIndex));
 		if (run.breakAfter) appendBreakMarker(tokens, runIndex, run.text.length, run.breakAfter);
 		// A list label maps to the start of the paragraph's text for click-to-cursor.
 		if (run.synthetic) {
@@ -85,5 +95,8 @@ export function tokenizeParagraph(paragraph: LayoutParagraph): {
 export interface PlacedToken {
 	token: BreakToken;
 	widthPx: number;
+	/** Glyph position and consumed advance differ for centered/right-aligned list markers. */
+	xOffsetPx?: number;
+	advancePx?: number;
 	leader?: LayoutFragment['leader'];
 }

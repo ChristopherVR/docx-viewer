@@ -183,6 +183,7 @@ export function computeListLabels(model: DocumentModel): Map<string, ParagraphLi
 			text,
 			suffix: def.suffix ?? 'tab',
 			...definedProps({
+				alignment: def.lvlJc,
 				indentLeftTwips: def.indentLeftTwips,
 				hangingTwips: def.hangingTwips,
 				firstLineTwips: def.firstLineTwips,

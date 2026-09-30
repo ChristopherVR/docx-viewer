@@ -78,6 +78,17 @@
 	white-space: pre;
 	user-select: none;
 }
+.dve-paper p[data-list-marker]:not([data-list-marker=''])::before {
+	content: attr(data-list-marker);
+	position: absolute;
+	left: var(--dve-marker-left);
+	text-indent: 0;
+	font-family: var(--dve-marker-family);
+	font-size: var(--dve-marker-size);
+	font-weight: var(--dve-marker-weight);
+	font-style: var(--dve-marker-style);
+	color: var(--dve-marker-color);
+}
 .multilingual-controls {
 	flex: 1 1 100%;
 	align-items: flex-start;
