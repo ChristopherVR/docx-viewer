@@ -34,6 +34,7 @@ function buildLevelElement(doc: XmlDocument, def: NumberingLevelDefinition): Xml
 	lvl.appendChild(valueElement(doc, 'numFmt', def.numFmt));
 	if (def.lvlRestart !== undefined)
 		lvl.appendChild(valueElement(doc, 'lvlRestart', String(def.lvlRestart)));
+	if (def.paragraphStyleId) lvl.appendChild(valueElement(doc, 'pStyle', def.paragraphStyleId));
 	if (def.isLgl) lvl.appendChild(makeW(doc, 'isLgl'));
 	lvl.appendChild(
 		valueElement(

@@ -160,6 +160,12 @@ export function validateNumberingCatalog(c: Checker, catalog: NumberingCatalog):
 			'must be "tab", "space" or "none"',
 		);
 		at.check('lvlText', level.lvlText, (v) => typeof v === 'string', 'must be a string');
+		at.check(
+			'paragraphStyleId',
+			level.paragraphStyleId,
+			(v) => typeof v === 'string' && v.length > 0,
+			'must be a nonempty style ID',
+		);
 		at.signed('indentLeftTwips', level.indentLeftTwips, 'ST_SignedTwipsMeasure');
 		at.unsigned('hangingTwips', level.hangingTwips, 'ST_TwipsMeasure');
 		at.unsigned('firstLineTwips', level.firstLineTwips, 'ST_TwipsMeasure');

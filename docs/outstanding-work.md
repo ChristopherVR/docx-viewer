@@ -274,6 +274,17 @@ its marker font measurements when web fonts load. Right-to-left marker placement
 editor positioning at center/right/decimal custom tabs remain approximate; marker-font
 definitions and inherited numbering fonts still need the controls and preservation work below.
 
+Imported heading outlines now resolve `w:lvl/w:pStyle` associations, rather than treating every
+style-inherited item as level one. Direct paragraph numbering and explicit `numId=0` removal
+retain precedence; effective level overrides are respected. Text editing preserves the original
+styles and numbering XML. All six browser bindings verify nested markers, editing and opening
+Define New Multilevel List at the inherited level with its imported pattern. Additive definition
+export writes style links in schema order. Word COM confirmed the five-item sequence
+`1., 1.1., 1.2., 2., 2.1.` when styles also specify matching `ilvl`. Installed Word discards the
+second heading's numbering when that redundant style level is omitted; the viewer follows the
+OOXML association rule for those imports. Creating or changing heading/style bindings through
+the dialog still requires preservation-safe style edits and history support.
+
 Still not at parity:
 
 - **Home:** Text Effects; Multilevel List offers two styles (1. 1.1. 1.1.1. and 1. a) i.), not Word's gallery of

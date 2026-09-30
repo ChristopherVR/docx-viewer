@@ -9,6 +9,7 @@ import {
 } from '@christophervr/docx-core';
 import type { EditorView } from 'prosemirror-view';
 import { applyCustomList } from './list-commands';
+import { nodeNumbering } from './node-numbering';
 import {
 	checkbox,
 	dialogButton,
@@ -270,13 +271,14 @@ export function createMultilevelListDialog(
 					if (paragraph.type.name !== 'paragraph' && node.type.name === 'paragraph')
 						paragraph = node;
 				});
-			const numId = paragraph.attrs.numId;
+			const numbering = nodeNumbering(paragraph, model);
+			const numId = numbering?.numId;
 			drafts = Array.from({ length: 9 }, (_, i) => ({
 				...(model.numberingCatalog && numId
 					? (resolveNumberingLevel(model.numberingCatalog, String(numId), i) ?? defaults[i]!)
 					: defaults[i]!),
 			}));
-			active = Math.min(8, Math.max(0, Number(paragraph.attrs.ilvl ?? 0)));
+			active = Math.min(8, Math.max(0, numbering?.level ?? Number(paragraph.attrs.ilvl ?? 0)));
 			element.replaceChildren(...content);
 			localizeElement(element, locale);
 			read();

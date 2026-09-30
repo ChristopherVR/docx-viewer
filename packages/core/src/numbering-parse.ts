@@ -31,6 +31,8 @@ export function parseNumberingLevel(lvl: XmlElement): NumberingLevelDefinition {
 	const ind = first(first(lvl, 'pPr'), 'ind');
 	const suffRaw = getW(first(lvl, 'suff'), 'val');
 	const result: NumberingLevelDefinition = { level, start, numFmt, lvlText };
+	const paragraphStyleId = getW(first(lvl, 'pStyle'), 'val');
+	if (paragraphStyleId) result.paragraphStyleId = paragraphStyleId;
 	if (jc === 'left' || jc === 'center' || jc === 'right') result.lvlJc = jc;
 	const left = getW(ind, 'left') ?? getW(ind, 'start');
 	if (left !== undefined) result.indentLeftTwips = parseSignedTwips(left) ?? signedTwips(0);

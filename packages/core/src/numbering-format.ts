@@ -51,13 +51,23 @@ export function formatListNumber(numFmt: string, value: number): string {
 export function resolveParagraphNumbering(
 	paragraph: Paragraph,
 	styleCatalog: ParagraphStyleCatalog | undefined,
+	numberingCatalog?: NumberingCatalog,
 ): { numId: number; level: number } | undefined {
 	if (paragraph.numbering)
 		// `numId="0"` is Word's explicit "no numbering" override; it blocks style inheritance
 		// without itself producing a marker.
 		return paragraph.numbering.numId > 0 ? paragraph.numbering : undefined;
 	if (!styleCatalog) return undefined;
-	return resolveStyleNumbering(paragraph.style, styleCatalog);
+	const inherited = resolveStyleNumbering(paragraph.style, styleCatalog);
+	if (!inherited || inherited.numId <= 0) return undefined;
+	if (numberingCatalog && paragraph.style && styleCatalog.styles[paragraph.style]) {
+		for (let level = 0; level < 9; level++) {
+			const definition = resolveNumberingLevel(numberingCatalog, String(inherited.numId), level);
+			if (definition?.paragraphStyleId === paragraph.style)
+				return { numId: inherited.numId, level };
+		}
+	}
+	return inherited;
 }
 
 function flattenParagraphs(blocks: Block[]): Paragraph[] {
@@ -165,7 +175,7 @@ export function computeListLabels(model: DocumentModel): Map<string, ParagraphLi
 	if (!catalog) return labels;
 	const counters = new NumberingCounters();
 	for (const paragraph of flattenParagraphs(model.blocks)) {
-		const numbering = resolveParagraphNumbering(paragraph, model.paragraphStyles);
+		const numbering = resolveParagraphNumbering(paragraph, model.paragraphStyles, catalog);
 		if (!numbering) continue;
 		const numId = String(numbering.numId);
 		const level = Math.min(8, Math.max(0, numbering.level));

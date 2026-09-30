@@ -10,6 +10,8 @@ export interface NumberingLevelDefinition {
 	numFmt: StNumberFormat;
 	/** Raw `w:lvlText/@w:val`, with `%1`..`%9` placeholders (1-based ancestor levels) or a bullet glyph. */
 	lvlText: string;
+	/** Paragraph style associated with this level (`w:pStyle`). */
+	paragraphStyleId?: string;
 	lvlJc?: 'left' | 'center' | 'right';
 	indentLeftTwips?: SignedTwips;
 	hangingTwips?: Twips;
