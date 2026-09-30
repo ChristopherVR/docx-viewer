@@ -206,5 +206,6 @@ export const zhCNApp: AppStrings = {
 	'Two pages': '两页',
 	'Zoom settings': '缩放设置',
 	'Line Spacing Options…': '行距选项…',
+	'Custom Margins…': '自定义页边距…',
 	None: '无',
 };

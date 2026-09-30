@@ -217,5 +217,6 @@ export const esApp: AppStrings = {
 	'Two pages': 'Dos páginas',
 	'Zoom settings': 'Configuración de zoom',
 	'Line Spacing Options…': 'Opciones de interlineado…',
+	'Custom Margins…': 'Márgenes personalizados…',
 	None: 'Ninguno',
 };

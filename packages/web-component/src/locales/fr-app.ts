@@ -209,5 +209,6 @@ export const frApp: AppStrings = {
 	'Two pages': 'Deux pages',
 	'Zoom settings': 'Paramètres de zoom',
 	'Line Spacing Options…': 'Options d’interligne…',
+	'Custom Margins…': 'Marges personnalisées…',
 	None: 'Aucun',
 };

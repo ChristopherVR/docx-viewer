@@ -219,5 +219,6 @@ export const deApp: AppStrings = {
 	'Two pages': 'Zwei Seiten',
 	'Zoom settings': 'Zoomeinstellungen',
 	'Line Spacing Options…': 'Zeilenabstandsoptionen…',
+	'Custom Margins…': 'Benutzerdefinierte Seitenränder…',
 	None: 'Keine',
 };

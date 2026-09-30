@@ -186,8 +186,7 @@ Still not at parity:
   spacing are galleries with thumbnails (Line spacing ends with Line Spacing Options, which opens the
   Paragraph dialog; Borders has no Borders and Shading entry because that dialog does not exist).
   Page number format, Sort, Change case and similar stay plain text lists, as Word's Change Case
-  does. Zoom is a percentage list next to a Zoom dialog. Margins has no Custom Margins entry (Page Setup
-  has it) and Columns has no Left, Right or More Columns.
+  does. Zoom is a percentage list next to a Zoom dialog. Margins ends with Custom Margins, which opens Page Setup; Columns has no Left, Right or More Columns.
 - **Ribbon:** command KeyTips use Word's keys for the commands that share a name with Word's (Bold `1`,
   Paste `V`, Font Color `FC` and so on) and two letters from the label for the rest, so a few differ
   from Word's; there are no group-level tips and they are not localised. Customisation is limited to showing and hiding commands (File > Customize Ribbon; no reordering,

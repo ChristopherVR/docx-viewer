@@ -206,5 +206,6 @@ export const enApp = {
 	'Two pages': 'Two pages',
 	'Zoom settings': 'Zoom settings',
 	'Line Spacing Options…': 'Line Spacing Options…',
+	'Custom Margins…': 'Custom Margins…',
 	None: 'None',
 } as const;

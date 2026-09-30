@@ -214,6 +214,11 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 					['wide', 'Wide'],
 				],
 				(value) => ({ type: 'page', key: 'margin', value }),
+				{
+					commands: [
+						{ label: 'Custom Margins…', action: { type: 'formatDialog', kind: 'pageSetup' } },
+					],
+				},
 			),
 			menuGallery('Page size', 'pageSize', 'size', PAGE_SIZE_OPTIONS, (value) => ({
 				type: 'page',
