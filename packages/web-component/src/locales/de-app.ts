@@ -220,5 +220,10 @@ export const deApp: AppStrings = {
 	'Zoom settings': 'Zoomeinstellungen',
 	'Line Spacing Options…': 'Zeilenabstandsoptionen…',
 	'Custom Margins…': 'Benutzerdefinierte Seitenränder…',
+	'Borders and Shading': 'Rahmen und Schattierung',
+	'Borders and Shading…': 'Rahmen und Schattierung…',
+	'Style': 'Format',
+	'Color': 'Farbe',
+	'Fill': 'Füllung',
 	None: 'Keine',
 };

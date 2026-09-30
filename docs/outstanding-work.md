@@ -171,8 +171,10 @@ Known limits of what is implemented:
   changed.
 - Page Number adds a PAGE field to the default header or footer; it does not offer Word's numbered
   gallery styles, "Page X of Y" or first/odd/even variants.
-- Shading is a solid hex fill and Borders use Word's default 0.5 pt automatic pen; there are no line
-  styles, widths, colours, patterns or the Borders and Shading dialog.
+- The Borders menu presets use Word's default 0.5 pt automatic pen. The Borders and Shading dialog
+  (paragraphs) sets sides, one style (single, double, dotted, dashed), width and colour for all chosen
+  sides, and a solid fill; there is no per-side pen, Box/Shadow/3-D setting, patterns, page borders or
+  table/cell targeting, and no preview.
 - The Font dialog has no Advanced tab (ligatures, kerning, scale, position) or text effects.
 
 Still not at parity:
@@ -191,7 +193,7 @@ Still not at parity:
   Split and Macros.
 - **Dropdown galleries:** Margins, Size, Orientation, Vertical alignment, Columns, Borders and Line
   spacing are galleries with thumbnails (Line spacing ends with Line Spacing Options, which opens the
-  Paragraph dialog; Borders has no Borders and Shading entry because that dialog does not exist).
+  Paragraph dialog; Borders ends with Borders and Shading).
   Page number format, Sort, Change case and similar stay plain text lists, as Word's Change Case
   does. Zoom is a percentage list next to a Zoom dialog. Margins ends with Custom Margins, which opens Page Setup; Columns has no Left, Right or More Columns.
 - **Ribbon:** command KeyTips use Word's keys for the commands that share a name with Word's (Bold `1`,

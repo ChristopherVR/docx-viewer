@@ -218,5 +218,10 @@ export const esApp: AppStrings = {
 	'Zoom settings': 'Configuración de zoom',
 	'Line Spacing Options…': 'Opciones de interlineado…',
 	'Custom Margins…': 'Márgenes personalizados…',
+	'Borders and Shading': 'Bordes y sombreado',
+	'Borders and Shading…': 'Bordes y sombreado…',
+	'Style': 'Estilo',
+	'Color': 'Color',
+	'Fill': 'Relleno',
 	None: 'Ninguno',
 };

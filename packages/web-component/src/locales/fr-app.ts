@@ -210,5 +210,10 @@ export const frApp: AppStrings = {
 	'Zoom settings': 'Paramètres de zoom',
 	'Line Spacing Options…': 'Options d’interligne…',
 	'Custom Margins…': 'Marges personnalisées…',
+	'Borders and Shading': 'Bordures et trame',
+	'Borders and Shading…': 'Bordures et trame…',
+	'Style': 'Style',
+	'Color': 'Couleur',
+	'Fill': 'Remplissage',
 	None: 'Aucun',
 };

@@ -3,6 +3,7 @@ import type { EditorView } from 'prosemirror-view';
 import { createFontDialog, type FormatDialog } from './font-dialog';
 import type { EditorLocale } from './localization';
 import { createBookmarkDialog } from './bookmark-dialog';
+import { createBordersDialog } from './borders-dialog';
 import { createCaptionDialog } from './caption-dialog';
 import { createCrossReferenceDialog } from './cross-reference-dialog';
 import { blockPageNumbers } from './toc-commands';
@@ -18,7 +19,8 @@ export type FormatDialogKind =
 	| 'pageSetup'
 	| 'caption'
 	| 'crossReference'
-	| 'zoom';
+	| 'zoom'
+	| 'borders';
 
 export interface FormatDialogsHost {
 	view(): EditorView | undefined;
@@ -58,6 +60,7 @@ export class FormatDialogs {
 				...(host.pageSetup ?? { section: () => undefined, canEdit: () => false, apply: () => {} }),
 				restoreFocus: () => focusView(host.view()),
 			}),
+			borders: createBordersDialog(() => host.view()),
 		};
 	}
 

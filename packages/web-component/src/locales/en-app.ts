@@ -207,5 +207,10 @@ export const enApp = {
 	'Zoom settings': 'Zoom settings',
 	'Line Spacing Options…': 'Line Spacing Options…',
 	'Custom Margins…': 'Custom Margins…',
+	'Borders and Shading': 'Borders and Shading',
+	'Borders and Shading…': 'Borders and Shading…',
+	'Style': 'Style',
+	'Color': 'Color',
+	'Fill': 'Fill',
 	None: 'None',
 } as const;

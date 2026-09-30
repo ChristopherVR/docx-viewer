@@ -207,5 +207,10 @@ export const zhCNApp: AppStrings = {
 	'Zoom settings': '缩放设置',
 	'Line Spacing Options…': '行距选项…',
 	'Custom Margins…': '自定义页边距…',
+	'Borders and Shading': '边框和底纹',
+	'Borders and Shading…': '边框和底纹…',
+	'Style': '样式',
+	'Color': '颜色',
+	'Fill': '填充',
 	None: '无',
 };

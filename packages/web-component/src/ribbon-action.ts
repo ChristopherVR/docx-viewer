@@ -75,7 +75,7 @@ export type RibbonAction =
 	| { type: 'headerFooter'; kind: 'header' | 'footer' }
 	| {
 			type: 'formatDialog';
-			kind: 'font' | 'paragraph' | 'bookmark' | 'pageSetup' | 'caption' | 'crossReference' | 'zoom';
+			kind: 'font' | 'paragraph' | 'bookmark' | 'pageSetup' | 'caption' | 'crossReference' | 'zoom' | 'borders';
 	  }
 	| { type: 'indent'; side: 'left' | 'right'; inches: number }
 	| { type: 'zoomFit'; mode: 'actual' | 'width' | 'page' | 'pages' }

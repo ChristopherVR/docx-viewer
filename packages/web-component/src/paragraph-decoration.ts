@@ -117,3 +117,69 @@ export function setBorders(view: EditorView, preset: BorderPreset): boolean {
 	view.dispatch(closeHistory(tr));
 	return true;
 }
+
+export interface BordersAndShading {
+	/** Sides to draw; the other sides lose their border. */
+	sides: Partial<Record<'top' | 'bottom' | 'left' | 'right', boolean>>;
+	style: 'single' | 'double' | 'dotted' | 'dashed';
+	sizeEighthPoints: number;
+	/** `#rrggbb`, or `null` for automatic. */
+	color: string | null;
+	/** `#rrggbb`, or `null` for no shading. */
+	fill: string | null;
+}
+
+const HEX = /^#?[0-9a-f]{6}$/i;
+const asHex = (value: unknown): string | null =>
+	typeof value === 'string' && HEX.test(value) ? `#${value.replace('#', '')}` : null;
+
+/** What the Borders and Shading dialog shows: the first selected paragraph's pen, sides and fill. */
+export function readBordersAndShading(state: EditorState): BordersAndShading {
+	const node = state.doc.nodeAt(selectedParagraphs(state)[0] ?? -1);
+	const borders = bordersOf(node?.attrs ?? {});
+	const pen = borders.top ?? borders.bottom ?? borders.left ?? borders.right;
+	const style = pen?.style;
+	return {
+		sides: Object.fromEntries(
+			(['top', 'bottom', 'left', 'right'] as const).map((side) => [
+				side,
+				Boolean(borders[side] && borders[side]?.style !== 'none'),
+			]),
+		),
+		style: style === 'double' || style === 'dotted' || style === 'dashed' ? style : 'single',
+		sizeEighthPoints: pen?.sizeEighthPoints ?? PEN.sizeEighthPoints,
+		color: asHex(pen?.color),
+		fill: asHex(node?.attrs.shadingFill),
+	};
+}
+
+/** Borders and Shading dialog: one pen for the chosen sides plus a fill, on every selected paragraph. */
+export function applyBordersAndShading(view: EditorView, settings: BordersAndShading): boolean {
+	if (!view.editable) return false;
+	const fill = asHex(settings.fill)?.toUpperCase() ?? null;
+	const color = asHex(settings.color);
+	let tr = view.state.tr;
+	for (const pos of selectedParagraphs(view.state)) {
+		const node = tr.doc.nodeAt(pos);
+		if (!node) continue;
+		const borders: Borders = { ...bordersOf(node.attrs) };
+		for (const side of ['top', 'bottom', 'left', 'right'] as const) {
+			if (settings.sides[side])
+				borders[side] = {
+					...PEN,
+					style: settings.style,
+					sizeEighthPoints: settings.sizeEighthPoints,
+					...(color ? { color } : {}),
+				};
+			else delete borders[side];
+		}
+		tr = tr.setNodeMarkup(pos, undefined, {
+			...node.attrs,
+			borders: Object.keys(borders).length ? borders : null,
+			shadingFill: fill,
+		});
+	}
+	if (!tr.docChanged) return false;
+	view.dispatch(closeHistory(tr));
+	return true;
+}

@@ -260,7 +260,16 @@ export function buildHomePanel(panels: Map<string, HTMLElement>): void {
 					'borders',
 					BORDER_PRESETS,
 					(value) => ({ type: 'borders', preset: value as 'none' }),
-					{ compact: true, momentary: true },
+					{
+						compact: true,
+						momentary: true,
+						commands: [
+							{
+								label: 'Borders and Shading…',
+								action: { type: 'formatDialog', kind: 'borders' },
+							},
+						],
+					},
 				),
 			),
 		),
