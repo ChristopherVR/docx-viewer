@@ -16,6 +16,12 @@ export interface LayoutRun {
 	fontFamily?: string;
 	/** Points, matching `TextRun.fontSize` in docx-core. */
 	fontSizePt?: number;
+	textScalePercent?: number;
+	ligatures?: import('@christophervr/docx-core').Ligatures;
+	characterSpacingPx?: number;
+	kerningThresholdPt?: number;
+	/** Positive raises the baseline, negative lowers it. */
+	positionPx?: number;
 	/** A hard page/column break placed immediately after this run's text. */
 	breakAfter?: 'page' | 'column';
 	/** An inline picture: occupies its size on the line (`text` is empty). */
@@ -188,6 +194,9 @@ export interface LayoutPageGeometry {
 export interface LayoutColumns {
 	count: number;
 	gapPx: number;
+	separator?: boolean;
+	/** Explicit column widths and the gap after each column (`w:col`). */
+	widths?: { widthPx: number; gapPx: number }[];
 }
 
 export interface LayoutSection {

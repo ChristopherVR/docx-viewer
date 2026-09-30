@@ -8,6 +8,8 @@ import type {
 import { schema } from './schema';
 import { runToInlineNodes } from './run-adapter';
 import { translateUiText } from './localization';
+import { effectiveSlots } from './header-footer-link';
+import { stylePreviewRuns } from './preview-run-styles';
 
 function blockNode(block: Block): ReturnType<typeof schema.node> {
 	if (block.type === 'paragraph') {
@@ -34,10 +36,14 @@ function blockNode(block: Block): ReturnType<typeof schema.node> {
 	return schema.node('table', { id: block.id, structureEditable: false }, rows);
 }
 
-export function renderBlocks(blocks: Block[]): DocumentFragment {
+export function renderBlocks(blocks: Block[], model?: DocumentModel): DocumentFragment {
 	const serializer = DOMSerializer.fromSchema(schema);
 	const fragment = document.createDocumentFragment();
-	for (const block of blocks) fragment.append(serializer.serializeNode(blockNode(block)));
+	for (const block of blocks) {
+		const element = serializer.serializeNode(blockNode(block)) as HTMLElement;
+		if (model) stylePreviewRuns(element, block, model, serializer);
+		fragment.append(element);
+	}
 	return fragment;
 }
 
@@ -46,6 +52,7 @@ function slot(
 	labelText: string,
 	content: HeaderFooterContent | undefined,
 	name: 'default' | 'first' | 'even',
+	model: DocumentModel,
 ): void {
 	if (!content || !content.blocks.length) return;
 	const wrap = document.createElement('div');
@@ -57,7 +64,7 @@ function slot(
 	label.dataset.localeAriaLabel = labelText;
 	const body = document.createElement('div');
 	body.className = 'dve-header-footer-body';
-	body.append(renderBlocks(content.blocks));
+	body.append(renderBlocks(content.blocks, model));
 	wrap.append(label, body);
 	root.append(wrap);
 }
@@ -66,6 +73,7 @@ function buildSlotsElement(
 	slots: HeaderFooterSlots | undefined,
 	kind: 'header' | 'footer',
 	locale: string,
+	model: DocumentModel,
 ): HTMLElement | null {
 	if (!slots || (!slots.default && !slots.first && !slots.even)) return null;
 	const root = document.createElement('section');
@@ -78,27 +86,38 @@ function buildSlotsElement(
 		translateUiText(root, kind === 'header' ? 'First page header' : 'First page footer'),
 		slots.first,
 		'first',
+		model,
 	);
 	slot(
 		root,
 		translateUiText(root, kind === 'header' ? 'Even page header' : 'Even page footer'),
 		slots.even,
 		'even',
+		model,
 	);
 	slot(
 		root,
 		translateUiText(root, kind === 'header' ? 'Header' : 'Footer'),
 		slots.default,
 		'default',
+		model,
 	);
 	root.dataset.editorLocale = locale;
 	return root;
 }
 
-/** The first section drives the read-only header/footer preview on this continuous surface. */
-export function buildHeaderElement(model: DocumentModel, locale: string): HTMLElement | null {
-	return buildSlotsElement(model.sections?.[0]?.headers, 'header', locale);
+/** The selected section drives the header/footer preview on this continuous surface. */
+export function buildHeaderElement(
+	model: DocumentModel,
+	locale: string,
+	sectionIndex = 0,
+): HTMLElement | null {
+	return buildSlotsElement(effectiveSlots(model, sectionIndex, 'headers'), 'header', locale, model);
 }
-export function buildFooterElement(model: DocumentModel, locale: string): HTMLElement | null {
-	return buildSlotsElement(model.sections?.[0]?.footers, 'footer', locale);
+export function buildFooterElement(
+	model: DocumentModel,
+	locale: string,
+	sectionIndex = 0,
+): HTMLElement | null {
+	return buildSlotsElement(effectiveSlots(model, sectionIndex, 'footers'), 'footer', locale, model);
 }

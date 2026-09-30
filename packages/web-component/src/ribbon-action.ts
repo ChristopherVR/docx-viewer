@@ -36,13 +36,24 @@ export type RibbonAction =
 	| { type: 'evenOddHeaders' }
 	| { type: 'pageColor'; value: string }
 	| { type: 'hyphenation'; value: string }
+	| { type: 'suppressLineNumbers' }
 	| {
 			type: 'paragraph';
 			key: 'indent' | 'spacingBefore' | 'spacingAfter' | 'lineSpacing';
 			value: string;
 	  }
 	| { type: 'zoom'; value: number }
-	| { type: 'list'; key: 'bullet' | 'number' | 'multilevel' | 'outline' | 'increaseLevel' | 'decreaseLevel' | 'remove' }
+	| {
+			type: 'list';
+			key:
+				| 'bullet'
+				| 'number'
+				| 'multilevel'
+				| 'outline'
+				| 'increaseLevel'
+				| 'decreaseLevel'
+				| 'remove';
+	  }
 	| { type: 'view'; value: 'draft' | 'print' }
 	| { type: 'print' }
 	| MultilingualAction
@@ -58,6 +69,7 @@ export type RibbonAction =
 	| { type: 'blankPage' }
 	| { type: 'readAloud' }
 	| { type: 'gridlines' }
+	| { type: 'navigation' }
 	| { type: 'shading'; value: string }
 	| {
 			type: 'borders';
@@ -72,11 +84,20 @@ export type RibbonAction =
 				| 'insideH'
 				| 'horizontal';
 	  }
-	| { type: 'pageNumber'; position: 'top' | 'bottom'; align: 'left' | 'center' | 'right' }
-	| { type: 'headerFooter'; kind: 'header' | 'footer' }
+	| {
+			type: 'pageNumber';
+			position: 'top' | 'bottom';
+			align: 'left' | 'center' | 'right';
+			style?: 'plain' | 'pageOfTotal';
+	  }
+	| { type: 'headerFooter'; kind: 'header' | 'footer'; slot?: 'default' | 'first' | 'even' }
+	| { type: 'headerFooterLink' }
+	| { type: 'headerFooterClose' }
+	| { type: 'headerFooterNavigate'; target: 'header' | 'footer' | 'previous' | 'next' }
+	| { type: 'headerFooterPosition'; kind: 'header' | 'footer'; inches: number }
 	| {
 			type: 'formatDialog';
-			kind: 'font' | 'paragraph' | 'bookmark' | 'pageSetup' | 'caption' | 'crossReference' | 'zoom' | 'borders';
+			kind: import('./format-dialogs').FormatDialogKind;
 	  }
 	| { type: 'indent'; side: 'left' | 'right'; inches: number }
 	| { type: 'zoomFit'; mode: 'actual' | 'width' | 'page' | 'pages' }

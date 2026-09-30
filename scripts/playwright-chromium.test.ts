@@ -11,8 +11,14 @@ function fakeCache(): string {
 		['chromium_headless_shell-1194', 'headless_shell'],
 		['chromium-1200', 'chrome'],
 	] as const) {
-		mkdirSync(join(root, dir, 'chrome-linux'), { recursive: true });
-		writeFileSync(join(root, dir, 'chrome-linux', exe), '');
+		for (const [platformDir, filename] of [
+			['chrome-linux', exe],
+			['chrome-win', `${exe}.exe`],
+			['chrome-mac', exe],
+		]) {
+			mkdirSync(join(root, dir, platformDir!), { recursive: true });
+			writeFileSync(join(root, dir, platformDir!, filename!), '');
+		}
 	}
 	return root;
 }

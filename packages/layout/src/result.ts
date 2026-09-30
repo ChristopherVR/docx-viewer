@@ -8,6 +8,10 @@ export interface LayoutFragment {
 	italic?: boolean;
 	fontFamily?: string;
 	fontSizePt?: number;
+	textScalePercent?: number;
+	ligatures?: import('@christophervr/docx-core').Ligatures;
+	characterSpacingPx?: number;
+	kerningThresholdPt?: number;
 	/** An inline picture drawn in this fragment's box, bottom-aligned on the line. */
 	object?: import('./input.js').LayoutObject;
 	color?: string;
@@ -34,6 +38,10 @@ export interface LayoutLine {
 	/** Character range within the paragraph's concatenated run text, for hit-testing. */
 	sourceStart: number;
 	sourceEnd: number;
+	/** First unconsumed paragraph token, for reflow into a column of a different width. */
+	nextToken?: number;
+	/** First token on this line, for reflowing a split table-cell paragraph. */
+	firstToken?: number;
 }
 
 export interface LayoutParagraphBox {
@@ -107,6 +115,7 @@ export interface LayoutPageBox {
 	marginBottomPx: number;
 	marginLeftPx: number;
 	columns: LayoutColumnBox[];
+	columnSeparator?: boolean;
 	/** Floating pictures on this page, in page coordinates (CSS pixels from the sheet's top-left). */
 	floats?: LayoutFloatBox[];
 	/** Footnotes at the bottom of the page, in reference order; `yPx` values are within the area. */

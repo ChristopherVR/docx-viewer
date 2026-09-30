@@ -8,6 +8,7 @@ function noteList(
 	kind: 'footnote' | 'endnote',
 	numFmt: string | undefined,
 	blocks: DocumentModel['blocks'],
+	model: DocumentModel,
 ): HTMLElement {
 	const order = numberNotesInOrder(blocks, kind);
 	const numbered = notes
@@ -24,7 +25,7 @@ function noteList(
 		marker.textContent = `${formatNoteNumber(number, numFmt)}. `;
 		const body = document.createElement('div');
 		body.className = 'dve-note-body';
-		body.append(renderBlocks(note.blocks));
+		body.append(renderBlocks(note.blocks, model));
 		item.append(marker, body);
 		list.append(item);
 	}
@@ -38,6 +39,7 @@ function section(
 	numFmt: string | undefined,
 	blocks: DocumentModel['blocks'],
 	locale: string,
+	model: DocumentModel,
 ): HTMLElement | null {
 	if (!notes?.length) return null;
 	const root = document.createElement('section');
@@ -50,7 +52,7 @@ function section(
 	heading.className = 'dve-notes-heading';
 	heading.textContent = translateUiText(root, label);
 	heading.dataset.localeAriaLabel = label;
-	root.append(heading, noteList(notes, kind, numFmt, blocks));
+	root.append(heading, noteList(notes, kind, numFmt, blocks, model));
 	return root;
 }
 
@@ -63,6 +65,7 @@ export function buildNotesElement(model: DocumentModel, locale: string): HTMLEle
 		model.footnoteNumFmt,
 		model.blocks,
 		locale,
+		model,
 	);
 	const endnotes = section(
 		'Endnotes',
@@ -71,6 +74,7 @@ export function buildNotesElement(model: DocumentModel, locale: string): HTMLEle
 		model.endnoteNumFmt,
 		model.blocks,
 		locale,
+		model,
 	);
 	if (!footnotes && !endnotes) return null;
 	const root = document.createElement('div');

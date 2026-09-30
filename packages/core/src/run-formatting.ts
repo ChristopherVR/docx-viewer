@@ -29,6 +29,10 @@ const OVERRIDE_KEYS = [
 	'color',
 	'colorTheme',
 	'characterSpacingTwips',
+	'textScalePercent',
+	'ligatures',
+	'kerningHalfPoints',
+	'positionHalfPoints',
 	'shadingFill',
 	'shadingThemeFill',
 ] as const satisfies readonly (keyof RunFormatting)[];
@@ -38,10 +42,11 @@ function paragraphStyleRunChain(
 	paragraphCatalog: ParagraphStyleCatalog | undefined,
 	runCatalog: RunStyleCatalog | undefined,
 ): RunFormatting[] {
-	if (!styleId || !paragraphCatalog) return [];
+	if (!paragraphCatalog) return [];
 	const chain: RunFormatting[] = [];
 	const visited = new Set<string>();
-	let current: string | undefined = styleId;
+	let current: string | undefined =
+		styleId || Object.values(paragraphCatalog.styles).find((style) => style.isDefault)?.id;
 	while (current && !visited.has(current)) {
 		const style: ParagraphStyleCatalog['styles'][string] | undefined =
 			paragraphCatalog.styles[current];

@@ -1,5 +1,6 @@
 import type { TextRun } from '@christophervr/docx-core';
 import type { MarkSpec } from 'prosemirror-model';
+import { ligatureStyle } from './ligature-style';
 
 /**
  * Run properties modeled by docx-core that have no dedicated editor control yet. They travel
@@ -14,6 +15,10 @@ export const extraRunFields = [
 	'underlineStyle',
 	'underlineColor',
 	'characterSpacingTwips',
+	'textScalePercent',
+	'ligatures',
+	'kerningHalfPoints',
+	'positionHalfPoints',
 	'shadingFill',
 	'shadingThemeFill',
 	'colorTheme',
@@ -43,6 +48,7 @@ const cssColor = (value: unknown): string | undefined =>
 
 function extraRunStyle(props: ExtraRunProperties): string {
 	const css: string[] = [];
+	if (props.ligatures) css.push(ligatureStyle(props.ligatures));
 	if (props.caps) css.push('text-transform:uppercase');
 	if (props.smallCaps) css.push('font-variant:small-caps');
 	const decorations: string[] = [];
@@ -61,6 +67,9 @@ function extraRunStyle(props: ExtraRunProperties): string {
 	if (underlineColor) css.push(`text-decoration-color:${underlineColor}`);
 	if (typeof props.characterSpacingTwips === 'number')
 		css.push(`letter-spacing:${(props.characterSpacingTwips / 20).toFixed(2)}pt`);
+	if (typeof props.positionHalfPoints === 'number')
+		css.push(`vertical-align:${props.positionHalfPoints / 2}pt`);
+	if (props.kerningHalfPoints === 0) css.push('font-kerning:none');
 	const shading = cssColor(props.shadingFill);
 	if (shading) css.push(`background-color:${shading}`);
 	if (props.vanish) css.push('opacity:0.45;text-decoration:underline dotted');

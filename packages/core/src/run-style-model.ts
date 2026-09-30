@@ -22,6 +22,10 @@ export type RunFormatting = Pick<
 	| 'color'
 	| 'colorTheme'
 	| 'characterSpacingTwips'
+	| 'textScalePercent'
+	| 'ligatures'
+	| 'kerningHalfPoints'
+	| 'positionHalfPoints'
 	| 'shadingFill'
 	| 'shadingThemeFill'
 >;

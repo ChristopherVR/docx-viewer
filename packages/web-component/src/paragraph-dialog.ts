@@ -27,7 +27,8 @@ type BooleanField =
 	| 'widowControl'
 	| 'keepNext'
 	| 'keepLines'
-	| 'pageBreakBefore';
+	| 'pageBreakBefore'
+	| 'suppressLineNumbers';
 
 /** Word's Paragraph dialog: alignment, indentation, spacing, line spacing and pagination. */
 export function createParagraphDialog(
@@ -73,6 +74,7 @@ export function createParagraphDialog(
 		keepNext: checkbox('Keep with next'),
 		keepLines: checkbox('Keep lines together'),
 		pageBreakBefore: checkbox('Page break before'),
+		suppressLineNumbers: checkbox('Suppress line numbers'),
 	};
 
 	const toggles: Array<[BooleanField, ReturnType<typeof checkbox>]> = [
@@ -81,6 +83,7 @@ export function createParagraphDialog(
 		['keepNext', pagination.keepNext],
 		['keepLines', pagination.keepLines],
 		['pageBreakBefore', pagination.pageBreakBefore],
+		['suppressLineNumbers', pagination.suppressLineNumbers],
 	];
 
 	const cancel = dialogButton('Cancel');

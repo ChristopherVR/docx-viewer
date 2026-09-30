@@ -61,6 +61,17 @@ describe('line numbers in Print Layout', () => {
 		expect(numbers(every.element)).toEqual(['2', '4', '6']);
 		expect(numbers(renderPrintLayout(result).element)).toEqual([]);
 	});
+	it('uses visible numbers for Count by and omits suppressed paragraphs from the counter', () => {
+		const counted = renderPrintLayout(result, undefined, {
+			lineNumbers: [{ countBy: 5, start: 3, restart: 'continuous' }],
+		});
+		expect(numbers(counted.element)).toEqual(['5']);
+		const suppressed = renderPrintLayout(result, undefined, {
+			lineNumbers: [{ countBy: 1, start: 3, restart: 'continuous' }],
+			suppressedLineNumberParagraphs: new Set(['p0']),
+		});
+		expect(numbers(suppressed.element)).toEqual(['3', '4', '5']);
+	});
 });
 
 describe('setLineNumbering', () => {

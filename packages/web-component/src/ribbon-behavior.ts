@@ -10,6 +10,7 @@ const KEY_TIPS: Record<string, string> = {
 	'dve-tab-review': 'R',
 	'dve-tab-view': 'W',
 	'dve-tab-table': 'T',
+	'dve-tab-header-footer': 'J',
 };
 
 /**

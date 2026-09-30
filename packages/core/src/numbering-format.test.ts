@@ -112,7 +112,7 @@ describe('computeListLabels', () => {
 		expect(labels.get('b1')?.text).toBe('a)');
 	});
 
-	it('parses lvlRestart for round-tripping without affecting the simplified default restart', () => {
+	it('ignores an out-of-range restart trigger and uses the default previous level', () => {
 		const catalog = catalogWith({
 			abstractNums: {
 				'0': {
@@ -145,7 +145,7 @@ describe('computeListLabels', () => {
 		};
 		const labels = computeListLabels(model);
 		expect(labels.get('a1')?.text).toBe('1.');
-		// The simplified counter always restarts a deeper level on any shallower-level change.
+		// The invalid trigger is ignored, so this falls back to the previous level.
 		expect(labels.get('b1')?.text).toBe('1.');
 		expect(at(must(catalog.abstractNums['0'], 'abstract numbering 0').levels, 1).lvlRestart).toBe(
 			5,

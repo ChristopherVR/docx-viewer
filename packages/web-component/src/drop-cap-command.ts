@@ -1,4 +1,5 @@
 import { closeHistory } from 'prosemirror-history';
+import type { Paragraph } from '@christophervr/docx-core';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import { TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
@@ -8,6 +9,30 @@ import { schema } from './schema';
 export type DropCapStyle = 'none' | 'drop' | 'margin';
 
 const LINES = 3;
+export interface DropCapOptions {
+	lines: number;
+	distanceTwips?: number;
+	fontFamily?: string;
+}
+
+/** Current frame settings, or the body font for a new initial. */
+export function readDropCap(
+	view: EditorView,
+): { style: DropCapStyle; lines: number; distanceTwips: number; fontFamily: string } | undefined {
+	const pair = findPair(view);
+	if (!pair) return undefined;
+	const body = view.state.doc.nodeAt(pair.bodyPos)!;
+	const frame = pair.framePos === undefined ? undefined : view.state.doc.nodeAt(pair.framePos);
+	const text = frame?.firstChild ?? body.firstChild;
+	if (!text?.isText) return undefined;
+	const cap = frame?.attrs.dropCap as Paragraph['dropCap'];
+	return {
+		style: cap?.style ?? 'none',
+		lines: cap?.lines ?? LINES,
+		distanceTwips: cap?.distanceTwips ?? 0,
+		fontFamily: effectiveFont(view.state, text, frame ?? body).family,
+	};
+}
 
 /** The drop cap frame paragraph and the paragraph it belongs to, around the caret. */
 function findPair(view: EditorView): { framePos?: number; bodyPos: number } | undefined {
@@ -28,10 +53,13 @@ function findPair(view: EditorView): { framePos?: number; bodyPos: number } | un
 }
 
 /** Marks for the enlarged initial: its own marks with the font size set for `lines` lines. */
-function capMarks(node: ProseMirrorNode, size: number) {
+function capMarks(node: ProseMirrorNode, size: number, family?: string) {
 	const marks = node.marks.filter((mark) => mark.type !== schema.marks.font);
 	const font = node.marks.find((mark) => mark.type === schema.marks.font);
-	return [...marks, schema.marks.font.create({ ...font?.attrs, size })];
+	return [
+		...marks,
+		schema.marks.font.create({ ...font?.attrs, size, ...(family ? { family } : {}) }),
+	];
 }
 
 /** Marks without an enlarged size, for folding the initial back into its paragraph. */
@@ -49,8 +77,21 @@ function plainMarks(node: ProseMirrorNode) {
  * paragraph (`w:framePr`) placed before it; None folds the letter back. Choosing a style on a
  * paragraph that already has a frame only restyles the frame.
  */
-export function setDropCap(view: EditorView, style: DropCapStyle): boolean {
+export function setDropCap(
+	view: EditorView,
+	style: DropCapStyle,
+	options?: DropCapOptions,
+): boolean {
 	if (!view.editable) return false;
+	if (
+		options &&
+		(!Number.isInteger(options.lines) ||
+			options.lines < 1 ||
+			options.lines > 10 ||
+			(options.distanceTwips !== undefined &&
+				(!Number.isSafeInteger(options.distanceTwips) || options.distanceTwips < 0)))
+	)
+		return false;
 	const pair = findPair(view);
 	if (!pair) return false;
 	const { doc } = view.state;
@@ -72,9 +113,35 @@ export function setDropCap(view: EditorView, style: DropCapStyle): boolean {
 		return true;
 	}
 
-	const cap = { style, lines: LINES };
+	const previous = frame?.attrs.dropCap as Paragraph['dropCap'];
+	const lines = options?.lines ?? previous?.lines ?? LINES;
+	const cap = {
+		...previous,
+		style,
+		lines,
+		...(options?.distanceTwips !== undefined ? { distanceTwips: options.distanceTwips } : {}),
+	};
+	const bodyText = body.firstChild;
+	const base = effectiveFont(view.state, bodyText?.isText ? bodyText : schema.text('x'), body).size;
 	if (frame) {
-		tr = tr.setNodeMarkup(pair.framePos!, undefined, { ...frame.attrs, dropCap: cap });
+		tr = tr.setNodeMarkup(pair.framePos!, undefined, {
+			...frame.attrs,
+			dropCap: cap,
+			...(options
+				? { lineSpacingRule: 'exact', lineSpacingTwips: Math.round(base * lines * 1.2 * 20) }
+				: {}),
+		});
+		if (options) {
+			let offset = pair.framePos! + 1;
+			frame.forEach((child) => {
+				if (child.isText) {
+					tr.removeMark(offset, offset + child.nodeSize, schema.marks.font);
+					const font = capMarks(child, Math.round(base * lines * 1.65), options.fontFamily).at(-1)!;
+					tr.addMark(offset, offset + child.nodeSize, font);
+				}
+				offset += child.nodeSize;
+			});
+		}
 		view.dispatch(closeHistory(tr));
 		return true;
 	}
@@ -82,14 +149,13 @@ export function setDropCap(view: EditorView, style: DropCapStyle): boolean {
 	if (!letter?.isText || !letter.text || /^\s/.test(letter.text)) return false;
 	const first = letter.text.codePointAt(0)!;
 	const char = String.fromCodePoint(first);
-	const base = effectiveFont(view.state, letter, body).size;
-	const size = Math.round(base * LINES * 1.65);
-	const initial = schema.text(char, capMarks(letter, size));
+	const size = Math.round(base * lines * 1.65);
+	const initial = schema.text(char, capMarks(letter, size, options?.fontFamily));
 	const frameNode = schema.nodes.paragraph!.create(
 		{
 			dropCap: cap,
 			lineSpacingRule: 'exact',
-			lineSpacingTwips: Math.round(base * LINES * 1.2 * 20),
+			lineSpacingTwips: Math.round(base * lines * 1.2 * 20),
 			spacingBeforeTwips: 0,
 			spacingAfterTwips: 0,
 		},

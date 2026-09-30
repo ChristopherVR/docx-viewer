@@ -110,7 +110,8 @@ export function adaptDocumentModel(
 				? dateFieldResult(name, run.field.instr, now)
 				: run.text);
 		const script =
-			noteText !== undefined || formatting.verticalAlign === 'superscript'
+			formatting.verticalAlign === 'superscript' ||
+			(noteText !== undefined && formatting.verticalAlign === undefined)
 				? 'super'
 				: formatting.verticalAlign === 'subscript'
 					? 'sub'
@@ -135,6 +136,18 @@ export function adaptDocumentModel(
 				italic: formatting.italic,
 				fontFamily: family,
 				fontSizePt: formatting.fontSize,
+				textScalePercent: formatting.textScalePercent,
+				ligatures: formatting.ligatures,
+				characterSpacingPx:
+					formatting.characterSpacingTwips === undefined
+						? undefined
+						: formatting.characterSpacingTwips / 15,
+				kerningThresholdPt:
+					formatting.kerningHalfPoints === undefined ? undefined : formatting.kerningHalfPoints / 2,
+				positionPx:
+					formatting.positionHalfPoints === undefined
+						? undefined
+						: (formatting.positionHalfPoints * 2) / 3,
 			}),
 			...(color && /^#[0-9a-f]{6}$/i.test(color) ? { color } : {}),
 			...(formatting.underline ? { underline: true } : {}),
@@ -272,6 +285,17 @@ export function adaptDocumentModel(
 						columns: {
 							count: section.columns.count,
 							gapPx: twipsToPx(section.columns.spacingTwips ?? twips(720)),
+							...(section.columns.separator ? { separator: true } : {}),
+							...(!section.columns.equalWidth && section.columns.widths?.length
+								? {
+										widths: section.columns.widths.map((column) => ({
+											widthPx: twipsToPx(column.widthTwips),
+											gapPx: twipsToPx(
+												column.spacingTwips ?? section.columns.spacingTwips ?? twips(720),
+											),
+										})),
+									}
+								: {}),
 						},
 					}
 				: {}),

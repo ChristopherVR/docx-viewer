@@ -11,6 +11,8 @@ import {
 	type TextRun,
 } from '@christophervr/docx-core';
 import { appendInlineNode } from './run-adapter';
+import { ligatureStyle } from './ligature-style';
+import { scaledSegments, scaleMeasurer } from './run-scale';
 
 type Theme = NonNullable<DocumentModel['theme']>;
 
@@ -33,6 +35,9 @@ export function runFormattingCss(
 	direct: RunFormatting = {},
 ): string {
 	const css: string[] = [];
+	const script =
+		formatting.verticalAlign === 'superscript' || formatting.verticalAlign === 'subscript';
+	if (formatting.ligatures) css.push(ligatureStyle(formatting.ligatures));
 	// Word toggle properties cancel out when set at an odd number of levels; a direct toggle that the
 	// hierarchy cancels still renders its mark, so the decoration (inside the mark) resets it.
 	if (formatting.bold) css.push('font-weight:700');
@@ -48,7 +53,11 @@ export function runFormattingCss(
 	else if (direct.caps) css.push('text-transform:none');
 	if (formatting.smallCaps) css.push('font-variant:small-caps');
 	else if (direct.smallCaps) css.push('font-variant:normal');
-	if (formatting.fontSize) css.push(`font-size:${formatting.fontSize}pt`);
+	if (formatting.fontSize) css.push(`font-size:${formatting.fontSize * (script ? 0.65 : 1)}pt`);
+	if (formatting.verticalAlign && direct.verticalAlign === undefined)
+		css.push(
+			`vertical-align:${formatting.verticalAlign === 'baseline' ? 'baseline' : formatting.verticalAlign === 'superscript' ? 'super' : 'sub'}`,
+		);
 	const family = formatting.fontFamily ?? themeFontOf(formatting, theme);
 	if (family) css.push(`font-family:${quoteFont(family)}`);
 	const color =
@@ -57,6 +66,21 @@ export function runFormattingCss(
 			? safeColor(resolveThemeColorReference(formatting.colorTheme, theme))
 			: undefined);
 	if (color) css.push(`color:${color}`);
+	if (formatting.characterSpacingTwips !== undefined)
+		css.push(`letter-spacing:${formatting.characterSpacingTwips / 20}pt`);
+	// Direct position lives on its mark, including in read-only previews. Applying it to an inner
+	// decoration too would move the baseline twice.
+	if (formatting.positionHalfPoints !== undefined && direct.positionHalfPoints === undefined) {
+		if (script && direct.verticalAlign === undefined)
+			css.push('position:relative', `top:${-formatting.positionHalfPoints / 2}pt`);
+		else css.push(`vertical-align:${formatting.positionHalfPoints / 2}pt`);
+	}
+	if (formatting.kerningHalfPoints !== undefined) {
+		const threshold = formatting.kerningHalfPoints / 2;
+		css.push(
+			`font-kerning:${threshold > 0 && (formatting.fontSize ?? 11) >= threshold ? 'normal' : 'none'}`,
+		);
+	}
 	return css.join(';');
 }
 
@@ -82,13 +106,22 @@ export function styleModelOf(state: EditorState): DocumentModel | undefined {
 }
 
 export function runStylesPlugin(getModel: () => DocumentModel) {
+	let measurer = scaleMeasurer();
 	return new Plugin({
 		key: runStylesKey,
 		getModel,
+		view(view) {
+			const fonts = view.dom.ownerDocument.fonts;
+			const refresh = () => {
+				measurer = scaleMeasurer();
+				view.dispatch(view.state.tr.setMeta('addToHistory', false).setMeta(runStylesKey, 'fonts'));
+			};
+			fonts?.addEventListener?.('loadingdone', refresh);
+			return { destroy: () => fonts?.removeEventListener?.('loadingdone', refresh) };
+		},
 		props: {
 			decorations(state) {
 				const model = getModel();
-				if (!model.characterStyles && !model.theme && !model.tableStyles) return null;
 				const tables = new Map<string, Table>();
 				for (const block of model.blocks) if (block.type === 'table') tables.set(block.id, block);
 				const decorations: Decoration[] = [];
@@ -96,7 +129,7 @@ export function runStylesPlugin(getModel: () => DocumentModel) {
 					paragraph: ProseMirrorNode,
 					start: number,
 					tableStyleRun?: RunFormatting,
-				) =>
+				) => {
 					paragraph.forEach((child, offset) => {
 						if (!child.isText) return;
 						const run = runOf(child);
@@ -109,6 +142,27 @@ export function runStylesPlugin(getModel: () => DocumentModel) {
 						});
 						const style = runFormattingCss(resolved, model.theme, run);
 						const hidden = resolved.vanish === true;
+						const segments = scaledSegments(
+							child.text!,
+							resolved,
+							resolved.fontFamily ?? themeFontOf(resolved, model.theme),
+							measurer,
+						);
+						if (segments.length) {
+							for (const segment of segments)
+								decorations.push(
+									Decoration.inline(
+										start + offset + segment.from,
+										start + offset + segment.to,
+										{
+											style: `${style};${segment.css}`,
+											class: `dve-scaled-text${hidden ? ' dve-hidden-text' : ''}`,
+										},
+										{ segment: segment.from },
+									),
+								);
+							return;
+						}
 						if (style || hidden)
 							decorations.push(
 								Decoration.inline(start + offset, start + offset + child.nodeSize, {
@@ -117,6 +171,7 @@ export function runStylesPlugin(getModel: () => DocumentModel) {
 								}),
 							);
 					});
+				};
 				state.doc.forEach((block, blockOffset) => {
 					if (block.type.name === 'paragraph') return visitParagraph(block, blockOffset + 1);
 					if (block.type.name !== 'table') return;

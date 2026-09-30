@@ -17,11 +17,19 @@ export function stackParagraphs(
 	measurer: TextMeasurer,
 	note: (message: string) => void,
 	topPx = 0,
+	startTokens?: ReadonlyMap<string, number>,
 ): { heightPx: number; boxes: LayoutParagraphBox[] } {
 	let y = topPx;
 	const boxes: LayoutParagraphBox[] = [];
 	for (const paragraph of paragraphs) {
-		const layout = layoutParagraph(paragraph, widthPx, measurer, note);
+		const layout = layoutParagraph(
+			paragraph,
+			widthPx,
+			measurer,
+			note,
+			undefined,
+			startTokens?.get(paragraph.id) ?? 0,
+		);
 		y += layout.spacingBeforePx;
 		const top = y;
 		const lines = layout.lines.map((line) => ({ ...line, yPx: line.yPx + top }));
@@ -46,19 +54,25 @@ export function layoutRow(
 	tableWidthPx: number,
 	measurer: TextMeasurer,
 	note: (message: string) => void,
+	remaining?: LayoutParagraphBox[][],
 ): RowLayout {
 	const count = row.cells.length || 1;
 	let x = 0;
 	const geometry: LayoutCellGeometry[] = [];
 	const laidOut = row.cells.map((cell) => {
+		const continuation = remaining?.[geometry.length];
+		const starts = continuation
+			? new Map(continuation.map((box) => [box.blockId, box.lines[0]?.firstToken ?? 0]))
+			: undefined;
 		const widthPx = cell.widthPx ?? tableWidthPx / count;
 		const padding = cell.padding ?? { top: 0, right: 0, bottom: 0, left: 0 };
 		const content = stackParagraphs(
-			cell.paragraphs,
+			starts ? cell.paragraphs.filter((paragraph) => starts.has(paragraph.id)) : cell.paragraphs,
 			Math.max(1, widthPx - padding.left - padding.right),
 			measurer,
 			note,
 			padding.top,
+			starts,
 		);
 		const heightPx = content.heightPx + padding.bottom;
 		geometry.push({

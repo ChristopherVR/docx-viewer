@@ -1,8 +1,16 @@
 import type { Command } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { closeHistory } from 'prosemirror-history';
-import type { DocumentModel, NumberingCatalog } from '@christophervr/docx-core';
-import { ensureListDefinition, resolveNumberingLevel } from '@christophervr/docx-core';
+import type {
+	DocumentModel,
+	NumberingCatalog,
+	NumberingLevelDefinition,
+} from '@christophervr/docx-core';
+import {
+	createListDefinition,
+	ensureListDefinition,
+	resolveNumberingLevel,
+} from '@christophervr/docx-core';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 
 export type ListKind = 'bullet' | 'decimal';
@@ -152,7 +160,27 @@ function levelCommand(delta: 1 | -1): Command {
 export const indentListItem: Command = levelCommand(1);
 export const outdentListItem: Command = levelCommand(-1);
 
-export type ListAction = 'bullet' | 'number' | 'multilevel' | 'outline' | 'increaseLevel' | 'decreaseLevel' | 'remove';
+export type ListAction =
+	| 'bullet'
+	| 'number'
+	| 'multilevel'
+	| 'outline'
+	| 'increaseLevel'
+	| 'decreaseLevel'
+	| 'remove';
+
+/** A definition and all selected list paragraphs are applied through one history transaction. */
+export function applyCustomList(
+	view: EditorView,
+	model: DocumentModel,
+	levels: readonly NumberingLevelDefinition[],
+): void {
+	toggleList(view, false, () => {
+		const created = createListDefinition(model.numberingCatalog, levels);
+		model.numberingCatalog = created.catalog;
+		return created.numId;
+	});
+}
 
 /**
  * Runs a Home > Paragraph list command. Applying a new list adds a fresh numbering definition to

@@ -23,6 +23,12 @@ const PAGE_NUMBER_OPTIONS: Array<[string, string]> = [
 	['bottom:left', 'Bottom left'],
 	['bottom:center', 'Bottom center'],
 	['bottom:right', 'Bottom right'],
+	['top:left:pageOfTotal', 'Top left — Page X of Y'],
+	['top:center:pageOfTotal', 'Top center — Page X of Y'],
+	['top:right:pageOfTotal', 'Top right — Page X of Y'],
+	['bottom:left:pageOfTotal', 'Bottom left — Page X of Y'],
+	['bottom:center:pageOfTotal', 'Bottom center — Page X of Y'],
+	['bottom:right:pageOfTotal', 'Bottom right — Page X of Y'],
 ];
 import { menuGallery } from './ribbon-gallery-menu';
 import { colorSplit, group, launcher, menuSelect, select, stack, tool } from './ribbon-parts';
@@ -89,11 +95,20 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 		),
 		group(
 			'Header & Footer',
+			tool('Link to Previous', 'link', { type: 'headerFooterLink' }),
 			menuSelect(
 				'Header',
 				'header',
-				[['blank', 'Blank']],
-				() => ({ type: 'headerFooter', kind: 'header' }),
+				[
+					['blank', 'Blank'],
+					['first', 'Blank first page'],
+					['even', 'Blank even pages'],
+				],
+				(value) => ({
+					type: 'headerFooter',
+					kind: 'header',
+					slot: value === 'blank' ? 'default' : (value as 'first' | 'even'),
+				}),
 				{
 					momentary: true,
 				},
@@ -101,22 +116,32 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 			menuSelect(
 				'Footer',
 				'footer',
-				[['blank', 'Blank']],
-				() => ({ type: 'headerFooter', kind: 'footer' }),
+				[
+					['blank', 'Blank'],
+					['first', 'Blank first page'],
+					['even', 'Blank even pages'],
+				],
+				(value) => ({
+					type: 'headerFooter',
+					kind: 'footer',
+					slot: value === 'blank' ? 'default' : (value as 'first' | 'even'),
+				}),
 				{
 					momentary: true,
 				},
 			),
-			menuSelect(
+			menuGallery(
 				'Page number',
 				'pageNumberIcon',
+				'pageNumber',
 				PAGE_NUMBER_OPTIONS,
 				(value) => {
-					const [position, align] = value.split(':') as [
+					const [position, align, style = 'plain'] = value.split(':') as [
 						'top' | 'bottom',
 						'left' | 'center' | 'right',
+						('plain' | 'pageOfTotal')?,
 					];
-					return { type: 'pageNumber', position, align };
+					return { type: 'pageNumber', position, align, style };
 				},
 				{ momentary: true },
 			),
@@ -130,8 +155,12 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 					['none', 'None'],
 					['drop', 'Dropped'],
 					['margin', 'In margin'],
+					['options', 'Drop Cap Options…'],
 				],
-				(value) => ({ type: 'dropCap', value: value as 'none' }),
+				(value) =>
+					value === 'options'
+						? { type: 'formatDialog', kind: 'dropCap' }
+						: { type: 'dropCap', value: value as 'none' },
 				{ momentary: true },
 			),
 			menuSelect(
@@ -275,8 +304,15 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 					['continuous', 'Continuous'],
 					['newPage', 'Restart Each Page'],
 					['newSection', 'Restart Each Section'],
+					['suppress', 'Suppress for Current Paragraph'],
+					['options', 'Line Numbering Options…'],
 				],
-				(value) => ({ type: 'page', key: 'lineNumbers', value }),
+				(value) =>
+					value === 'options'
+						? { type: 'formatDialog', kind: 'lineNumbers' }
+						: value === 'suppress'
+							? { type: 'suppressLineNumbers' }
+							: { type: 'page', key: 'lineNumbers', value },
 			),
 			menuGallery(
 				'Columns',
@@ -286,8 +322,13 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 					['1', 'One column'],
 					['2', 'Two columns'],
 					['3', 'Three columns'],
+					['left', 'Left'],
+					['right', 'Right'],
 				],
 				(value) => ({ type: 'page', key: 'columns', value }),
+				{
+					commands: [{ label: 'More Columns…', action: { type: 'formatDialog', kind: 'columns' } }],
+				},
 			),
 		),
 		group(
@@ -379,6 +420,12 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 			),
 			tool('Ruler', 'ruler', { type: 'ruler' }, { large: true }),
 			tool('Gridlines', 'gridlines', { type: 'gridlines' }, { large: true }),
+			tool(
+				'Navigation pane',
+				'thumbnails',
+				{ type: 'navigation' },
+				{ large: true, caption: 'Navigation' },
+			),
 			tool(
 				'Page thumbnails',
 				'thumbnails',

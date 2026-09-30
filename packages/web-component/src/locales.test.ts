@@ -175,7 +175,7 @@ describe('localized rendering', () => {
 		for (const locale of EDITOR_LOCALES) {
 			const ribbon = createRibbon(locale);
 			const names = [...ribbon.querySelectorAll('[role=tab]')].map((tab) => tab.textContent);
-			expect(names, locale).toEqual([...expected[locale]]);
+			expect(names, locale).toEqual([...expected[locale], strings[locale]['tab.header-footer']]);
 		}
 		expect(strings.fr['tab.insert']).toBe('Insertion');
 		expect(strings.fr.Insert).toBe('Insérer');

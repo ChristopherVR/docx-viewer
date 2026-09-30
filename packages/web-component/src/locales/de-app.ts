@@ -222,8 +222,8 @@ export const deApp: AppStrings = {
 	'Custom Margins…': 'Benutzerdefinierte Seitenränder…',
 	'Borders and Shading': 'Rahmen und Schattierung',
 	'Borders and Shading…': 'Rahmen und Schattierung…',
-	'Style': 'Format',
-	'Color': 'Farbe',
-	'Fill': 'Füllung',
+	Style: 'Format',
+	Color: 'Farbe',
+	Fill: 'Füllung',
 	None: 'Keine',
 };

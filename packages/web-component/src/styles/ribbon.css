@@ -109,7 +109,17 @@
 	width: 338px;
 }
 .ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Paragraph'] {
+	/* The list-level and indent commands need room before the Sort and paragraph-mark buttons. */
 	width: 288px;
+	max-width: none;
+}
+.ribbon-group[data-label='Paragraph'] .ribbon-small {
+	width: 24px;
+	min-width: 24px;
+}
+.ribbon-group[data-label='Paragraph'] .ribbon-menu-compact {
+	width: 36px;
+	flex: none;
 }
 .ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Styles'] select {
 	width: 100%;

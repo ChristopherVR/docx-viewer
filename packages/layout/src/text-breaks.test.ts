@@ -12,6 +12,12 @@ describe('isEastAsianChar', () => {
 });
 
 describe('tokenizeRun', () => {
+	it('does not break a CJK grapheme from its combining mark', () => {
+		expect(tokenizeRun('あ\u3099中', 0)).toEqual([
+			{ kind: 'word', text: 'あ\u3099', runIndex: 0, sourceStart: 0 },
+			{ kind: 'word', text: '中', runIndex: 0, sourceStart: 2 },
+		]);
+	});
 	it('splits ordinary words at spaces without breaking inside a word', () => {
 		const tokens = tokenizeRun('hello world', 0);
 		expect(tokens.map((t) => t.kind)).toEqual(['word', 'space', 'word']);

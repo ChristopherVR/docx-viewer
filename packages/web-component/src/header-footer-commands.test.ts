@@ -19,6 +19,69 @@ const footerParagraphs = (model: DocumentModel) =>
 	(model.sections![0]!.footers!.default!.blocks as Paragraph[]) ?? [];
 
 describe('withPageNumber', () => {
+	it('adds numbers to the inherited story without creating a local reference', () => {
+		const model = withBlankHeaderFooter(withBody(), 'headers', id);
+		const section = model.sections![0]!;
+		model.sections = [section, { ...section, endsAtBlockId: 'second', headers: {} }];
+		const next = withPageNumber(model, 'top', 'center', id, 1, 'pageOfTotal');
+		expect(next.sections![1]!.headers!.default).toBeUndefined();
+		expect((next.sections![0]!.headers!.default!.blocks[1] as Paragraph).runs).toHaveLength(4);
+	});
+	it('switches generated page patterns without duplicates and keeps surrounding paragraphs', () => {
+		const model = withBlankHeaderFooter(withBody(), 'footers', id);
+		footerParagraphs(model)[0]!.runs = [{ text: 'Confidential' }];
+		const numbered = withPageNumber(model, 'bottom', 'center', id, 0, 'pageOfTotal');
+		const page = footerParagraphs(numbered)[1]!;
+		expect(page.runs.map((run) => run.field?.instr.trim() ?? run.text)).toEqual([
+			'Page ',
+			'PAGE',
+			' of ',
+			'NUMPAGES',
+		]);
+		const again = withPageNumber(numbered, 'bottom', 'right', id, 0, 'pageOfTotal');
+		expect(footerParagraphs(again)).toHaveLength(2);
+		expect(footerParagraphs(again)[0]!.runs[0]!.text).toBe('Confidential');
+		const plain = withPageNumber(again, 'bottom', 'left', id, 0, 'plain');
+		expect(footerParagraphs(plain)[1]!.runs).toEqual([
+			{ text: '1', field: { instr: ' PAGE ', simple: true } },
+		]);
+		expect(page.runs).toHaveLength(4);
+	});
+	it('keeps imported custom page text and complex fields when adding the total', () => {
+		const model = withPageNumber(withBody(), 'bottom', 'left', id);
+		const runs = [
+			{ text: 'Company, page ' },
+			{ text: '', fieldChar: 'begin' as const },
+			{ text: '', fieldCode: ' PAGE ' },
+			{ text: '', fieldChar: 'separate' as const },
+			{ text: '4' },
+			{ text: '', fieldChar: 'end' as const },
+		];
+		footerParagraphs(model)[0]!.runs = runs;
+		const changed = withPageNumber(model, 'bottom', 'center', id, 0, 'pageOfTotal');
+		expect(footerParagraphs(changed)[0]!.runs.slice(0, 6)).toEqual(runs);
+		expect(footerParagraphs(changed)[0]!.runs[7]!.field?.instr.trim()).toBe('NUMPAGES');
+		expect(
+			footerParagraphs(withPageNumber(changed, 'bottom', 'center', id, 0, 'pageOfTotal'))[0]!.runs,
+		).toHaveLength(8);
+	});
+	it('targets a later section and updates every slot linked to its existing part', () => {
+		const model = withBody();
+		const section = withPageNumber(model, 'bottom', 'left', id).sections![0]!;
+		const { footers: _footer, ...noFooter } = section;
+		model.sections = [
+			{ ...noFooter, endsAtBlockId: 'before' },
+			{ ...section, endsAtBlockId: 'p1' },
+		];
+		const changed = withPageNumber(model, 'bottom', 'right', id, 1);
+		expect(changed.sections![0]!.footers).toBeUndefined();
+		expect((changed.sections![1]!.footers!.default!.blocks[0] as Paragraph).align).toBe('right');
+		model.sections = [section, { ...section, endsAtBlockId: 'other' }];
+		const linked = withPageNumber(model, 'bottom', 'center', id, 1);
+		expect(
+			linked.sections!.map((part) => (part.footers!.default!.blocks[0] as Paragraph).align),
+		).toEqual(['center', 'center']);
+	});
 	it('creates a footer with a PAGE field for a document that has none', () => {
 		const next = withPageNumber(withBody(), 'bottom', 'center', id);
 		const footer = next.sections![0]!.footers!.default!;
@@ -93,6 +156,27 @@ describe('withPageNumber', () => {
 });
 
 describe('withBlankHeaderFooter', () => {
+	it('creates separate first/even parts and enables only their required settings', () => {
+		const normal = withBlankHeaderFooter(withBody(), 'footers', id);
+		const first = withBlankHeaderFooter(normal, 'footers', id, 0, 'first');
+		expect(first.sections![0]!.titlePage).toBe(true);
+		expect(first.evenAndOddHeaders).toBeUndefined();
+		expect(first.sections![0]!.footers!.default).toEqual(normal.sections![0]!.footers!.default);
+		expect(first.sections![0]!.footers!.first!.partName).toBe('word/footer2.xml');
+		const even = withPageNumber(first, 'bottom', 'right', id, 0, 'pageOfTotal', 'even');
+		expect(even.evenAndOddHeaders).toBe(true);
+		expect(even.sections![0]!.footers!.even!.partName).toBe('word/footer3.xml');
+		expect(even.sections![0]!.footers!.first).toEqual(first.sections![0]!.footers!.first);
+		expect(withBlankHeaderFooter(even, 'footers', id, 0, 'even')).toBe(even);
+	});
+	it('reactivates existing first-page content without replacing it', () => {
+		const first = withBlankHeaderFooter(withBody(), 'headers', id, 0, 'first');
+		first.sections![0]!.titlePage = false;
+		(first.sections![0]!.headers!.first!.blocks[0] as Paragraph).runs = [{ text: 'Letterhead' }];
+		const enabled = withBlankHeaderFooter(first, 'headers', id, 0, 'first');
+		expect(enabled.sections![0]!.titlePage).toBe(true);
+		expect(enabled.sections![0]!.headers!.first).toEqual(first.sections![0]!.headers!.first);
+	});
 	it('creates an empty part once and is a no-op afterwards', () => {
 		const model = withBody();
 		const created = withBlankHeaderFooter(model, 'headers', id);
@@ -119,7 +203,7 @@ describe('pageNumberParagraph', () => {
 });
 
 describe('rebuilding the model keeps created headers and footers', () => {
-	it('holds them for a document whose editor state has no section layout', async () => {
+	it('restores the absence of a footer from an earlier document snapshot', async () => {
 		const { docToModel, modelToDoc } = await import('./model-adapter');
 		const withFooter = withPageNumber(withBody(), 'bottom', 'right', id);
 		// A new document has no `sections` attribute on the editor document.
@@ -128,7 +212,7 @@ describe('rebuilding the model keeps created headers and footers', () => {
 		expect(doc.attrs.sections).toBeNull();
 		const rebuilt = docToModel(doc, withFooter);
 		expect(rebuilt.sections).toHaveLength(1);
-		expect(rebuilt.sections![0]!.footers!.default!.partName).toBe('word/footer1.xml');
+		expect(rebuilt.sections![0]!.footers).toBeUndefined();
 		expect(rebuilt.sections![0]!.pageWidthTwips).toBeGreaterThan(0);
 	});
 

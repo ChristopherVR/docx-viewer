@@ -209,8 +209,8 @@ export const enApp = {
 	'Custom Margins…': 'Custom Margins…',
 	'Borders and Shading': 'Borders and Shading',
 	'Borders and Shading…': 'Borders and Shading…',
-	'Style': 'Style',
-	'Color': 'Color',
-	'Fill': 'Fill',
+	Style: 'Style',
+	Color: 'Color',
+	Fill: 'Fill',
 	None: 'None',
 } as const;

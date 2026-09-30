@@ -1,5 +1,5 @@
 import { definedProps } from './defined-props.js';
-import type { LayoutFontSpec } from './measure.js';
+import type { LayoutFontSpec, TextMeasurer } from './measure.js';
 import type { LayoutFragment } from './result.js';
 import { appendBreakMarker, tokenizeRun, type BreakToken } from './text-breaks.js';
 import type { LayoutParagraph, LayoutRun } from './input.js';
@@ -12,8 +12,27 @@ export function fontOf(run: LayoutRun): LayoutFontSpec {
 	return {
 		family: run.fontFamily || DEFAULT_FONT_FAMILY,
 		sizePx: ptToPx(run.fontSizePt ?? DEFAULT_FONT_SIZE_PT) * (run.script ? SCRIPT_SCALE : 1),
-		...definedProps({ bold: run.bold, italic: run.italic }),
+		...definedProps({ bold: run.bold, italic: run.italic, ligatures: run.ligatures }),
+		...(run.kerningThresholdPt === undefined
+			? {}
+			: {
+					kerning:
+						run.kerningThresholdPt > 0 &&
+						(run.fontSizePt ?? DEFAULT_FONT_SIZE_PT) >= run.kerningThresholdPt
+							? ('normal' as const)
+							: ('none' as const),
+				}),
 	};
+}
+
+const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+/** Word applies additional character spacing after scaling the glyph advances. */
+export function runTextWidth(text: string, run: LayoutRun, measurer: TextMeasurer): number {
+	return Math.max(
+		0,
+		(measurer.widthOf(text, fontOf(run)) * (run.textScalePercent ?? 100)) / 100 +
+			[...graphemes.segment(text)].length * (run.characterSpacingPx ?? 0),
+	);
 }
 
 export function resolveIndents(paragraph: LayoutParagraph): {

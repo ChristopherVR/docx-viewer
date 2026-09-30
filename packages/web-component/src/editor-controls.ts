@@ -15,6 +15,7 @@ import { syncSpellingButton } from './spelling';
 import { syncIndentInputs } from './indent-commands';
 import { syncParagraphToggles } from './paragraph-toggle-sync';
 import { syncContextualTabs } from './contextual-tabs';
+import { tablePropertiesContext } from './table-properties';
 import { syncRuler } from './ruler-sync';
 import { hasAnyChange, hasChangeAtCursor } from './review-commands';
 import { commentAnchors, commentIdsAtSelection } from './comment-commands';
@@ -43,6 +44,7 @@ export function refreshEditorControls(
 					'Zoom',
 					'Show hidden text',
 					'Page thumbnails',
+					'Navigation pane',
 					'Layout view',
 					'Print',
 					'Copy',
@@ -70,6 +72,8 @@ export function refreshEditorControls(
 			if (action.type === 'tableEdit')
 				button.disabled =
 					readOnly || Boolean(collaboration) || !canExecuteTableCommand(view, action.key);
+			if (action.type === 'formatDialog' && action.kind === 'tableProperties')
+				button.disabled = readOnly || !tablePropertiesContext(state);
 		}
 		syncFontControls(toolbar, state);
 		syncParagraphControls(toolbar, state);

@@ -1,18 +1,24 @@
-import { resolveRunFormatting, type RunFormatting } from '@christophervr/docx-core';
+import {
+	resolveRunFormatting,
+	isLigatures,
+	type Ligatures,
+	type RunFormatting,
+} from '@christophervr/docx-core';
 import type { Mark, Node as ProseMirrorNode } from 'prosemirror-model';
 import type { EditorState } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { effectiveFont } from './font-sync';
-import { toggleVerticalAlign } from './inline-commands';
+import { applyVerticalAlign } from './inline-commands';
 import { applyFont } from './ribbon-commands';
 import { runOf, styleModelOf } from './run-styles';
 import { schema } from './schema';
 import { toggleFormat, type ToggleKey } from './toggle-commands';
+import { batchFontFormat } from './font-format-batch';
 
 export type UnderlineKind = 'none' | 'single' | 'double' | 'dotted' | 'dash' | 'wave';
 export type Script = 'none' | 'superscript' | 'subscript';
 
-/** Everything Word's Font dialog edits, in the units the dialog shows (points, not twips). */
+/** Formatting edited by the Font dialog, in UI units (points instead of twips). */
 export interface FontFormat {
 	family: string;
 	size: number;
@@ -30,6 +36,12 @@ export interface FontFormat {
 	hidden: boolean;
 	/** Expanded (positive) or condensed (negative) character spacing in points. */
 	spacing: number;
+	scale: number;
+	/** Baseline displacement in points; positive raises, negative lowers. */
+	position: number;
+	/** Minimum point size for kerning; zero means off. */
+	kerning: number;
+	ligatures: Ligatures;
 }
 
 /** A selection's format, with `null` for a field whose value differs across the selection. */
@@ -50,6 +62,10 @@ const FIELDS = [
 	'caps',
 	'hidden',
 	'spacing',
+	'scale',
+	'position',
+	'kerning',
+	'ligatures',
 ] as const satisfies readonly (keyof FontFormat)[];
 
 function underlineKind(resolved: RunFormatting): UnderlineKind {
@@ -99,6 +115,10 @@ function formatOf(
 		caps: Boolean(resolved.caps),
 		hidden: Boolean(resolved.vanish),
 		spacing: (resolved.characterSpacingTwips ?? 0) / 20,
+		scale: resolved.textScalePercent ?? 100,
+		position: (resolved.positionHalfPoints ?? 0) / 2,
+		kerning: (resolved.kerningHalfPoints ?? 0) / 2,
+		ligatures: resolved.ligatures ?? 'none',
 	};
 }
 
@@ -185,6 +205,10 @@ function patchExtraProps(view: EditorView, patch: ExtraPatch): void {
 /** Applies the fields present in `changes` to the selection; untouched fields keep their values. */
 export function applyFontFormat(view: EditorView, changes: Partial<FontFormat>): void {
 	if (!view.editable) return;
+	batchFontFormat(view, (draft) => applyFontFields(draft, changes));
+}
+
+function applyFontFields(view: EditorView, changes: Partial<FontFormat>): void {
 	if (changes.family !== undefined) applyFont(view, 'family', changes.family);
 	if (changes.size !== undefined) applyFont(view, 'size', String(changes.size));
 	if (changes.color !== undefined) applyFont(view, 'color', changes.color);
@@ -203,18 +227,30 @@ export function applyFontFormat(view: EditorView, changes: Partial<FontFormat>):
 	if (changes.script !== undefined) {
 		const current = readFontFormat(view.state).script;
 		if (current !== changes.script) {
-			if (current === 'superscript' || current === 'subscript') toggleVerticalAlign(view, current);
-			if (changes.script !== 'none') toggleVerticalAlign(view, changes.script);
+			applyVerticalAlign(view, changes.script === 'none' ? 'baseline' : changes.script);
 		}
 	}
 	const extras: ExtraPatch = {};
+	if (isLigatures(changes.ligatures)) extras.ligatures = changes.ligatures;
 	if (changes.underlineColor !== undefined)
 		extras.underlineColor = changes.underlineColor ?? undefined;
-	if (changes.doubleStrike !== undefined) extras.doubleStrike = changes.doubleStrike || undefined;
-	if (changes.smallCaps !== undefined) extras.smallCaps = changes.smallCaps || undefined;
-	if (changes.caps !== undefined) extras.caps = changes.caps || undefined;
-	if (changes.hidden !== undefined) extras.vanish = changes.hidden || undefined;
+	if (changes.doubleStrike !== undefined) extras.doubleStrike = changes.doubleStrike;
+	if (changes.smallCaps !== undefined) extras.smallCaps = changes.smallCaps;
+	if (changes.caps !== undefined) extras.caps = changes.caps;
+	if (changes.hidden !== undefined) extras.vanish = changes.hidden;
 	if (changes.spacing !== undefined)
-		extras.characterSpacingTwips = changes.spacing ? Math.round(changes.spacing * 20) : undefined;
+		extras.characterSpacingTwips = Math.round(changes.spacing * 20);
+	if (
+		changes.scale !== undefined &&
+		Number.isInteger(changes.scale) &&
+		changes.scale >= 0 &&
+		changes.scale <= 600
+	)
+		extras.textScalePercent = changes.scale;
+	if (changes.position !== undefined && Number.isFinite(changes.position))
+		extras.positionHalfPoints =
+			Math.sign(changes.position) * Math.round(Math.abs(changes.position) * 2);
+	if (changes.kerning !== undefined && Number.isFinite(changes.kerning) && changes.kerning >= 0)
+		extras.kerningHalfPoints = Math.round(changes.kerning * 2);
 	if (Object.keys(extras).length) patchExtraProps(view, extras);
 }

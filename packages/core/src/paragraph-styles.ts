@@ -25,6 +25,7 @@ export const PAGINATION_KEYS = [
 	'keepLines',
 	'widowControl',
 	'contextualSpacing',
+	'suppressLineNumbers',
 ] as const;
 
 /** Parses `w:pPr` formatting (shared by styles, docDefaults and direct paragraph properties). */

@@ -11,6 +11,11 @@ import { focusView } from './focus-view';
 import { createPageSetupDialog, type PageSetupHost } from './page-setup-dialog';
 import { createParagraphDialog } from './paragraph-dialog';
 import { createZoomDialog, type ZoomHost } from './zoom-dialog';
+import { createTablePropertiesDialog } from './table-properties-dialog';
+import { createLineNumberDialog, type LineNumberHost } from './line-number-dialog';
+import { createDropCapDialog } from './drop-cap-dialog';
+import { createColumnsDialog, type ColumnsHost } from './columns-dialog';
+import { createMultilevelListDialog } from './multilevel-list-dialog';
 
 export type FormatDialogKind =
 	| 'font'
@@ -20,15 +25,25 @@ export type FormatDialogKind =
 	| 'caption'
 	| 'crossReference'
 	| 'zoom'
-	| 'borders';
+	| 'borders'
+	| 'tableProperties'
+	| 'lineNumbers'
+	| 'dropCap'
+	| 'columns'
+	| 'multilevelList';
 
 export interface FormatDialogsHost {
 	view(): EditorView | undefined;
+	/** Header/footer edits use the main document's history; notes use their own. */
+	historyView?(): EditorView | undefined;
 	model(): DocumentModel;
+	canDefineList?(): boolean;
 	/** Page Setup edits the section holding the selection. */
 	pageSetup?: Omit<PageSetupHost, 'restoreFocus'>;
 	/** View > Zoom: the current zoom and how to change it. */
 	zoom?: Omit<ZoomHost, 'restoreFocus'>;
+	lineNumbers?: Omit<LineNumberHost, 'restoreFocus'>;
+	columns?: Omit<ColumnsHost, 'restoreFocus'>;
 }
 
 /** The Font and Paragraph dialogs opened from the ribbon's group launchers. */
@@ -37,7 +52,10 @@ export class FormatDialogs {
 
 	constructor(host: FormatDialogsHost) {
 		this.dialogs = {
-			font: createFontDialog(() => host.view()),
+			font: createFontDialog(
+				() => host.view(),
+				() => host.historyView?.() ?? host.view(),
+			),
 			paragraph: createParagraphDialog(
 				() => host.view(),
 				() => host.model(),
@@ -61,6 +79,25 @@ export class FormatDialogs {
 				restoreFocus: () => focusView(host.view()),
 			}),
 			borders: createBordersDialog(() => host.view()),
+			tableProperties: createTablePropertiesDialog(() => host.view()),
+			lineNumbers: createLineNumberDialog({
+				...(host.lineNumbers ?? {
+					section: () => undefined,
+					canEdit: () => false,
+					apply: () => {},
+				}),
+				restoreFocus: () => focusView(host.view()),
+			}),
+			dropCap: createDropCapDialog(() => host.view()),
+			columns: createColumnsDialog({
+				...(host.columns ?? { section: () => undefined, canEdit: () => false, apply: () => {} }),
+				restoreFocus: () => focusView(host.view()),
+			}),
+			multilevelList: createMultilevelListDialog(
+				() => host.view(),
+				() => host.model(),
+				() => host.canDefineList?.() ?? true,
+			),
 		};
 	}
 

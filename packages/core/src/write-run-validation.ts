@@ -4,7 +4,15 @@ import { isWordHighlightToken } from './highlight.js';
 import { isValidLanguageTag } from './language.js';
 import { isWordUnderlineStyle } from './underline.js';
 import { isThemeColorToken } from './theme-color.js';
-import { parseHalfPoints, parseHexColor, parseSignedTwips } from './simple-types.js';
+import { isLigatures, WORD_2010_NS } from './ligatures.js';
+import { isStVerticalAlignRun } from './generated/wml-simple-types.js';
+import {
+	parseHalfPoints,
+	parseHexColor,
+	parseSignedTwips,
+	parseSignedHalfPoints,
+	parseTextScale,
+} from './simple-types.js';
 
 const modeledRunProperties = new Set([
 	'b',
@@ -24,6 +32,9 @@ const modeledRunProperties = new Set([
 	'dstrike',
 	'vanish',
 	'spacing',
+	'w',
+	'kern',
+	'position',
 	'shd',
 ]);
 const simpleToggleProperties = ['b', 'i', 'strike', 'caps', 'smallCaps', 'dstrike', 'vanish'];
@@ -36,6 +47,9 @@ const allowedRunPropertyAttributes: Record<string, string[]> = {
 	rtl: ['val'],
 	rStyle: ['val'],
 	spacing: ['val'],
+	w: ['val'],
+	kern: ['val'],
+	position: ['val'],
 	u: ['val', 'color'],
 	color: ['val', 'themeColor', 'themeTint', 'themeShade'],
 	shd: ['val', 'fill', 'color', 'themeFill', 'themeFillTint', 'themeFillShade'],
@@ -59,6 +73,19 @@ export function runHasUnknownProperties(run: XmlElement): boolean {
 			continue;
 		}
 		const property = node as XmlElement;
+		if (property.namespaceURI === WORD_2010_NS && property.localName === 'ligatures') {
+			if (!isLigatures(property.getAttributeNS(WORD_2010_NS, 'val')) || elements(property).length)
+				return true;
+			if (
+				Array.from(property.attributes).some(
+					(attribute) =>
+						attribute.namespaceURI !== 'http://www.w3.org/2000/xmlns/' &&
+						(attribute.namespaceURI !== WORD_2010_NS || attribute.localName !== 'val'),
+				)
+			)
+				return true;
+			continue;
+		}
 		if (property.namespaceURI !== WORD_NS || !modeledRunProperties.has(property.localName))
 			return true;
 		const allowed = simpleToggleProperties.includes(property.localName)
@@ -66,6 +93,10 @@ export function runHasUnknownProperties(run: XmlElement): boolean {
 			: (allowedRunPropertyAttributes[property.localName] ?? []);
 		if (hasUnexpectedAttributes(property, allowed) || elements(property).length > 0) return true;
 		const value = getW(property, 'val');
+		if (property.localName === 'w' && parseTextScale(value ?? '100') === undefined) return true;
+		if (property.localName === 'kern' && parseHalfPoints(value) === undefined) return true;
+		if (property.localName === 'position' && parseSignedHalfPoints(value) === undefined)
+			return true;
 		if (property.localName === 'highlight' && value && !isWordHighlightToken(value)) return true;
 		if (
 			property.localName === 'rtl' &&
@@ -81,8 +112,7 @@ export function runHasUnknownProperties(run: XmlElement): boolean {
 			})
 		)
 			return true;
-		if (property.localName === 'vertAlign' && value !== 'superscript' && value !== 'subscript')
-			return true;
+		if (property.localName === 'vertAlign' && !isStVerticalAlignRun(value)) return true;
 		if (
 			property.localName === 'u' &&
 			value &&

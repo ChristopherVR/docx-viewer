@@ -108,7 +108,13 @@ function updateKeepOptions(
 	paragraph: Paragraph,
 	base?: Paragraph,
 ): void {
-	for (const key of ['keepNext', 'keepLines', 'widowControl', 'contextualSpacing'] as const) {
+	for (const key of [
+		'keepNext',
+		'keepLines',
+		'widowControl',
+		'contextualSpacing',
+		'suppressLineNumbers',
+	] as const) {
 		if (base && paragraph[key] === base[key]) continue;
 		for (const element of children(props, key)) props.removeChild(element);
 		const value = paragraph[key];
@@ -142,6 +148,7 @@ function updateDropCap(
 	}
 	setAttribute(frame, 'dropCap', cap.style);
 	setAttribute(frame, 'lines', String(cap.lines));
+	setWordValue(frame, 'hSpace', cap.distanceTwips);
 }
 
 export function writeParagraphProperties(

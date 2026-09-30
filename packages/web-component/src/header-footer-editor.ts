@@ -1,7 +1,13 @@
 import { EditorState, type Plugin, type Transaction } from 'prosemirror-state';
 import { EditorView, type EditorProps } from 'prosemirror-view';
 import { history } from 'prosemirror-history';
-import { createDocument, type Block, type HeaderFooterContent } from '@christophervr/docx-core';
+import { keymap } from 'prosemirror-keymap';
+import {
+	createDocument,
+	type Block,
+	type DocumentModel,
+	type HeaderFooterContent,
+} from '@christophervr/docx-core';
 import { assignMissingParagraphIds, docToModel, modelToDoc } from './model-adapter';
 import { editorKeymap } from './editor-commands';
 import { focusView } from './focus-view';
@@ -12,6 +18,8 @@ export type HeaderFooterSlotName = 'default' | 'first' | 'even';
 
 /** Picture support for in-place editors: node views, and a hook to finish previews after closing. */
 export interface InlineEditorOptions {
+	/** Owner document formatting for the preview after this editor closes. */
+	contextModel?(): DocumentModel;
 	nodeViews?: EditorProps['nodeViews'];
 	decorate?(preview: HTMLElement): void;
 	/** Extra plugins, e.g. the editor's Ctrl+K link shortcut. */
@@ -21,6 +29,9 @@ export interface InlineEditorOptions {
 	deactivate?(view: EditorView): void;
 	/** Focus moving into these (the ribbon, dialogs) keeps the editor open. */
 	keepOpenWithin?(): (Element | undefined)[];
+	/** Header/footer editors share the body document's undo stack. Notes may keep local history. */
+	history?(key: 'undo' | 'redo'): boolean;
+	registerClose?(close: () => void): void;
 }
 
 export interface HeaderFooterEditingOptions {
@@ -73,7 +84,20 @@ export function openBlocksEditor(
 	const view: EditorView = new EditorView(host, {
 		state: EditorState.create({
 			doc: modelToDoc(model),
-			plugins: [history(), ...(options.plugins ?? []), editorKeymap(() => undefined)],
+			plugins: [
+				history(),
+				...(options.history
+					? [
+							keymap({
+								'Mod-z': () => options.history!('undo'),
+								'Mod-y': () => options.history!('redo'),
+								'Mod-Shift-z': () => options.history!('redo'),
+							}),
+						]
+					: []),
+				...(options.plugins ?? []),
+				editorKeymap(() => undefined),
+			],
 		}),
 		...(options.nodeViews ? { nodeViews: options.nodeViews } : {}),
 		dispatchTransaction(transaction: Transaction) {
@@ -90,7 +114,7 @@ export function openBlocksEditor(
 		container.classList.remove('dve-header-footer-editing');
 		options.deactivate?.(view);
 		view.destroy();
-		body.replaceChildren(renderBlocks(model.blocks));
+		body.replaceChildren(renderBlocks(model.blocks, options.contextModel?.()));
 		options.decorate?.(body);
 	};
 	host.addEventListener('keydown', (event) => {
@@ -102,6 +126,7 @@ export function openBlocksEditor(
 		if (!host.contains(next) && !keepOpen) close();
 	});
 	options.activate?.(view);
+	options.registerClose?.(close);
 	focusView(view);
 }
 

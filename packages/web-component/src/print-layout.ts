@@ -1,5 +1,6 @@
 import {
 	cssFontStack,
+	ligatureCss,
 	DEFAULT_FONT_SIZE_PT,
 	type LayoutBlockBox,
 	type LayoutLine,
@@ -7,6 +8,8 @@ import {
 	type LayoutResult,
 } from '@christophervr/docx-layout';
 import { renderTable } from './print-table';
+import { lineNumberLabels, type PrintLineNumbering } from './print-line-numbers';
+export type { PrintLineNumbering } from './print-line-numbers';
 
 /** One clickable line, recorded for best-effort click-to-cursor mapping. */
 interface LineHitBox {
@@ -58,14 +61,17 @@ function leaderElement(fragment: LayoutLine['fragments'][number]): HTMLElement {
 	const el = document.createElement('span');
 	styleFragment(el, { ...fragment, text: '' });
 	el.classList.add('dve-print-leader');
-	el.style.width = `${fragment.widthPx}px`;
+	const scale = (fragment.textScalePercent ?? 100) / 100;
+	el.style.width = `${scale ? fragment.widthPx / scale : fragment.widthPx}px`;
 	el.style.overflow = 'hidden';
 	el.style.textAlign = 'right';
 	const character = LEADER_CHARACTERS[fragment.leader!];
 	if (character) {
 		// Enough characters to fill the tab; the overflow is clipped on the left.
 		const sizePx = ((fragment.fontSizePt ?? DEFAULT_FONT_SIZE_PT) * 96) / 72;
-		el.textContent = character.repeat(Math.ceil(fragment.widthPx / (sizePx * 0.25)) + 1);
+		el.textContent = character.repeat(
+			Math.ceil(fragment.widthPx / ((scale || 1) * sizePx * 0.25)) + 1,
+		);
 		el.style.direction = 'rtl';
 	} else {
 		el.style.height = '1em';
@@ -83,10 +89,24 @@ function styleFragment(el: HTMLSpanElement, fragment: LayoutLine['fragments'][nu
 	// The same metric-compatible stack the measurer used, so rendered text matches its line breaks.
 	el.style.fontFamily = cssFontStack(fragment.fontFamily);
 	el.style.fontSize = `${(fragment.fontSizePt ?? DEFAULT_FONT_SIZE_PT) * (fragment.script ? 0.65 : 1)}pt`;
+	const scale = (fragment.textScalePercent ?? 100) / 100;
+	if (scale !== 1) {
+		el.style.transform = `scaleX(${scale})`;
+		el.style.transformOrigin = 'left center';
+	}
+	if (fragment.characterSpacingPx !== undefined)
+		el.style.letterSpacing = `${scale ? fragment.characterSpacingPx / scale : 0}px`;
+	if (fragment.kerningThresholdPt !== undefined)
+		el.style.fontKerning =
+			fragment.kerningThresholdPt > 0 &&
+			(fragment.fontSizePt ?? DEFAULT_FONT_SIZE_PT) >= fragment.kerningThresholdPt
+				? 'normal'
+				: 'none';
 	// The layout places each fragment's box so its baseline sits on the line's baseline.
 	if (fragment.topPx !== undefined) el.style.top = `${fragment.topPx}px`;
 	if (fragment.boxHeightPx !== undefined) el.style.lineHeight = `${fragment.boxHeightPx}px`;
 	if (fragment.color) el.style.color = fragment.color;
+	if (fragment.ligatures !== undefined) el.style.fontVariantLigatures = ligatureCss(fragment.ligatures);
 	const lines = [fragment.underline && 'underline', fragment.strike && 'line-through'].filter(
 		Boolean,
 	);
@@ -201,54 +221,11 @@ function footnoteArea(
 	return area;
 }
 
-/** Line numbering of a section, as the section model gives it. */
-export interface PrintLineNumbering {
-	countBy: number;
-	start: number;
-	restart: 'newPage' | 'newSection' | 'continuous';
-	distanceTwips?: number;
-}
-
 export interface PrintLayoutOptions {
 	/** Line numbering by section index; sections without an entry print no numbers. */
 	lineNumbers?: ReadonlyArray<PrintLineNumbering | undefined>;
-}
-
-/** The shown line numbers for a page, advancing `counter` across pages as the restart rule says. */
-function lineNumberLabels(
-	page: LayoutResult['pages'][number],
-	settings: PrintLineNumbering,
-	counter: { next: number; section: number },
-): HTMLElement[] {
-	const newSection = counter.section !== page.sectionIndex;
-	if (
-		counter.section === -1 ||
-		settings.restart === 'newPage' ||
-		(newSection && settings.restart === 'newSection')
-	)
-		counter.next = settings.start;
-	counter.section = page.sectionIndex;
-	const labels: HTMLElement[] = [];
-	const gap = (settings.distanceTwips ?? 360) / 15;
-	for (const column of page.columns)
-		for (const block of column.blocks) {
-			if (block.kind !== 'paragraph') continue;
-			for (const line of block.lines) {
-				const number = counter.next++;
-				if ((number - settings.start + 1) % settings.countBy !== 0) continue;
-				const label = document.createElement('span');
-				label.className = 'dve-print-line-number';
-				label.textContent = String(number);
-				Object.assign(label.style, {
-					left: `${page.marginLeftPx + column.xPx - gap - 40}px`,
-					top: `${page.marginTopPx + block.yPx + line.yPx}px`,
-					height: `${line.heightPx}px`,
-					lineHeight: `${line.heightPx}px`,
-				});
-				labels.push(label);
-			}
-		}
-	return labels;
+	/** Paragraphs with effective `w:suppressLineNumbers`; omitted from the counter. */
+	suppressedLineNumberParagraphs?: ReadonlySet<string>;
 }
 
 /** Pure, framework-neutral renderer: turns a `LayoutResult` into a DOM tree of page sheets. */
@@ -268,6 +245,19 @@ export function renderPrintLayout(
 		sheet.style.width = `${page.widthPx}px`;
 		sheet.style.height = `${page.heightPx}px`;
 		for (const column of page.columns) {
+			const previous = page.columns[page.columns.indexOf(column) - 1];
+			if (page.columnSeparator && previous) {
+				const rule = document.createElement('div');
+				rule.className = 'dve-print-column-rule';
+				Object.assign(rule.style, {
+					position: 'absolute',
+					left: `${page.marginLeftPx + (previous.xPx + previous.widthPx + column.xPx) / 2}px`,
+					top: `${page.marginTopPx}px`,
+					height: `${page.heightPx - page.marginTopPx - page.marginBottomPx}px`,
+					borderLeft: '1px solid currentColor',
+				});
+				sheet.append(rule);
+			}
 			const columnEl = document.createElement('div');
 			columnEl.className = 'dve-print-column';
 			columnEl.style.top = `${page.marginTopPx}px`;
@@ -279,7 +269,10 @@ export function renderPrintLayout(
 			sheet.append(columnEl);
 		}
 		const numbering = options.lineNumbers?.[page.sectionIndex];
-		if (numbering) sheet.append(...lineNumberLabels(page, numbering, counter));
+		if (numbering)
+			sheet.append(
+				...lineNumberLabels(page, numbering, counter, options.suppressedLineNumberParagraphs),
+			);
 		if (page.footnotes?.length) sheet.append(footnoteArea(page, hitboxes, pictureUrl));
 		for (const float of page.floats ?? []) {
 			const picture = pictureElement(float, pictureUrl);

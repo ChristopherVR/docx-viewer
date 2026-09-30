@@ -131,9 +131,50 @@ describe('applyFontFormat', () => {
 			characterSpacingTwips: -30,
 		});
 		applyFontFormat(view, { smallCaps: false, hidden: false, doubleStrike: false, spacing: 0 });
-		expect(view.state.doc.nodeAt(2)!.marks.some((mark) => mark.type.name === 'runProperties')).toBe(
-			false,
-		);
+		expect(extras(view)).toEqual({
+			characterSpacingTwips: 0,
+			smallCaps: false,
+			vanish: false,
+			doubleStrike: false,
+		});
+	});
+	it('turns inherited font effects off with explicit overrides', () => {
+		const model = createDocument();
+		model.characterStyles = {
+			docDefaults: { caps: true, smallCaps: true, doubleStrike: true, vanish: true },
+			styles: {},
+			warnings: [],
+		};
+		const view = new EditorView(document.createElement('div'), {
+			state: EditorState.create({
+				schema,
+				doc: schema.node('doc', null, [
+					schema.nodes.paragraph!.create({ id: 'p' }, schema.text('Inherited')),
+				]),
+				plugins: [runStylesPlugin(() => model)],
+			}),
+		});
+		selectAll(view);
+		expect(readFontFormat(view.state)).toMatchObject({
+			caps: true,
+			smallCaps: true,
+			doubleStrike: true,
+			hidden: true,
+		});
+		applyFontFormat(view, { caps: false, smallCaps: false, doubleStrike: false, hidden: false });
+		expect(readFontFormat(view.state)).toMatchObject({
+			caps: false,
+			smallCaps: false,
+			doubleStrike: false,
+			hidden: false,
+		});
+		expect(extras(view)).toEqual({
+			caps: false,
+			smallCaps: false,
+			doubleStrike: false,
+			vanish: false,
+		});
+		view.destroy();
 	});
 
 	it('switches between superscript and subscript', () => {

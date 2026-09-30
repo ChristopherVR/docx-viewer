@@ -181,6 +181,8 @@ export class DocxEditorElement extends DocxEditorApi {
 	set readOnly(value: boolean) {
 		this.core.readOnly = Boolean(value);
 		this.core.view?.setProps({ editable: () => !this.core.readOnly });
+		if (this.core.readOnly)
+			this.core.parts.closeHeaderFooter(this.core.shell.canvas, this.core.shell.paper);
 		this.core.refreshControls();
 		reflectAttribute(this, 'read-only', this.core.readOnly);
 	}

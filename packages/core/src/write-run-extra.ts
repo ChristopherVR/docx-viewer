@@ -2,6 +2,7 @@
 import type { TextRun } from './model.js';
 import { children, makeW, type XmlDocument, type XmlElement, WORD_NS } from './xml.js';
 import { fractionToThemeByte } from './theme-color.js';
+import { writeLigatures } from './ligatures.js';
 
 function setAttribute(element: XmlElement, local: string, value: string): void {
 	element.setAttributeNS(WORD_NS, `w:${local}`, value);
@@ -31,6 +32,7 @@ export function setExtendedRunProperties(
 	base?: TextRun,
 ): void {
 	const changed = (key: keyof TextRun): boolean => !base || run[key] !== base[key];
+	if (changed('ligatures')) writeLigatures(doc, props, run.ligatures);
 	if (changed('style')) {
 		removeChildren(props, 'rStyle');
 		if (run.style) {
@@ -43,6 +45,18 @@ export function setExtendedRunProperties(
 	if (changed('smallCaps')) setToggle(doc, props, 'smallCaps', run.smallCaps);
 	if (changed('doubleStrike')) setToggle(doc, props, 'dstrike', run.doubleStrike);
 	if (changed('vanish')) setToggle(doc, props, 'vanish', run.vanish);
+	for (const [key, local] of [
+		['textScalePercent', 'w'],
+		['kerningHalfPoints', 'kern'],
+		['positionHalfPoints', 'position'],
+	] as const) {
+		if (!changed(key)) continue;
+		removeChildren(props, local);
+		if (run[key] === undefined) continue;
+		const element = makeW(doc, local);
+		setAttribute(element, 'val', String(run[key]));
+		props.appendChild(element);
+	}
 	if (changed('characterSpacingTwips')) {
 		removeChildren(props, 'spacing');
 		if (run.characterSpacingTwips !== undefined) {

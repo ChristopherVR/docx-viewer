@@ -152,6 +152,15 @@ export function buildHomePanel(panels: Map<string, HTMLElement>): void {
 		.get('Table')!
 		.append(
 			group(
+				'Properties',
+				tool(
+					'Table properties',
+					'table',
+					{ type: 'formatDialog', kind: 'tableProperties' },
+					{ large: true, caption: 'Properties' },
+				),
+			),
+			group(
 				'Table',
 				tool(
 					'Insert row above',
@@ -204,9 +213,13 @@ export function buildHomePanel(panels: Map<string, HTMLElement>): void {
 					[
 						['multilevel', '1. 1.1. 1.1.1.'],
 						['outline', '1. a) i.'],
+						['define', 'Define New Multilevel List…'],
 					],
-					(value) => ({ type: 'list', key: value as 'multilevel' }),
-					{ momentary: true },
+					(value) =>
+						value === 'define'
+							? { type: 'formatDialog', kind: 'multilevelList' }
+							: { type: 'list', key: value as 'multilevel' },
+					{ compact: true, momentary: true },
 				),
 				tool('Decrease list level', 'outdent', { type: 'list', key: 'decreaseLevel' }),
 				tool('Increase list level', 'indent', { type: 'list', key: 'increaseLevel' }),

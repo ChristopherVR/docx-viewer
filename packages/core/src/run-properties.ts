@@ -1,21 +1,30 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import type { RunFormatting } from './run-style-model.js';
-import { isStHighlightColor, isStThemeColor } from './generated/wml-simple-types.js';
+import {
+	isStHighlightColor,
+	isStThemeColor,
+	isStVerticalAlignRun,
+} from './generated/wml-simple-types.js';
 import { enumValue } from './parse-diagnostics.js';
 import {
 	onOffElement,
 	parseHalfPoints,
 	parseRgbColor,
 	parseSignedTwips,
+	parseSignedHalfPoints,
+	parseTextScale,
 	parseTintShade,
 } from './simple-types.js';
 import { first, getW, type XmlElement } from './xml.js';
 import { isWordUnderlineStyle } from './underline.js';
+import { parseLigatures } from './ligatures.js';
 
 /** Shared `w:rPr` -> `RunFormatting` parsing, used for direct runs, docDefaults and style catalogs. */
 export function parseRunProperties(props: XmlElement | undefined): RunFormatting {
 	const result: RunFormatting = {};
 	if (!props) return result;
+	const ligatures = parseLigatures(props);
+	if (ligatures !== undefined) result.ligatures = ligatures;
 	// Toggles are kept when explicitly off too (`w:val="0"`): that cancels a style's value.
 	const toggle = (local: string): boolean | undefined => {
 		return onOffElement(first(props, local));
@@ -57,8 +66,7 @@ export function parseRunProperties(props: XmlElement | undefined): RunFormatting
 	);
 	if (highlight) result.highlight = highlight;
 	const verticalAlign = getW(first(props, 'vertAlign'), 'val');
-	if (verticalAlign === 'superscript' || verticalAlign === 'subscript')
-		result.verticalAlign = verticalAlign;
+	if (isStVerticalAlignRun(verticalAlign)) result.verticalAlign = verticalAlign;
 	const size = parseHalfPoints(getW(first(props, 'sz'), 'val'));
 	if (size !== undefined) result.fontSize = size / 2;
 	const fonts = first(props, 'rFonts');
@@ -101,6 +109,13 @@ export function parseRunProperties(props: XmlElement | undefined): RunFormatting
 	}
 	const spacing = parseSignedTwips(getW(first(props, 'spacing'), 'val'));
 	if (spacing !== undefined) result.characterSpacingTwips = spacing;
+	const scaleElement = first(props, 'w');
+	const scale = scaleElement ? parseTextScale(getW(scaleElement, 'val') ?? '100') : undefined;
+	if (scale !== undefined) result.textScalePercent = scale;
+	const kerning = parseHalfPoints(getW(first(props, 'kern'), 'val'));
+	if (kerning !== undefined) result.kerningHalfPoints = kerning;
+	const position = parseSignedHalfPoints(getW(first(props, 'position'), 'val'));
+	if (position !== undefined) result.positionHalfPoints = position;
 	const shd = first(props, 'shd');
 	const fill = parseRgbColor(getW(shd, 'fill'));
 	if (fill) result.shadingFill = fill;

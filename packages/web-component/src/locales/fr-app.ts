@@ -212,8 +212,8 @@ export const frApp: AppStrings = {
 	'Custom Margins…': 'Marges personnalisées…',
 	'Borders and Shading': 'Bordures et trame',
 	'Borders and Shading…': 'Bordures et trame…',
-	'Style': 'Style',
-	'Color': 'Couleur',
-	'Fill': 'Remplissage',
+	Style: 'Style',
+	Color: 'Couleur',
+	Fill: 'Remplissage',
 	None: 'Aucun',
 };

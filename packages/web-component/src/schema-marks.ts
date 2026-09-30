@@ -109,8 +109,12 @@ export const markSpecs = {
 		parseDOM: [
 			{ tag: 'sup', attrs: { value: 'superscript' } },
 			{ tag: 'sub', attrs: { value: 'subscript' } },
+			{ tag: 'span[data-docx-vertical-align="baseline"]', attrs: { value: 'baseline' } },
 		],
-		toDOM: (mark) => [mark.attrs.value === 'subscript' ? 'sub' : 'sup', 0],
+		toDOM: (mark) =>
+			mark.attrs.value === 'baseline'
+				? ['span', { 'data-docx-vertical-align': 'baseline' }, 0]
+				: [mark.attrs.value === 'subscript' ? 'sub' : 'sup', 0],
 	},
 	language: {
 		attrs: {

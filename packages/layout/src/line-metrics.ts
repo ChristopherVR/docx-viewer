@@ -20,8 +20,9 @@ export function tokenExtent(
 		return { above: run.object.heightPx, below: 0, ascent: run.object.heightPx, descent: 0 };
 	const { ascent, descent } = fontMetrics(measurer, fonts[token.runIndex] ?? fontOf({ text: '' }));
 	const size = ptToPx(run?.fontSizePt ?? DEFAULT_FONT_SIZE_PT);
-	const shift =
+	const scriptShift =
 		run?.script === 'super' ? SUPER_RAISE * size : run?.script === 'sub' ? -SUB_DROP * size : 0;
+	const shift = scriptShift + (run?.positionPx ?? 0);
 	return { above: ascent + shift, below: descent - shift, ascent, descent };
 }
 

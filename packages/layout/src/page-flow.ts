@@ -24,8 +24,8 @@ class SectionFlow {
 	private readonly blocks: LayoutBlock[];
 	private readonly measurer: TextMeasurer;
 	private readonly note: (message: string) => void;
-	private readonly paragraphCache = new Map<number, ParagraphLayoutResult>();
-	private readonly firstRowHeightCache = new Map<number, number>();
+	private readonly paragraphCache = new Map<string, ParagraphLayoutResult>();
+	private readonly firstRowHeightCache = new Map<string, number>();
 
 	constructor(
 		section: LayoutSection,
@@ -48,7 +48,8 @@ class SectionFlow {
 	}
 
 	private paragraphLayout(index: number): ParagraphLayoutResult {
-		let cached = this.paragraphCache.get(index);
+		const key = `${index}:${this.cursor.columnWidthPx}`;
+		let cached = this.paragraphCache.get(key);
 		if (!cached) {
 			cached = layoutParagraph(
 				this.blocks[index] as Extract<LayoutBlock, { kind: 'paragraph' }>,
@@ -56,20 +57,21 @@ class SectionFlow {
 				this.measurer,
 				this.note,
 			);
-			this.paragraphCache.set(index, cached);
+			this.paragraphCache.set(key, cached);
 		}
 		return cached;
 	}
 
 	private firstRowHeight(index: number): number {
-		let cached = this.firstRowHeightCache.get(index);
+		const key = `${index}:${this.cursor.columnWidthPx}`;
+		let cached = this.firstRowHeightCache.get(key);
 		if (cached === undefined) {
 			const table = this.blocks[index] as Extract<LayoutBlock, { kind: 'table' }>;
 			const [firstRow] = table.rows;
 			cached = firstRow
 				? layoutRow(firstRow, this.cursor.columnWidthPx, this.measurer, this.note).heightPx
 				: 0;
-			this.firstRowHeightCache.set(index, cached);
+			this.firstRowHeightCache.set(key, cached);
 		}
 		return cached;
 	}
@@ -154,7 +156,21 @@ class SectionFlow {
 					: 0;
 			placeParagraph(
 				this.cursor,
-				{ paragraph: block, layout, spacingBeforePx, requiredTogetherPx },
+				{
+					paragraph: block,
+					layout,
+					spacingBeforePx,
+					requiredTogetherPx,
+					reflow: (token) =>
+						layoutParagraph(
+							block,
+							this.cursor.columnWidthPx,
+							this.measurer,
+							this.note,
+							undefined,
+							token,
+						),
+				},
 				this.note,
 			);
 		}

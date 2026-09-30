@@ -103,6 +103,10 @@ function setRunProperties(
 			run.vanish ||
 			run.underlineStyle ||
 			run.characterSpacingTwips !== undefined ||
+			run.textScalePercent !== undefined ||
+			run.ligatures !== undefined ||
+			run.kerningHalfPoints !== undefined ||
+			run.positionHalfPoints !== undefined ||
 			run.shadingFill ||
 			run.shadingThemeFill ||
 			run.fontTheme)

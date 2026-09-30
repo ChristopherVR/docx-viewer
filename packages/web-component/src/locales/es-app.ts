@@ -220,8 +220,8 @@ export const esApp: AppStrings = {
 	'Custom Margins…': 'Márgenes personalizados…',
 	'Borders and Shading': 'Bordes y sombreado',
 	'Borders and Shading…': 'Bordes y sombreado…',
-	'Style': 'Estilo',
-	'Color': 'Color',
-	'Fill': 'Relleno',
+	Style: 'Estilo',
+	Color: 'Color',
+	Fill: 'Relleno',
 	None: 'Ninguno',
 };

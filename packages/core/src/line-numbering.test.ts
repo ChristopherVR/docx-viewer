@@ -21,7 +21,7 @@ describe('line numbering', () => {
 		);
 		expect(loaded.model.sections![0]).toMatchObject({
 			lineNumbering: true,
-			lineNumberSettings: { countBy: 5, start: 3, restart: 'newPage', distanceTwips: 360 },
+			lineNumberSettings: { countBy: 5, start: 4, restart: 'newPage', distanceTwips: 360 },
 		});
 	});
 
@@ -55,5 +55,32 @@ describe('line numbering', () => {
 		const model = structuredClone(loaded.model);
 		model.sections![0]!.lineNumberSettings = { countBy: 0, start: 1, restart: 'continuous' };
 		await expect(loaded.save(model)).rejects.toThrow(/countBy/);
+	});
+	it('converts Word zero-based start values to visible numbers on parse and back on save', async () => {
+		const loaded = await load('<w:sectPr><w:lnNumType w:start="2"/></w:sectPr>');
+		expect(loaded.model.sections![0]!.lineNumberSettings!.start).toBe(3);
+		const updated = structuredClone(loaded.model);
+		updated.sections![0]!.lineNumberSettings!.start = 5;
+		const xml = await xmlOf(await loaded.save(updated));
+		expect(xml).toContain('w:start="4"');
+		expect(
+			(await loadDocx(await loaded.save(updated))).model.sections![0]!.lineNumberSettings!.start,
+		).toBe(5);
+	});
+	it('preserves and explicitly disables paragraph suppression, including inherited values', async () => {
+		const zip = new JSZip();
+		zip.file(
+			'word/document.xml',
+			`<w:document xmlns:w="${W}"><w:body><w:p><w:pPr><w:suppressLineNumbers/></w:pPr><w:r><w:t>one</w:t></w:r></w:p><w:sectPr/></w:body></w:document>`,
+		);
+		const loaded = await loadDocx(await zip.generateAsync({ type: 'uint8array' }));
+		const model = structuredClone(loaded.model);
+		const paragraph = model.blocks[0]!;
+		if (paragraph.type !== 'paragraph') throw new Error('Expected paragraph');
+		expect(paragraph.suppressLineNumbers).toBe(true);
+		paragraph.suppressLineNumbers = false;
+		expect(await xmlOf(await loaded.save(model))).toContain('<w:suppressLineNumbers w:val="0"');
+		const reopened = await loadDocx(await loaded.save(model));
+		expect(reopened.model.blocks[0]).toMatchObject({ suppressLineNumbers: false });
 	});
 });

@@ -5,6 +5,7 @@ import { at, expectParagraph, must } from './test-support/access.js';
 
 const w = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const r = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+const cloneModel = (model: DocumentModel): DocumentModel => structuredClone(model);
 
 /** Two sections sharing header1.xml, plus a footer with a PAGE field. */
 async function fixture(): Promise<Uint8Array> {
@@ -42,6 +43,37 @@ function editHeader(model: DocumentModel, edit: (paragraph: Paragraph) => void) 
 }
 
 describe('header and footer editing', () => {
+	it('removes a local reference when linking and preserves copied XML and relationships when unlinking', async () => {
+		const input = await JSZip.loadAsync(await fixture());
+		const sourceXml = (await input.file('word/header1.xml')!.async('string')).replace(
+			'<w:hdr ',
+			'<w:hdr data-preserved="yes" ',
+		);
+		input.file('word/header1.xml', sourceXml);
+		const rels = `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdKeep" Type="${r}/hyperlink" Target="https://example.com/" TargetMode="External"/></Relationships>`;
+		input.file('word/_rels/header1.xml.rels', rels);
+		const loaded = await loadDocx(await input.generateAsync({ type: 'uint8array' }));
+		const linked = cloneModel(loaded.model);
+		delete linked.sections![1]!.headers!.default;
+		const linkedBytes = await loaded.save(linked);
+		const linkedZip = await JSZip.loadAsync(linkedBytes);
+		expect(
+			(await linkedZip.file('word/document.xml')!.async('string')).match(/<w:headerReference/g),
+		).toHaveLength(1);
+		const unlinked = cloneModel(linked);
+		unlinked.sections![1]!.headers!.default = {
+			...structuredClone(loaded.model.sections![0]!.headers!.default!),
+			partName: 'word/header2.xml',
+			sourcePartName: 'word/header1.xml',
+		};
+		const saved = await loaded.save(unlinked);
+		const copied = await JSZip.loadAsync(saved);
+		expect(await copied.file('word/header2.xml')!.async('string')).toBe(sourceXml);
+		expect(await copied.file('word/_rels/header2.xml.rels')!.async('string')).toBe(rels);
+		expect((await loadDocx(saved)).model.sections![1]!.headers!.default!.partName).toBe(
+			'word/header2.xml',
+		);
+	});
 	it('rewrites only the edited header part and keeps its formatting', async () => {
 		const original = await fixture();
 		const loaded = await loadDocx(original);

@@ -5,7 +5,6 @@ import {
 	fieldset,
 	labelled,
 	listInput,
-	numberInput,
 	row,
 	selectOf,
 	setTriState,
@@ -20,6 +19,9 @@ import {
 import { focusView } from './focus-view';
 import { localizeElement, type EditorLocale } from './localization';
 import { FONT_FAMILIES, parseFontFamily, parseFontSize } from './ribbon-combo';
+import { createFontAdvanced } from './font-advanced';
+import { createFontDialogTabs } from './font-dialog-tabs';
+import { closeHistory } from 'prosemirror-history';
 
 export interface FormatDialog {
 	element: HTMLElement;
@@ -43,7 +45,10 @@ const styleOf = (bold: boolean, italic: boolean): Style =>
 	bold ? (italic ? 'boldItalic' : 'bold') : italic ? 'italic' : 'regular';
 
 /** Word's Font dialog: family, style, size, colour, underline, effects and character spacing. */
-export function createFontDialog(getView: () => EditorView | undefined): FormatDialog {
+export function createFontDialog(
+	getView: () => EditorView | undefined,
+	getHistoryView = getView,
+): FormatDialog {
 	const element = document.createElement('section');
 	element.className = 'dve-dialog dve-format-dialog dve-font-dialog';
 	element.setAttribute('role', 'dialog');
@@ -51,6 +56,13 @@ export function createFontDialog(getView: () => EditorView | undefined): FormatD
 	element.hidden = true;
 	const heading = document.createElement('h2');
 	heading.textContent = 'Font';
+	const dirty = new Set<keyof FontFormat>();
+	const mark = (...fields: Array<keyof FontFormat>) => {
+		for (const field of fields) dirty.add(field);
+		refreshPreview();
+	};
+	const advanced = createFontAdvanced(mark);
+	const tabs = createFontDialogTabs();
 
 	const { input: family, list } = listInput(FONT_FAMILIES);
 	const style = selectOf([
@@ -73,20 +85,15 @@ export function createFontDialog(getView: () => EditorView | undefined): FormatD
 		caps: checkbox('All caps'),
 		hidden: checkbox('Hidden'),
 	};
-	const spacingKind = selectOf([
-		['normal', 'Normal'],
-		['expanded', 'Expanded'],
-		['condensed', 'Condensed'],
-	]);
-	const spacingBy = numberInput(0, 1584, 0.1);
-	const preview = document.createElement('div');
-	preview.className = 'dve-format-preview';
-	preview.textContent = 'AaBbYyZz';
+	const previewBox = document.createElement('div');
+	previewBox.className = 'dve-format-preview';
+	const preview = document.createElement('span');
+	preview.textContent = 'AaBbYyZz office affinity';
 	preview.setAttribute('aria-hidden', 'true');
+	previewBox.append(preview);
 
 	const effectBoxes = Object.values(effects).map((item) => item.wrapper);
-	element.append(
-		heading,
+	tabs.basic.append(
 		row(labelled('Font', family), labelled('Font style', style), labelled('Size', size)),
 		row(
 			labelled('Font color', color),
@@ -95,12 +102,9 @@ export function createFontDialog(getView: () => EditorView | undefined): FormatD
 		),
 		automatic.wrapper,
 		fieldset('Effects', ...effectBoxes),
-		fieldset(
-			'Character spacing',
-			row(labelled('Character spacing', spacingKind), labelled('By', spacingBy)),
-		),
-		preview,
 	);
+	tabs.advanced.append(advanced.element);
+	element.append(heading, tabs.list, tabs.basic, tabs.advanced, previewBox);
 	element.append(list);
 	const cancel = dialogButton('Cancel');
 	const confirm = dialogButton('OK', true);
@@ -110,11 +114,6 @@ export function createFontDialog(getView: () => EditorView | undefined): FormatD
 	element.append(actions);
 
 	let initial: ReturnType<typeof readFontFormat> | undefined;
-	const dirty = new Set<keyof FontFormat>();
-	const mark = (...fields: Array<keyof FontFormat>) => {
-		for (const field of fields) dirty.add(field);
-		refreshPreview();
-	};
 
 	const refreshPreview = () => {
 		const bold = style.value === 'bold' || style.value === 'boldItalic';
@@ -124,7 +123,6 @@ export function createFontDialog(getView: () => EditorView | undefined): FormatD
 			underline.value !== 'none' ? 'underline' : '',
 			effects.strike.input.checked || effects.doubleStrike.input.checked ? 'line-through' : '',
 		].filter(Boolean);
-		const by = spacingKind.value === 'normal' ? 0 : Number(spacingBy.value) || 0;
 		Object.assign(preview.style, {
 			fontFamily: parseFontFamily(family.value) ? `"${family.value}", sans-serif` : '',
 			fontSize: `${Math.min(30, Math.max(10, points * 1.3))}px`,
@@ -145,13 +143,13 @@ export function createFontDialog(getView: () => EditorView | undefined): FormatD
 			textDecorationColor: automatic.input.checked ? '' : underlineColor.value,
 			textTransform: effects.caps.input.checked ? 'uppercase' : 'none',
 			fontVariant: effects.smallCaps.input.checked ? 'small-caps' : 'normal',
-			letterSpacing: spacingKind.value === 'condensed' ? `${-by}pt` : `${by}pt`,
 			verticalAlign: effects.superscript.input.checked
 				? 'super'
 				: effects.subscript.input.checked
 					? 'sub'
 					: 'baseline',
 			opacity: effects.hidden.input.checked ? '0.5' : '1',
+			...advanced.previewStyle(points),
 		});
 	};
 
@@ -165,11 +163,6 @@ export function createFontDialog(getView: () => EditorView | undefined): FormatD
 		mark('underlineColor');
 	});
 	automatic.input.addEventListener('change', () => mark('underlineColor'));
-	spacingKind.addEventListener('change', () => {
-		if (spacingKind.value !== 'normal' && !Number(spacingBy.value)) spacingBy.value = '1';
-		mark('spacing');
-	});
-	spacingBy.addEventListener('input', () => mark('spacing'));
 	for (const [field, item] of Object.entries(effects))
 		item.input.addEventListener('change', () => {
 			item.input.indeterminate = false;
@@ -206,11 +199,7 @@ export function createFontDialog(getView: () => EditorView | undefined): FormatD
 				: effects.subscript.input.checked
 					? 'subscript'
 					: 'none';
-		if (dirty.has('spacing')) {
-			const by = Number(spacingBy.value) || 0;
-			changes.spacing =
-				spacingKind.value === 'normal' ? 0 : spacingKind.value === 'condensed' ? -by : by;
-		}
+		Object.assign(changes, advanced.collect(dirty));
 		return changes as Partial<FontFormat>;
 	};
 
@@ -221,7 +210,13 @@ export function createFontDialog(getView: () => EditorView | undefined): FormatD
 	};
 	const submit = () => {
 		const view = getView();
-		if (view) applyFontFormat(view, collect());
+		if (!advanced.valid(dirty, tabs.showAdvanced)) return;
+		if (view?.editable) {
+			const historyView = getHistoryView() ?? view;
+			historyView.dispatch(closeHistory(historyView.state.tr));
+			applyFontFormat(view, collect());
+			historyView.dispatch(closeHistory(historyView.state.tr));
+		}
 		close();
 	};
 	cancel.addEventListener('click', close);
@@ -248,6 +243,8 @@ export function createFontDialog(getView: () => EditorView | undefined): FormatD
 			localizeElement(element, locale);
 			initial = readFontFormat(view.state);
 			dirty.clear();
+			tabs.reset();
+			advanced.reset(initial);
 			family.value = initial.family ?? '';
 			size.value = initial.size === null ? '' : String(initial.size);
 			if (initial.bold === null || initial.italic === null) style.selectedIndex = -1;
@@ -270,9 +267,6 @@ export function createFontDialog(getView: () => EditorView | undefined): FormatD
 			setTriState(effects.smallCaps.input, initial.smallCaps);
 			setTriState(effects.caps.input, initial.caps);
 			setTriState(effects.hidden.input, initial.hidden);
-			const spacing = initial.spacing ?? 0;
-			spacingKind.value = spacing === 0 ? 'normal' : spacing > 0 ? 'expanded' : 'condensed';
-			spacingBy.value = spacing ? String(Math.abs(spacing)) : '';
 			refreshPreview();
 			element.hidden = false;
 			family.focus();

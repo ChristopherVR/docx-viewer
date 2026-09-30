@@ -209,8 +209,8 @@ export const zhCNApp: AppStrings = {
 	'Custom Margins…': '自定义页边距…',
 	'Borders and Shading': '边框和底纹',
 	'Borders and Shading…': '边框和底纹…',
-	'Style': '样式',
-	'Color': '颜色',
-	'Fill': '填充',
+	Style: '样式',
+	Color: '颜色',
+	Fill: '填充',
 	None: '无',
 };

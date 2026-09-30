@@ -80,6 +80,16 @@
 	font-size: 12px;
 	white-space: nowrap;
 }
+.ribbon-panel[data-panel='Header & Footer'] .ribbon-group[data-label='Position'] {
+	max-width: none;
+}
+.ribbon-panel[data-panel='Header & Footer'] .ribbon-group[data-label='Position'] .ribbon-spinner {
+	width: auto;
+	min-width: 280px;
+}
+.ribbon-panel[data-panel='Header & Footer'] .ribbon-spinner input {
+	flex: none;
+}
 .ribbon-group .ribbon-spinner input {
 	width: 64px;
 	height: 24px;

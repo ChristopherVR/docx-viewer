@@ -3,6 +3,7 @@ import type { Mark } from 'prosemirror-model';
 import { schema } from './schema';
 import { lineSpacingLabel, lineSpacingValue } from './line-spacing';
 import { findLocalizedControl } from './localization';
+import { selectionScript } from './script-state';
 
 /** Synchronize the inline-format toggle buttons with the current selection. */
 export function syncFormatControls(toolbar: HTMLElement, state: EditorState) {
@@ -40,25 +41,9 @@ export function syncFormatControls(toolbar: HTMLElement, state: EditorState) {
 	}
 	const superButton = findLocalizedControl(toolbar, 'Superscript');
 	const subButton = findLocalizedControl(toolbar, 'Subscript');
-	const aligns = new Set<string>();
-	if (state.selection.empty) {
-		const align = (state.storedMarks || state.selection.$from.marks()).find(
-			(mark) => mark.type.name === 'verticalAlign',
-		);
-		aligns.add(align?.attrs.value || 'none');
-	} else {
-		let found = false;
-		state.doc.nodesBetween(state.selection.from, state.selection.to, (node) => {
-			if (!node.isText) return;
-			found = true;
-			aligns.add(
-				node.marks.find((mark) => mark.type.name === 'verticalAlign')?.attrs.value || 'none',
-			);
-		});
-		if (!found) aligns.add('none');
-	}
-	superButton?.setAttribute('aria-pressed', String(aligns.size === 1 && aligns.has('superscript')));
-	subButton?.setAttribute('aria-pressed', String(aligns.size === 1 && aligns.has('subscript')));
+	const align = selectionScript(state);
+	superButton?.setAttribute('aria-pressed', String(align === 'superscript'));
+	subButton?.setAttribute('aria-pressed', String(align === 'subscript'));
 }
 
 export function syncParagraphControls(toolbar: HTMLElement, state: EditorState) {

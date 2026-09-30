@@ -16,7 +16,7 @@ const twipsCss = (value: unknown): string | null =>
 
 /** A drop cap frame floats left so the next paragraph wraps around it; a margin cap hangs into the margin. */
 function dropCapCss(value: unknown): string[] {
-	const cap = value as { style?: string; lines?: number } | null;
+	const cap = value as { style?: string; lines?: number; distanceTwips?: number } | null;
 	if (!cap || (cap.style !== 'drop' && cap.style !== 'margin')) return [];
 	const lines = Number.isInteger(cap.lines) ? Number(cap.lines) : 3;
 	return [
@@ -24,7 +24,7 @@ function dropCapCss(value: unknown): string[] {
 		'text-indent:0',
 		'margin-top:0',
 		'margin-bottom:0',
-		`margin-right:${cap.style === 'margin' ? 0.2 : 4}${cap.style === 'margin' ? 'em' : 'px'}`,
+		`margin-right:${twipsCss(cap.distanceTwips) ?? (cap.style === 'margin' ? '0.2em' : '4px')}`,
 		...(cap.style === 'margin' ? [`margin-left:-${Math.round(lines * 12) / 10}em`] : []),
 	];
 }
@@ -86,6 +86,7 @@ export const schema = new Schema({
 				endnoteNumFmt: { default: null },
 				/** Section layout (no header/footer content) as JSON, so page setup is undoable. */
 				sections: { default: null },
+				sectionParts: { default: null },
 			},
 		},
 		paragraph: {
@@ -119,6 +120,7 @@ export const schema = new Schema({
 				keepLines: { default: null },
 				widowControl: { default: null },
 				contextualSpacing: { default: null },
+				suppressLineNumbers: { default: null },
 				/** `w:framePr` drop cap: `{ style, lines }` on the frame paragraph holding the initial. */
 				dropCap: { default: null },
 				/** `w:pBdr` (object) and shading fill; read-only, drawn around the paragraph. */
@@ -211,7 +213,7 @@ export const schema = new Schema({
 				alignment: { default: null },
 				indentTwips: { default: null },
 				borders: { default: null },
-				/** Default cell margins (`w:tblCellMar`) as JSON; display only. */
+				/** Default cell margins (`w:tblCellMar`) as JSON. */
 				cellMargins: { default: null },
 			},
 			parseDOM: [{ tag: 'table' }],
@@ -219,8 +221,8 @@ export const schema = new Schema({
 		},
 		tableRow: {
 			content: 'tableCell+',
-			/** `w:trHeight` in CSS pixels (a minimum on screen); display only. */
-			attrs: { heightPx: { default: null } },
+			/** Row formatting travels with the row during structural edits and undo. */
+			attrs: { heightPx: { default: null }, properties: { default: null } },
 			parseDOM: [{ tag: 'tr' }],
 			toDOM: (node) => [
 				'tr',

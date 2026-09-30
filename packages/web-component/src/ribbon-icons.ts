@@ -1,5 +1,6 @@
 /** Line icons for ribbon buttons on a 24x24 grid, drawn with `currentColor` so themes apply. */
 const paths = {
+	close: 'M6 6l12 12 M18 6L6 18',
 	paste: 'M8 4h8v3H8z M6 5.5H5v15h14v-15h-1 M9 12h6 M9 15.5h6',
 	cut: 'M6 3l9 12 M18 3l-9 12 M7 15.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z M17 15.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z',
 	copy: 'M9 8h11v13H9z M6 16H4V3h11v2',

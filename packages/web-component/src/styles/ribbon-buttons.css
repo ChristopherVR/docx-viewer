@@ -185,6 +185,12 @@
 .ribbon-stack .ribbon-inline {
 	justify-content: flex-start;
 }
+.ribbon-panel[data-panel='Header & Footer'] .ribbon-stack button.ribbon-inline {
+	height: 22px;
+}
+.ribbon-panel[data-panel='Header & Footer'] button.ribbon-large {
+	width: 112px;
+}
 .ribbon-panel[data-panel='Home'] .ribbon-group[data-label='Editing'] {
 	width: auto;
 	min-width: 110px;

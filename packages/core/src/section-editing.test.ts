@@ -18,6 +18,64 @@ const finalSection =
 	'<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/><w:cols w:space="720"/></w:sectPr>';
 
 describe('section editing', () => {
+	it('does not copy a following footer reference into an earlier new section without a footer', async () => {
+		const loaded = await loadDocx(
+			await docx(
+				`<w:p><w:r><w:t>First</w:t></w:r></w:p><w:p><w:r><w:t>Second</w:t></w:r></w:p>${finalSection}`,
+			),
+		);
+		const next = clone(loaded.model);
+		const section = next.sections![0]!;
+		next.sections = [
+			{ ...section, endsAtBlockId: 'p0' },
+			{
+				...section,
+				endsAtBlockId: 'p1',
+				footers: {
+					default: {
+						partName: 'word/footer1.xml',
+						blocks: [
+							{
+								type: 'paragraph',
+								id: 'f',
+								runs: [{ text: '1', field: { instr: ' PAGE ', simple: true } }],
+							},
+						],
+					},
+				},
+			},
+		];
+		const xml = await documentXml(await loaded.save(next));
+		expect(xml.match(/<w:footerReference/g)).toHaveLength(1);
+		expect(xml.indexOf('<w:footerReference')).toBeGreaterThan(xml.indexOf('Second'));
+	});
+	it('writes unequal widths, removes stale columns and preserves unmodeled column attributes', async () => {
+		const loaded = await loadDocx(
+			await docx(
+				`<w:p><w:r><w:t>Columns</w:t></w:r></w:p>${finalSection.replace('<w:cols w:space="720"/>', '<w:cols w:equalWidth="0" w:num="3" w:space="720"><w:col w:w="2400" w:space="720" data-extra="keep"/><w:col w:w="2400" w:space="720"/><w:col w:w="3120"/></w:cols>')}`,
+			),
+		);
+		const next = clone(loaded.model);
+		next.sections![0]!.columns = {
+			count: 2,
+			equalWidth: false,
+			widths: [{ widthTwips: twips(2880), spacingTwips: twips(720) }, { widthTwips: twips(5760) }],
+		};
+		const bytes = await loaded.save(next);
+		const xml = await documentXml(bytes);
+		expect(xml).toContain('w:equalWidth="0"');
+		expect(xml).toContain('data-extra="keep"');
+		expect(xml.match(/<w:col /g)).toHaveLength(2);
+		expect((await loadDocx(bytes)).model.sections![0]!.columns).toMatchObject({
+			count: 2,
+			equalWidth: false,
+			widths: [{ widthTwips: 2880, spacingTwips: 720 }, { widthTwips: 5760 }],
+		});
+		next.sections![0]!.columns = { count: 1, equalWidth: true };
+		const cleared = await documentXml(await loaded.save(next));
+		expect(cleared).not.toContain('<w:col ');
+		expect(cleared).not.toContain('w:equalWidth');
+	});
 	it('inserts a continuous section break with two columns after a paragraph', async () => {
 		const loaded = await loadDocx(
 			await docx(

@@ -71,7 +71,14 @@ export function tableNode(
 			);
 		});
 		const heightTwips = block.rowProperties?.[rowIndex]?.heightTwips;
-		return schema.node('tableRow', heightTwips ? { heightPx: heightTwips / 15 } : null, cells);
+		return schema.node(
+			'tableRow',
+			{
+				heightPx: heightTwips ? heightTwips / 15 : null,
+				properties: block.rowProperties?.[rowIndex] ?? null,
+			},
+			cells,
+		);
 	});
 	return schema.node(
 		'table',
@@ -86,6 +93,22 @@ export function tableNode(
 		},
 		rows,
 	);
+}
+
+/** Reads editable formatting from nodes rather than a stale prior model. */
+export function tableFormattingFromNode(node: ProseMirrorNode): {
+	rowProperties: Table['rowProperties'];
+	cellMargins: Table['cellMargins'];
+} {
+	const rowProperties: NonNullable<Table['rowProperties']> = [];
+	node.forEach((row) => rowProperties.push(structuredClone(row.attrs.properties ?? {})));
+	return {
+		rowProperties: rowProperties.some((row) => Object.keys(row).length) ? rowProperties : undefined,
+		cellMargins:
+			typeof node.attrs.cellMargins === 'string'
+				? (JSON.parse(node.attrs.cellMargins) as Table['cellMargins'])
+				: undefined,
+	};
 }
 
 /** Rebuilds a simple (structurally editable) table directly from its visible ProseMirror rows. */

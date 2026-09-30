@@ -9,6 +9,8 @@ export interface HeaderFooterContent {
 	blocks: Block[];
 	/** The header or footer package part, e.g. `word/header1.xml`; several sections may share one. */
 	partName?: string;
+	/** Source package part to preserve XML and relationships when making an independent copy. */
+	sourcePartName?: string;
 }
 /** One `w:headerReference`/`w:footerReference` slot resolved into content, if present. */
 export interface HeaderFooterSlots {
@@ -41,7 +43,7 @@ export interface SectionPageNumbering {
 export interface LineNumberSettings {
 	/** Show a number on every n-th line (`w:countBy`, at least 1). */
 	countBy: number;
-	/** First number of a restart (`w:start`, default 1). */
+	/** First visible number of a restart (one more than the zero-based `w:start`, default 1). */
 	start: number;
 	/** `w:restart`: start over each page, each section, or never. */
 	restart: 'newPage' | 'newSection' | 'continuous';

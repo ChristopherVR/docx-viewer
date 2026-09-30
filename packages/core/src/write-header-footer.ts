@@ -9,7 +9,11 @@ import type {
 	PendingMediaPart,
 	SectionProperties,
 } from './model.js';
-import { allocatorForPart, writeNewRelationships } from './part-relationships.js';
+import {
+	allocatorForPart,
+	relationshipsPartFor,
+	writeNewRelationships,
+} from './part-relationships.js';
 import type { DocPrIdAllocator } from './docpr-ids.js';
 import { buildXml, parseXml } from './xml.js';
 import { applyBlocks } from './write.js';
@@ -68,6 +72,7 @@ export async function createHeaderFooterParts(
 	zip: JSZip,
 	model: DocumentModel,
 	base: DocumentModel | undefined,
+	docPrIds?: DocPrIdAllocator,
 ): Promise<Map<string, string>> {
 	const ids = new Map<string, string>();
 	for (const { partName, kind } of newHeaderFooterParts(model, base)) {
@@ -82,6 +87,24 @@ export async function createHeaderFooterParts(
 			partName,
 			`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:${info.root} xmlns:w="${WORD_NS}" xmlns:r="${RELATIONSHIPS}"/>`,
 		);
+		const content = (model.sections ?? [])
+			.flatMap((section) => Object.values(section[kind] ?? {}))
+			.find((content) => content?.partName === partName);
+		const source = content?.sourcePartName && zip.file(content.sourcePartName);
+		if (source) {
+			const xml = await source.async('string');
+			zip.file(
+				partName,
+				docPrIds
+					? xml.replace(
+							/(<(?:[\w.-]+:)?docPr\b[^>]*?\sid\s*=\s*["'])\d+(["'])/g,
+						(_match: string, start: string, end: string) => `${start}${docPrIds.next()}${end}`,
+						)
+					: xml,
+			);
+			const rels = zip.file(relationshipsPartFor(content!.sourcePartName!));
+			if (rels) zip.file(relationshipsPartFor(partName), await rels.async('uint8array'));
+		}
 		await ensureContentTypeOverride(
 			zip,
 			partName,
@@ -124,12 +147,26 @@ export async function applyHeaderFooterEdits(
 ): Promise<void> {
 	const next = partContents(model.sections);
 	const previous = partContents(base.sections);
+	const sources = new Map(
+		(model.sections ?? []).flatMap((section) =>
+			KINDS.flatMap((kind) =>
+				Object.values(section[kind] ?? {}).flatMap((content) =>
+					content?.partName && content.sourcePartName
+						? [[content.partName, content.sourcePartName] as const]
+						: [],
+				),
+			),
+		),
+	);
 	const contentWidthTwips = Math.round(
 		(model.page.width - model.page.marginLeft - model.page.marginRight) * 15,
 	);
 	const created = new Set(newHeaderFooterParts(model, base).map((part) => part.partName));
 	for (const [partName, blocks] of next) {
-		const original = previous.get(partName) ?? (created.has(partName) ? [] : undefined);
+		const original =
+			previous.get(partName) ??
+			previous.get(sources.get(partName) ?? '') ??
+			(created.has(partName) ? [] : undefined);
 		if (!original || JSON.stringify(original) === JSON.stringify(blocks)) continue;
 		const file = zip.file(partName);
 		if (!file) throw new Error(`Header/footer part ${partName} is missing from the package.`);

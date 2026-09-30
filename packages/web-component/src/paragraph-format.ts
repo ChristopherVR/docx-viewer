@@ -29,6 +29,7 @@ export interface ParagraphFormat {
 	keepNext: boolean;
 	keepLines: boolean;
 	pageBreakBefore: boolean;
+	suppressLineNumbers: boolean;
 }
 
 /** A selection's paragraph format, with `null` for a field that differs between paragraphs. */
@@ -49,6 +50,7 @@ const FIELDS = [
 	'keepNext',
 	'keepLines',
 	'pageBreakBefore',
+	'suppressLineNumbers',
 ] as const satisfies readonly (keyof ParagraphFormat)[];
 
 const TWIPS_PER_INCH = 1440;
@@ -113,6 +115,7 @@ function formatOf(attrs: Attrs): ParagraphFormat {
 		keepNext: attrs.keepNext === true,
 		keepLines: attrs.keepLines === true,
 		pageBreakBefore: attrs.pageBreakBefore === true,
+		suppressLineNumbers: attrs.suppressLineNumbers === true,
 	};
 }
 
@@ -193,6 +196,7 @@ function attrChanges(node: ProseMirrorNode, changes: Partial<ParagraphFormat>): 
 		'keepNext',
 		'keepLines',
 		'pageBreakBefore',
+		'suppressLineNumbers',
 	] as const)
 		if (changes[key] !== undefined) out[key] = changes[key];
 	return out;

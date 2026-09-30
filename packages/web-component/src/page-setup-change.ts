@@ -4,6 +4,7 @@ import {
 	type SectionProperties,
 } from '@christophervr/docx-core';
 import { setPageSize } from './page-size';
+import { unequalColumnPreset } from './column-settings';
 import type { RibbonAction } from './ribbon-action';
 import {
 	setColumns,
@@ -13,6 +14,7 @@ import {
 	setPageNumbering,
 	setTitlePage,
 	setVerticalAlign,
+	withSection,
 } from './section-commands';
 
 export type PageSetupKey = Extract<RibbonAction, { type: 'page' }>['key'];
@@ -35,6 +37,11 @@ export function pageSetupChange(
 		case 'orientation':
 			return setOrientation(model, index, value === 'landscape' ? 'landscape' : 'portrait');
 		case 'columns':
+			if (value === 'left' || value === 'right')
+				return withSection(model, index, (part) => ({
+					...part,
+					columns: unequalColumnPreset(part, value),
+				}));
 			return setColumns(model, index, Math.max(1, Number(value) || 1));
 		case 'numberFormat':
 			return setPageNumbering(model, index, {

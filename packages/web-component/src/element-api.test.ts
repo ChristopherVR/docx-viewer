@@ -141,6 +141,7 @@ describe('UI customisation', () => {
 			'print',
 			'show-hidden-text',
 			'page-thumbnails',
+			'navigation-pane',
 			'zoom',
 			'zoom-dialog',
 			'zoom-actual-size',

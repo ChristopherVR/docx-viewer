@@ -1,16 +1,24 @@
 import type { DocumentModel, SectionProperties } from '@christophervr/docx-core';
+import { closeHistory } from 'prosemirror-history';
 import { applyPageSetup, type PageSetupValues } from './page-setup-model';
 import { emit } from './events';
 import type { EditorHost } from './editor-host';
 import { findLocalizedControl } from './localization';
 import type { PrintLayoutController } from './print-layout-view';
 import { applyPageStyles } from './ribbon-commands';
-import { currentSectionIndex, insertSectionBreak, sectionsOf } from './section-commands';
+import {
+	currentSectionIndex,
+	insertSectionBreak,
+	sectionsOf,
+	withSection,
+} from './section-commands';
 import { newHeaderFooterId, withBlankHeaderFooter, withPageNumber } from './header-footer-commands';
 import { pageSetupChange } from './page-setup-change';
 import { pageSizeOf } from './page-size';
+import { columnPreset } from './column-settings';
 import type { RibbonAction } from './ribbon';
 import { sectionLayoutJson } from './section-layout';
+import { sectionPartsJson } from './header-footer-history';
 import type { StatusBar } from './status-bar';
 import { fitZoomPercent, type ZoomFit } from './zoom-fit';
 
@@ -57,11 +65,11 @@ export class PageController {
 		setSelect('Hyphenation', model.autoHyphenation ? 'auto' : 'none');
 		setSelect('Page size', pageSizeOf(section) ?? '');
 		setSelect('Vertical alignment', section.verticalAlign ?? 'top');
-		findLocalizedControl<HTMLButtonElement>(toolbar, 'Different odd and even pages')?.setAttribute(
-			'aria-pressed',
-			String(Boolean(model.evenAndOddHeaders)),
-		);
-		setSelect('Columns', String(section.columns.count));
+		for (const button of toolbar.querySelectorAll(
+			'[data-localearialabel="Different odd and even pages"]',
+		))
+			button.setAttribute('aria-pressed', String(Boolean(model.evenAndOddHeaders)));
+		setSelect('Columns', columnPreset(section.columns));
 		setSelect(
 			'Line numbers',
 			section.lineNumberSettings ? section.lineNumberSettings.restart : 'none',
@@ -71,10 +79,8 @@ export class PageController {
 			'Page numbering',
 			section.pageNumbering?.start !== undefined ? 'restart' : 'continue',
 		);
-		findLocalizedControl<HTMLButtonElement>(toolbar, 'Different first page')?.setAttribute(
-			'aria-pressed',
-			String(Boolean(section.titlePage)),
-		);
+		for (const button of toolbar.querySelectorAll('[data-localearialabel="Different first page"]'))
+			button.setAttribute('aria-pressed', String(Boolean(section.titlePage)));
 	}
 
 	/** The section holding the selection, for the Page Setup dialog. */
@@ -92,17 +98,62 @@ export class PageController {
 		this.dispatchSections(applyPageSetup(model, currentSectionIndex(view, model), values));
 	}
 
+	/** Layout > More Columns, recorded as one undoable section edit. */
+	applyColumns(columns: SectionProperties['columns']): void {
+		const view = this.host.view();
+		if (!view?.editable || !this.host.canEditOutsideBody()) return;
+		const model = this.host.model();
+		this.dispatchSections(
+			withSection(model, currentSectionIndex(view, model), (section) => ({ ...section, columns })),
+		);
+	}
+
+	/** Layout > Line Numbers options, recorded as one undoable section edit. */
+	applyLineNumberSettings(settings: SectionProperties['lineNumberSettings']): void {
+		const view = this.host.view();
+		if (!view?.editable || !this.host.canEditOutsideBody()) return;
+		const model = this.host.model();
+		this.dispatchSections(
+			withSection(model, currentSectionIndex(view, model), (section) => {
+				const { lineNumbering: _on, lineNumberSettings: _settings, ...rest } = section;
+				return settings ? { ...rest, lineNumbering: true, lineNumberSettings: settings } : rest;
+			}),
+		);
+	}
+
 	/** Insert > Page Number: a PAGE field in the header or footer, creating the part when needed. */
-	insertPageNumber(position: 'top' | 'bottom', align: 'left' | 'center' | 'right'): boolean {
+	insertPageNumber(
+		position: 'top' | 'bottom',
+		align: 'left' | 'center' | 'right',
+		style?: 'plain' | 'pageOfTotal',
+		slot: 'default' | 'first' | 'even' = 'default',
+	): boolean {
 		return this.changeHeaderFooter((model) =>
-			withPageNumber(model, position, align, newHeaderFooterId),
+			withPageNumber(
+				model,
+				position,
+				align,
+				newHeaderFooterId,
+				this.host.view() ? currentSectionIndex(this.host.view()!, model) : 0,
+				style,
+				slot,
+			),
 		);
 	}
 
 	/** Insert > Header / Footer: an empty part when the document has none. */
-	insertHeaderFooter(kind: 'header' | 'footer'): boolean {
+	insertHeaderFooter(
+		kind: 'header' | 'footer',
+		slot: 'default' | 'first' | 'even' = 'default',
+	): boolean {
 		return this.changeHeaderFooter((model) =>
-			withBlankHeaderFooter(model, kind === 'header' ? 'headers' : 'footers', newHeaderFooterId),
+			withBlankHeaderFooter(
+				model,
+				kind === 'header' ? 'headers' : 'footers',
+				newHeaderFooterId,
+				this.host.view() ? currentSectionIndex(this.host.view()!, model) : 0,
+				slot,
+			),
 		);
 	}
 
@@ -110,12 +161,14 @@ export class PageController {
 		const view = this.host.view();
 		if (!view?.editable || !this.host.canEditOutsideBody()) return false;
 		const next = change(this.host.model());
-		// Header and footer content lives in the model, outside the editor document, so like in-place
-		// header edits this is not part of Ctrl+Z history. The layout is recorded without a history step
-		// so the document always has a `sections` attribute to rebuild the model from.
-		this.host.setModel(next);
-		this.dispatchSections(next, false);
-		this.host.edited();
+		if (next === this.host.model()) return true;
+		if (
+			sectionPartsJson(next.sections) === view.state.doc.attrs.sectionParts &&
+			sectionLayoutJson(next.sections ?? []) === view.state.doc.attrs.sections &&
+			Boolean(next.evenAndOddHeaders) === view.state.doc.attrs.evenAndOddHeaders
+		)
+			return true;
+		this.dispatchSections(next);
 		return true;
 	}
 
@@ -161,7 +214,7 @@ export class PageController {
 		if (!view) return;
 		const { page } = next;
 		view.dispatch(
-			view.state.tr
+			closeHistory(view.state.tr)
 				.setMeta('addToHistory', undoable)
 				.setDocAttribute('pageWidth', page.width)
 				.setDocAttribute('pageHeight', page.height)
@@ -169,7 +222,9 @@ export class PageController {
 				.setDocAttribute('marginRight', page.marginRight)
 				.setDocAttribute('marginBottom', page.marginBottom)
 				.setDocAttribute('marginLeft', page.marginLeft)
-				.setDocAttribute('sections', next.sections ? sectionLayoutJson(next.sections) : null),
+				.setDocAttribute('sections', next.sections ? sectionLayoutJson(next.sections) : null)
+				.setDocAttribute('sectionParts', sectionPartsJson(next.sections))
+				.setDocAttribute('evenAndOddHeaders', Boolean(next.evenAndOddHeaders)),
 		);
 	}
 
@@ -182,8 +237,9 @@ export class PageController {
 		const sections = model.sections ?? [];
 		const columns = sections.length === 1 ? sections[0]?.columns : undefined;
 		const multiple = columns && columns.count > 1;
-		paper.style.columnCount = multiple ? String(columns.count) : '';
+		paper.style.columnCount = multiple && columns.equalWidth ? String(columns.count) : '';
 		paper.style.columnGap = multiple ? `${((columns.spacingTwips ?? 720) / 15) * this.zoom}px` : '';
+		paper.style.columnRule = multiple && columns.separator ? '1px solid currentColor' : '';
 	}
 
 	/** Zoom to 100%, the page width or a whole page, from the section holding the selection. */

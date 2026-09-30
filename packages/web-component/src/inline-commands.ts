@@ -1,6 +1,7 @@
 import type { MarkType } from 'prosemirror-model';
 import type { EditorView } from 'prosemirror-view';
 import { schema, wordHighlightColors } from './schema';
+import { selectionScript } from './script-state';
 
 function setInlineMark(view: EditorView, type: MarkType, attrs?: Record<string, string>) {
 	if (!view.editable) return;
@@ -24,20 +25,12 @@ export function applyHighlight(view: EditorView, color: string) {
 }
 
 export function toggleVerticalAlign(view: EditorView, value: 'superscript' | 'subscript') {
-	const { state } = view;
-	const type = schema.marks.verticalAlign;
-	const matches = (marks: readonly import('prosemirror-model').Mark[]) =>
-		marks.some((mark) => mark.type === type && mark.attrs.value === value);
-	let all = true;
-	let found = false;
-	if (state.selection.empty) {
-		found = true;
-		all = matches(state.storedMarks ?? state.selection.$from.marks());
-	} else
-		state.doc.nodesBetween(state.selection.from, state.selection.to, (node) => {
-			if (!node.isText) return;
-			found = true;
-			all = all && matches(node.marks);
-		});
-	setInlineMark(view, type, found && all ? undefined : { value });
+	applyVerticalAlign(view, selectionScript(view.state) === value ? 'baseline' : value);
+}
+
+export function applyVerticalAlign(
+	view: EditorView,
+	value: 'baseline' | 'superscript' | 'subscript',
+) {
+	setInlineMark(view, schema.marks.verticalAlign, { value });
 }

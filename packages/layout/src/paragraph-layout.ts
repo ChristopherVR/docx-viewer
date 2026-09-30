@@ -4,7 +4,13 @@ import type { LayoutFragment, LayoutLine, LayoutParagraphFrame } from './result.
 import type { LayoutParagraph } from './input.js';
 import { NO_TWIPS, twipsToPx } from './units.js';
 import { placeTab } from './tab-stops.js';
-import { fontOf, resolveIndents, tokenizeParagraph, type PlacedToken } from './paragraph-tokens.js';
+import {
+	fontOf,
+	runTextWidth,
+	resolveIndents,
+	tokenizeParagraph,
+	type PlacedToken,
+} from './paragraph-tokens.js';
 import { lineMetrics, tokenExtent } from './line-metrics.js';
 import { alignFragments, buildFragments } from './paragraph-fragments.js';
 import { expectDefined } from './expect-defined.js';
@@ -48,11 +54,12 @@ export function layoutParagraph(
 	measurer: TextMeasurer,
 	note: (message: string) => void,
 	lineBox?: LineBoxFn,
+	startToken = 0,
 ): ParagraphLayoutResult {
-	const { leftPx, rightPx, firstLineExtraPx } = resolveIndents(paragraph);
+	const { leftPx, rightPx, firstLineExtraPx: initialIndent } = resolveIndents(paragraph);
+	const firstLineExtraPx = startToken ? 0 : initialIndent;
 	const bodyWidth = Math.max(1, contentWidthPx - leftPx - rightPx);
 	const fonts = paragraph.runs.map(fontOf);
-	const fontAt = (runIndex: number) => expectDefined(fonts[runIndex], 'run font index');
 	const { tokens, runOffsets } = tokenizeParagraph(paragraph);
 	const globalOffset = (token: BreakToken) =>
 		expectDefined(runOffsets[token.runIndex], 'run offset index') + token.sourceStart;
@@ -65,6 +72,8 @@ export function layoutParagraph(
 
 	let placed: PlacedToken[] = [];
 	let lineWidthPx = 0;
+	let tokenCursor = startToken;
+	let firstToken = startToken;
 
 	// Per-line boxes around wrapped floats, computed when each line starts (its top is then known).
 	const boxes: { leftInsetPx: number; rightInsetPx: number; gapBeforePx: number }[] = [];
@@ -99,7 +108,11 @@ export function layoutParagraph(
 		leftPx + (lineIndex === 0 ? firstLineExtraPx : 0) + boxFor(lineIndex).leftInsetPx;
 	const tokenWidth = (token: BreakToken): number =>
 		token.kind === 'word' || token.kind === 'space'
-			? measurer.widthOf(token.text, fontAt(token.runIndex))
+			? runTextWidth(
+					token.text,
+					expectDefined(paragraph.runs[token.runIndex], 'token run'),
+					measurer,
+				)
 			: token.kind === 'object'
 				? (paragraph.runs[token.runIndex]?.object?.widthPx ?? 0)
 				: 0;
@@ -114,7 +127,13 @@ export function layoutParagraph(
 			if (ends.has(token.kind)) break;
 			if (beforeDecimalPx === undefined && token.kind === 'word' && /[.,]/.test(token.text)) {
 				const prefix = token.text.slice(0, token.text.search(/[.,]/));
-				beforeDecimalPx = followingPx + measurer.widthOf(prefix, fontAt(token.runIndex));
+				beforeDecimalPx =
+					followingPx +
+					runTextWidth(
+						prefix,
+						expectDefined(paragraph.runs[token.runIndex], 'decimal run'),
+						measurer,
+					);
 			}
 			followingPx += widths[next] ?? 0;
 		}
@@ -152,6 +171,8 @@ export function layoutParagraph(
 			fragments,
 			sourceStart: start,
 			sourceEnd: end,
+			nextToken: tokenCursor,
+			firstToken,
 			...(gapBeforePx ? { gapBeforePx } : {}),
 		});
 		runningY += gapBeforePx + heightPx;
@@ -162,11 +183,15 @@ export function layoutParagraph(
 	}
 
 	for (const [tokenIndex, token] of tokens.entries()) {
+		if (tokenIndex < startToken) continue;
+		tokenCursor = tokenIndex + 1;
 		if (token.kind === 'lineBreak') {
+			if (!placed.length) firstToken = tokenIndex;
 			flushLine(true, undefined);
 			continue;
 		}
 		if (token.kind === 'pageBreak' || token.kind === 'columnBreak') {
+			if (!placed.length) firstToken = tokenIndex;
 			flushLine(true, token.kind === 'pageBreak' ? 'page' : 'column');
 			continue;
 		}
@@ -192,7 +217,9 @@ export function layoutParagraph(
 		// pre-subtracted here.
 		const wouldFit = lineWidthPx + width <= limit || placed.length === 0;
 		if (!wouldFit && token.kind !== 'space') {
+			tokenCursor = tokenIndex;
 			flushLine(false, undefined);
+			tokenCursor = tokenIndex + 1;
 			if (width > availableWidth(lines.length) && !widthOverflowNoted) {
 				widthOverflowNoted = true;
 				note(
@@ -201,6 +228,7 @@ export function layoutParagraph(
 			}
 		}
 		if (token.kind === 'space' && placed.length === 0) continue; // leading space at wrap point is dropped
+		if (!placed.length) firstToken = tokenIndex;
 		placed.push({ token, widthPx: width, ...(leader ? { leader } : {}) });
 		lineWidthPx += width;
 	}

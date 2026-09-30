@@ -1,4 +1,5 @@
 import type { DocumentModel } from '@christophervr/docx-core';
+import { resolveParagraphFormatting } from '@christophervr/docx-core';
 import {
 	createCanvasMeasurer,
 	layoutDocumentModel,
@@ -69,6 +70,17 @@ export function createPrintLayoutController(
 		result = layoutDocumentModel(model, measurer);
 		handle = renderPrintLayout(result, pictureUrl, {
 			lineNumbers: (model.sections ?? []).map((section) => section.lineNumberSettings),
+			suppressedLineNumberParagraphs: new Set(
+				model.blocks
+					.filter(
+						(block) =>
+							block.type === 'paragraph' &&
+							(model.paragraphStyles
+								? resolveParagraphFormatting(block, model.paragraphStyles).suppressLineNumbers
+								: block.suppressLineNumbers),
+					)
+					.map((block) => block.id),
+			),
 		});
 		if (model.pageColor)
 			handle.element.style.setProperty('--dve-page-color', `#${model.pageColor}`);

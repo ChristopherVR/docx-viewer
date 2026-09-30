@@ -101,7 +101,7 @@ export async function saveDocx(
 		);
 	}
 	// Header/footer parts the model added exist (with their relationships) before the body is written.
-	const headerFooterIds = await createHeaderFooterParts(zip, model, binding?.base);
+	const headerFooterIds = await createHeaderFooterParts(zip, model, binding?.base, docPrIds);
 	const existingRelationships = parseRelationships(await zip.file(RELS_PART)?.async('string'));
 	const { newRelationships } = applyModel(
 		document,

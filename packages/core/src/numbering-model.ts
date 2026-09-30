@@ -16,7 +16,7 @@ export interface NumberingLevelDefinition {
 	firstLineTwips?: Twips;
 	/** `w:isLgl`: render every placeholder in this level's marker as Decimal Number regardless of format. */
 	isLgl?: boolean;
-	/** `w:lvlRestart/@w:val`: the shallowest level (0-based) whose increment restarts this level's counter. */
+	/** `w:lvlRestart/@w:val`: one-based higher-level restart trigger; 0 means never. Omitted defaults to the previous level. */
 	lvlRestart?: number;
 	/** Marker-to-text separator from `w:suff` (defaults to `tab`). */
 	suffix?: 'tab' | 'space' | 'none';

@@ -91,13 +91,13 @@ class NumberingCounters {
 		return started;
 	}
 
-	/**
-	 * Advances the counter for `numId`/`level` and restarts every deeper level, matching Word's
-	 * default multilevel behavior. `lvlRestart` is parsed and preserved on the model for
-	 * round-tripping, but this simplified counter always restarts on any shallower-level change
-	 * rather than modeling `lvlRestart`'s non-default cascade.
-	 */
-	advance(numId: string, level: number, def: NumberingLevelDefinition): number {
+	/** Advances one level and resets deeper counters according to their resolved restart rules. */
+	advance(
+		numId: string,
+		level: number,
+		def: NumberingLevelDefinition,
+		catalog: NumberingCatalog,
+	): number {
 		const counts = this.forNum(numId);
 		const started = this.startedLevels(numId);
 		const next = started.has(level) ? (counts.get(level) ?? def.start) + 1 : def.start;
@@ -105,8 +105,26 @@ class NumberingCounters {
 		started.add(level);
 		for (const deeper of [...started]) {
 			if (deeper <= level) continue;
+			const deeperDef = resolveNumberingLevel(catalog, numId, deeper);
+			const restart = deeperDef?.lvlRestart;
+			if (restart === 0) continue;
+			// OOXML uses a one-based trigger. Invalid deeper/self triggers are ignored,
+			// leaving the default (previous level). Word also restarts on a skipped
+			// higher level, independently of that intermediate level's own restart rule.
+			const trigger =
+				restart !== undefined && restart > 0 && restart <= deeper ? restart - 1 : deeper - 1;
+			if (level > trigger) continue;
 			counts.delete(deeper);
 			started.delete(deeper);
+		}
+		// Nested items consume the initial value of omitted ancestors, even when
+		// their marker has no ancestor placeholders. Later explicit items advance it.
+		for (let ancestor = 0; ancestor < level; ancestor++) {
+			if (started.has(ancestor)) continue;
+			const ancestorDef = resolveNumberingLevel(catalog, numId, ancestor);
+			if (!ancestorDef) continue;
+			counts.set(ancestor, ancestorDef.start);
+			started.add(ancestor);
 		}
 		return next;
 	}
@@ -154,7 +172,7 @@ export function computeListLabels(model: DocumentModel): Map<string, ParagraphLi
 		const def = resolveNumberingLevel(catalog, numId, level);
 		if (!def) continue;
 		if (def.numFmt === 'none') continue;
-		counters.advance(numId, level, def);
+		counters.advance(numId, level, def, catalog);
 		const text =
 			def.numFmt === 'bullet'
 				? def.lvlText

@@ -9,10 +9,12 @@ import {
 	isStTabJc,
 	isStTabTlc,
 	isStUnderline,
+	isStVerticalAlignRun,
 } from './generated/wml-simple-types.js';
 import type { Paragraph, Revision, TabStop, TextRun } from './model.js';
 import type { ThemeColorReference } from './theme-model.js';
 import { Checker, show } from './validate-issues.js';
+import { isLigatures } from './ligatures.js';
 
 const isFraction = (value: unknown): boolean =>
 	typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
@@ -47,7 +49,26 @@ function validateFontSize(c: Checker, value: unknown): void {
 }
 
 export function validateRun(c: Checker, run: TextRun): void {
+	c.enum('ligatures', run.ligatures, isLigatures, 'ST_Ligatures');
 	validateFontSize(c, run.fontSize);
+	c.check(
+		'textScalePercent',
+		run.textScalePercent,
+		(v) => Number.isSafeInteger(v) && (v as number) >= 0 && (v as number) <= 600,
+		'must be a whole percentage from 0 through 600 (ST_TextScale)',
+	);
+	c.check(
+		'kerningHalfPoints',
+		run.kerningHalfPoints,
+		(v) => Number.isSafeInteger(v) && (v as number) >= 0,
+		'must be a nonnegative whole number of half-points (ST_HpsMeasure)',
+	);
+	c.check(
+		'positionHalfPoints',
+		run.positionHalfPoints,
+		Number.isSafeInteger,
+		'must be a signed whole number of half-points (ST_SignedHpsMeasure)',
+	);
 	c.hex('color', run.color);
 	c.hex('shadingFill', run.shadingFill);
 	c.hex('underlineColor', run.underlineColor);
@@ -74,8 +95,8 @@ export function validateRun(c: Checker, run: TextRun): void {
 	c.check(
 		'verticalAlign',
 		run.verticalAlign,
-		(v) => v === 'superscript' || v === 'subscript',
-		'must be "superscript" or "subscript"',
+		isStVerticalAlignRun,
+		'must be "baseline", "superscript" or "subscript"',
 	);
 	validateRevision(c, 'revision', run.revision);
 	if (run.image) {
@@ -110,6 +131,12 @@ export function validateParagraph(c: Checker, paragraph: Paragraph): void {
 			paragraph.dropCap.lines,
 			(v) => Number.isInteger(v) && (v as number) >= 1 && (v as number) <= 10,
 			'must be a whole number of lines from 1 to 10 (ST_DropCap frame height)',
+		);
+		at.check(
+			'distanceTwips',
+			paragraph.dropCap.distanceTwips,
+			(v) => Number.isSafeInteger(v) && (v as number) >= 0,
+			'must be a nonnegative whole number of twips',
 		);
 	}
 	c.check(

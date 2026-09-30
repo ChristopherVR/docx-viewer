@@ -54,11 +54,13 @@ export interface Paragraph {
 	widowControl?: boolean;
 	/** `w:contextualSpacing`: no spacing between paragraphs of the same style. */
 	contextualSpacing?: boolean;
+	/** `w:suppressLineNumbers`: omit this paragraph from line numbering; false overrides a style. */
+	suppressLineNumbers?: boolean;
 	/**
 	 * `w:framePr/@w:dropCap`: this paragraph is a drop cap frame (the initial letter) for the
 	 * paragraph that follows. `lines` is the number of text lines it spans.
 	 */
-	dropCap?: { style: 'drop' | 'margin'; lines: number };
+	dropCap?: { style: 'drop' | 'margin'; lines: number; distanceTwips?: Twips };
 	/** `w:pBdr`; read-only (preserved in the source XML, not written for new paragraphs). */
 	borders?: import('./table-model.js').ParagraphBorders;
 	/** `w:shd/@w:fill` as `#rrggbb`; read-only like `borders`. */
@@ -90,6 +92,7 @@ export type ParagraphFormatting = Pick<
 	| 'keepLines'
 	| 'widowControl'
 	| 'contextualSpacing'
+	| 'suppressLineNumbers'
 	| 'borders'
 	| 'shadingFill'
 >;

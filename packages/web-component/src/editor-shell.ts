@@ -16,6 +16,7 @@ import { dispatchDocumentError } from './editor-host';
 import { routeRibbonAction } from './ribbon-router';
 import { countWords } from './word-count';
 import { PageNavigator } from './page-navigator';
+import { HeadingNavigator } from './heading-navigator';
 import { applyViewOptions } from './view-options';
 import { attachEditorInteractions } from './editor-interactions';
 
@@ -55,8 +56,9 @@ function createChrome(core: EditorCore, api: ShellApi): EditorChrome {
 		print: () => core.pages.print(),
 		history: (key) => {
 			if (!core.view) return;
-			runRibbonCommand(core.view, { type: 'history', key }, core.collab.ids);
-			if (typeof document.execCommand === 'function') core.view.focus();
+			if (core.parts.usesBodyHistory()) core.parts.runHistory(key);
+			else runRibbonCommand(core.view, { type: 'history', key }, core.collab.ids);
+			if (typeof document.execCommand === 'function') core.targetView()?.focus();
 		},
 		toggleComments: () => shell.review?.handleComments('toggle'),
 		setViewMode: (mode) => core.pages.setViewMode(mode),
@@ -120,6 +122,20 @@ export function buildShell(core: EditorCore, api: ShellApi): void {
 		getView: () => core.view,
 		onClose: () => core.view?.focus(),
 	});
+	shell.headings = new HeadingNavigator({
+		model: () => core.model,
+		view: () => core.view,
+		goTo: (id) => {
+			core.pages.setViewMode('draft');
+			if (core.view) moveCursorToBlock(core.view, id, 0);
+			core.view?.dispatch(core.view.state.tr.scrollIntoView());
+		},
+		close: () => {
+			shell.headings?.setOpen(false);
+			core.refreshControls();
+			core.view?.focus();
+		},
+	});
 	shell.searchPanel.setLocale(core.locale);
 	const review = new ReviewController({
 		getModel: () => core.model,
@@ -138,7 +154,12 @@ export function buildShell(core: EditorCore, api: ShellApi): void {
 	core.formatDialogs.setLocale(core.locale);
 	const body = document.createElement('div');
 	body.className = 'dve-body';
-	body.append(shell.navigator.element, canvas, review.commentsPanel.element);
+	body.append(
+		shell.navigator.element,
+		shell.headings.element,
+		canvas,
+		review.commentsPanel.element,
+	);
 	frame.append(toolbar, shell.searchPanel.element, body);
 	const chrome = createChrome(core, api);
 	shell.chrome = chrome;

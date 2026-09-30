@@ -18,7 +18,7 @@ export const FOOTNOTE_SEPARATOR_PX = 12;
  */
 export class PageCursor {
 	readonly pages: LayoutPageBox[];
-	readonly columnWidthPx: number;
+	private readonly equalColumnWidthPx: number;
 	readonly columnHeightPx: number;
 	private geometry: LayoutPageGeometry;
 	private columns: LayoutColumns;
@@ -42,7 +42,7 @@ export class PageCursor {
 		this.geometry = geometry;
 		this.columns = columns;
 		const contentWidth = geometry.widthPx - geometry.marginLeftPx - geometry.marginRightPx;
-		this.columnWidthPx = Math.max(
+		this.equalColumnWidthPx = Math.max(
 			1,
 			(contentWidth - columns.gapPx * (columns.count - 1)) / columns.count,
 		);
@@ -55,12 +55,17 @@ export class PageCursor {
 
 	private pushPage() {
 		const columnBoxes: LayoutColumnBox[] = [];
-		for (let i = 0; i < this.columns.count; i++)
+		let xPx = 0;
+		for (let i = 0; i < this.columns.count; i++) {
+			const explicit = this.columns.widths?.[i];
+			const widthPx = Math.max(1, explicit?.widthPx ?? this.equalColumnWidthPx);
 			columnBoxes.push({
-				xPx: i * (this.columnWidthPx + this.columns.gapPx),
-				widthPx: this.columnWidthPx,
+				xPx,
+				widthPx,
 				blocks: [],
 			});
+			xPx += widthPx + (explicit?.gapPx ?? this.columns.gapPx);
+		}
 		this.pages.push({
 			index: this.pages.length,
 			sectionIndex: this.sectionIndex,
@@ -72,6 +77,7 @@ export class PageCursor {
 			marginBottomPx: this.geometry.marginBottomPx,
 			marginLeftPx: this.geometry.marginLeftPx,
 			columns: columnBoxes,
+			...(this.columns.separator ? { columnSeparator: true } : {}),
 		});
 		this.columnIndex = 0;
 		this.yPx = 0;
@@ -83,6 +89,9 @@ export class PageCursor {
 	}
 	get column(): LayoutColumnBox {
 		return expectDefined(this.page.columns[this.columnIndex], 'current page column');
+	}
+	get columnWidthPx(): number {
+		return this.column.widthPx;
 	}
 	get y(): number {
 		return this.yPx;

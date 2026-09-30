@@ -59,6 +59,9 @@ describe('list editing end to end', () => {
 			pmView.state.tr.setSelection(TextSelection.create(pmView.state.doc, 1)).scrollIntoView(),
 		);
 		click(editor, 'Bulleted list');
+		expect(editor.shadowRoot!.querySelector<HTMLElement>('.ProseMirror p')!.dataset.listLabel).toBe(
+			'•\t',
+		);
 		const paragraph = paragraphAt(model(editor).blocks, 0);
 		expect(paragraph.numbering).toBeDefined();
 		const numId = String(must(paragraph.numbering).numId);
@@ -70,6 +73,9 @@ describe('list editing end to end', () => {
 		click(editor, 'Bulleted list');
 		const toggledOff = paragraphAt(model(editor).blocks, 0);
 		expect(toggledOff.numbering).toBeUndefined();
+		expect(
+			editor.shadowRoot!.querySelector<HTMLElement>('.ProseMirror p')!.dataset.listLabel ?? '',
+		).toBe('');
 		editor.remove();
 	});
 
@@ -79,6 +85,9 @@ describe('list editing end to end', () => {
 		pmView.dispatch(pmView.state.tr.setSelection(TextSelection.create(pmView.state.doc, 1)));
 		click(editor, 'Numbered list');
 		click(editor, 'Increase list level');
+		expect(editor.shadowRoot!.querySelector<HTMLElement>('.ProseMirror p')!.dataset.listLabel).toBe(
+			'a.\t',
+		);
 		let paragraph = paragraphAt(model(editor).blocks, 0);
 		expect(paragraph.numbering?.level).toBe(1);
 		click(editor, 'Decrease list level');

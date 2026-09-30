@@ -1,5 +1,6 @@
 import { expectDefined } from './expect-defined.js';
 import type { Paragraph, Table, TableCell } from './model.js';
+import { patchRowProperties, patchTableMargins } from './write-table-properties.js';
 import {
 	children,
 	first,
@@ -132,6 +133,7 @@ export function writeTable(
 ): XmlElement {
 	if (base && JSON.stringify(table) === JSON.stringify(base)) return node;
 	assertNoDescriptorEdits(table, base);
+	patchTableMargins(doc, table, node, base);
 	const structural = base && JSON.stringify(layout(table)) !== JSON.stringify(layout(base));
 	if (structural && !canEditTableStructure(node))
 		throw new Error(
@@ -162,7 +164,7 @@ export function writeTable(
 	const usedCells = new Set<XmlElement>();
 	const usedRows = new Set<number>();
 	const columns = new Map<number, number>();
-	const nextRows = table.rows.map((row) => {
+	const nextRows = table.rows.map((row, rowIndex) => {
 		const sources = row.map((cell) =>
 			cell.paragraphs.map((p) => sourceById.get(p.id)).find(Boolean),
 		);
@@ -177,6 +179,12 @@ export function writeTable(
 				? makeW(doc, 'tr')
 				: expectDefined(oldRows[sourceRow], `table row ${sourceRow}`);
 		const oldCells = children(tr, 'tc');
+		patchRowProperties(
+			doc,
+			tr,
+			table.rowProperties?.[rowIndex],
+			sourceRow === undefined ? undefined : base?.rowProperties?.[sourceRow],
+		);
 		const nextCells = row.map((cell, ci) => {
 			const source = sources[ci];
 			if (source && usedCells.has(source.cell))

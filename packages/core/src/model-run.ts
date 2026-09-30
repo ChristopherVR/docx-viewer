@@ -7,7 +7,7 @@ import type {
 	ThemeFontScript,
 	WordUnderlineStyle,
 } from './theme-model.js';
-import type { SignedTwips } from './units.js';
+import type { HalfPoints, SignedTwips } from './units.js';
 
 /** A tracked-change revision recorded on a run or paragraph mark. */
 export interface Revision {
@@ -31,7 +31,7 @@ export interface TextRun {
 	strike?: boolean;
 	/** Word named highlight color, such as `yellow` or `lightGray`. */
 	highlight?: StHighlightColor;
-	verticalAlign?: 'superscript' | 'subscript';
+	verticalAlign?: 'baseline' | 'superscript' | 'subscript';
 	/** Direct Word run language tag (`w:lang/@w:val`), without automatic detection. */
 	language?: string;
 	/** Direct East Asian script language tag (`w:lang/@w:eastAsia`). */
@@ -87,6 +87,14 @@ export interface TextRun {
 	underlineColor?: string;
 	/** `w:spacing/@w:val` character spacing, in twips (positive expands, negative condenses). */
 	characterSpacingTwips?: SignedTwips;
+	/** `w:w` horizontal text scaling, in whole percent; 100 explicitly cancels inherited scaling. */
+	textScalePercent?: number;
+	/** Office 2010 OpenType ligature selection; undefined inherits. */
+	ligatures?: import('./ligatures.js').Ligatures;
+	/** `w:kern` minimum font size for kerning, in half-points; zero explicitly disables it. */
+	kerningHalfPoints?: HalfPoints;
+	/** `w:position` baseline displacement, in signed half-points; positive raises, negative lowers. */
+	positionHalfPoints?: HalfPoints;
 	/** Direct `w:shd/@w:fill` run shading. */
 	shadingFill?: string;
 	/** Direct `w:shd` theme fill; kept alongside `shadingFill` without flattening. */

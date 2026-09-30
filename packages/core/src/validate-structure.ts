@@ -118,7 +118,12 @@ export function validateSection(c: Checker, section: SectionProperties): void {
 			(v) => typeof v === 'number' && Number.isSafeInteger(v) && v >= 1,
 			'must be a positive integer (CT_LineNumber/@countBy)',
 		);
-		line.unsigned('start', settings.start, 'ST_DecimalNumber');
+		line.check(
+			'start',
+			settings.start,
+			(v) => typeof v === 'number' && Number.isSafeInteger(v) && v >= 1,
+			'must be a positive visible line number',
+		);
 		line.check(
 			'restart',
 			settings.restart,

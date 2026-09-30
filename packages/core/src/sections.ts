@@ -70,7 +70,7 @@ function lineNumbering(
 		lineNumbering: true,
 		lineNumberSettings: {
 			countBy: Math.max(1, parseUnsignedInteger(getW(element, 'countBy')) ?? 1),
-			start: parseUnsignedInteger(getW(element, 'start')) ?? 1,
+			start: (parseUnsignedInteger(getW(element, 'start')) ?? 0) + 1,
 			restart: restart === 'newPage' || restart === 'newSection' ? restart : 'continuous',
 			...(distance !== undefined ? { distanceTwips: distance } : {}),
 		},

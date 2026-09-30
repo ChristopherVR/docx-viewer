@@ -11,6 +11,7 @@ import { CollaborationSession } from './collaboration-session';
 import { repairCollaborativeDocumentIds } from './collaboration-identity';
 import type { EditorTheme, EditorThemeMode } from './theme';
 import type { EditorLocale } from './localization';
+import { findLocalizedControl } from './localization';
 import type { PrintLayoutController } from './print-layout-view';
 import { REMOTE_TRANSACTION_META } from './track-changes-mode';
 import type { ReviewDisplayMode } from './review-display';
@@ -25,7 +26,11 @@ import { emit } from './events';
 import { DirtyState } from './dirty-state';
 import { PageTracker, syncPageState } from './page-sync';
 import type { PageNavigator } from './page-navigator';
+import type { HeadingNavigator } from './heading-navigator';
+import { HEADER_FOOTER_INPUT } from './header-footer-history';
 import { ViewOptions } from './view-options';
+import { currentSectionIndex } from './section-commands';
+import { syncHeaderFooterRibbon } from './header-footer-ribbon';
 
 export type LoadedDocument = Awaited<ReturnType<typeof loadDocument>>;
 
@@ -39,6 +44,7 @@ export interface ShellParts {
 	chrome?: EditorChrome;
 	printLayout?: PrintLayoutController;
 	navigator?: PageNavigator;
+	headings?: HeadingNavigator;
 }
 
 /**
@@ -86,7 +92,9 @@ export class EditorCore {
 		});
 		this.formatDialogs = new FormatDialogs({
 			view: () => this.targetView(),
+			historyView: () => (this.parts.usesBodyHistory() ? this.view : this.targetView()),
 			model: () => this.model,
+			canDefineList: () => !this.readOnly && !this.collab.client,
 			zoom: {
 				percent: () => Math.round(this.pages.zoom * 100),
 				setPercent: (percent) => this.pages.setZoom(percent),
@@ -96,6 +104,16 @@ export class EditorCore {
 				section: () => this.pages.currentSection(),
 				canEdit: () => !this.readOnly && !this.collab.client,
 				apply: (values) => this.pages.applyPageSetupValues(values),
+			},
+			lineNumbers: {
+				section: () => this.pages.currentSection(),
+				canEdit: () => !this.readOnly && !this.collab.client,
+				apply: (settings) => this.pages.applyLineNumberSettings(settings),
+			},
+			columns: {
+				section: () => this.pages.currentSection(),
+				canEdit: () => !this.readOnly && !this.collab.client,
+				apply: (columns) => this.pages.applyColumns(columns),
 			},
 		});
 		this.imageMedia = new ImageMediaCache((partName) =>
@@ -117,6 +135,8 @@ export class EditorCore {
 			...this.host,
 			images: () => this.imageMedia,
 			plugins: () => this.inserts.plugins(),
+			sectionIndex: () => (this.view ? currentSectionIndex(this.view, this.model) : 0),
+			refreshControls: () => this.refreshControls(),
 			keepOpenWithin: () => [
 				this.shell.toolbar,
 				this.inserts.linkDialog.element,
@@ -167,6 +187,7 @@ export class EditorCore {
 		const view = this.view;
 		if (!view) return;
 		if (remote) transaction.setMeta(REMOTE_TRANSACTION_META, true);
+		const previousParts = view.state.doc.attrs.sectionParts;
 		const applied = view.state.applyTransaction(transaction).state;
 		const repaired = remote
 			? null
@@ -180,6 +201,11 @@ export class EditorCore {
 			this.pages.relayout();
 			this.shell.chrome?.setSaveState('dirty');
 			this.notifyChange();
+			if (
+				previousParts !== view.state.doc.attrs.sectionParts &&
+				!transaction.getMeta(HEADER_FOOTER_INPUT)
+			)
+				this.parts.render(this.shell.canvas, this.shell.paper, true);
 		}
 		this.refreshControls();
 		if (transaction.docChanged || remote) this.scheduleCollaborationSend();
@@ -188,12 +214,19 @@ export class EditorCore {
 	}
 
 	refreshControls(): void {
+		this.parts.syncSection(this.shell.canvas, this.shell.paper);
+		this.shell.headings?.sync(this.locale);
+		if (this.shell.toolbar)
+			findLocalizedControl(this.shell.toolbar, 'Navigation pane')?.setAttribute(
+				'aria-pressed',
+				String(this.shell.headings?.isOpen ?? false),
+			);
 		const { searchPanel, printLayout, review, chrome, toolbar } = this.shell;
 		searchPanel?.refresh();
 		if (this.pages.viewMode === 'print') printLayout?.refreshCurrentPage();
 		const status = refreshEditorControls(
 			toolbar,
-			this.view,
+			this.targetView(),
 			this.model,
 			this.readOnly,
 			Boolean(this.collab.client),
@@ -204,6 +237,13 @@ export class EditorCore {
 		);
 		if (status) chrome?.refresh(status.pageText, status.wordText);
 		this.pages.syncControls();
+		if (toolbar)
+			syncHeaderFooterRibbon(
+				toolbar,
+				this.parts.headerFooterContext(),
+				this.model,
+				this.host.canEditOutsideBody(),
+			);
 		syncPageState(this);
 		chrome?.titleBar.setCommentsOpen(Boolean(review?.commentsOpen));
 	}

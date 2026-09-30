@@ -7,6 +7,7 @@ import { buildHomePanel } from './ribbon-home';
 import { attachRibbonBehavior } from './ribbon-behavior';
 import { attachRibbonOverflow, fitPanel, refitRibbon } from './ribbon-overflow';
 import { buildOtherPanels } from './ribbon-tabs';
+import { buildHeaderFooterPanel } from './header-footer-ribbon';
 
 export type { RibbonAction } from './ribbon-action';
 
@@ -20,27 +21,37 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 	tabs.setAttribute('role', 'tablist');
 	tabs.setAttribute('aria-label', 'Ribbon tabs');
 	const panels = new Map<string, HTMLElement>();
-	for (const name of ['Home', 'Insert', 'Layout', 'References', 'Review', 'View', 'Table']) {
-		const id = `dve-tab-${name.toLowerCase()}`;
+	for (const name of [
+		'Home',
+		'Insert',
+		'Layout',
+		'References',
+		'Review',
+		'View',
+		'Table',
+		'Header & Footer',
+	]) {
+		const key = name === 'Header & Footer' ? 'header-footer' : name.toLowerCase();
+		const id = `dve-tab-${key}`;
 		const tab = document.createElement('button');
 		tab.type = 'button';
 		tab.id = id;
-		tab.dataset.tabKey = `tab.${name.toLowerCase()}`;
+		tab.dataset.tabKey = `tab.${key}`;
 		tab.textContent = name;
 		tab.setAttribute('role', 'tab');
 		tab.setAttribute('aria-selected', String(name === 'Home'));
-		tab.setAttribute('aria-controls', `dve-panel-${name.toLowerCase()}`);
+		tab.setAttribute('aria-controls', `dve-panel-${key}`);
 		tab.tabIndex = name === 'Home' ? 0 : -1;
 		const panel = document.createElement('div');
 		panel.className = 'ribbon-panel';
 		panel.dataset.panel = name;
-		panel.id = `dve-panel-${name.toLowerCase()}`;
+		panel.id = `dve-panel-${key}`;
 		panel.setAttribute('role', 'tabpanel');
 		panel.setAttribute('aria-labelledby', id);
 		panel.tabIndex = 0;
 		panel.hidden = name !== 'Home';
 		// Table tools are contextual: the tab appears only while the selection is in a table.
-		if (name === 'Table') {
+		if (name === 'Table' || name === 'Header & Footer') {
 			tab.hidden = true;
 			tab.dataset.contextual = '';
 		}
@@ -82,6 +93,7 @@ export function createRibbon(locale: string = 'en'): HTMLElement {
 	}
 	buildHomePanel(panels);
 	buildOtherPanels(panels);
+	buildHeaderFooterPanel(panels.get('Header & Footer')!);
 	for (const panel of panels.values()) root.append(panel);
 	setComboValue(root.querySelector<ComboInput>('[aria-label="Font family"]')!, 'Calibri');
 	setComboValue(root.querySelector<ComboInput>('[aria-label="Font size"]')!, '11');

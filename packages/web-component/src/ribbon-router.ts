@@ -15,15 +15,21 @@ import { setHeadingLevel } from './heading-commands';
 import { readAloudAvailable, textToRead, toggleReadAloud } from './read-aloud';
 import { showWordCount } from './word-count-panel';
 import { syncSpellingButton } from './spelling';
+import { applyParagraphFormat, readParagraphFormat } from './paragraph-format';
 import { selectAll } from 'prosemirror-commands';
 import { toggleFormatPainter } from './format-painter';
+import { withHeaderFooterDistance } from './header-footer-position';
+import { closeHistory } from 'prosemirror-history';
+import { sectionLayoutJson } from './section-layout';
 
 /** Routes a ribbon action to the controller that owns it. */
 export function routeRibbonAction(core: EditorCore, action: RibbonAction): void {
 	const { inserts, pages, parts, shell } = core;
 	if (inserts.handle(action)) return;
 	const target = core.targetView();
-	if (action.type === 'clipboard') {
+	if (action.type === 'history' && parts.usesBodyHistory()) {
+		parts.runHistory(action.key);
+	} else if (action.type === 'clipboard') {
 		if (!target || (action.key !== 'copy' && !target.editable)) return;
 		const done = action.key === 'paste' ? pasteText(target) : copyOrCut(target, action.key);
 		void done.then((ok) => {
@@ -40,13 +46,34 @@ export function routeRibbonAction(core: EditorCore, action: RibbonAction): void 
 				?.querySelector('[aria-label="Format painter"], [data-localearialabel="Format painter"]')
 				?.setAttribute('aria-pressed', String(on)),
 		);
+	else if (action.type === 'headerFooterLink') parts.toggleLink();
+	else if (action.type === 'headerFooterPosition') {
+		const context = parts.headerFooterContext();
+		if (!context || !core.view?.editable || core.readOnly || core.collab.client) return;
+		const next = withHeaderFooterDistance(core.model, context.index, action.kind, action.inches);
+		if (next !== core.model)
+			core.view.dispatch(
+				closeHistory(core.view.state.tr).setDocAttribute(
+					'sections',
+					sectionLayoutJson(next.sections!),
+				),
+			);
+	} else if (action.type === 'headerFooterClose')
+		parts.closeHeaderFooter(shell.canvas, shell.paper);
+	else if (action.type === 'headerFooterNavigate')
+		parts.navigate(action.target, shell.canvas, shell.paper);
 	else if (action.type === 'formatDialog') core.formatDialogs.open(action.kind);
 	else if (action.type === 'pageNumber' || action.type === 'headerFooter') {
 		const done =
 			action.type === 'pageNumber'
-				? pages.insertPageNumber(action.position, action.align)
-				: pages.insertHeaderFooter(action.kind);
-		if (done) parts.render(shell.canvas, shell.paper);
+				? pages.insertPageNumber(
+						action.position,
+						action.align,
+						action.style,
+						parts.activeHeaderFooterSlot(),
+					)
+				: pages.insertHeaderFooter(action.kind, action.slot);
+		if (done) parts.render(shell.canvas, shell.paper, true);
 	} else if (action.type === 'coverPage' && target) {
 		const title = Object.values(core.model.paragraphStyles?.styles ?? {}).find(
 			(style) => style.id === 'Title' || style.name === 'Title',
@@ -106,6 +133,9 @@ export function routeRibbonAction(core: EditorCore, action: RibbonAction): void 
 	} else if (action.type === 'spelling' && target) {
 		target.dom.spellcheck = !target.dom.spellcheck;
 		syncSpellingButton(shell.toolbar, target);
+	} else if (action.type === 'navigation') {
+		shell.headings?.setOpen(!shell.headings.isOpen);
+		core.refreshControls();
 	} else if (action.type === 'thumbnails')
 		core.element.toggleAttribute('show-thumbnails', !core.viewOptions.showThumbnails);
 	else if (action.type === 'zoom') pages.setZoom(action.value);
@@ -120,7 +150,14 @@ export function routeRibbonAction(core: EditorCore, action: RibbonAction): void 
 	else if (action.type === 'evenOddHeaders') pages.toggleEvenOddHeaders();
 	else if (action.type === 'pageColor') pages.setPageColor(action.value);
 	else if (action.type === 'hyphenation') pages.setHyphenation(action.value);
-	else if (action.type === 'reviewDisplay') {
+	else if (action.type === 'suppressLineNumbers' && target) {
+		applyParagraphFormat(target, {
+			suppressLineNumbers:
+				readParagraphFormat(target.state, core.model).suppressLineNumbers !== true,
+		});
+		pages.syncControls();
+		focusView(target);
+	} else if (action.type === 'reviewDisplay') {
 		core.reviewDisplayMode = action.value;
 		core.view?.dispatch(core.view.state.tr);
 	} else if (action.type === 'review') shell.review?.handleReview(action.key);

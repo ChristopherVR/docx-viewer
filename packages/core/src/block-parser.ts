@@ -201,6 +201,9 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 		paragraph.dropCap = {
 			style: dropCap,
 			lines: Number.isInteger(lines) && lines >= 1 && lines <= 10 ? lines : 3,
+			...(twipValue(getW(frame, 'hSpace')) !== undefined
+				? { distanceTwips: twipValue(getW(frame, 'hSpace'))! }
+				: {}),
 		};
 	}
 	const borders = parseParagraphBorders(first(props, 'pBdr'));

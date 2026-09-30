@@ -49,7 +49,9 @@ export function tokenizeRun(text: string, runIndex: number): BreakToken[] {
 		if (word) tokens.push({ kind: 'word', text: word, runIndex, sourceStart: wordStart });
 		word = '';
 	};
-	const chars = [...text];
+	const chars = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text)].map(
+		(part) => part.segment,
+	);
 	let offset = 0;
 	for (const ch of chars) {
 		if (ch === '\n') {

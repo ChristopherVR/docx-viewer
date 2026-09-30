@@ -36,7 +36,12 @@ it('switches superscript to subscript without losing highlights or unselected te
 	toggleVerticalAlign(view, 'subscript');
 	expect(view.state.doc.firstChild!.firstChild!.marks.map((mark) => mark.type.name)).toEqual([
 		'highlight',
+		'verticalAlign',
 	]);
+	expect(
+		view.state.doc.firstChild!.firstChild!.marks.find((mark) => mark.type.name === 'verticalAlign')!
+			.attrs.value,
+	).toBe('baseline');
 });
 it('retains cursor formatting until typing and refuses invalid/read-only changes', () => {
 	editor();

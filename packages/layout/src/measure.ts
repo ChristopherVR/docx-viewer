@@ -1,15 +1,19 @@
 import { cssFontStack } from './fonts.js';
+import { ligatureCss } from './ligatures.js';
 /** A font as the measurer needs it; sizes are already in CSS pixels. */
 export interface LayoutFontSpec {
 	family: string;
 	sizePx: number;
 	bold?: boolean;
 	italic?: boolean;
+	kerning?: 'normal' | 'none';
+	ligatures?: import('@christophervr/docx-core').Ligatures;
+	smallCaps?: boolean;
 }
 
 /** Injectable text measurer: canvas in the browser, a deterministic fake in tests. */
 export interface TextMeasurer {
-	/** Width of `text` set in `font`, in CSS pixels. Must be additive-ish (no kerning assumed). */
+	/** Glyph width in CSS pixels, including the requested kerning mode, before scale/spacing. */
 	widthOf(text: string, font: LayoutFontSpec): number;
 	/** Natural single-spaced line height for `font`, in CSS pixels (ascent + descent + leading). */
 	lineHeightOf(font: LayoutFontSpec): number;
@@ -77,11 +81,31 @@ export function createCanvasMeasurer(): TextMeasurer {
 		widthOf(text, font) {
 			const c = ctx();
 			if (!c) return fallback.widthOf(text, font);
-			const key = `${fontString(font)}\u0000${text}`;
+			const key = `${fontString(font)}\u0000${font.kerning ?? 'auto'}\u0000${font.ligatures ?? 'auto'}\u0000${font.smallCaps ?? false}\u0000${text}`;
 			const cached = widthCache.get(key);
 			if (cached !== undefined) return cached;
 			c.font = fontString(font);
-			const width = c.measureText(text).width;
+			c.fontKerning = font.kerning ?? 'auto';
+			let width = c.measureText(text).width;
+			// Canvas has no ligature feature selector. Measure explicit selections with the same
+			// browser shaping used to draw Print Layout, before applying glyph scale and spacing.
+			if ((font.ligatures !== undefined || font.smallCaps) && document.body) {
+				const span = document.createElement('span');
+				span.style.cssText =
+					'position:fixed;left:-100000px;top:0;visibility:hidden;display:inline-block;white-space:pre;padding:0;border:0;margin:0;letter-spacing:0;text-transform:none';
+				span.style.font = fontString(font);
+				span.style.fontKerning = font.kerning ?? 'auto';
+				if (font.ligatures !== undefined)
+					span.style.fontVariantLigatures = ligatureCss(font.ligatures);
+				if (font.smallCaps) span.style.fontVariantCaps = 'small-caps';
+				span.textContent = text;
+				document.body.append(span);
+				try {
+					width = span.getBoundingClientRect().width;
+				} finally {
+					span.remove();
+				}
+			}
 			if (widthCache.size > 20000) widthCache.clear();
 			widthCache.set(key, width);
 			return width;

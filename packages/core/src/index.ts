@@ -1,6 +1,7 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 export * from './model.js';
 export * from './highlight.js';
+export { LIGATURE_VALUES, isLigatures, type Ligatures } from './ligatures.js';
 export * from './language.js';
 export {
 	parseParagraphStyleCatalog,
@@ -36,7 +37,7 @@ export {
 	formatListNumber,
 	resolveParagraphNumbering,
 } from './numbering-format.js';
-export { ensureListDefinition, type ListKind } from './numbering-editing.js';
+export { ensureListDefinition, createListDefinition, type ListKind } from './numbering-editing.js';
 export { formatNoteNumber, numberNotesInOrder } from './notes.js';
 export {
 	acceptAllRevisions,

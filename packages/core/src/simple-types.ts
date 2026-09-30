@@ -92,6 +92,26 @@ export function parseHalfPoints(value: string | null | undefined): HalfPoints | 
 	const asTwips = UNIVERSAL_MEASURE.test(text) ? universalMeasureToTwips(text) : undefined;
 	return asTwips !== undefined && asTwips >= 0 ? halfPoints(Math.round(asTwips / 10)) : undefined;
 }
+/** `ST_SignedHpsMeasure`: signed half-points, including universal measures. */
+export function parseSignedHalfPoints(value: string | null | undefined): HalfPoints | undefined {
+	if (value === null || value === undefined) return undefined;
+	const text = value.trim();
+	const integer = parseInteger(text);
+	if (integer !== undefined) return halfPoints(integer);
+	const twips = universalMeasureToTwips(text);
+	return twips === undefined
+		? undefined
+		: halfPoints(Math.sign(twips) * Math.round(Math.abs(twips) / 10));
+}
+
+/** `ST_TextScale`: whole-number horizontal scaling, from 0 through 600 percent. */
+export function parseTextScale(value: string | null | undefined): number | undefined {
+	const text = value?.trim();
+	if (text?.endsWith('%') && !/^\d+%$/.test(text)) return undefined;
+	const parsed = parseUnsignedInteger(text?.endsWith('%') ? text.slice(0, -1) : text);
+	return parsed !== undefined && parsed <= 600 ? parsed : undefined;
+}
+
 /** `ST_EighthPointMeasure`: non-negative integer eighths of a point. */
 export function parseEighthPoints(value: string | null | undefined): EighthPoints | undefined {
 	const parsed = parseUnsignedInteger(value?.trim());

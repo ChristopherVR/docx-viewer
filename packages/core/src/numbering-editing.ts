@@ -7,6 +7,8 @@ import type {
 } from './numbering-model.js';
 import { expectDefined } from './expect-defined.js';
 import { signedTwips, twips } from './units.js';
+import { Checker, DocxModelValidationError, type ValidationIssue } from './validate-issues.js';
+import { validateNumberingCatalog } from './validate-structure.js';
 
 /**
  * `multilevel` numbers 1., 1.1., 1.1.1. (every level shows its ancestors); `outline` cycles
@@ -74,11 +76,34 @@ export function ensureListDefinition(
 	catalog: NumberingCatalog | undefined,
 	kind: ListKind,
 ): { catalog: NumberingCatalog; numId: number } {
+	return createListDefinition(catalog, Object.values(buildLevels(kind)));
+}
+
+/** Adds a validated independent definition without modifying any imported list. */
+export function createListDefinition(
+	catalog: NumberingCatalog | undefined,
+	levels: readonly NumberingLevelDefinition[],
+): { catalog: NumberingCatalog; numId: number } {
+	if (
+		!levels.length ||
+		levels.length > 9 ||
+		new Set(levels.map((level) => level.level)).size !== levels.length ||
+		levels.some((level) => !Number.isInteger(level.level) || level.level < 0 || level.level > 8)
+	)
+		throw new Error('A list must have 1 to 9 distinct levels numbered 0 through 8.');
+	const copied = Object.fromEntries(levels.map((level) => [level.level, { ...level }]));
+	const issues: ValidationIssue[] = [];
+	validateNumberingCatalog(new Checker(issues, 'numberingCatalog'), {
+		abstractNums: { '0': { id: '0', levels: copied } },
+		nums: {},
+		warnings: [],
+	});
+	if (issues.length) throw new DocxModelValidationError(issues);
 	const abstractNums: Record<string, AbstractNumDefinition> = { ...(catalog?.abstractNums ?? {}) };
 	const nums: Record<string, NumDefinition> = { ...(catalog?.nums ?? {}) };
 	const abstractId = nextId(Object.keys(abstractNums), 0);
 	const numId = nextId(Object.keys(nums), 1);
-	abstractNums[abstractId] = { id: abstractId, levels: buildLevels(kind) };
+	abstractNums[abstractId] = { id: abstractId, levels: copied };
 	nums[numId] = { id: numId, abstractNumId: abstractId };
 	return {
 		catalog: { abstractNums, nums, warnings: catalog?.warnings ?? [] },

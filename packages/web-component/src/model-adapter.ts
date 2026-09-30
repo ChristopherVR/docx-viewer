@@ -18,10 +18,16 @@ import { schema } from './schema';
 import { paragraphTwipsFromAttrs } from './attr-units';
 import { sameJson, sameRuns } from './run-compare';
 import { appendInlineNode, runToInlineNodes, type NoteNumberLookup } from './run-adapter';
-import { convertMergedTable, convertSimpleTable, tableNode } from './table-model-adapter';
+import {
+	convertMergedTable,
+	convertSimpleTable,
+	tableNode,
+	tableFormattingFromNode,
+} from './table-model-adapter';
 import { parseBordersJson } from './table-render';
 import { sectionLayoutJson, sectionsFromLayout } from './section-layout';
 import { sectionsOf } from './section-commands';
+import { sectionPartsJson, restoreSectionParts } from './header-footer-history';
 
 type ListLabels = ReturnType<typeof computeListLabels>;
 
@@ -58,6 +64,7 @@ function paragraphNode(paragraph: Paragraph, labels: ListLabels, noteNumber?: No
 			keepLines: paragraph.keepLines ?? null,
 			widowControl: paragraph.widowControl ?? null,
 			contextualSpacing: paragraph.contextualSpacing ?? null,
+			suppressLineNumbers: paragraph.suppressLineNumbers ?? null,
 			dropCap: paragraph.dropCap ?? null,
 			borders: paragraph.borders ?? null,
 			shadingFill: paragraph.shadingFill ?? null,
@@ -68,7 +75,13 @@ function paragraphNode(paragraph: Paragraph, labels: ListLabels, noteNumber?: No
 }
 
 /** Paragraph pagination toggles carried through the editor as node attributes. */
-const KEEP_KEYS = ['keepNext', 'keepLines', 'widowControl', 'contextualSpacing'] as const;
+const KEEP_KEYS = [
+	'keepNext',
+	'keepLines',
+	'widowControl',
+	'contextualSpacing',
+	'suppressLineNumbers',
+] as const;
 
 export function modelToDoc(model: DocumentModel) {
 	const labels = computeListLabels(model);
@@ -100,6 +113,7 @@ export function modelToDoc(model: DocumentModel) {
 			marginBottom: model.page.marginBottom,
 			marginLeft: model.page.marginLeft,
 			sections: model.sections ? sectionLayoutJson(model.sections) : null,
+			sectionParts: sectionPartsJson(model.sections),
 			evenAndOddHeaders: Boolean(model.evenAndOddHeaders),
 			pageColor: model.pageColor ?? null,
 			autoHyphenation: Boolean(model.autoHyphenation),
@@ -240,15 +254,12 @@ export function docToModel(
 						? {
 								...prior,
 								structureEditable: undefined,
-								// Row properties follow rows by position; drop them once rows are added or removed.
-								...(prior.rowProperties && prior.rows.length !== node.childCount
-									? { rowProperties: undefined }
-									: {}),
 							}
 						: tableBordersFromNode(node.attrs.borders)),
 					type: 'table',
 					id,
 					rows: convertSimpleTable(node, asParagraph, prior),
+					...tableFormattingFromNode(node),
 					...(node.attrs.structureEditable === false ? { structureEditable: false } : {}),
 				} as Table);
 		}
@@ -261,15 +272,21 @@ export function docToModel(
 		autoHyphenation: _hyphenation,
 		...rest
 	} = prior;
+	const sectionLayout =
+		typeof doc.attrs.sections === 'string'
+			? sectionsFromLayout(doc.attrs.sections, priorSections, blocks)
+			: keepHeaderFooterSections(priorSections, blocks, doc).sections;
+	const sections =
+		typeof doc.attrs.sectionParts === 'string' && sectionLayout
+			? restoreSectionParts(sectionLayout, doc.attrs.sectionParts, blocks)
+			: sectionLayout;
 	return {
 		...rest,
 		blocks,
 		...(doc.attrs.evenAndOddHeaders ? { evenAndOddHeaders: true } : {}),
 		...(doc.attrs.pageColor ? { pageColor: String(doc.attrs.pageColor) } : {}),
 		...(doc.attrs.autoHyphenation ? { autoHyphenation: true } : {}),
-		...(typeof doc.attrs.sections === 'string'
-			? { sections: sectionsFromLayout(doc.attrs.sections, priorSections, blocks) }
-			: keepHeaderFooterSections(priorSections, blocks, doc)),
+		...(sections ? { sections } : {}),
 		page: {
 			width: doc.attrs.pageWidth,
 			height: doc.attrs.pageHeight,

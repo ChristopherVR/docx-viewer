@@ -1,6 +1,6 @@
 # Outstanding parity work
 
-Status as of 2026-09-28. Six parity workstreams were run in parallel and are now
+Status as of 2026-09-30. Six parity workstreams were run in parallel and are now
 all merged into `main`. Four of them were interrupted before their authors
 finished, so they were completed during integration. The gaps below are what
 remains. None of this is Word parity; see the [parity roadmap](/parity-roadmap)
@@ -45,9 +45,11 @@ Still missing:
 - Section editing covers size/orientation, margins, columns, vertical alignment, all four
   section-break types, a different first page, page numbering and the document-wide odd/even
   headers setting and line numbering (Layout > Line Numbers: none, continuous, restart each page or
-  section; the count-by, start and distance values are read and kept but have no controls, and line
-  numbers are drawn in Print Layout only, counting every line of body paragraphs, tables excluded,
-  with no per-paragraph suppression); page borders are still protected (only their presence is
+  section, plus Line Numbering Options for count-by, start and automatic/custom distance from text;
+  numbers are drawn in Print Layout only, with per-paragraph suppression in the menu and Paragraph
+  dialog, including style inheritance and explicit offs. Tables are excluded.
+  The model uses visible start numbers and converts Word's zero-based `w:start` at the package boundary);
+  page borders are still protected (only their presence is
   modeled). The continuous surface shows columns only for single-section documents (Print Layout
   shows all); vertically justified sections lay out top-aligned.
 - Ctrl+Alt+F / Ctrl+Alt+D (insert footnote/endnote) are bound, but Windows browsers can report
@@ -59,9 +61,9 @@ Still missing:
 - Pictures and links in headers, footers and notes are resolved, shown and saved with each part's own
   relationships; while a header, footer or note is being edited, the ribbon (formatting, Insert
   Picture, Link) targets it.
-- Tables: default cell margins (`tblCellMar`) and row properties (height with its rule, keep-together, repeat-as-header) are modeled and render in both views; Print Layout clips exact-height rows and repeats header rows. They are read-only (no editor controls) and preserved on save; row properties are dropped from the model when rows are added or removed.
-- Paragraph borders (`w:pBdr`, with `w:space` and grouped `between` lines) and shading render in both views from direct formatting and styles; they are read-only (no controls) and preserved on save.
-- Paragraph keep options (`keepNext`, `keepLines`, `widowControl`, `contextualSpacing`) are modeled from styles and direct formatting, preserved through editing and used by Print Layout pagination (headings stay with the next paragraph); there are no editor controls for them yet.
+- Tables: default cell margins (`tblCellMar`) and row properties (height with its rule, keep-together, repeat-as-header) are modeled and render in both views; Print Layout clips exact-height rows and repeats header rows. Table > Properties now edits these settings for rectangular tables, with mixed selected rows, validation and one-step undo. Row properties follow surviving rows during structural edits. Opened DOCX packages save changes to these fields while preserving unrelated table XML. Merged/nested/complex tables remain protected; individual cell margins have no controls. Exact-height rows are a minimum on the continuous editing surface and clipped in Print Layout.
+- Paragraph borders (`w:pBdr`, with `w:space` and grouped `between` lines) and shading render in both views from direct formatting and styles. Home offers presets and a Borders and Shading dialog; art borders and a table/cell border editor remain missing.
+- Paragraph keep options (`keepNext`, `keepLines`, `widowControl`, `contextualSpacing`) are modeled from styles and direct formatting, preserved through editing and used by Print Layout pagination (headings stay with the next paragraph). The Paragraph dialog exposes these settings, including mixed selections.
 - Toggle properties follow ECMA-376: explicit offs (`w:val="0"`, `w:u w:val="none"`) are kept and cancel styles, styles inherit through basedOn and XOR across style types, and direct formatting is absolute. Bold, Italic, Underline and Strikethrough toggle what the text shows, writing an explicit off for style-inherited formatting as Word does (with a selection; a collapsed caret toggles the typing marks).
 
 ### Ribbon parity with Word
@@ -101,10 +103,9 @@ What each tab offers that Word also has:
 - **Insert:** Text boxes in an opened document (`wps:txbx`, including ones inside
   `mc:AlternateContent`) show their text read-only in a boxed placeholder on the editing surface and
   are kept byte-for-byte on save; they cannot be inserted or edited, and Print Layout does not draw
-  them (it says so). Drop Cap (Dropped or In margin, three lines: the first letter moves into its own
+  them (it says so). Drop Cap (Dropped or In margin, with font, line count and distance options: the first letter moves into its own
   `w:framePr` paragraph as in Word; the editing surface floats it, while Print Layout folds it into the
-  next paragraph as a raised initial with a warning; no Drop Cap Options dialog for font, lines or
-  distance), Table (a size grid with keyboard control and typed rows and columns), Cover Page (one
+  next paragraph as a raised initial with a warning), Table (a size grid with keyboard control and typed rows and columns), Cover Page (one
   plain design), Pictures, Format picture, Link, Bookmark (add, move, delete, go to, Word's naming
   rule), Blank page, page and column breaks, Header,
   Footer and Page Number (creates the part, relationship, content type and `sectPr` reference on
@@ -112,7 +113,9 @@ What each tab offers that Word also has:
   locale, not an updating field) and Symbol (27 common glyphs, not the full Symbol dialog).
 - **Layout:** a Page Setup dialog (custom margins, gutter, header and footer distances,
   orientation, paper size and custom width and height, validated so text keeps room), Margins (Normal, Narrow, Moderate, Wide), Size (Letter, Legal, Tabloid, Executive,
-  A3, A4, A5, B5), Orientation, Vertical alignment, Columns, page-number format and start,
+  A3, A4, A5, B5), Orientation, Vertical alignment, Columns (One, Two, Three, Left and Right;
+  More Columns edits count, equal or individual widths, spacing and separator lines, validates
+  available width, targets the current section and supports undo), page-number format and start,
   different first page, odd and even, section breaks, Page Color (the colour picker; written as
   `w:background` with `displayBackgroundShape`, drawn on the editing surface and in Print Layout, not
   printed, and undoable; theme and gradient page fills are not modeled), Indent Left/Right (inches) and paragraph
@@ -128,8 +131,10 @@ What each tab offers that Word also has:
   direction controls.
 - **View:** Ruler (inch ticks from the left margin, shaded margins and the current paragraph's
   indent markers; drag a marker to change the paragraph's indents, snapped to sixteenths of an inch and undone as one step; margin edges and tab stops are not draggable), Hidden text, Gridlines,
-  thumbnails, Zoom, Zoom to 100%, One page, Page width and Print Layout.
-- **Table (contextual):** appears only while the selection is in a table, as in Word.
+  thumbnails, Navigation pane (body headings, inherited heading styles, collapsible hierarchy,
+  keyboard navigation, current-heading selection and live refresh; also works in Viewing mode),
+  Zoom, Zoom to 100%, One page, Page width and Print Layout.
+- **Table (contextual):** appears only while the selection is in a table, as in Word. Properties opens row height (At least/Exactly), Allow row to break across pages, Repeat as header row, and default cell margins in inches. Row settings apply to selected rows; existing individual cell margin overrides stay in place. These controls are disabled for complex tables and Viewing mode. Word 16 COM confirmed row semantics and the 0/0/0.075/0.075-inch default cell margins.
 - **Ribbon:** collapse (button, double-click a tab, or Ctrl+F1) with click-to-peek, and tab KeyTips
   after Alt or F10 (H, N, P, S, R, W, T; F opens File); choosing a tab shows a tip on each of its
   commands (Alt, H, 1 is Bold), and Escape steps out.
@@ -164,26 +169,110 @@ Known limits of what is implemented:
   and unfold when the window widens. Folding goes strictly right to left, with no priority order
   or intermediate sizes as in Word (a group does not first shrink its buttons), and the panel only
   scrolls when even folded groups do not fit.
-- Home fits at 1280 px only because the Styles gallery shows about three tiles (Word shows more);
-  in French and German the Editing group folds at that width.
+- The Styles gallery shows about three tiles (Word shows more). Compact multilevel-list and
+  paragraph controls keep the full command row inside its group, so Show/Hide ¶ cannot overlap
+  the Styles gallery. In French and German the Editing group folds at 1280 px.
 - Icons are one line-icon set with a tinted stroke; Word's are two-tone and drawn per command.
 
-- Inserting a header, footer or page number is not undone by Ctrl+Z. Header and footer content lives
-  in the model outside the editor document, like in-place header edits, and the editor's history
-  records only the section layout. The first section's header and footer are the ones shown and
-  changed.
-- Page Number adds a PAGE field to the default header or footer; it does not offer Word's numbered
-  gallery styles, "Page X of Y" or first/odd/even variants.
+- Inserting headers, footers and page numbers and editing header/footer text share the body undo
+  history. Ctrl+Z/Ctrl+Y, ribbon history and Quick Access history restore both content and previews.
+  Browser contracts cover header insertion, typing and body history across all six bindings.
+  The selection's section supplies the preview and receives inserted parts; edits to a part linked
+  by several sections update all its uses. Word COM confirmed that a page number inserted in section
+  2 exports as one field in that section and no fields in section 1. Header and Footer menus insert
+  blank default, first-page or even-page parts. First-page insertion enables Different first page in
+  that section; even-page insertion enables the document-wide odd/even setting, in the same undo step.
+  Page Number follows the first/even/default slot being edited, or the default slot from the body.
+  Word COM confirmed a three-page export enables both settings, with PAGE/NUMPAGES in the first-page
+  footer, PAGE in the even-page footer and no fields in the default footer. Decorative header/footer
+  galleries remain missing. Insert > Link to Previous toggles the active
+  first/even/default header/footer story (disabled in section 1, outside a story and in Viewing mode).
+  Inherited content now appears and edits in the continuous preview. Unlinking creates an independent
+  copy, preserving the source XML and relationships; linking removes the local reference and uses the
+  previous section's story. Both are undoable. Word COM confirmed independent section-2 header text
+  with LinkToPrevious false, and matching inherited text with LinkToPrevious true after relinking.
+  A contextual Header & Footer tab appears and opens while editing a story, with Go to Header/Footer,
+  Previous/Next Section, Link to Previous, the first/odd/even settings and Close Header and Footer.
+  Navigation keeps the story variant and updates the body section selection. Empty stories can be
+  visited without changing the model; their parts are created only on typing, with undo removing
+  that first edit and its part. Closing removes the empty preview and returns focus to the body;
+  switching to Viewing mode also closes an active story editor.
+  Header/footer formatting controls now reflect the active story rather than the body selection.
+  Browser contracts cover context, navigation, first typing, undo and close across all six bindings.
+  Word COM confirmed that typing into section 2's previously empty footer creates independent text
+  there and leaves section 1's footer blank.
+  Position controls edit Header from Top and Footer from Bottom in inches for the active section,
+  preserving other measurements exactly, validating the same 0–22-inch range as Page Setup and
+  supporting undo/redo. Word COM confirmed a two-section export keeps section 1 at 0.5/0.5 inches
+  while section 2 uses 0.75/0.875 inches. Review the distances in Print Layout; the continuous story
+  preview stays outside the body editing surface.
+- Page Number offers page-thumbnail choices for plain numbers or "Page X of Y", at the left,
+  center or right of the default header or footer. These are PAGE and NUMPAGES fields: Print Layout
+  and Word update both (Word COM confirmed a two-page export reads "Page 1 of 2"). Switching the
+  generated pattern is undoable and preserves surrounding paragraphs. Imported custom page-number
+  text and complex codes are kept; adding a total extends that paragraph, while Plain changes only
+  its alignment. Word's decorative gallery styles remain missing; slot selection is through editing
+  the corresponding first/even/default header or footer, rather than a separate page-number gallery.
 - The Borders menu presets use Word's default 0.5 pt automatic pen. The Borders and Shading dialog
   (paragraphs) sets sides, one style (single, double, dotted, dashed), width and colour for all chosen
   sides, and a solid fill; there is no per-side pen, Box/Shadow/3-D setting, patterns, page borders or
   table/cell targeting, and no preview.
-- The Font dialog has no Advanced tab (ligatures, kerning, scale, position) or text effects.
+- The Font dialog now has Font and Advanced tabs. Advanced sets horizontal scale, expanded or
+  condensed character spacing, raised/lowered position and a kerning threshold. It preserves
+  untouched mixed values, validates edited values, and applies all dialog changes as one undo step.
+  Combined Font/Advanced changes are atomic; header/footer formatting uses the body history so an
+  undo reverses formatting without also undoing prior header typing.
+  Superscript/Subscript toggles reflect inherited formatting and write `<w:vertAlign w:val="baseline"/>`
+  when turning it off, including at a collapsed caret. Clearing script in the Font dialog handles
+  inherited and mixed selections with one undo step; baseline renders at full size in both views.
+  Word COM confirmed an exported reset is 12 pt with both script flags off while Normal retains
+  its superscript setting. The source style XML remains unchanged.
+  Tabs support arrow keys, Home/End and all five display locales. Ligatures now offers all 16
+  Office 2010 combinations, preserves inherited and untouched mixed settings, and writes explicit
+  None overrides. Editing surfaces, story previews, the dialog preview and Print Layout apply
+  the selected OpenType features when the font supports them. Print Layout measures explicit
+  selections with browser text shaping; exact Word glyph metrics remain approximate. Word COM
+  confirmed Standard + Contextual as 3 and the exported None reset as 0. Text effects remain missing.
+  The core now models horizontal scale (0–600%), kerning threshold and signed baseline position,
+  including inherited style values and explicit neutral overrides. These survive editor typing,
+  undo/redo and export in all six bindings. Invalid/unmodeled properties remain protected; Word COM
+  verified an edited 125% / 12 pt kerning / lowered 3 pt run and a neutral reset. Print Layout now
+  applies scale, additional character spacing, baseline position and kerning thresholds, including
+  inherited settings. Scaled widths also drive wrapping and decimal tabs; Word COM confirmed that
+  character spacing is added after scaling. Browser font metrics remain approximate. The continuous
+  editor and header/footer/note previews now render inherited and direct spacing, baseline position
+  and kerning thresholds, with script sizing retained. Paragraphs without an explicit pStyle now
+  resolve the default Normal font settings, checked against Word COM. Horizontal scale now also
+  renders on the continuous surface and in header/footer/note previews, with scaled glyph advances,
+  spacing added after scale, word wrapping and native caret/selection. Unicode grapheme clusters
+  stay intact. A scaled word split across formatting runs can still wrap at that split in a narrow
+  column; the browser regression records this as an expected failure pending logical-word grouping.
+  Scaled word boxes also suppress browser automatic hyphenation inside those words; Print Layout
+  remains the required reference for pagination and keeps its existing hyphenation limitation.
+  The dialog directs
+  users to Print Layout to review these settings. Word COM verified a UI-exported run with 125%
+  scale, 2 pt expanded spacing, lowered 3 pt position and 12 pt kerning.
+
+The Home > Multilevel List menu now includes Define New Multilevel List. It edits nine levels,
+with number style, `%1`–`%9` format tokens, start value, restart rule, legal numbering, alignment,
+number/text positions and tab/space/nothing suffix. It starts from the selected list's supported
+properties and creates a new independent definition; imported definitions remain untouched.
+The dialog has a live marker preview, validation, Cancel/Escape, editing-permission checks and
+all five display locales. Applying the list is one undoable paragraph edit; unused definitions
+may remain in the additive catalog after undo. All six bindings verify apply/undo/redo/export
+and preservation of the imported abstract definition. Live editing markers also recalculate on
+list commands and history changes, including in header/footer/note editors. Word COM verified
+the exported markers, start 4, never restart, right alignment, 0.25-inch number position,
+1-inch text position and space suffix. The dialog fits a 1280×720 viewport with its action
+buttons visible. Number alignment is saved for Word; the editing surface still renders markers
+inline and does not reproduce Word's aligned marker boxes.
 
 Still not at parity:
 
 - **Home:** Text Effects; Multilevel List offers two styles (1. 1.1. 1.1.1. and 1. a) i.), not Word's gallery of
-  heading-linked and bullet outlines, and has no Define New Multilevel List dialog. Text Highlight keeps the 17-colour list (Word's is a short
+  heading-linked and bullet outlines. Define New Multilevel List still needs heading/style links,
+  marker Font controls, an explicit tab-stop position, Word's graphical number placeholders and
+  its apply-to/list-style options. Text Highlight keeps the 17-colour list (Word's is a short
   list too). Line Spacing offers presets; the Paragraph dialog has the rest.
 - **Insert:** Cover Page galleries (one plain design exists), Shapes, Icons, 3D Models, SmartArt,
   Charts, Screenshot, inserting Text Boxes, WordArt, Equation, Signature Line, Object.
@@ -192,13 +281,13 @@ Still not at parity:
   automatic updating of `REF`, `PAGEREF` and `SEQ` results (they are computed when inserted; captions
   renumber immediately, cross-references do not).
 - **Review and View:** Editor pane, Thesaurus, Translate, Accessibility, Compare, Protect, Ink;
-  Navigation Pane headings, Read Mode, Web and Outline views, New Window,
+  Read Mode, Web and Outline views, New Window,
   Split and Macros.
-- **Dropdown galleries:** Margins, Size, Orientation, Vertical alignment, Columns, Borders and Line
+- **Dropdown galleries:** Margins, Size, Orientation, Vertical alignment, Columns, Page Number, Borders and Line
   spacing are galleries with thumbnails (Line spacing ends with Line Spacing Options, which opens the
   Paragraph dialog; Borders ends with Borders and Shading).
   Page number format, Sort, Change case and similar stay plain text lists, as Word's Change Case
-  does. Zoom is a percentage list next to a Zoom dialog. Margins ends with Custom Margins, which opens Page Setup; Columns has no Left, Right or More Columns.
+  does. Zoom is a percentage list next to a Zoom dialog. Margins ends with Custom Margins, which opens Page Setup. Columns includes Left and Right presets and ends with More Columns. Individual widths and gaps are editable; changing a width adjusts the adjacent column to retain the available text width. Print Layout uses unequal widths and reflows paragraph continuations. The continuous editing surface shows unequal-column sections at full text width, so Print Layout is required to review their columns.
 - **Ribbon:** command KeyTips use Word's keys for the commands that share a name with Word's (Bold `1`,
   Paste `V`, Font Color `FC` and so on) and two letters from the label for the rest, so a few differ
   from Word's; there are no group-level tips and they are not localised. Customisation is limited to showing and hiding commands (File > Customize Ribbon; no reordering,
@@ -219,7 +308,16 @@ Still not at parity:
   in table cells paginate inline; header and footer pictures (inline and floating) are drawn on
   every page; floats inside table cells are not positioned. The editing surface still approximates
   floats with CSS floats.
-- Picture bullets, `numStyleLink`, Word's exact `lvlRestart` cascade.
+- Picture bullets and `numStyleLink`. Multilevel counters now respect `lvlRestart=0` (never),
+  one-based higher-level restart triggers, the omitted previous-level default, skipped ancestor
+  levels and per-instance level/start overrides. Nested items initialize omitted ancestors,
+  so a subsequent explicit ancestor advances its counter. Word COM comparisons cover default,
+  never and restart-after-Level-1 sequences, including a skipped level whose intermediate
+  ancestor never restarts; all six browser bindings display the same markers. Text editing and
+  export preserve the original numbering XML. Out-of-range triggers use the OOXML default;
+  Word's import normalization of redundant/invalid explicit triggers is not replicated (this
+  installed Word discarded a level with an explicit previous-level trigger, rather than treating
+  it like an omitted trigger). Remaining Define New Multilevel List controls are listed above.
 - Prior-formatting snapshots for `rPrChange`/`pPrChange`, and table-structure revisions. Tracked moves are linked by name (accepting or rejecting either side resolves both) and saved with their range markers. Under Track Changes, dragging text or cutting and pasting the same text records a move; moving formatted content across table cells is recorded as a deletion and an insertion. Comments may span paragraphs (one range per comment); range edges outside any run move to the nearest commented text when edited.
 - Print Layout measures and draws text with formatting inherited from document defaults, paragraph
   and character styles and theme fonts. It uses metric-compatible substitutes (Carlito, Caladea,

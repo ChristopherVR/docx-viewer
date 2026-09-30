@@ -1,6 +1,7 @@
 // Framework-neutral pagination/print-layout engine for @christophervr/docx-core documents.
 export * from './units.js';
 export * from './measure.js';
+export { ligatureCss } from './ligatures.js';
 export * from './text-breaks.js';
 export * from './input.js';
 export * from './result.js';

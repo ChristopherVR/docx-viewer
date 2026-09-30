@@ -181,6 +181,32 @@
 .dve-font-dialog .dve-dialog-fieldset:nth-of-type(1) {
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+.dve-font-dialog .dve-font-tab-panel[hidden] {
+	display: none;
+}
+.dve-font-tab-panel {
+	display: grid;
+	gap: 10px;
+}
+.dve-font-dialog .dve-font-tab-panel .dve-dialog-fieldset:has(.dve-dialog-cols) {
+	grid-template-columns: 1fr;
+}
+.dve-font-tabs {
+	display: flex;
+	gap: 2px;
+	border-bottom: 1px solid var(--line);
+}
+.dve-font-tabs button {
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	padding: 7px 14px;
+}
+.dve-font-tabs button[aria-selected='true'] {
+	color: var(--word);
+	border-bottom: 2px solid var(--word);
+	font-weight: 600;
+}
 .dve-format-preview {
 	display: grid;
 	min-height: 54px;

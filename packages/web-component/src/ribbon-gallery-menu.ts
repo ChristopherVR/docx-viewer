@@ -18,6 +18,7 @@ export type GalleryKind =
 	| 'columns'
 	| 'verticalAlign'
 	| 'borders'
+	| 'pageNumber'
 	| 'lineSpacing';
 
 /** A command listed under a gallery's entries, such as Line Spacing Options. */
@@ -158,6 +159,17 @@ export function galleryLook(
 		};
 	}
 	if (kind === 'columns') {
+		if (value === 'left' || value === 'right') {
+			const first = value === 'left' ? 6 : 13;
+			return {
+				thumb: page(
+					30,
+					40,
+					...lines(4, 5, first, 30, 6),
+					...lines(4 + first + 3, 5, 19 - first, 30, 6),
+				),
+			};
+		}
 		const count = Number(value) || 1;
 		const gap = 3;
 		const width = (30 - 8 - gap * (count - 1)) / count;
@@ -165,6 +177,18 @@ export function galleryLook(
 			lines(4 + i * (width + gap), 5, width, 30, 6),
 		);
 		return { thumb: page(30, 40, ...columns.flat()) };
+	}
+	if (kind === 'pageNumber') {
+		const [position, align, format] = value.split(':');
+		const number = shape('text', {
+			x: align === 'left' ? 5 : align === 'right' ? 27 : 16,
+			y: position === 'top' ? 6 : 39,
+			'font-size': 3,
+			'text-anchor': align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle',
+			fill: 'currentColor',
+		});
+		number.textContent = format === 'pageOfTotal' ? '1 / 2' : '1';
+		return { thumb: page(30, 40, ...lines(5, 10, 22, 22, 6), number) };
 	}
 	if (kind === 'borders') return { thumb: borderThumb(value) };
 	if (kind === 'lineSpacing') return { thumb: spacingThumb(value) };

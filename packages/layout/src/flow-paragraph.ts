@@ -16,6 +16,8 @@ export interface ParagraphPlacement {
 	 * start; 0 when neither `keepNext` nor `keepLines` apply.
 	 */
 	requiredTogetherPx: number;
+	/** Lays unconsumed tokens out at the cursor's new column width. */
+	reflow?: (startToken: number) => ParagraphLayoutResult;
 }
 
 /**
@@ -30,7 +32,9 @@ export function placeParagraph(
 	placement: ParagraphPlacement,
 	note: (message: string) => void,
 ): void {
-	const { paragraph, layout, spacingBeforePx, requiredTogetherPx } = placement;
+	const { paragraph, spacingBeforePx, requiredTogetherPx, reflow } = placement;
+	let layout = placement.layout;
+	let width = cursor.columnWidthPx;
 	if (paragraph.pageBreakBefore && !cursor.atColumnTop) cursor.newPage();
 	if (
 		requiredTogetherPx > 0 &&
@@ -43,7 +47,15 @@ export function placeParagraph(
 
 	const widow = widowControlEnabled(paragraph.widowControl);
 	let lineCursor = 0;
+	let nextToken = 0;
 	let firstSegment = true;
+	const reflowIfNeeded = () => {
+		if (!reflow || cursor.columnWidthPx === width) return;
+		layout = reflow(nextToken);
+		lineCursor = 0;
+		width = cursor.columnWidthPx;
+	};
+	reflowIfNeeded();
 	if (!layout.lines.length) {
 		// An empty paragraph still occupies its spacing/blank-line height.
 		cursor.place(
@@ -53,6 +65,7 @@ export function placeParagraph(
 		return;
 	}
 	while (lineCursor < layout.lines.length) {
+		reflowIfNeeded();
 		const budget = cursor.remainingHeightPx() - (firstSegment ? spacingBeforePx : 0);
 		let cumulative = 0;
 		let end = lineCursor;
@@ -111,6 +124,7 @@ export function placeParagraph(
 		const advance =
 			(firstSegment ? spacingBeforePx : 0) + segmentHeight + (isFinal ? layout.spacingAfterPx : 0);
 		cursor.place(box, advance);
+		nextToken = layout.lines[lineCursor + placedCount - 1]?.nextToken ?? nextToken;
 		lineCursor += placedCount;
 		firstSegment = false;
 		if (forced === 'page') cursor.newPage();

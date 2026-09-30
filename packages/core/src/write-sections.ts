@@ -113,6 +113,17 @@ function writeSectionProperties(doc: XmlDocument, sectPr: XmlElement, section: S
 	if (section.columns.equalWidth || !section.columns.widths?.length) {
 		for (const column of children(columns, 'col')) columns.removeChild(column);
 		columns.removeAttributeNS(WORD_NS, 'equalWidth');
+	} else {
+		setW(columns, 'equalWidth', '0');
+		const old = children(columns, 'col');
+		section.columns.widths.forEach((value, index) => {
+			const column = old[index] ?? makeW(doc, 'col');
+			if (!old[index]) columns.appendChild(column);
+			setW(column, 'w', String(value.widthTwips));
+			if (value.spacingTwips !== undefined) setW(column, 'space', String(value.spacingTwips));
+			else column.removeAttributeNS(WORD_NS, 'space');
+		});
+		for (const column of old.slice(section.columns.widths.length)) columns.removeChild(column);
 	}
 	if (section.columns.separator) setW(columns, 'sep', '1');
 	else columns.removeAttributeNS(WORD_NS, 'sep');
@@ -130,7 +141,7 @@ function writeSectionProperties(doc: XmlDocument, sectPr: XmlElement, section: S
 		const lnNum = child(doc, sectPr, 'lnNumType', AFTER_LNNUM);
 		if (line.countBy > 1) setW(lnNum, 'countBy', String(line.countBy));
 		else lnNum.removeAttributeNS(WORD_NS, 'countBy');
-		if (line.start !== 1) setW(lnNum, 'start', String(line.start));
+		if (line.start !== 1) setW(lnNum, 'start', String(line.start - 1));
 		else lnNum.removeAttributeNS(WORD_NS, 'start');
 		if (line.distanceTwips !== undefined) setW(lnNum, 'distance', String(line.distanceTwips));
 		else lnNum.removeAttributeNS(WORD_NS, 'distance');
@@ -171,7 +182,8 @@ const REL_NAMESPACE = 'http://schemas.openxmlformats.org/officeDocument/2006/rel
 
 /**
  * Adds `w:headerReference` / `w:footerReference` for header and footer parts this section gained
- * (`references` maps each new part to its relationship id). Existing references stay as they are.
+ * (`references` maps each new part to its relationship id), removing references when a story links
+ * to the previous section. Unchanged references stay as they are.
  */
 function writeNewReferences(
 	doc: XmlDocument,
@@ -183,7 +195,13 @@ function writeNewReferences(
 	for (const [kind, name] of [
 		['headers', 'headerReference'],
 		['footers', 'footerReference'],
-	] as const)
+	] as const) {
+		// Remove deleted local stories and references copied from following geometry into new breaks.
+		if (!previous || previous[kind])
+			for (const reference of children(sectPr, name)) {
+				const slot = reference.getAttributeNS(WORD_NS, 'type') as keyof HeaderFooterSlots;
+				if (!section[kind]?.[slot]) sectPr.removeChild(reference);
+			}
 		for (const [slot, content] of Object.entries(section[kind] ?? {}) as Array<
 			[keyof HeaderFooterSlots, HeaderFooterSlots[keyof HeaderFooterSlots]]
 		>) {
@@ -196,6 +214,7 @@ function writeNewReferences(
 			reference.setAttributeNS(REL_NAMESPACE, 'r:id', id);
 			sectPr.appendChild(reference);
 		}
+	}
 }
 
 /** The paragraph-level w:sectPr of a top-level paragraph, if any. */

@@ -47,6 +47,40 @@ function sampleResult(): LayoutResult {
 }
 
 describe('renderPrintLayout', () => {
+	it('renders scaled text with independent spacing and threshold-controlled kerning', () => {
+		const result = sampleResult();
+		const block = result.pages[0]!.columns[0]!.blocks[0]!;
+		if (block.kind !== 'paragraph') throw new Error('Expected paragraph');
+		Object.assign(block.lines[0]!.fragments[0]!, {
+			fontSizePt: 12,
+			textScalePercent: 200,
+			characterSpacingPx: 2,
+			kerningThresholdPt: 12,
+			topPx: 4,
+			boxHeightPx: 20,
+		});
+		const rendered = renderPrintLayout(result);
+		const span = rendered.element.querySelector('.dve-print-line span') as HTMLElement;
+		expect(span.style.transform).toBe('scaleX(2)');
+		expect(span.style.transformOrigin).toBe('left center');
+		expect(span.style.letterSpacing).toBe('1px');
+		expect(span.style.fontKerning).toBe('normal');
+		expect(span.style.top).toBe('4px');
+		expect(span.style.lineHeight).toBe('20px');
+	});
+	it('draws a column separator halfway across the gap', () => {
+		const result = sampleResult();
+		const page = result.pages[0]!;
+		page.columns = [
+			{ xPx: 0, widthPx: 120, blocks: [] },
+			{ xPx: 160, widthPx: 120, blocks: [] },
+		];
+		page.columnSeparator = true;
+		const rendered = renderPrintLayout(result);
+		const rule = rendered.element.querySelector<HTMLElement>('.dve-print-column-rule')!;
+		expect(rule.style.left).toBe('150px');
+		expect(rule.style.height).toBe('180px');
+	});
 	it('renders one sheet per page sized from the page geometry', () => {
 		const handle = renderPrintLayout(sampleResult());
 		const pages = handle.element.querySelectorAll('.dve-print-page');

@@ -205,6 +205,7 @@ test('formats text and inserts a picture inside a header from the ribbon', async
 	const headerEditor = header.locator('.dve-header-footer-editor .ProseMirror');
 	await expect(headerEditor).toBeFocused();
 	await page.keyboard.press('Control+a');
+	await editor.getByRole('tab', { name: 'Home', exact: true }).click();
 	await editor.getByRole('button', { name: 'Bold', exact: true }).click();
 	await expect(headerEditor.locator('strong')).toHaveText('Company');
 	await page.keyboard.press('End');

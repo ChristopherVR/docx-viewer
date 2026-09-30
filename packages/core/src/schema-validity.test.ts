@@ -1,4 +1,4 @@
-import { eighthPoints, signedTwips, twips } from './units.js';
+import { eighthPoints, halfPoints, signedTwips, twips } from './units.js';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import {
@@ -55,12 +55,17 @@ function kitchenSink(): DocumentModel {
 					smallCaps: false,
 					vanish: false,
 					characterSpacingTwips: signedTwips(20),
+					textScalePercent: 125,
+					ligatures: 'standardContextual',
+					kerningHalfPoints: halfPoints(24),
+					positionHalfPoints: halfPoints(-6),
 					shadingFill: '#FFFF00',
 					underlineStyle: 'double',
 					underlineColor: '#00FF00',
 					doubleStrike: false,
 					style: 'Hyperlink',
 				},
+				{ text: 'baseline', verticalAlign: 'baseline' },
 				{ text: 'link', link: { anchor: '_Toc100000000' } },
 				{ text: '', break: 'page' },
 				{ text: '\tafter tab\n' },

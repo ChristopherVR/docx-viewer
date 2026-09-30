@@ -1,7 +1,7 @@
 import type { PageCursor } from './page-cursor.js';
 import { layoutRow, splitRowAtHeight, type RowLayout } from './table-layout.js';
 import type { TextMeasurer } from './measure.js';
-import type { LayoutTable } from './input.js';
+import type { LayoutTable, LayoutTableRow } from './input.js';
 import type { LayoutTableBox, LayoutTableRowBox } from './result.js';
 
 /**
@@ -18,18 +18,16 @@ export function placeTable(
 	note: (message: string) => void,
 ): void {
 	const headerRows = table.rows.filter((row) => row.isHeader);
-	const headerLayouts = headerRows.map((row) =>
-		layoutRow(row, cursor.columnWidthPx, measurer, note),
-	);
 
 	// Table indent, or alignment of the grid within the column.
-	const width = table.widthPx ?? cursor.columnWidthPx;
-	const xPx =
-		table.alignment === 'center'
+	const xPosition = () => {
+		const width = table.widthPx ?? cursor.columnWidthPx;
+		return table.alignment === 'center'
 			? Math.max(0, (cursor.columnWidthPx - width) / 2)
 			: table.alignment === 'right'
 				? Math.max(0, cursor.columnWidthPx - width)
 				: (table.indentPx ?? 0);
+	};
 	let fragmentRows: LayoutTableRowBox[] = [];
 	let fragmentHeight = 0;
 
@@ -50,7 +48,7 @@ export function placeTable(
 		const box: LayoutTableBox = {
 			kind: 'table',
 			blockId: table.id,
-			...(xPx ? { xPx } : {}),
+			...(xPosition() ? { xPx: xPosition() } : {}),
 			yPx: 0,
 			heightPx: fragmentHeight,
 			rows: fragmentRows,
@@ -62,10 +60,11 @@ export function placeTable(
 	function startNewFragment() {
 		flushFragment();
 		cursor.newColumn();
-		for (const header of headerLayouts) fragmentRows.push(toRowBox(header, true));
+		for (const header of headerRows)
+			fragmentRows.push(toRowBox(layoutRow(header, cursor.columnWidthPx, measurer, note), true));
 	}
 
-	function placeRow(initial: RowLayout, cantSplit: boolean) {
+	function placeRow(row: LayoutTableRow, initial: RowLayout, cantSplit: boolean) {
 		let remainingRow: RowLayout | null = initial;
 		while (remainingRow) {
 			const remaining = cursor.remainingHeightPx() - fragmentHeight;
@@ -75,7 +74,10 @@ export function placeTable(
 				continue;
 			}
 			if (cantSplit) {
-				if (fragmentRows.length) startNewFragment();
+				if (fragmentRows.length || !cursor.atColumnTop) {
+					startNewFragment();
+					remainingRow = layoutRow(row, cursor.columnWidthPx, measurer, note);
+				}
 				const freshRemaining = cursor.remainingHeightPx() - fragmentHeight;
 				if (remainingRow.heightPx > freshRemaining)
 					note('A table row marked "keep row together" is taller than an empty page/column.');
@@ -84,15 +86,25 @@ export function placeTable(
 				continue;
 			}
 			const { before, after } = splitRowAtHeight(remainingRow, Math.max(0, remaining));
+			const previousWidth = cursor.columnWidthPx;
 			if (before.cells.some((cell) => cell.length)) fragmentRows.push(toRowBox(before, false));
 			startNewFragment();
-			remainingRow = after;
+			remainingRow =
+				after && previousWidth !== cursor.columnWidthPx
+					? layoutRow(
+							{ ...row, heightPx: 0, heightRule: 'atLeast' },
+							cursor.columnWidthPx,
+							measurer,
+							note,
+							after.cells,
+						)
+					: after;
 		}
 	}
 
 	for (const row of table.rows) {
 		const layout = layoutRow(row, cursor.columnWidthPx, measurer, note);
-		placeRow(layout, Boolean(row.cantSplit) || row.isHeader === true);
+		placeRow(row, layout, Boolean(row.cantSplit) || row.isHeader === true);
 	}
 	flushFragment();
 }
