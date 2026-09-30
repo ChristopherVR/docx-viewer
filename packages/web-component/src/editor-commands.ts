@@ -1,3 +1,4 @@
+import { setDropCap } from './drop-cap-command';
 import type { Command } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { undo, redo } from 'prosemirror-history';
@@ -141,6 +142,7 @@ export function runRibbonCommand(
 	else if (action.type === 'borders') setBorders(view, action.preset);
 	else if (action.type === 'indent') setIndent(view, action.side, action.inches);
 	else if (action.type === 'insertSymbol') insertPlainText(view, action.value);
+	else if (action.type === 'dropCap') setDropCap(view, action.value);
 	else if (action.type === 'insertDateTime')
 		insertPlainText(
 			view,

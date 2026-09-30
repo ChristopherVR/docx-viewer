@@ -95,7 +95,10 @@ What each tab offers that Word also has:
   and Paragraph (alignment, indents, first-line/hanging, spacing, line rule and amount, contextual
   spacing, widow/orphan, keep with next, keep lines, page break before). Both apply only the
   fields you changed and show mixed selections as blank or indeterminate.
-- **Insert:** Table (a size grid with keyboard control and typed rows and columns), Cover Page (one
+- **Insert:** Drop Cap (Dropped or In margin, three lines: the first letter moves into its own
+  `w:framePr` paragraph as in Word; the editing surface floats it, while Print Layout folds it into the
+  next paragraph as a raised initial with a warning; no Drop Cap Options dialog for font, lines or
+  distance), Table (a size grid with keyboard control and typed rows and columns), Cover Page (one
   plain design), Pictures, Format picture, Link, Bookmark (add, move, delete, go to, Word's naming
   rule), Blank page, page and column breaks, Header,
   Footer and Page Number (creates the part, relationship, content type and `sectPr` reference on
@@ -174,7 +177,7 @@ Still not at parity:
 - **Home:** Text Effects, Multilevel List. Text Highlight keeps the 17-colour list (Word's is a short
   list too). Line Spacing offers presets; the Paragraph dialog has the rest.
 - **Insert:** Cover Page galleries (one plain design exists), Shapes, Icons, 3D Models, SmartArt,
-  Charts, Screenshot, Text Box, WordArt, Drop Cap, Equation, Signature Line, Object.
+  Charts, Screenshot, Text Box, WordArt, Equation, Signature Line, Object.
 - **Layout and References:** Line Numbers, Manual Hyphenation and its options, Watermark, Page Borders, Position
   and Wrap Text, Citations, Bibliography, Table of Figures, Index and Table of Authorities, and
   automatic updating of `REF`, `PAGEREF` and `SEQ` results (they are computed when inserted; captions

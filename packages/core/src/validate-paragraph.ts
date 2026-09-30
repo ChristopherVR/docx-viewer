@@ -97,6 +97,21 @@ function validateTabStop(c: Checker, stop: TabStop): void {
 }
 
 export function validateParagraph(c: Checker, paragraph: Paragraph): void {
+	if (paragraph.dropCap) {
+		const at = c.at('.dropCap');
+		at.check(
+			'style',
+			paragraph.dropCap.style,
+			(v) => v === 'drop' || v === 'margin',
+			'must be "drop" or "margin"',
+		);
+		at.check(
+			'lines',
+			paragraph.dropCap.lines,
+			(v) => Number.isInteger(v) && (v as number) >= 1 && (v as number) <= 10,
+			'must be a whole number of lines from 1 to 10 (ST_DropCap frame height)',
+		);
+	}
 	c.check(
 		'align',
 		paragraph.align,

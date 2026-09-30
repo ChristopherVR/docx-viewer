@@ -124,6 +124,17 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 		group(
 			'Text',
 			menuSelect(
+				'Drop cap',
+				'dropCap',
+				[
+					['none', 'None'],
+					['drop', 'Dropped'],
+					['margin', 'In margin'],
+				],
+				(value) => ({ type: 'dropCap', value: value as 'none' }),
+				{ momentary: true },
+			),
+			menuSelect(
 				'Date and time',
 				'dateTime',
 				[

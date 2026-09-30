@@ -82,6 +82,7 @@ export type RibbonAction =
 	| { type: 'wordCount' }
 	| { type: 'spelling' }
 	| { type: 'insertSymbol'; value: string }
+	| { type: 'dropCap'; value: 'none' | 'drop' | 'margin' }
 	| { type: 'insertDateTime'; value: 'long' | 'short' | 'time' | 'datetime' }
 	| { type: 'showMarks' }
 	| { type: 'selectAll' }

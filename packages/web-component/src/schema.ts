@@ -14,6 +14,21 @@ const safeCssValue = (value: unknown): string => String(value ?? '').replace(/[;
 const twipsCss = (value: unknown): string | null =>
 	Number.isSafeInteger(value) ? `${Number(value) / 15}px` : null;
 
+/** A drop cap frame floats left so the next paragraph wraps around it; a margin cap hangs into the margin. */
+function dropCapCss(value: unknown): string[] {
+	const cap = value as { style?: string; lines?: number } | null;
+	if (!cap || (cap.style !== 'drop' && cap.style !== 'margin')) return [];
+	const lines = Number.isInteger(cap.lines) ? Number(cap.lines) : 3;
+	return [
+		'float:left',
+		'text-indent:0',
+		'margin-top:0',
+		'margin-bottom:0',
+		`margin-right:${cap.style === 'margin' ? 0.2 : 4}${cap.style === 'margin' ? 'em' : 'px'}`,
+		...(cap.style === 'margin' ? [`margin-left:-${Math.round(lines * 12) / 10}em`] : []),
+	];
+}
+
 export function paragraphStyle(attrs: Record<string, unknown>): string {
 	const declarations = [
 		attrs.align
@@ -45,6 +60,7 @@ export function paragraphStyle(attrs: Record<string, unknown>): string {
 						: `${Number(attrs.lineSpacingTwips) / 15}px`
 			}`,
 		...paragraphBoxCss(attrs.borders, attrs.shadingFill),
+		...dropCapCss(attrs.dropCap),
 	].filter(Boolean);
 	return declarations.join(';');
 }
@@ -103,6 +119,8 @@ export const schema = new Schema({
 				keepLines: { default: null },
 				widowControl: { default: null },
 				contextualSpacing: { default: null },
+				/** `w:framePr` drop cap: `{ style, lines }` on the frame paragraph holding the initial. */
+				dropCap: { default: null },
 				/** `w:pBdr` (object) and shading fill; read-only, drawn around the paragraph. */
 				borders: { default: null },
 				shadingFill: { default: null },

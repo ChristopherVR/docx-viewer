@@ -21,6 +21,7 @@ import {
 import { floatsOf } from './adapt-floats.js';
 import { definedProps } from './defined-props.js';
 import { adaptTable } from './adapt-table.js';
+import { foldDropCaps } from './adapt-drop-cap.js';
 import { groupParagraphBorders, paragraphBox } from './adapt-paragraph-box.js';
 import { endnoteParagraphs, noteLabels, paragraphFootnotes } from './adapt-notes.js';
 import type {
@@ -37,6 +38,8 @@ const TABLE_ROW_NOTE =
 	'Table rows with an exact height clip content that does not fit; text in them is not shrunk.';
 const VERTICAL_MERGE_NOTE =
 	'Vertically merged table cells are drawn as one cell, but their text stays in the first row of the merge.';
+const DROP_CAP_NOTE =
+	'Drop caps are laid out as an enlarged first letter (a raised cap), not as a dropped cap.';
 const NEXT_COLUMN_NOTE = 'A "next column" section break is laid out as a continuous section break.';
 
 const twipsToPx = twipsToPixels;
@@ -223,6 +226,8 @@ export function adaptDocumentModel(
 		...endnoteParagraphs(model, noteLabel, adaptParagraph),
 	];
 	groupParagraphBorders(blocks, betweenBorders);
+	const folded = foldDropCaps(model.blocks, blocks);
+	if (folded.size) reportOnce(DROP_CAP_NOTE);
 	const sections = model.sections;
 	if (!sections || !sections.length) {
 		return {
@@ -236,7 +241,7 @@ export function adaptDocumentModel(
 						marginBottomPx: model.page.marginBottom,
 						marginLeftPx: model.page.marginLeft,
 					},
-					blocks,
+					blocks: blocks.filter((block) => !folded.has(block)),
 				},
 			],
 		};
@@ -269,7 +274,7 @@ export function adaptDocumentModel(
 				: {}),
 			...(sectionStart && { break: sectionStart }),
 			...(section.verticalAlign ? { verticalAlign: section.verticalAlign } : {}),
-			blocks: slice,
+			blocks: slice.filter((block) => !folded.has(block)),
 		};
 	});
 	return { sections: result };

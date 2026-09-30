@@ -84,6 +84,7 @@ const paths = {
 	wordCount: 'M4 5h16v14H4z M8 15V9l2 4 2-4v6 M16 9v6',
 	spelling: 'M4 15l4-10 4 10 M5.5 12h5 M14 17l2.5 2.5L21 13',
 	symbol: 'M5 19h4v-2a6 6 0 1 1 6 0v2h4',
+	dropCap: 'M4 4h8v8H4z M6.5 10l1.5-4 1.5 4 M14 5h6 M14 8h6 M14 11h6 M4 15h16 M4 18h16 M4 21h11',
 	dateTime: 'M4 5h16v15H4z M4 10h16 M8 3v4 M16 3v4 M12 13v3l2 1',
 	zoom100: 'M10 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12z M14.5 14.5 20 20 M8.5 8.5l1.5-1v5',
 	pageWidth: 'M3 6v12 M21 6v12 M7 12h10 M9 10l-2 2 2 2 M15 10l2 2-2 2',

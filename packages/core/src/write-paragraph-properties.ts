@@ -119,6 +119,31 @@ function updateKeepOptions(
 	}
 }
 
+/** `w:framePr` for a drop cap; other frame attributes of a loaded frame are kept as they are. */
+function updateDropCap(
+	doc: XmlDocument,
+	props: XmlElement,
+	paragraph: Paragraph,
+	base?: Paragraph,
+): void {
+	if (base && JSON.stringify(paragraph.dropCap) === JSON.stringify(base.dropCap)) return;
+	let frame = first(props, 'framePr');
+	const cap = paragraph.dropCap;
+	if (!cap) {
+		if (frame) props.removeChild(frame);
+		return;
+	}
+	if (!frame) {
+		frame = makeW(doc, 'framePr');
+		props.appendChild(frame);
+		setAttribute(frame, 'wrap', 'around');
+		setAttribute(frame, 'vAnchor', 'text');
+		setAttribute(frame, 'hAnchor', 'text');
+	}
+	setAttribute(frame, 'dropCap', cap.style);
+	setAttribute(frame, 'lines', String(cap.lines));
+}
+
 export function writeParagraphProperties(
 	doc: XmlDocument,
 	props: XmlElement,
@@ -127,6 +152,7 @@ export function writeParagraphProperties(
 ): void {
 	updatePageBreakBefore(doc, props, paragraph, base);
 	updateKeepOptions(doc, props, paragraph, base);
+	updateDropCap(doc, props, paragraph, base);
 	updateDirection(doc, props, paragraph, base);
 	writeParagraphDecoration(doc, props, paragraph, base);
 	const spacingKeys = [

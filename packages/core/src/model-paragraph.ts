@@ -54,6 +54,11 @@ export interface Paragraph {
 	widowControl?: boolean;
 	/** `w:contextualSpacing`: no spacing between paragraphs of the same style. */
 	contextualSpacing?: boolean;
+	/**
+	 * `w:framePr/@w:dropCap`: this paragraph is a drop cap frame (the initial letter) for the
+	 * paragraph that follows. `lines` is the number of text lines it spans.
+	 */
+	dropCap?: { style: 'drop' | 'margin'; lines: number };
 	/** `w:pBdr`; read-only (preserved in the source XML, not written for new paragraphs). */
 	borders?: import('./table-model.js').ParagraphBorders;
 	/** `w:shd/@w:fill` as `#rrggbb`; read-only like `borders`. */

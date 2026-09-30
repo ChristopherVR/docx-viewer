@@ -180,6 +180,15 @@ function parseParagraph(node: XmlElement, id: string): Paragraph {
 		const value = onOffElement(first(props, key));
 		if (value !== undefined) paragraph[key] = value;
 	}
+	const frame = first(props, 'framePr');
+	const dropCap = getW(frame, 'dropCap');
+	if (dropCap === 'drop' || dropCap === 'margin') {
+		const lines = Number(getW(frame, 'lines') ?? 3);
+		paragraph.dropCap = {
+			style: dropCap,
+			lines: Number.isInteger(lines) && lines >= 1 && lines <= 10 ? lines : 3,
+		};
+	}
 	const borders = parseParagraphBorders(first(props, 'pBdr'));
 	if (borders) paragraph.borders = borders;
 	const shading = parseShadingFill(first(props, 'shd'));
