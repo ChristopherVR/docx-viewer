@@ -4,7 +4,14 @@ import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { describe, expect, it } from 'vitest';
 import { createRibbon } from './ribbon';
-import { createRuler, inchLabels, markerPositions, updateRuler, type RulerGeometry } from './ruler';
+import {
+	createRuler,
+	inchLabels,
+	markerChange,
+	markerPositions,
+	updateRuler,
+	type RulerGeometry,
+} from './ruler';
 import { rulerGeometry, syncRuler } from './ruler-sync';
 import { schema } from './schema';
 
@@ -96,5 +103,43 @@ describe('ruler sync', () => {
 		ribbon.addEventListener('ribbon-action', (event) => seen.push((event as CustomEvent).detail));
 		ribbon.querySelector<HTMLButtonElement>('button[aria-label="Ruler"]')!.click();
 		expect(seen).toEqual([{ type: 'ruler' }]);
+	});
+});
+
+describe('ruler dragging', () => {
+	it('turns a dragged marker into indent changes snapped to sixteenths of an inch', () => {
+		expect(markerChange('left', 96 + 48, geometry())).toEqual({ leftInches: 0.5 });
+		expect(markerChange('left', 10, geometry())).toEqual({ leftInches: 0 });
+		expect(markerChange('right', 720 - 97, geometry())).toEqual({ rightInches: 1.0 });
+		expect(markerChange('right', 900, geometry())).toEqual({ rightInches: 0 });
+		expect(markerChange('first-line', 96 + 24, geometry())).toEqual({
+			special: 'firstLine',
+			specialInches: 0.25,
+		});
+		expect(markerChange('first-line', 96 - 24, geometry({ indentLeft: 48 }))).toEqual({
+			special: 'hanging',
+			specialInches: 0.75,
+		});
+		expect(markerChange('first-line', 96, geometry())).toEqual({
+			special: 'none',
+			specialInches: 0,
+		});
+	});
+
+	it('previews while dragging and reports one change on release', () => {
+		const changes: unknown[] = [];
+		const ruler = createRuler((change) => changes.push(change));
+		document.body.append(ruler);
+		updateRuler(ruler, geometry(), 1);
+		const marker = ruler.querySelector<HTMLElement>('.dve-ruler-marker-left')!;
+		const fire = (type: string, clientX: number) =>
+			marker.dispatchEvent(new MouseEvent(type, { clientX, bubbles: true, button: 0 }));
+		fire('pointerdown', 96);
+		fire('pointermove', 144);
+		expect(marker.style.left).toBe('144px');
+		expect(changes).toEqual([]);
+		fire('pointerup', 144);
+		expect(changes).toEqual([{ leftInches: 0.5 }]);
+		ruler.remove();
 	});
 });

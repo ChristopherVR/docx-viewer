@@ -1,3 +1,5 @@
+import type { ParagraphFormat } from './paragraph-format';
+
 /** Everything the ruler draws, in CSS pixels at 100% zoom (96 per inch). */
 export interface RulerGeometry {
 	pageWidth: number;
@@ -35,12 +37,97 @@ export function inchLabels(geometry: RulerGeometry): Array<{ at: number; text: s
 	return labels;
 }
 
+export type RulerMarker = 'first-line' | 'left' | 'right';
+
+/** The paragraph fields a marker dragged to `x` (px from the page's left edge) changes. */
+export function markerChange(
+	marker: RulerMarker,
+	x: number,
+	geometry: RulerGeometry,
+): Partial<Pick<ParagraphFormat, 'leftInches' | 'rightInches' | 'special' | 'specialInches'>> {
+	const snap = (px: number) => Math.round(px / SNAP_PX) * SNAP_PX;
+	const inches = (px: number) => Math.round((px / PX_PER_INCH) * 1000) / 1000;
+	const positions = markerPositions(geometry);
+	if (marker === 'right') {
+		const edge = geometry.pageWidth - geometry.marginRight;
+		const indent = Math.min(Math.max(snap(edge - x), 0), edge - positions.left - SNAP_PX);
+		return { rightInches: inches(indent) };
+	}
+	if (marker === 'left') {
+		// Like Word's left-indent marker, the first-line offset travels with it.
+		const limit = geometry.pageWidth - geometry.marginRight - geometry.indentRight - SNAP_PX;
+		const indent = Math.min(
+			Math.max(snap(x - geometry.marginLeft), 0),
+			limit - geometry.marginLeft,
+		);
+		return { leftInches: inches(indent) };
+	}
+	const offset = snap(x - positions.left);
+	const first = Math.max(offset, -positions.left);
+	return {
+		special: first > 0 ? 'firstLine' : first < 0 ? 'hanging' : 'none',
+		specialInches: inches(Math.abs(first)),
+	};
+}
+
+const SNAP_PX = PX_PER_INCH / 16;
+const geometries = new WeakMap<HTMLElement, RulerGeometry>();
+
+/** Lets the three markers be dragged; `onChange` gets the result once, when the pointer is released. */
+function enableDragging(
+	ruler: HTMLElement,
+	onChange: (change: ReturnType<typeof markerChange>) => void,
+): void {
+	for (const name of ['first-line', 'left', 'right'] as const) {
+		const marker = ruler.querySelector<HTMLElement>(`.dve-ruler-marker-${name}`)!;
+		marker.addEventListener('pointerdown', (event) => {
+			const geometry = geometries.get(ruler);
+			if (!geometry || event.button !== 0) return;
+			event.preventDefault();
+			marker.setPointerCapture?.(event.pointerId);
+			const zoom = Number(ruler.style.getPropertyValue('--dve-zoom')) || 1;
+			const at = (e: PointerEvent) => (e.clientX - ruler.getBoundingClientRect().left) / zoom;
+			const move = (e: PointerEvent) => {
+				const preview = markerChange(name, at(e), geometry);
+				const shifted = { ...geometry };
+				if (preview.leftInches !== undefined) shifted.indentLeft = preview.leftInches * PX_PER_INCH;
+				if (preview.rightInches !== undefined)
+					shifted.indentRight = preview.rightInches * PX_PER_INCH;
+				if (preview.special)
+					shifted.firstLine =
+						(preview.special === 'hanging' ? -1 : 1) * (preview.specialInches ?? 0) * PX_PER_INCH;
+				paintMarkers(ruler, shifted);
+			};
+			const finish = (e: PointerEvent) => {
+				marker.removeEventListener('pointermove', move);
+				marker.removeEventListener('pointerup', finish);
+				marker.removeEventListener('pointercancel', finish);
+				onChange(e.type === 'pointerup' ? markerChange(name, at(e), geometry) : {});
+			};
+			marker.addEventListener('pointermove', move);
+			marker.addEventListener('pointerup', finish);
+			marker.addEventListener('pointercancel', finish);
+		});
+	}
+}
+
+function paintMarkers(ruler: HTMLElement, geometry: RulerGeometry): void {
+	const positions = markerPositions(geometry);
+	const at = (name: string) => ruler.querySelector<HTMLElement>(`.dve-ruler-marker-${name}`)!;
+	at('first-line').style.left = `${positions.firstLine}px`;
+	at('left').style.left = `${positions.left}px`;
+	at('right').style.left = `${positions.right}px`;
+}
+
 /**
  * Word's horizontal ruler above the page: inch ticks counted from the left margin, the margins
- * shaded, and markers for the current paragraph's first-line, left and right indents. This ruler
- * displays them; dragging a marker is not supported (use Layout > Indent or the Paragraph dialog).
+ * shaded, and draggable markers for the current paragraph's first-line, left and right indents.
+ * Dragging snaps to sixteenths of an inch and applies as one undoable step on release. Margin
+ * edges and tab stops are not draggable.
  */
-export function createRuler(): HTMLElement {
+export function createRuler(
+	onChange?: (change: ReturnType<typeof markerChange>) => void,
+): HTMLElement {
 	const ruler = document.createElement('div');
 	ruler.className = 'dve-ruler';
 	ruler.setAttribute('role', 'img');
@@ -55,6 +142,7 @@ export function createRuler(): HTMLElement {
 		marker.className = `dve-ruler-marker dve-ruler-marker-${name}`;
 		ruler.append(marker);
 	}
+	if (onChange) enableDragging(ruler, onChange);
 	return ruler;
 }
 
@@ -68,10 +156,8 @@ export function updateRuler(ruler: HTMLElement, geometry: RulerGeometry, zoom: n
 	left.style.width = `${geometry.marginLeft}px`;
 	const right = part('margin-right');
 	right.style.width = `${geometry.marginRight}px`;
-	const positions = markerPositions(geometry);
-	part('marker-first-line').style.left = `${positions.firstLine}px`;
-	part('marker-left').style.left = `${positions.left}px`;
-	part('marker-right').style.left = `${positions.right}px`;
+	geometries.set(ruler, geometry);
+	paintMarkers(ruler, geometry);
 	const labels = part('labels');
 	const wanted = inchLabels(geometry);
 	if (labels.dataset.key !== JSON.stringify(wanted)) {

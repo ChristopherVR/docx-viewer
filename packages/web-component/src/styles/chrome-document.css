@@ -254,12 +254,21 @@
 	transform: translateX(-50%);
 }
 .dve-ruler-marker {
+	pointer-events: auto;
+	cursor: ew-resize;
+	touch-action: none;
 	position: absolute;
 	width: 0;
 	height: 0;
 	margin-left: -4px;
 	border-right: 4px solid transparent;
 	border-left: 4px solid transparent;
+}
+.dve-ruler-marker::after {
+	content: '';
+	position: absolute;
+	inset: -6px -6px -6px -6px;
+	margin-left: -4px;
 }
 .dve-ruler-marker-first-line {
 	top: 1px;

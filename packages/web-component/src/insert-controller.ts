@@ -1,3 +1,4 @@
+import { applyParagraphFormat } from './paragraph-format';
 import { createRuler } from './ruler';
 import { syncRuler } from './ruler-sync';
 import { keymap } from 'prosemirror-keymap';
@@ -160,7 +161,11 @@ export class InsertController {
 	private syncRulerElement(paper: HTMLElement): void {
 		const canvas = paper.parentElement;
 		const existing = canvas?.querySelector('.dve-ruler');
-		if (this.showRuler && canvas && !existing) canvas.insertBefore(createRuler(), paper);
+		if (this.showRuler && canvas && !existing)
+			canvas.insertBefore(
+				createRuler((change) => this.applyRulerChange(change)),
+				paper,
+			);
 		else if (!this.showRuler) existing?.remove();
 		const frame = this.host.toolbar()?.parentElement;
 		const button = frame?.querySelector('[aria-label="Ruler"], [data-localearialabel="Ruler"]');
@@ -168,6 +173,16 @@ export class InsertController {
 		const view = this.host.view();
 		const toolbar = this.host.toolbar();
 		if (this.showRuler && view && toolbar) syncRuler(toolbar, view, this.host.model());
+	}
+
+	private applyRulerChange(
+		change: Parameters<NonNullable<Parameters<typeof createRuler>[0]>>[0],
+	): void {
+		const view = this.host.view();
+		const toolbar = this.host.toolbar();
+		if (view && Object.keys(change).length) applyParagraphFormat(view, change);
+		if (view && toolbar) syncRuler(toolbar, view, this.host.model());
+		focusView(view);
 	}
 
 	private setShowHidden(show: boolean): void {

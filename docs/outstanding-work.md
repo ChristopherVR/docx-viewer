@@ -118,7 +118,7 @@ What each tab offers that Word also has:
   tracked-change commands, comments (New, Delete, Previous, Next, Show), and the language and
   direction controls.
 - **View:** Ruler (inch ticks from the left margin, shaded margins and the current paragraph's
-  indent markers; it displays them and does not yet let you drag a marker), Hidden text, Gridlines,
+  indent markers; drag a marker to change the paragraph's indents, snapped to sixteenths of an inch and undone as one step; margin edges and tab stops are not draggable), Hidden text, Gridlines,
   thumbnails, Zoom, Zoom to 100%, One page, Page width and Print Layout.
 - **Table (contextual):** appears only while the selection is in a table, as in Word.
 - **Ribbon:** collapse (button, double-click a tab, or Ctrl+F1) with click-to-peek, and tab KeyTips
@@ -180,7 +180,7 @@ Still not at parity:
   automatic updating of `REF`, `PAGEREF` and `SEQ` results (they are computed when inserted; captions
   renumber immediately, cross-references do not).
 - **Review and View:** Editor pane, Thesaurus, Translate, Accessibility, Compare, Protect, Ink;
-  a draggable Ruler, Navigation Pane headings, Read Mode, Web and Outline views, New Window,
+  Navigation Pane headings, Read Mode, Web and Outline views, New Window,
   Split and Macros.
 - **Dropdown galleries:** Margins, Size, Orientation, Vertical alignment, Columns, Borders and Line
   spacing are galleries with thumbnails (Line spacing ends with Line Spacing Options, which opens the
