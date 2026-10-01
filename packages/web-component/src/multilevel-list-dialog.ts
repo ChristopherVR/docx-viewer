@@ -81,7 +81,7 @@ export function createMultilevelListDialog(
 	preview.setAttribute('role', 'group');
 	preview.setAttribute('aria-label', 'List preview');
 	preview.style.cssText =
-		'max-height:90px;overflow:auto;padding:8px;border:1px solid var(--dve-border,#ccc)';
+		'max-height:84px;overflow:auto;padding:8px;border:1px solid var(--dve-border,#ccc)';
 	const message = document.createElement('p');
 	message.setAttribute('role', 'alert');
 	const ok = dialogButton('OK', true),
@@ -99,7 +99,12 @@ export function createMultilevelListDialog(
 			row(labelled('Number style for this level', style), labelled('Start at', start)),
 			labelled('Enter formatting for number', pattern),
 			hint,
-			row(labelled('Restart list after', restart), legal.wrapper),
+			row(
+				labelled('Restart list after', restart),
+				legal.wrapper,
+				markerBold.wrapper,
+				markerItalic.wrapper,
+			),
 		),
 		fieldset(
 			'Position',
@@ -108,16 +113,12 @@ export function createMultilevelListDialog(
 				labelled('Aligned at (inches)', aligned),
 				labelled('Text indent at (inches)', indent),
 			),
-			labelled('Follow number with', suffix),
-		),
-		fieldset(
-			'Number font',
 			row(
+				labelled('Follow number with', suffix),
 				labelled('Font', markerFont),
 				labelled('Size (pt)', markerSize),
 				labelled('Color (#rrggbb, blank for automatic)', markerColor),
 			),
-			row(markerBold.wrapper, markerItalic.wrapper),
 		),
 		message,
 		actions,
