@@ -127,7 +127,7 @@ What each tab offers that Word also has:
   one is added, and the Caption style is used when the document has one), Cross-reference (`REF` or
   `PAGEREF` fields to headings, bookmarks and captions; hidden `_Ref` bookmarks are added as
   needed), Table of Figures (`TOC \h \z \c "Figure"` for Figure, Table or Equation captions: entries are the captions with Print Layout page numbers and links to `_Toc` bookmarks, rebuilt by Update Table of Figures; custom `\t` style mappings and `\a` are not collected), Update Fields (renumbers every `SEQ` caption, then refreshes `REF` and `PAGEREF`
-  results from their bookmarks and Print Layout pages in one undo step; fields with other
+  results from their bookmarks and Print Layout pages, then rebuilds the table of contents and any tables of figures; the field changes are one undo step, each table rebuild is its own; fields with other
   switches such as `\n`, `\r`, `\w` or `\p`, and fields whose bookmark is missing, are left
   as they are; it is a command, not automatic on edit), Footnote and Endnote.
 - **Review:** Spelling (toggles the browser's spell checker; no bundled dictionary or grammar

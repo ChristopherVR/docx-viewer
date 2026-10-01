@@ -102,8 +102,12 @@ export class InsertController {
 					if (!removeTableOfContents(view, this.host.model()))
 						this.host.reportError(new Error('This document has no table of contents to remove.'));
 				} else if (action.key === 'fields') {
-					if (!updateFields(view, (id) => blockPageNumbers(this.host.model()).get(id)))
-						this.host.reportError(new Error('No fields needed updating.'));
+					// Word's Update Field refreshes everything: captions and references first, then
+					// the tables built from them (headings, then each figure label).
+					let changed = updateFields(view, (id) => blockPageNumbers(this.host.model()).get(id));
+					for (const label of [undefined, 'Figure', 'Table', 'Equation'])
+						changed = updateTableOfContents(view, this.host.model(), undefined, label) || changed;
+					if (!changed) this.host.reportError(new Error('No fields needed updating.'));
 				} else if (!updateTableOfContents(view, this.host.model()))
 					this.host.reportError(new Error('This document has no table of contents to update.'));
 			} catch (error) {
