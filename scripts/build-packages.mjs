@@ -3,125 +3,172 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { build } from 'vite';
-import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { rollup } from 'rollup';
+import { dts } from 'rollup-plugin-dts';
 
+/**
+ * Builds the published packages: `core` (a thin entry over @christophervr/ooxml-core/docx) and
+ * one self-contained package per framework. Every internal workspace package (document, layout,
+ * legacy, web-component, bindings) is `private` and is inlined into each framework bundle, along
+ * with the shared @christophervr/ole2 legacy codecs, so a tarball only imports `docx-core`, the
+ * prosemirror libraries and its framework peers. Declarations are flattened the same way.
+ */
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const packages = ['core', 'legacy', 'document', 'layout', 'web-component', 'bindings', 'viewer'];
-const run = (command, args, options = {}) => {
-	const result = spawnSync(command, args, { cwd: root, stdio: 'inherit', ...options });
-	if (result.status !== 0)
-		throw new Error(
-			`${command} ${args.join(' ')} failed${result.error ? `: ${result.error.message}` : ''}`,
-		);
+const packagesDir = path.join(root, 'packages');
+const typesDir = path.join(root, '.release-types');
+
+/** Published packages and the source entry behind each emitted `dist/<name>.js`. */
+export const PUBLISHED = {
+	core: { index: 'src/index.ts', embedded: 'src/embedded.ts' },
+	react: { index: 'src/index.ts' },
+	vue: { index: 'src/index.ts' },
+	angular: { index: 'src/index.ts' },
+	solid: { index: 'src/index.ts' },
+	vanilla: { index: 'src/index.ts' },
+	svelte: { runtime: 'src/runtime.ts' },
 };
 
-await rm(path.join(root, '.release-types'), { recursive: true, force: true });
-run(process.execPath, [
-	path.join(root, 'node_modules/typescript/bin/tsc'),
-	'--project',
-	'tsconfig.release.json',
+/** Private workspace packages that get inlined, by import specifier -> source file. */
+const BINDING_ENTRIES = {
+	react: 'react.tsx',
+	vue: 'vue.ts',
+	angular: 'angular.ts',
+	solid: 'solid.ts',
+	common: 'common.ts',
+};
+export const INTERNAL_SOURCES = new Map([
+	['@christophervr/docx-document', 'packages/document/src/index.ts'],
+	['@christophervr/docx-layout', 'packages/layout/src/index.ts'],
+	['@christophervr/docx-legacy', 'packages/legacy/src/index.ts'],
+	['@christophervr/docx-web-component', 'packages/web-component/src/index.ts'],
+	['@christophervr/docx-bindings', 'packages/bindings/src/index.ts'],
+	...Object.entries(BINDING_ENTRIES).map(([name, file]) => [
+		`@christophervr/docx-bindings/${name}`,
+		`packages/bindings/src/${file}`,
+	]),
 ]);
 
-for (const name of packages) {
-	const packageDir = path.join(root, 'packages', name);
-	const distDir = path.join(packageDir, 'dist');
-	await rm(distDir, { recursive: true, force: true });
-	await mkdir(distDir, { recursive: true });
-	const declRoot = path.join(root, '.release-types', 'packages', name, 'src');
-	try {
-		for (const entry of await readdir(declRoot, { withFileTypes: true })) {
-			if (entry.isFile() && entry.name.endsWith('.d.ts') && !entry.name.includes('.test.')) {
-				await cp(path.join(declRoot, entry.name), path.join(distDir, entry.name));
-			}
-		}
-	} catch {
-		throw new Error(`No emitted declarations found for packages/${name}/src`);
-	}
-	const manifest = JSON.parse(await readFile(path.join(packageDir, 'package.json'), 'utf8'));
-	const inputs =
-		name === 'bindings'
-			? {
-					index: 'src/index.ts',
-					react: 'src/react.tsx',
-					vue: 'src/vue.ts',
-					angular: 'src/angular.ts',
-					solid: 'src/solid.ts',
-				}
-			: name === 'viewer'
-				? Object.fromEntries(
-						[
-							'index',
-							'core',
-							'document',
-							'legacy',
-							'web-component',
-							'vanilla',
-							'react',
-							'vue',
-							'angular',
-							'svelte',
-							'solid',
-						].map((entry) => [entry, `src/${entry}.ts`]),
-					)
-				: { index: 'src/index.ts', ...(name === 'core' ? { embedded: 'src/embedded.ts' } : {}) };
+const run = (command, args) => {
+	const result = spawnSync(command, args, { cwd: root, stdio: 'inherit' });
+	if (result.status !== 0) throw new Error(`${command} ${args.join(' ')} failed`);
+};
+const readManifest = async (name) =>
+	JSON.parse(await readFile(path.join(packagesDir, name, 'package.json'), 'utf8'));
+const isDependency = (names) => (id) =>
+	names.some((name) => id === name || id.startsWith(`${name}/`));
+const dependencyNames = (manifest) => [
+	...Object.keys(manifest.dependencies ?? {}),
+	...Object.keys(manifest.peerDependencies ?? {}),
+];
+
+async function buildJavaScript(name, manifest, distDir) {
 	await build({
 		configFile: false,
-		root: packageDir,
-		plugins: name === 'bindings' || name === 'web-component' ? [svelte()] : [],
+		root: path.join(packagesDir, name),
+		logLevel: 'warn',
+		resolve: {
+			alias: [...INTERNAL_SOURCES].map(([find, file]) => ({
+				find: new RegExp(`^${find}$`),
+				replacement: path.join(root, file),
+			})),
+		},
 		build: {
 			target: 'es2022',
 			outDir: distDir,
 			emptyOutDir: false,
 			lib: {
 				entry: Object.fromEntries(
-					Object.entries(inputs).map(([key, value]) => [key, path.join(packageDir, value)]),
+					Object.entries(PUBLISHED[name]).map(([key, file]) => [
+						key,
+						path.join(packagesDir, name, file),
+					]),
 				),
 				formats: ['es'],
 				fileName: (_format, entryName) => `${entryName}.js`,
 			},
-			rollupOptions: {
-				external: [
-					...Object.keys(manifest.dependencies ?? {}),
-					...Object.keys(manifest.peerDependencies ?? {}),
-					/^@christophervr\//,
-				],
-			},
+			rollupOptions: { external: isDependency(dependencyNames(manifest)) },
 		},
 	});
-	if (name === 'bindings') {
-		await writeFile(
-			path.join(distDir, 'svelte.d.ts'),
-			[
-				"import type { Component } from 'svelte';",
-				"import type { EditorEventHandlers, EditorProps } from './index';",
-				"type Props = EditorProps & { ondocumentchange?: EditorEventHandlers['document-change']; ondocumenterror?: EditorEventHandlers['document-error']; onpagechange?: EditorEventHandlers['page-change']; ondirtychange?: EditorEventHandlers['dirty-change'] };",
-				'type Exports = { load(input: Uint8Array | ArrayBuffer): Promise<void>; save(): Promise<Blob>; download(fileName?: string): Promise<void>; markClean(): void; isDirty(): boolean };',
-				'declare const WordEditor: Component<Props, Exports>;',
-				'export default WordEditor;',
-				'',
-			].join('\n'),
-		);
+}
+
+/** Inlines internal declarations into one flat `.d.ts` per entry; dependencies stay imports. */
+async function bundleDeclarations(name, manifest, distDir) {
+	const internal = new Map(
+		[...INTERNAL_SOURCES].map(([id, file]) => [
+			id,
+			path.join(typesDir, file.replace(/\.tsx?$/, '.d.ts')),
+		]),
+	);
+	const isExternal = isDependency(dependencyNames(manifest));
+	for (const key of Object.keys(PUBLISHED[name])) {
+		const bundle = await rollup({
+			input: path.join(typesDir, 'packages', name, 'src', `${key}.d.ts`),
+			external: (id) =>
+				!internal.has(id) && !id.startsWith('.') && !path.isAbsolute(id) && isExternal(id),
+			onwarn: (warning, warn) => {
+				if (warning.code !== 'UNUSED_EXTERNAL_IMPORT') warn(warning);
+			},
+			plugins: [
+				{ name: 'internal-declarations', resolveId: (id) => internal.get(id) ?? null },
+				dts(),
+			],
+		});
+		await bundle.write({ file: path.join(distDir, `${key}.d.ts`), format: 'es' });
+		await bundle.close();
 	}
 }
-const viewerDist = path.join(root, 'packages/viewer/dist');
-// The component imports binding helpers from './index'; in the viewer package that path is the
-// viewer's own entry, which does not re-export them, so point it at the bindings package instead.
-const svelteSource = await readFile(
-	path.join(root, 'packages/bindings/src/WordEditor.svelte'),
-	'utf8',
-);
-const viewerSvelte = svelteSource.replace(
-	/from '\.\/index'/g,
-	"from '@christophervr/docx-bindings'",
-);
-if (viewerSvelte === svelteSource)
-	throw new Error(
-		"WordEditor.svelte no longer imports from './index'; update the viewer copy step",
+
+/** Svelte ships the component source; its helper import is repointed at the bundled runtime. */
+async function writeSvelteComponent(distDir) {
+	const source = await readFile(path.join(packagesDir, 'bindings/src/WordEditor.svelte'), 'utf8');
+	const component = source.replace(/from '\.\/index'/g, "from './runtime.js'");
+	if (component === source)
+		throw new Error("WordEditor.svelte no longer imports from './index'; update this step");
+	await writeFile(path.join(distDir, 'WordEditor.svelte'), component);
+	await writeFile(
+		path.join(distDir, 'index.d.ts'),
+		[
+			"import type { Component } from 'svelte';",
+			"import type { EditorEventHandlers, EditorProps } from './runtime';",
+			"type Props = EditorProps & { ondocumentchange?: EditorEventHandlers['document-change']; ondocumenterror?: EditorEventHandlers['document-error']; onpagechange?: EditorEventHandlers['page-change']; ondirtychange?: EditorEventHandlers['dirty-change'] };",
+			'type Exports = { load(input: Uint8Array | ArrayBuffer): Promise<void>; save(): Promise<Blob>; download(fileName?: string): Promise<void>; markClean(): void; isDirty(): boolean };',
+			'declare const WordEditor: Component<Props, Exports>;',
+			'export default WordEditor;',
+			'',
+		].join('\n'),
 	);
-await writeFile(path.join(viewerDist, 'WordEditor.svelte'), viewerSvelte);
-await writeFile(
-	path.join(viewerDist, 'svelte.d.ts'),
-	"export { default } from '@christophervr/docx-bindings/svelte';\n",
-);
-await rm(path.join(root, '.release-types'), { recursive: true, force: true });
-console.log('Built publishable ESM bundles and TypeScript declarations for all six packages.');
+}
+
+async function copyCoreDeclarations(distDir) {
+	const from = path.join(typesDir, 'packages', 'core', 'src');
+	for (const entry of await readdir(from, { withFileTypes: true })) {
+		if (entry.isFile() && entry.name.endsWith('.d.ts') && !entry.name.includes('.test.'))
+			await cp(path.join(from, entry.name), path.join(distDir, entry.name));
+	}
+}
+
+async function main() {
+	await rm(typesDir, { recursive: true, force: true });
+	run(process.execPath, [
+		path.join(root, 'node_modules/typescript/bin/tsc'),
+		'--project',
+		'tsconfig.release.json',
+	]);
+	// core first: the framework packages leave @christophervr/docx-core as an import.
+	for (const name of Object.keys(PUBLISHED)) {
+		const distDir = path.join(packagesDir, name, 'dist');
+		await rm(distDir, { recursive: true, force: true });
+		await mkdir(distDir, { recursive: true });
+		const manifest = await readManifest(name);
+		await buildJavaScript(name, manifest, distDir);
+		if (name === 'core') await copyCoreDeclarations(distDir);
+		else await bundleDeclarations(name, manifest, distDir);
+		if (name === 'svelte') await writeSvelteComponent(distDir);
+	}
+	await rm(typesDir, { recursive: true, force: true });
+	console.log(
+		`Built ${Object.keys(PUBLISHED).length} publishable packages (docx-core and six self-contained framework packages).`,
+	);
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) await main();

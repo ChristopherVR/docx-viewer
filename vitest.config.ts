@@ -19,7 +19,11 @@ export default defineConfig({
 				find: /^@christophervr\/docx-core\/embedded$/,
 				replacement: fileURLToPath(new URL('./packages/core/src/embedded.ts', import.meta.url)),
 			},
-			...['core', 'legacy', 'web-component', 'document', 'layout'].map((name) => ({
+			{
+				find: /^@christophervr\/docx-bindings\/(react|vue|angular|solid|common)$/,
+				replacement: fileURLToPath(new URL('./packages/bindings/src/$1', import.meta.url)),
+			},
+			...['core', 'legacy', 'web-component', 'document', 'layout', 'bindings'].map((name) => ({
 				find: new RegExp(`^@christophervr/docx-${name}$`),
 				replacement: fileURLToPath(new URL(`./packages/${name}/src/index.ts`, import.meta.url)),
 			})),

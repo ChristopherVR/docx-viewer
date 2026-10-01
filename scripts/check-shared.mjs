@@ -11,7 +11,10 @@ async function sources(directory) {
 	return result;
 }
 const legacy = await readFile(new URL('packages/legacy/src/index.ts', root), 'utf8');
-assert(legacy.includes('@christophervr/ole2/'), 'Legacy adapter must consume published ole2');
+assert(
+	legacy.includes('@christophervr/ole2/'),
+	'Legacy adapter must consume the shared ole2 codecs',
+);
 const core = JSON.parse(await readFile(new URL('packages/core/package.json', root), 'utf8'));
 assert(!core.dependencies?.['@christophervr/ole2'], 'Modern DOCX core must not depend on ole2');
 assert(core.exports['./embedded'], 'Embedded DOCX API must be shared with PowerPoint');
@@ -33,7 +36,30 @@ assert(
 	(await sources(new URL('packages/core/src/', root))).length === 2,
 	'docx-core must hold no logic; it lives in @christophervr/ooxml-core/docx',
 );
-for (const name of ['core', 'legacy', 'document', 'layout', 'web-component', 'bindings']) {
+const PUBLISHED = ['core', 'react', 'vue', 'angular', 'svelte', 'solid', 'vanilla'];
+const INTERNAL = ['legacy', 'document', 'layout', 'web-component', 'bindings'];
+for (const name of [...PUBLISHED, ...INTERNAL]) {
+	const manifest = JSON.parse(
+		await readFile(new URL(`packages/${name}/package.json`, root), 'utf8'),
+	);
+	if (INTERNAL.includes(name)) {
+		assert.equal(manifest.private, true, `packages/${name} is internal and must be private`);
+		continue;
+	}
+	assert.notEqual(manifest.private, true, `packages/${name} is published and must not be private`);
+	for (const dep of Object.keys({ ...manifest.dependencies, ...manifest.peerDependencies })) {
+		assert(
+			!/^@christophervr\/(?!docx-core$|ooxml-core$)/.test(dep),
+			`packages/${name} must not depend on ${dep}; internal packages and ole2 are bundled`,
+		);
+	}
+}
+assert.deepEqual(
+	(await readdir(new URL('packages/', root))).sort(),
+	[...PUBLISHED, ...INTERNAL].sort(),
+	'every workspace package must be classified as published or internal',
+);
+for (const name of [...PUBLISHED, ...INTERNAL]) {
 	for (const file of await sources(new URL(`packages/${name}/src/`, root))) {
 		const source = await readFile(file, 'utf8');
 		assert(

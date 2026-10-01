@@ -1,7 +1,8 @@
 {
 	"name": "@christophervr/docx-legacy",
 	"version": "0.1.0",
-	"description": "Legacy Word DOC binary reader and converter",
+	"private": true,
+	"description": "Legacy Word DOC binary reader and converter (internal; bundled into the published framework packages)",
 	"license": "Apache-2.0",
 	"author": "ChristopherVR",
 	"repository": {
@@ -9,23 +10,9 @@
 		"url": "https://github.com/ChristopherVR/docx-viewer.git",
 		"directory": "packages/legacy"
 	},
-	"files": [
-		"dist",
-		"README.md",
-		"LICENSE",
-		"NOTICE"
-	],
 	"type": "module",
-	"main": "./dist/index.js",
-	"types": "./dist/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js"
-		}
-	},
 	"dependencies": {
-		"@christophervr/docx-core": "0.1.0",
+		"@christophervr/docx-core": "workspace:*",
 		"@christophervr/ole2": "0.2.0"
 	}
 }
