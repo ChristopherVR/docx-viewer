@@ -86,6 +86,10 @@ get('sample').addEventListener('click', (event) => {
 	event.stopPropagation();
 	void openModel(createSampleDocument(), 'Sample document.docx');
 });
+// `?sample=1` opens the sample document immediately (used by the docs site's embedded demo).
+if (new URLSearchParams(location.search).get('sample') === '1') {
+	void openModel(createSampleDocument(), 'Sample document.docx');
+}
 const dropzone = get('dropzone');
 dropzone.addEventListener('click', () => landingFile.click());
 dropzone.addEventListener('keydown', (event) => {
