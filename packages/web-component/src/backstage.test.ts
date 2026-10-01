@@ -13,6 +13,7 @@ function setup(overrides: Partial<BackstageHandlers> = {}) {
 	model.blocks = [{ type: 'paragraph', id: 'p', runs: [{ text: 'Hello there' }] }];
 	const calls: Array<[string, string | undefined]> = [];
 	const options: Array<[string, string]> = [];
+	const properties: Array<[string, string]> = [];
 	const handlers: BackstageHandlers = {
 		fileCommand: (command, name) => calls.push([command, name]),
 		close: vi.fn(),
@@ -24,6 +25,7 @@ function setup(overrides: Partial<BackstageHandlers> = {}) {
 			saveState: 'dirty',
 		}),
 		options: () => ({ locale: 'en', theme: 'auto', author: 'Ann' }),
+		setProperty: (key, value) => properties.push([key, value]),
 		setOption: (key, value) => options.push([key, value]),
 		ribbon: () => undefined,
 		hiddenActions: () => [],
@@ -32,7 +34,7 @@ function setup(overrides: Partial<BackstageHandlers> = {}) {
 	};
 	const backstage = createBackstage(handlers);
 	document.body.append(backstage.element);
-	return { backstage, handlers, calls, options };
+	return { backstage, handlers, calls, options, properties, model };
 }
 const nav = (root: HTMLElement) =>
 	[...root.querySelectorAll('.dve-backstage-nav > button')].map((b) => b.textContent);
@@ -190,4 +192,16 @@ describe('Customize Ribbon', () => {
 		expect(text).toContain('Réinitialiser toutes les personnalisations');
 		expect(text).toContain('Choisissez les commandes affichées dans le ruban.');
 	});
+});
+
+it('edits document properties from Info', () => {
+	const s = setup();
+	s.model.properties = { title: 'Report' };
+	s.backstage.open('info');
+	const title = s.backstage.element.querySelector<HTMLInputElement>('[aria-label="Title"]')!;
+	expect(title.value).toBe('Report');
+	const author = s.backstage.element.querySelector<HTMLInputElement>('[aria-label="Author"]')!;
+	author.value = 'Bo';
+	author.dispatchEvent(new Event('change'));
+	expect(s.properties).toEqual([['creator', 'Bo']]);
 });

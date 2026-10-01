@@ -117,6 +117,10 @@ export const deApp: AppStrings = {
 	'Update Table': 'Tabelle aktualisieren',
 	'Update fields': 'Felder aktualisieren',
 	'Update Fields': 'Felder aktualisieren',
+	Title: 'Titel',
+	Subject: 'Betreff',
+	Author: 'Autor',
+	Tags: 'Tags',
 	'This document has no table of contents to update.':
 		'Dieses Dokument enthält kein Inhaltsverzeichnis, das aktualisiert werden könnte.',
 	'Insert footnote': 'Fußnote einfügen',

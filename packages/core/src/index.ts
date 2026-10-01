@@ -70,3 +70,4 @@ export * from './simple-types.js';
 export { alignFromJustification, parseJustification } from './paragraph-alignment.js';
 export type { ParagraphAlign, ParsedJustification } from './paragraph-alignment.js';
 export { withParseWarnings, enumValue, reportParseWarning } from './parse-diagnostics.js';
+export { PROPERTY_FIELDS, type DocumentProperties } from './core-properties.js';

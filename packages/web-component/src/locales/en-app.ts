@@ -107,6 +107,10 @@ export const enApp = {
 	'Update Table': 'Update Table',
 	'Update fields': 'Update fields',
 	'Update Fields': 'Update Fields',
+	Title: 'Title',
+	Subject: 'Subject',
+	Author: 'Author',
+	Tags: 'Tags',
 	'This document has no table of contents to update.':
 		'This document has no table of contents to update.',
 	'Insert footnote': 'Insert footnote',

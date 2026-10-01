@@ -81,8 +81,10 @@ tracked-change and comment counts, and a properties panel of words, characters, 
 tables, sections, page size and orientation), New, Open, Save, Save As (takes a file name and keeps
 the opened format), Print, Export (PDF through the print dialog, DOCX, plain text) and Options
 (display language, theme, review author). Not implemented: Home and recent files, Share, Account,
-Close, Protect Document, Version History, author/title/tags properties (the model has no core
-properties), and the page count on Info (pagination is a Print Layout result).
+Close, Protect Document, Version History, and the page count on Info (pagination is a Print Layout result).
+Info edits Title, Subject, Author, Tags and Comments (`docProps/core.xml`, created when missing; other
+elements such as created/modified dates are kept untouched, and the last-modified fields are not
+updated on save). Edits mark the document dirty but are not part of undo history.
 
 What each tab offers that Word also has:
 

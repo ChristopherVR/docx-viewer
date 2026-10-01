@@ -70,6 +70,16 @@ export class EditorChrome {
 			}),
 			options: () => host.options(),
 			setOption: (key, value) => host.setOption(key, value),
+			setProperty: (key, value) => {
+				const model = host.model();
+				if ((model.properties?.[key] ?? '') === value) return;
+				const next = { ...model.properties };
+				if (value) next[key] = value;
+				else delete next[key];
+				if (Object.keys(next).length) model.properties = next;
+				else delete model.properties;
+				this.setSaveState('dirty');
+			},
 			ribbon: () => host.ribbon(),
 			hiddenActions: () => host.hiddenActions(),
 			setHiddenActions: (ids) => host.setHiddenActions(ids),

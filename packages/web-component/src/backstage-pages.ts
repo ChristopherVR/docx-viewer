@@ -1,4 +1,4 @@
-import type { DocumentModel } from '@christophervr/docx-core';
+import { PROPERTY_FIELDS, type DocumentModel } from '@christophervr/docx-core';
 import { icon } from './chrome-icons';
 import type { DocumentStats } from './document-stats';
 import type { FileCommand } from './file-commands';
@@ -19,6 +19,8 @@ export interface BackstageHandlers {
 	};
 	options(): { locale: string; theme: string; author: string };
 	setOption(key: 'locale' | 'theme' | 'author', value: string): void;
+	/** Sets a document property (title, author, tags...); an empty value clears it. */
+	setProperty(key: (typeof PROPERTY_FIELDS)[number], value: string): void;
 	/** The ribbon element, for listing its commands on Customize Ribbon. */
 	ribbon(): HTMLElement | undefined;
 	hiddenActions(): readonly string[];
@@ -81,6 +83,32 @@ const facts = (rows: Array<[string, string]>, t: (text: string) => string) => {
 	return list;
 };
 
+const PROPERTY_LABELS: ReadonlyArray<readonly [(typeof PROPERTY_FIELDS)[number], string]> = [
+	['title', 'Title'],
+	['subject', 'Subject'],
+	['creator', 'Author'],
+	['keywords', 'Tags'],
+	['description', 'Comments'],
+];
+
+/** Word's editable Title, Subject, Author, Tags and Comments (`docProps/core.xml`). */
+function propertyFields(
+	model: DocumentModel,
+	handlers: BackstageHandlers,
+	t: (text: string) => string,
+): HTMLElement {
+	const list = document.createElement('div');
+	list.className = 'dve-backstage-property-fields';
+	for (const [key, label] of PROPERTY_LABELS) {
+		const input = document.createElement('input');
+		input.type = 'text';
+		input.value = model.properties?.[key] ?? '';
+		input.addEventListener('change', () => handlers.setProperty(key, input.value));
+		list.append(labelled(t(label), input));
+	}
+	return list;
+}
+
 export function renderInfo({ handlers, t, content }: PageContext): void {
 	const { fileName, model, stats, words, saveState } = handlers.summary();
 	const section = sectionsOf(model)[0];
@@ -127,8 +155,8 @@ export function renderInfo({ handlers, t, content }: PageContext): void {
 	);
 	const right = document.createElement('aside');
 	right.className = 'dve-backstage-properties';
+	right.append(heading(t('Properties'), 'h3'), propertyFields(model, handlers, t));
 	right.append(
-		heading(t('Properties'), 'h3'),
 		facts(
 			[
 				['Words', String(words)],

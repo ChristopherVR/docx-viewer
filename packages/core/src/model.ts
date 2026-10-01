@@ -1,3 +1,4 @@
+import type { DocumentProperties } from './core-properties.js';
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import { defaultStyleCatalogs } from './default-styles.js';
 import type { StJcTable, StNumberFormat } from './generated/wml-simple-types.js';
@@ -111,6 +112,8 @@ export interface DocumentModel {
 	 * body section). `page` above mirrors the last section's page geometry for backward compat.
 	 */
 	sections?: SectionProperties[];
+	/** Package properties from `docProps/core.xml` (title, author, tags...). */
+	properties?: DocumentProperties;
 	/** Whether `settings.xml` requests separate even-page headers/footers (`w:evenAndOddHeaders`). */
 	evenAndOddHeaders?: boolean;
 	/** `w:autoHyphenation` in settings.xml: Word hyphenates words at line ends. */

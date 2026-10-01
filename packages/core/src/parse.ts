@@ -1,3 +1,4 @@
+import { parseCoreProperties } from './core-properties.js';
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import JSZip from 'jszip';
 import type { Block, DocumentModel, LoadedDocument } from './model.js';
@@ -150,6 +151,11 @@ export async function readPackage(input: Uint8Array | ArrayBuffer): Promise<{
 	if (parts.endnoteNumFmt) model.endnoteNumFmt = parts.endnoteNumFmt;
 	if (parts.evenAndOddHeaders) model.evenAndOddHeaders = true;
 	if (parts.autoHyphenation) model.autoHyphenation = true;
+	const coreFile = zip.file('docProps/core.xml');
+	if (coreFile) {
+		const properties = parseCoreProperties(await coreFile.async('string'));
+		if (properties) model.properties = properties;
+	}
 	const pageColor = parsePageBackground(document.documentElement);
 	if (pageColor) model.pageColor = pageColor;
 	model.warnings.push(...parts.warnings);

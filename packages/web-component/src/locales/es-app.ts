@@ -118,6 +118,10 @@ export const esApp: AppStrings = {
 	'Update Table': 'Actualizar tabla',
 	'Update fields': 'Actualizar campos',
 	'Update Fields': 'Actualizar campos',
+	Title: 'Título',
+	Subject: 'Asunto',
+	Author: 'Autor',
+	Tags: 'Etiquetas',
 	'This document has no table of contents to update.':
 		'Este documento no tiene ninguna tabla de contenido que actualizar.',
 	'Insert footnote': 'Insertar nota al pie',

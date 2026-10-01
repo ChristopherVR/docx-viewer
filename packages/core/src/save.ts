@@ -6,6 +6,7 @@ import type { PackageContext } from './parse.js';
 import { applyModel } from './write.js';
 import { DocPrIdAllocator } from './docpr-ids.js';
 import { assertValidDocumentModel } from './validate-model.js';
+import { applyCoreProperties } from './core-properties.js';
 import { applyNumberingCatalog } from './numbering-package.js';
 import { applyStyleNumbering, differsOnlyByStyleNumbering } from './style-numbering-package.js';
 import { applyHeaderFooterEdits, createHeaderFooterParts } from './write-header-footer.js';
@@ -129,6 +130,7 @@ export async function saveDocx(
 		docPrIds,
 	);
 	await applyNumberingCatalog(zip, model, binding);
+	await applyCoreProperties(zip, model.properties, binding?.base.properties);
 	if (binding) await applyStyleNumbering(zip, model, binding.base);
 	if (Boolean(model.evenAndOddHeaders) !== Boolean(binding?.base.evenAndOddHeaders))
 		await applySettingsFlag(zip, 'evenAndOddHeaders', Boolean(model.evenAndOddHeaders));
