@@ -71,3 +71,9 @@ export { alignFromJustification, parseJustification } from './paragraph-alignmen
 export type { ParagraphAlign, ParsedJustification } from './paragraph-alignment.js';
 export { withParseWarnings, enumValue, reportParseWarning } from './parse-diagnostics.js';
 export { PROPERTY_FIELDS, type DocumentProperties } from './core-properties.js';
+export {
+	captionParagraphs,
+	isCaptionOf,
+	tableOfFiguresInstruction,
+	tocCaptionLabel,
+} from './table-of-figures.js';

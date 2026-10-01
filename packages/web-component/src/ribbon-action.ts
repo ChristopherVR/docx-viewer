@@ -131,4 +131,9 @@ export type RibbonAction =
 	| { type: 'showHidden' }
 	| { type: 'thumbnails' }
 	| { type: 'insertNote'; kind: 'footnote' | 'endnote' }
-	| { type: 'toc'; key: 'insert' | 'update' | 'remove' | 'fields'; levels?: number };
+	| {
+			type: 'toc';
+			key: 'insert' | 'update' | 'remove' | 'fields' | 'figures' | 'updateFigures';
+			levels?: number;
+			label?: string;
+	  };

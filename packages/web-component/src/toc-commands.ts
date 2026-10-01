@@ -3,6 +3,8 @@ import {
 	DEFAULT_TOC_INSTRUCTION,
 	findTableOfContents,
 	tocBookmarks,
+	tableOfFiguresInstruction,
+	tocCaptionLabel,
 	tocEntries,
 	tocHyperlinks,
 	twipsFromPixels,
@@ -99,12 +101,19 @@ function replaceBlocks(
 	view.dispatch(closeHistory(tr).scrollIntoView());
 }
 
+/** Selects the table of figures of `label` (case-insensitively), or heading TOCs when absent. */
+const figuresFilter = (label: string | undefined) =>
+	label
+		? (instruction: string) => tocCaptionLabel(instruction)?.toLowerCase() === label.toLowerCase()
+		: undefined;
+
 /** Inserts a TOC before the block holding the caret, replacing it when it is an empty paragraph. */
 export function insertTableOfContents(
 	view: EditorView,
 	model: DocumentModel,
 	measurer?: TextMeasurer,
 	levels = 3,
+	captionLabel?: string,
 ): void {
 	const { $from } = view.state.selection;
 	const index = $from.index(0);
@@ -112,17 +121,23 @@ export function insertTableOfContents(
 	const replace = current?.type.name === 'paragraph' && current.content.size === 0;
 	const end = replace ? index : index - 1;
 	const depth = Math.min(9, Math.max(1, Math.floor(levels)));
-	const instruction = ` TOC \\o "1-${depth}" \\h \\z \\u `;
+	const instruction = captionLabel
+		? tableOfFiguresInstruction(captionLabel)
+		: ` TOC \\o "1-${depth}" \\h \\z \\u `;
 	replaceBlocks(view, model, index, end, tocParagraphs(model, index, end, instruction, measurer));
 }
 
-/** Rebuilds the document's TOC with current headings and page numbers; false when there is none. */
+/**
+ * Rebuilds the document's TOC with current headings and page numbers (or, with `captionLabel`,
+ * its table of figures from the current captions); false when there is none.
+ */
 export function updateTableOfContents(
 	view: EditorView,
 	model: DocumentModel,
 	measurer?: TextMeasurer,
+	captionLabel?: string,
 ): boolean {
-	const found = findTableOfContents(model.blocks);
+	const found = findTableOfContents(model.blocks, figuresFilter(captionLabel));
 	if (!found) return false;
 	const toc = tocParagraphs(model, found.start, found.end, found.instruction, measurer);
 	const firstParagraph = toc.paragraphs[0];
@@ -138,8 +153,12 @@ export function updateTableOfContents(
  * Removes the document's table of contents (Word's Remove Table of Contents). Text that shared a
  * paragraph with the field is kept. Returns false when there is no TOC to remove.
  */
-export function removeTableOfContents(view: EditorView, model: DocumentModel): boolean {
-	const found = findTableOfContents(model.blocks);
+export function removeTableOfContents(
+	view: EditorView,
+	model: DocumentModel,
+	captionLabel?: string,
+): boolean {
+	const found = findTableOfContents(model.blocks, figuresFilter(captionLabel));
 	if (!found || !view.editable) return false;
 	const { doc } = view.state;
 	let from = 0;

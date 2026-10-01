@@ -10,6 +10,12 @@ const TOC_OPTIONS: Array<[string, string]> = [
 	['5', 'Table of contents, levels 1 to 5'],
 	['remove', 'Remove table of contents'],
 ];
+const FIGURE_OPTIONS: Array<[string, string]> = [
+	['Figure', 'Table of figures: Figure'],
+	['Table', 'Table of figures: Table'],
+	['Equation', 'Table of figures: Equation'],
+	['update', 'Update table of figures'],
+];
 const ADD_TEXT_OPTIONS: Array<[string, string]> = [
 	['1', 'Level 1'],
 	['2', 'Level 2'],
@@ -222,6 +228,16 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				'crossReference',
 				{ type: 'formatDialog', kind: 'crossReference' },
 				{ large: true },
+			),
+			menuSelect(
+				'Insert table of figures',
+				'toc',
+				FIGURE_OPTIONS,
+				(value) =>
+					value === 'update'
+						? { type: 'toc', key: 'updateFigures' }
+						: { type: 'toc', key: 'figures', label: value },
+				{ momentary: true },
 			),
 			tool(
 				'Update fields',

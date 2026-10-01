@@ -51,9 +51,9 @@ describe('updateFields', () => {
 			),
 			paragraph('p2', [
 				schema.text('See '),
-				field('Figure 9', ' REF _Ref1 \h '),
+				field('Figure 9', ' REF _Ref1 \\h '),
 				schema.text(' on page '),
-				field('9', ' PAGEREF _Ref1 \h '),
+				field('9', ' PAGEREF _Ref1 \\h '),
 			]),
 		);
 		expect(updateFields(view, pages)).toBe(true);
@@ -64,11 +64,11 @@ describe('updateFields', () => {
 		const view = editor(
 			paragraph('p0', [schema.text('New title')], ['_Ref2']),
 			paragraph('p1', [
-				field('Old title', ' REF _Ref2 \h '),
+				field('Old title', ' REF _Ref2 \\h '),
 				schema.text('|'),
-				field('x', ' REF _Ref2 \n \h '),
+				field('x', ' REF _Ref2 \\n \\h '),
 				schema.text('|'),
-				field('gone', ' REF _Missing \h '),
+				field('gone', ' REF _Missing \\h '),
 			]),
 		);
 		expect(updateFields(view, pages)).toBe(true);

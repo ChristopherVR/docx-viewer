@@ -3,12 +3,15 @@
 // refreshes an existing TOC field that spans body paragraphs.
 import { expectDefined } from './expect-defined.js';
 import { fieldName } from './field-runs.js';
+import { captionParagraphs, tocCaptionLabel } from './table-of-figures.js';
 import { signedTwips, twips, type Twips } from './units.js';
 import type { Block, DocumentModel, Paragraph, ParagraphStyleCatalog, TextRun } from './model.js';
 
 export const DEFAULT_TOC_INSTRUCTION = ' TOC \\o "1-3" \\h \\z \\u ';
 /** Word's result text when a TOC has no entries. */
 export const EMPTY_TOC_TEXT = 'No table of contents entries found.';
+/** Word's result text when a table of figures has no entries. */
+export const EMPTY_FIGURES_TEXT = 'No table of figures entries found.';
 
 /** The heading level (1–9) of a paragraph, from its style id or Word's built-in `heading N` name. */
 export function headingLevel(
@@ -52,6 +55,11 @@ export function tocEntries(
 	model: DocumentModel,
 	instruction = DEFAULT_TOC_INSTRUCTION,
 ): TocEntry[] {
+	const label = tocCaptionLabel(instruction);
+	if (label)
+		return captionParagraphs(model, label)
+			.map((paragraph) => ({ level: 1, text: plainText(paragraph), blockId: paragraph.id }))
+			.filter((entry) => entry.text);
 	const { from, to } = tocLevels(instruction);
 	const entries: TocEntry[] = [];
 	for (const block of model.blocks) {
@@ -171,13 +179,14 @@ export function buildTableOfContents(model: DocumentModel, options: TocOptions):
 	const width = options.contentWidthTwips ?? twips(9360);
 	const styles = model.paragraphStyles?.styles ?? {};
 	const entries = tocEntries(model, instruction);
+	const figures = tocCaptionLabel(instruction) !== undefined;
 	const paragraphs: Paragraph[] = (entries.length ? entries : [undefined]).map((entry) => {
 		const level = entry?.level ?? 1;
-		const style = `TOC${level}`;
+		const style = figures ? 'TableofFigures' : `TOC${level}`;
 		const page = entry ? options.pageNumbers?.get(entry.blockId) : undefined;
 		const bookmark = entry ? options.bookmarks?.get(entry.blockId) : undefined;
 		const runs: TextRun[] = !entry
-			? [{ text: EMPTY_TOC_TEXT, bold: true, field }]
+			? [{ text: figures ? EMPTY_FIGURES_TEXT : EMPTY_TOC_TEXT, bold: true, field }]
 			: bookmark
 				? linkedEntry(entry.text, bookmark, page)
 				: [{ text: page ? `${entry.text}\t${page}` : entry.text, field }];
@@ -213,8 +222,12 @@ export interface TocLocation {
 	after: TextRun[];
 }
 
-/** The first TOC field in the body, following nested fields with a marker stack. */
-export function findTableOfContents(blocks: Block[]): TocLocation | undefined {
+/** The first heading TOC field in the body (or the first TOC `accepts`), following nested fields with a marker stack. */
+export function findTableOfContents(
+	blocks: Block[],
+	accepts: (instruction: string) => boolean = (instruction) =>
+		tocCaptionLabel(instruction) === undefined,
+): TocLocation | undefined {
 	const stack: { code: string; block: number; run: number }[] = [];
 	for (let index = 0; index < blocks.length; index++) {
 		const block = blocks[index];
@@ -225,7 +238,7 @@ export function findTableOfContents(blocks: Block[]): TocLocation | undefined {
 				expectDefined(stack.at(-1), 'open field frame').code += run.fieldCode;
 			else if (run.fieldChar === 'end') {
 				const frame = stack.pop();
-				if (!frame || fieldName(frame.code) !== 'TOC') continue;
+				if (!frame || fieldName(frame.code) !== 'TOC' || !accepts(frame.code)) continue;
 				const first = blocks[frame.block] as Paragraph;
 				return {
 					start: frame.block,

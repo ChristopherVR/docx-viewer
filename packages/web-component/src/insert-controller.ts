@@ -86,7 +86,17 @@ export class InsertController {
 		} else if (action.type === 'toc') {
 			if (!view || !editable) return true;
 			try {
-				if (action.key === 'insert')
+				if (action.key === 'figures')
+					insertTableOfContents(view, this.host.model(), undefined, 3, action.label ?? 'Figure');
+				else if (action.key === 'updateFigures') {
+					const labels = action.label ? [action.label] : ['Figure', 'Table', 'Equation'];
+					// Each update rebuilds the model from the view, so re-read it between labels.
+					const updated = labels.filter((label) =>
+						updateTableOfContents(view, this.host.model(), undefined, label),
+					);
+					if (!updated.length)
+						this.host.reportError(new Error('This document has no table of figures to update.'));
+				} else if (action.key === 'insert')
 					insertTableOfContents(view, this.host.model(), undefined, action.levels ?? 3);
 				else if (action.key === 'remove') {
 					if (!removeTableOfContents(view, this.host.model()))

@@ -126,7 +126,7 @@ What each tab offers that Word also has:
   1-3), Update Table, Insert Caption (a `SEQ` field; every caption of a label is renumbered when
   one is added, and the Caption style is used when the document has one), Cross-reference (`REF` or
   `PAGEREF` fields to headings, bookmarks and captions; hidden `_Ref` bookmarks are added as
-  needed), Update Fields (renumbers every `SEQ` caption, then refreshes `REF` and `PAGEREF`
+  needed), Table of Figures (`TOC \h \z \c "Figure"` for Figure, Table or Equation captions: entries are the captions with Print Layout page numbers and links to `_Toc` bookmarks, rebuilt by Update Table of Figures; custom `\t` style mappings and `\a` are not collected), Update Fields (renumbers every `SEQ` caption, then refreshes `REF` and `PAGEREF`
   results from their bookmarks and Print Layout pages in one undo step; fields with other
   switches such as `\n`, `\r`, `\w` or `\p`, and fields whose bookmark is missing, are left
   as they are; it is a command, not automatic on edit), Footnote and Endnote.
@@ -307,7 +307,7 @@ Still not at parity:
 - **Insert:** Cover Page galleries (one plain design exists), Shapes, Icons, 3D Models, SmartArt,
   Charts, Screenshot, inserting Text Boxes, WordArt, Equation, Signature Line, Object.
 - **Layout and References:** Manual Hyphenation and its options, Watermark, Page Borders, Position
-  and Wrap Text, Citations, Bibliography, Table of Figures, Index and Table of Authorities, and
+  and Wrap Text, Citations, Bibliography, Index and Table of Authorities, and
   automatic updating of `REF`, `PAGEREF` and `SEQ` results (Update Fields refreshes them on request;
   only captions renumber on insert).
 - **Review and View:** Editor pane, Thesaurus, Translate, Accessibility, Compare, Protect, Ink;

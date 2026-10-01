@@ -50,6 +50,7 @@ export type LegacyRibbonLabel =
 	| 'Insert table of contents'
 	| 'Update table of contents'
 	| 'Update fields'
+	| 'Insert table of figures'
 	| 'Insert footnote'
 	| 'Insert endnote'
 	| 'Paragraph direction'
