@@ -124,7 +124,10 @@ What each tab offers that Word also has:
   1-3), Update Table, Insert Caption (a `SEQ` field; every caption of a label is renumbered when
   one is added, and the Caption style is used when the document has one), Cross-reference (`REF` or
   `PAGEREF` fields to headings, bookmarks and captions; hidden `_Ref` bookmarks are added as
-  needed and the result text is computed when inserted, not updated later), Footnote and Endnote.
+  needed), Update Fields (renumbers every `SEQ` caption, then refreshes `REF` and `PAGEREF`
+  results from their bookmarks and Print Layout pages in one undo step; fields with other
+  switches such as `\n`, `\r`, `\w` or `\p`, and fields whose bookmark is missing, are left
+  as they are; it is a command, not automatic on edit), Footnote and Endnote.
 - **Review:** Spelling (toggles the browser's spell checker; no bundled dictionary or grammar
   checker), Word Count (selection or document), Read Aloud (the browser's speech synthesis),
   tracked-change commands, comments (New, Delete, Previous, Next, Show), and the language and
@@ -296,8 +299,8 @@ Still not at parity:
   Charts, Screenshot, inserting Text Boxes, WordArt, Equation, Signature Line, Object.
 - **Layout and References:** Manual Hyphenation and its options, Watermark, Page Borders, Position
   and Wrap Text, Citations, Bibliography, Table of Figures, Index and Table of Authorities, and
-  automatic updating of `REF`, `PAGEREF` and `SEQ` results (they are computed when inserted; captions
-  renumber immediately, cross-references do not).
+  automatic updating of `REF`, `PAGEREF` and `SEQ` results (Update Fields refreshes them on request;
+  only captions renumber on insert).
 - **Review and View:** Editor pane, Thesaurus, Translate, Accessibility, Compare, Protect, Ink;
   Read Mode, Web and Outline views, New Window,
   Split and Macros.
@@ -355,4 +358,5 @@ Still not at parity:
 
 ### Engineering follow-ups
 
-- Modules over the 300-line guideline: `web-component/src/component.ts` (~520: the element's public API, lifecycle and ribbon dispatch) and the `localization-strings.ts` data table.
+- Modules over the 300-line guideline (non-test, non-data): `web-component/src/ribbon-tabs.ts` (~490, the tab definitions), `ribbon-home.ts`, `backstage-pages.ts`, `model-adapter.ts` and a few files just over 300; the locale tables and generated schema types are data.
+- `ssr.test.ts` can time out (5 s) when the whole suite runs under load; it passes alone.

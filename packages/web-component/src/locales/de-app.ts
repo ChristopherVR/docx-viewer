@@ -115,6 +115,8 @@ export const deApp: AppStrings = {
 	'Insert table of contents': 'Inhaltsverzeichnis einfügen',
 	'Update table of contents': 'Inhaltsverzeichnis aktualisieren',
 	'Update Table': 'Tabelle aktualisieren',
+	'Update fields': 'Felder aktualisieren',
+	'Update Fields': 'Felder aktualisieren',
 	'This document has no table of contents to update.':
 		'Dieses Dokument enthält kein Inhaltsverzeichnis, das aktualisiert werden könnte.',
 	'Insert footnote': 'Fußnote einfügen',

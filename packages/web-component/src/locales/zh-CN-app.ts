@@ -111,6 +111,8 @@ export const zhCNApp: AppStrings = {
 	'Insert table of contents': '插入目录',
 	'Update table of contents': '更新目录',
 	'Update Table': '更新目录',
+	'Update fields': '更新域',
+	'Update Fields': '更新域',
 	'This document has no table of contents to update.': '此文档没有可更新的目录。',
 	'Insert footnote': '插入脚注',
 	'Insert endnote': '插入尾注',

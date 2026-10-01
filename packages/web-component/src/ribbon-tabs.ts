@@ -223,6 +223,12 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				{ type: 'formatDialog', kind: 'crossReference' },
 				{ large: true },
 			),
+			tool(
+				'Update fields',
+				'updateTable',
+				{ type: 'toc', key: 'fields' },
+				{ large: true, caption: 'Update Fields' },
+			),
 		),
 		group(
 			'Footnotes',

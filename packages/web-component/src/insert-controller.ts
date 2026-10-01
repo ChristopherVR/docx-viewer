@@ -14,7 +14,9 @@ import { insertPicture, PICTURE_TYPES, stagePicture } from './picture-commands';
 import type { RibbonAction } from './ribbon';
 import { translate, type EditorLocale } from './localization';
 import { focusView } from './focus-view';
+import { updateFields } from './field-update';
 import {
+	blockPageNumbers,
 	insertTableOfContents,
 	removeTableOfContents,
 	updateTableOfContents,
@@ -89,6 +91,9 @@ export class InsertController {
 				else if (action.key === 'remove') {
 					if (!removeTableOfContents(view, this.host.model()))
 						this.host.reportError(new Error('This document has no table of contents to remove.'));
+				} else if (action.key === 'fields') {
+					if (!updateFields(view, (id) => blockPageNumbers(this.host.model()).get(id)))
+						this.host.reportError(new Error('No fields needed updating.'));
 				} else if (!updateTableOfContents(view, this.host.model()))
 					this.host.reportError(new Error('This document has no table of contents to update.'));
 			} catch (error) {

@@ -116,6 +116,8 @@ export const esApp: AppStrings = {
 	'Insert table of contents': 'Insertar tabla de contenido',
 	'Update table of contents': 'Actualizar tabla de contenido',
 	'Update Table': 'Actualizar tabla',
+	'Update fields': 'Actualizar campos',
+	'Update Fields': 'Actualizar campos',
 	'This document has no table of contents to update.':
 		'Este documento no tiene ninguna tabla de contenido que actualizar.',
 	'Insert footnote': 'Insertar nota al pie',

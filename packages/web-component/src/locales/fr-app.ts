@@ -107,6 +107,8 @@ export const frApp: AppStrings = {
 	'Insert table of contents': 'Insérer une table des matières',
 	'Update table of contents': 'Mettre à jour la table des matières',
 	'Update Table': 'Mettre à jour la table',
+	'Update fields': 'Mettre à jour les champs',
+	'Update Fields': 'Mettre à jour les champs',
 	'This document has no table of contents to update.':
 		'Ce document ne contient aucune table des matières à mettre à jour.',
 	'Insert footnote': 'Insérer une note de bas de page',

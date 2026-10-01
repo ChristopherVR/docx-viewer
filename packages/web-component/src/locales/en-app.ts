@@ -105,6 +105,8 @@ export const enApp = {
 	'Insert table of contents': 'Insert table of contents',
 	'Update table of contents': 'Update table of contents',
 	'Update Table': 'Update Table',
+	'Update fields': 'Update fields',
+	'Update Fields': 'Update Fields',
 	'This document has no table of contents to update.':
 		'This document has no table of contents to update.',
 	'Insert footnote': 'Insert footnote',

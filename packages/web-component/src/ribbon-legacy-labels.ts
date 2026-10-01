@@ -49,6 +49,7 @@ export type LegacyRibbonLabel =
 	| 'Odd page section break'
 	| 'Insert table of contents'
 	| 'Update table of contents'
+	| 'Update fields'
 	| 'Insert footnote'
 	| 'Insert endnote'
 	| 'Paragraph direction'

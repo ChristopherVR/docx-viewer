@@ -128,4 +128,4 @@ export type RibbonAction =
 	| { type: 'showHidden' }
 	| { type: 'thumbnails' }
 	| { type: 'insertNote'; kind: 'footnote' | 'endnote' }
-	| { type: 'toc'; key: 'insert' | 'update' | 'remove'; levels?: number };
+	| { type: 'toc'; key: 'insert' | 'update' | 'remove' | 'fields'; levels?: number };
