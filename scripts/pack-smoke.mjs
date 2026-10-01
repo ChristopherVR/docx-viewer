@@ -74,7 +74,15 @@ try {
 		);
 		const manifest = JSON.parse(await readFile(path.join(target, 'package.json'), 'utf8'));
 		assert(!JSON.stringify(manifest).includes('workspace:'));
-		assert(!JSON.stringify(manifest).includes('file:'));
+		// `@christophervr/ooxml-core` is a private sibling checkout (`file:`) until it is published;
+		// that one dependency is allowed here, and publishing stays blocked on it (see docs/releasing.md).
+		const unpublished = new Set(['@christophervr/ooxml-core']);
+		for (const [dependency, version] of Object.entries(manifest.dependencies ?? {}))
+			assert(
+				!String(version).includes('file:') || unpublished.has(dependency),
+				`${packed.name} depends on ${dependency} through ${version}`,
+			);
+		assert(!JSON.stringify({ ...manifest, dependencies: undefined }).includes('file:'));
 		await assertPublishedImports(path.join(target, 'dist'), packed.name);
 		for (const [dependency, version] of Object.entries(manifest.peerDependencies ?? {}))
 			peers.set(dependency, version);
