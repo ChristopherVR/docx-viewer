@@ -5,6 +5,7 @@ import type {
 	NumberingLevelDefinition,
 	NumDefinition,
 } from './numbering-model.js';
+import type { ParagraphStyleCatalog } from './model-paragraph.js';
 import { expectDefined } from './expect-defined.js';
 import { signedTwips, twips } from './units.js';
 import { Checker, DocxModelValidationError, type ValidationIssue } from './validate-issues.js';
@@ -109,4 +110,24 @@ export function createListDefinition(
 		catalog: { abstractNums, nums, warnings: catalog?.warnings ?? [] },
 		numId: Number(numId),
 	};
+}
+
+/**
+ * Points each existing paragraph style named by a level's `paragraphStyleId` at that level of
+ * list `numId` (the style's `w:numPr`), as Word does for heading-linked outlines. Pure; styles that
+ * are not in the catalog are skipped. A style linked from two levels keeps the deepest-first
+ * assignment that appears last, so callers should keep style ids unique per list.
+ */
+export function linkStylesToList(
+	styles: ParagraphStyleCatalog | undefined,
+	levels: readonly NumberingLevelDefinition[],
+	numId: number,
+): ParagraphStyleCatalog | undefined {
+	if (!styles) return styles;
+	const next: ParagraphStyleCatalog = { ...styles, styles: { ...styles.styles } };
+	for (const level of levels) {
+		const style = level.paragraphStyleId ? next.styles[level.paragraphStyleId] : undefined;
+		if (style) next.styles[style.id] = { ...style, numbering: { numId, level: level.level } };
+	}
+	return next;
 }

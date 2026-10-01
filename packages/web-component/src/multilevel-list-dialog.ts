@@ -68,6 +68,7 @@ export function createMultilevelListDialog(
 		['space', 'Space'],
 		['none', 'Nothing'],
 	]);
+	const linkedStyle = selectOf([['', '(No style)']]);
 	const markerFont = textInput();
 	const markerSize = numberInput(1, 400, 0.5);
 	const markerColor = textInput();
@@ -96,7 +97,11 @@ export function createMultilevelListDialog(
 		row(levelField, preview),
 		fieldset(
 			'Number format',
-			row(labelled('Number style for this level', style), labelled('Start at', start)),
+			row(
+				labelled('Number style for this level', style),
+				labelled('Start at', start),
+				labelled('Link level to style', linkedStyle),
+			),
 			labelled('Enter formatting for number', pattern),
 			hint,
 			row(
@@ -166,6 +171,14 @@ export function createMultilevelListDialog(
 		draft.isLgl = legal.input.checked;
 		if (restart.value === 'default') delete draft.lvlRestart;
 		else draft.lvlRestart = Number(restart.value);
+		if (linkedStyle.value) {
+			draft.paragraphStyleId = linkedStyle.value;
+			// A style belongs to one level of a list.
+			drafts.forEach((other, index) => {
+				if (index !== active && other.paragraphStyleId === linkedStyle.value)
+					delete other.paragraphStyleId;
+			});
+		} else delete draft.paragraphStyleId;
 		draft.suffix = suffix.value as NonNullable<NumberingLevelDefinition['suffix']>;
 		const marker: NonNullable<NumberingLevelDefinition['markerFormat']> = {};
 		if (markerFont.value.trim()) marker.fontFamily = markerFont.value.trim();
@@ -220,6 +233,16 @@ export function createMultilevelListDialog(
 				1440,
 		);
 		suffix.value = draft.suffix ?? 'tab';
+		const styles = Object.values(getModel().paragraphStyles?.styles ?? {}).sort((a, b) =>
+			(a.name ?? a.id).localeCompare(b.name ?? b.id),
+		);
+		linkedStyle.replaceChildren(
+			new Option('(No style)', ''),
+			...styles.map((item) => new Option(item.name ?? item.id, item.id)),
+		);
+		if (draft.paragraphStyleId && !styles.some((item) => item.id === draft.paragraphStyleId))
+			linkedStyle.append(new Option(draft.paragraphStyleId, draft.paragraphStyleId));
+		linkedStyle.value = draft.paragraphStyleId ?? '';
 		const marker = draft.markerFormat;
 		markerFont.value = marker?.fontFamily ?? '';
 		markerSize.value = marker?.fontSizeHalfPoints ? String(marker.fontSizeHalfPoints / 2) : '';
@@ -260,6 +283,7 @@ export function createMultilevelListDialog(
 		aligned,
 		indent,
 		suffix,
+		linkedStyle,
 		markerFont,
 		markerSize,
 		markerColor,

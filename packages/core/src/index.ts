@@ -37,7 +37,12 @@ export {
 	formatListNumber,
 	resolveParagraphNumbering,
 } from './numbering-format.js';
-export { ensureListDefinition, createListDefinition, type ListKind } from './numbering-editing.js';
+export {
+	ensureListDefinition,
+	createListDefinition,
+	linkStylesToList,
+	type ListKind,
+} from './numbering-editing.js';
 export { formatNoteNumber, numberNotesInOrder } from './notes.js';
 export {
 	acceptAllRevisions,

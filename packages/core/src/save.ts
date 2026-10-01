@@ -7,6 +7,7 @@ import { applyModel } from './write.js';
 import { DocPrIdAllocator } from './docpr-ids.js';
 import { assertValidDocumentModel } from './validate-model.js';
 import { applyNumberingCatalog } from './numbering-package.js';
+import { applyStyleNumbering, differsOnlyByStyleNumbering } from './style-numbering-package.js';
 import { applyHeaderFooterEdits, createHeaderFooterParts } from './write-header-footer.js';
 import { applyNoteEdits } from './write-notes.js';
 import { writeNewRelationships } from './part-relationships.js';
@@ -60,10 +61,7 @@ export async function saveDocx(
 		return new Uint8Array(binding.context.original);
 	assertValidDocumentModel(model);
 	model = numberRevisionIds(numberCommentIds(model), maxWordId(binding?.context.sourceXml));
-	if (
-		binding &&
-		JSON.stringify(model.paragraphStyles) !== JSON.stringify(binding.base.paragraphStyles)
-	)
+	if (binding && !differsOnlyByStyleNumbering(model.paragraphStyles, binding.base.paragraphStyles))
 		throw new Error(
 			'Editing the paragraph style catalog is not supported; source styles.xml is preserved unchanged.',
 		);
@@ -131,6 +129,7 @@ export async function saveDocx(
 		docPrIds,
 	);
 	await applyNumberingCatalog(zip, model, binding);
+	if (binding) await applyStyleNumbering(zip, model, binding.base);
 	if (Boolean(model.evenAndOddHeaders) !== Boolean(binding?.base.evenAndOddHeaders))
 		await applySettingsFlag(zip, 'evenAndOddHeaders', Boolean(model.evenAndOddHeaders));
 	// Word shows a page colour only when settings.xml asks for background shapes.

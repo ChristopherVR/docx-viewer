@@ -8,6 +8,7 @@ import type {
 } from '@christophervr/docx-core';
 import {
 	createListDefinition,
+	linkStylesToList,
 	ensureListDefinition,
 	resolveNumberingLevel,
 } from '@christophervr/docx-core';
@@ -178,6 +179,8 @@ export function applyCustomList(
 	toggleList(view, false, () => {
 		const created = createListDefinition(model.numberingCatalog, levels);
 		model.numberingCatalog = created.catalog;
+		const linked = linkStylesToList(model.paragraphStyles, levels, created.numId);
+		if (linked) model.paragraphStyles = linked;
 		return created.numId;
 	});
 }

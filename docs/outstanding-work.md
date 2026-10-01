@@ -288,14 +288,17 @@ Define New Multilevel List at the inherited level with its imported pattern. Add
 export writes style links in schema order. Word COM confirmed the five-item sequence
 `1., 1.1., 1.2., 2., 2.1.` when styles also specify matching `ilvl`. Installed Word discards the
 second heading's numbering when that redundant style level is omitted; the viewer follows the
-OOXML association rule for those imports. Creating or changing heading/style bindings through
-the dialog still requires preservation-safe style edits and history support.
+OOXML association rule for those imports. Each level has a Link level to style
+select (a style belongs to one level). Applying the list writes `w:numPr` into those existing
+paragraph styles in `styles.xml` (schema-ordered, the rest of the style XML untouched) and a
+`w:pStyle` on the new level; any other style-catalog edit is still refused on save. The style link
+is not part of editor history: Undo removes the list from the selection, but styles stay linked to
+the (retained) definition. Creating new styles from the dialog is not supported.
 
 Still not at parity:
 
 - **Home:** Text Effects; Multilevel List offers two styles (1. 1.1. 1.1.1. and 1. a) i.), not Word's gallery of
-  heading-linked and bullet outlines. Define New Multilevel List still needs heading/style links,
-  an explicit tab-stop position, Word's graphical number placeholders and
+  heading-linked and bullet outlines. Define New Multilevel List still needs an explicit tab-stop position, Word's graphical number placeholders and
   its apply-to/list-style options. Text Highlight keeps the 17-colour list (Word's is a short
   list too). Line Spacing offers presets; the Paragraph dialog has the rest.
 - **Insert:** Cover Page galleries (one plain design exists), Shapes, Icons, 3D Models, SmartArt,

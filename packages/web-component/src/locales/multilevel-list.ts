@@ -28,6 +28,8 @@ const keys = [
 	'Bold',
 	'Italic',
 	'Enter a font size from 1 to 400 and a colour such as #1F4E79.',
+	'Link level to style',
+	'(No style)',
 ] as const;
 type Key = (typeof keys)[number];
 const from = (values: readonly string[]): Record<Key, string> =>
@@ -63,6 +65,8 @@ export const frMultilevelList = from([
 	'Gras',
 	'Italique',
 	'Saisissez une taille de 1 à 400 et une couleur telle que #1F4E79.',
+	'Lier le niveau au style',
+	'(Aucun style)',
 ]);
 export const deMultilevelList = from([
 	'Neue Liste mit mehreren Ebenen definieren',
@@ -94,6 +98,8 @@ export const deMultilevelList = from([
 	'Fett',
 	'Kursiv',
 	'Geben Sie eine Größe von 1 bis 400 und eine Farbe wie #1F4E79 ein.',
+	'Ebene mit Formatvorlage verknüpfen',
+	'(Keine Formatvorlage)',
 ]);
 export const esMultilevelList = from([
 	'Definir nueva lista multinivel',
@@ -125,6 +131,8 @@ export const esMultilevelList = from([
 	'Negrita',
 	'Cursiva',
 	'Introduzca un tamaño de 1 a 400 y un color como #1F4E79.',
+	'Vincular nivel con estilo',
+	'(Sin estilo)',
 ]);
 export const zhMultilevelList = from([
 	'定义新的多级列表',
@@ -156,4 +164,6 @@ export const zhMultilevelList = from([
 	'加粗',
 	'倾斜',
 	'请输入 1 到 400 的字号和类似 #1F4E79 的颜色。',
+	'将级别链接到样式',
+	'（无样式）',
 ]);

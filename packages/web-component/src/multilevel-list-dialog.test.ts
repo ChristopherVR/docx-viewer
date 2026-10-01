@@ -103,3 +103,20 @@ it('stores marker font settings on the level and rejects an invalid colour', () 
 	});
 	s.view.destroy();
 });
+
+it('links a level to a paragraph style once per list and updates the style numbering', () => {
+	const s = setup();
+	s.dialog.open();
+	s.set('Link level to style', 'Heading1', 'change');
+	s.set('Level to modify', '1', 'change');
+	s.set('Link level to style', 'Heading1', 'change');
+	s.set('Level to modify', '0', 'change');
+	expect(s.field('Link level to style').value).toBe('');
+	s.set('Level to modify', '1', 'change');
+	s.button('OK').click();
+	const levels = s.model.numberingCatalog!.abstractNums['0']!.levels;
+	expect(levels[0]!.paragraphStyleId).toBeUndefined();
+	expect(levels[1]!.paragraphStyleId).toBe('Heading1');
+	expect(s.model.paragraphStyles!.styles.Heading1!.numbering).toEqual({ numId: 1, level: 1 });
+	s.view.destroy();
+});
