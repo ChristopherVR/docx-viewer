@@ -107,6 +107,7 @@ export const deRibbon: RibbonStrings = {
 	'All borders': 'Alle Rahmenlinien',
 	'Outside borders': 'Rahmenlinien außen',
 	'Inside horizontal border': 'Horizontale Linie innen',
+	'Inside vertical border': 'Vertikale Linie innen',
 	'Shading options': 'Optionen für Schattierung',
 	'Borders options': 'Optionen für Rahmen',
 	'Header & Footer': 'Kopf- und Fußzeile',

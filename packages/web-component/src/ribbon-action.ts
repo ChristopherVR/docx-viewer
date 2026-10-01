@@ -85,6 +85,7 @@ export type RibbonAction =
 				| 'all'
 				| 'outside'
 				| 'insideH'
+				| 'insideV'
 				| 'horizontal';
 	  }
 	| {

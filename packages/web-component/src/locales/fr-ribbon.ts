@@ -100,6 +100,7 @@ export const frRibbon: RibbonStrings = {
 	'All borders': 'Toutes les bordures',
 	'Outside borders': 'Bordures extérieures',
 	'Inside horizontal border': 'Bordure horizontale intérieure',
+	'Inside vertical border': 'Bordure verticale intérieure',
 	'Shading options': 'Options de trame de fond',
 	'Borders options': 'Options de bordures',
 	'Header & Footer': 'En-tête et pied de page',

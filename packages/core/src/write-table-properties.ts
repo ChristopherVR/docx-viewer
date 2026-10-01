@@ -1,7 +1,7 @@
 import type { Table } from './model.js';
-import type { TableRowProperties } from './table-model.js';
+import type { TableBorders, TableRowProperties } from './table-model.js';
 import { buildRowProperties } from './table-cell-write.js';
-import { buildMargins } from './table-defaults.js';
+import { buildBorders, buildMargins } from './table-defaults.js';
 import { orderChildren } from './element-order.js';
 import { children, first, makeW, type XmlDocument, type XmlElement } from './xml.js';
 
@@ -97,4 +97,64 @@ export function patchTableMargins(
 	}
 	orderChildren(margins, ['top', 'left', 'start', 'bottom', 'right', 'end']);
 	orderChildren(props, TABLE_ORDER);
+}
+
+const CELL_ORDER = [
+	'cnfStyle',
+	'tcW',
+	'gridSpan',
+	'hMerge',
+	'vMerge',
+	'tcBorders',
+	'shd',
+	'noWrap',
+	'tcMar',
+	'textDirection',
+	'tcFitText',
+	'vAlign',
+	'hideMark',
+	'headers',
+	'cellIns',
+	'cellDel',
+	'cellMerge',
+	'tcPrChange',
+];
+const CELL_BORDER_ORDER = ['top', 'start', 'left', 'bottom', 'end', 'right', 'insideH', 'insideV'];
+const CELL_SIDES = ['top', 'left', 'bottom', 'right'] as const;
+
+/**
+ * Changes only the cell border sides that differ from `base`, keeping every other `tcPr` child
+ * (width, shading, margins, extensions) and untouched sides exactly as they were.
+ */
+export function patchCellBorders(
+	doc: XmlDocument,
+	tc: XmlElement,
+	next: TableBorders | undefined,
+	base: TableBorders | undefined,
+): void {
+	const changed = CELL_SIDES.filter(
+		(side) => JSON.stringify(next?.[side]) !== JSON.stringify(base?.[side]),
+	);
+	if (!changed.length) return;
+	let props = first(tc, 'tcPr');
+	if (!props) {
+		props = makeW(doc, 'tcPr');
+		tc.insertBefore(props, tc.firstChild);
+	}
+	let borders = first(props, 'tcBorders');
+	if (!borders) {
+		borders = makeW(doc, 'tcBorders');
+		props.appendChild(borders);
+	}
+	const built = buildBorders(doc, next ?? {}, 'tcBorders');
+	for (const side of changed) {
+		for (const old of children(borders, side)) borders.removeChild(old);
+		const replacement = first(built, side);
+		if (replacement) borders.appendChild(replacement);
+	}
+	if (!Array.from(borders.childNodes).some((node) => node.nodeType === 1))
+		props.removeChild(borders);
+	else orderChildren(borders, CELL_BORDER_ORDER);
+	orderChildren(props, CELL_ORDER);
+	if (!Array.from(props.childNodes).some((node) => node.nodeType === 1)) tc.removeChild(props);
 }

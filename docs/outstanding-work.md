@@ -62,7 +62,14 @@ Still missing:
   relationships; while a header, footer or note is being edited, the ribbon (formatting, Insert
   Picture, Link) targets it.
 - Tables: default cell margins (`tblCellMar`) and row properties (height with its rule, keep-together, repeat-as-header) are modeled and render in both views; Print Layout clips exact-height rows and repeats header rows. Table > Properties now edits these settings for rectangular tables, with mixed selected rows, validation and one-step undo. Row properties follow surviving rows during structural edits. Opened DOCX packages save changes to these fields while preserving unrelated table XML. Merged/nested/complex tables remain protected; individual cell margins have no controls. Exact-height rows are a minimum on the continuous editing surface and clipped in Print Layout.
-- Paragraph borders (`w:pBdr`, with `w:space` and grouped `between` lines) and shading render in both views from direct formatting and styles. Home offers presets and a Borders and Shading dialog; art borders and a table/cell border editor remain missing.
+- Paragraph borders (`w:pBdr`, with `w:space` and grouped `between` lines) and shading render in both views from direct formatting and styles. Home offers presets and a Borders and Shading dialog; art borders remain missing.
+  In a rectangular table the Home Borders menu (including Inside vertical) and the dialog's Apply to
+  Cell or Table draw per-cell edges (`w:tcBorders`): the selected cells' rectangle, one pen, the shared edge on the
+  neighbouring cell updated too, one undo step. Existing cell XML keeps its other sides, shading and
+  width; only changed sides are rewritten. Merged/nested/complex tables stay protected; table-level
+  `w:tblBorders` and table styles are not edited (cells override them), pen per side, diagonal
+  borders, cell shading and a preview are not offered, and a cleared edge is written as an explicit
+  `none` rather than removed.
 - Paragraph keep options (`keepNext`, `keepLines`, `widowControl`, `contextualSpacing`) are modeled from styles and direct formatting, preserved through editing and used by Print Layout pagination (headings stay with the next paragraph). The Paragraph dialog exposes these settings, including mixed selections.
 - Toggle properties follow ECMA-376: explicit offs (`w:val="0"`, `w:u w:val="none"`) are kept and cancel styles, styles inherit through basedOn and XOR across style types, and direct formatting is absolute. Bold, Italic, Underline and Strikethrough toggle what the text shows, writing an explicit off for style-inherited formatting as Word does (with a selection; a collapsed caret toggles the typing marks).
 
@@ -220,8 +227,8 @@ Known limits of what is implemented:
   the corresponding first/even/default header or footer, rather than a separate page-number gallery.
 - The Borders menu presets use Word's default 0.5 pt automatic pen. The Borders and Shading dialog
   (paragraphs) sets sides, one style (single, double, dotted, dashed), width and colour for all chosen
-  sides, and a solid fill; there is no per-side pen, Box/Shadow/3-D setting, patterns, page borders or
-  table/cell targeting, and no preview.
+  sides, and a solid fill; there is no per-side pen, Box/Shadow/3-D setting, patterns, page borders, and no preview
+  (Apply to Cell/Table is described under Layout above).
 - The Font dialog now has Font and Advanced tabs. Advanced sets horizontal scale, expanded or
   condensed character spacing, raised/lowered position and a kerning threshold. It preserves
   untouched mixed values, validates edited values, and applies all dialog changes as one undo step.

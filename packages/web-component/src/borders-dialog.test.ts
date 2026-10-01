@@ -67,4 +67,29 @@ describe('Borders and Shading', () => {
 		expect(dialog.isOpen).toBe(false);
 		dialog.element.remove();
 	});
+
+	it('offers Apply to inside a table and draws cell edges instead of paragraph borders', () => {
+		const cell = (id: string) =>
+			schema.nodes.tableCell!.create(null, schema.nodes.paragraph!.create({ id }, schema.text(id)));
+		const table = schema.nodes.table!.create({ id: 't' }, [
+			schema.nodes.tableRow!.create(null, [cell('a'), cell('b')]),
+		]);
+		const doc = schema.node('doc', null, [table]);
+		const view = new EditorView(document.createElement('div'), {
+			state: EditorState.create({ doc, schema }),
+		});
+		view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 4)));
+		const dialog = createBordersDialog(() => view);
+		document.body.append(dialog.element);
+		dialog.open();
+		const field = (name: string) =>
+			dialog.element.querySelector<HTMLInputElement & HTMLSelectElement>(`[aria-label="${name}"]`)!;
+		expect(field('Apply to').value).toBe('cell');
+		field('Right').checked = true;
+		[...dialog.element.querySelectorAll('button')].find((b) => b.textContent === 'OK')!.click();
+		const cells = view.state.doc.firstChild!.firstChild!;
+		expect(JSON.parse(cells.child(0).attrs.directBorders).right.style).toBe('single');
+		expect(JSON.parse(cells.child(1).attrs.directBorders).left.style).toBe('single');
+		dialog.element.remove();
+	});
 });

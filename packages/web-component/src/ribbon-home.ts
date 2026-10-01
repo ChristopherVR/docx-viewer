@@ -42,6 +42,7 @@ const BORDER_PRESETS: Array<[string, string]> = [
 	['all', 'All borders'],
 	['outside', 'Outside borders'],
 	['insideH', 'Inside horizontal border'],
+	['insideV', 'Inside vertical border'],
 	['horizontal', 'Horizontal line'],
 ];
 const FONT_COLORS: Array<[string, string]> = [

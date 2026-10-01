@@ -12,7 +12,8 @@ export type BorderPreset =
 	| 'right'
 	| 'all'
 	| 'outside'
-	| 'insideH';
+	| 'insideH'
+	| 'insideV';
 
 type Side = 'top' | 'bottom' | 'left' | 'right' | 'between';
 type BorderSide = { style: string; sizeEighthPoints: number; color?: string; spacePoints?: number };
@@ -21,7 +22,7 @@ type Borders = Partial<Record<Side, BorderSide>>;
 /** Word's default border pen: a single 0.5 pt automatic-colour line, 1 pt from the text. */
 const PEN: BorderSide = { style: 'single', sizeEighthPoints: 4, spacePoints: 1 };
 
-const SIDES_OF: Record<Exclude<BorderPreset, 'none' | 'horizontal'>, Side[]> = {
+const SIDES_OF: Record<Exclude<BorderPreset, 'none' | 'horizontal' | 'insideV'>, Side[]> = {
 	bottom: ['bottom'],
 	top: ['top'],
 	left: ['left'],
@@ -90,6 +91,7 @@ export function insertHorizontalLine(view: EditorView): boolean {
 export function setBorders(view: EditorView, preset: BorderPreset): boolean {
 	if (!view.editable) return false;
 	if (preset === 'horizontal') return insertHorizontalLine(view);
+	if (preset === 'insideV') return false;
 	const positions = selectedParagraphs(view.state);
 	const sides = preset === 'none' ? [] : SIDES_OF[preset];
 	const allHave =

@@ -105,6 +105,7 @@ export const zhCNRibbon: RibbonStrings = {
 	'All borders': '所有框线',
 	'Outside borders': '外侧框线',
 	'Inside horizontal border': '内部横框线',
+	'Inside vertical border': '内部竖框线',
 	'Shading options': '底纹选项',
 	'Borders options': '边框选项',
 	'Header & Footer': '页眉和页脚',

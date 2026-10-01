@@ -84,6 +84,7 @@ function borderThumb(value: string): SVGSVGElement {
 		all: ['t', 'b', 'l', 'r', 'h', 'v'],
 		outside: ['t', 'b', 'l', 'r'],
 		insideH: ['h'],
+		insideV: ['v'],
 		horizontal: ['h'],
 		none: [],
 	};

@@ -21,6 +21,11 @@ import { setBorders, setShading } from './paragraph-decoration';
 import { formatDateTime, insertPlainText } from './insert-text-commands';
 import { selectAll } from 'prosemirror-commands';
 import { exitListOnEmptyEnter, indentListItem, outdentListItem } from './list-commands';
+import {
+	setCellBorders,
+	tableBorderContext,
+	type TableBorderPreset,
+} from './table-border-commands';
 
 const marks = {
 	bold: toggleFormat('bold'),
@@ -139,8 +144,12 @@ export function runRibbonCommand(
 		insertPageBreak(view.state, view.dispatch, view);
 	} else if (action.type === 'shading')
 		setShading(view, action.value === 'none' ? null : action.value);
-	else if (action.type === 'borders') setBorders(view, action.preset);
-	else if (action.type === 'indent') setIndent(view, action.side, action.inches);
+	else if (action.type === 'borders') {
+		// In a table the Borders menu draws cell edges, as in Word; elsewhere it styles paragraphs.
+		const inTable = tableBorderContext(view.state) && action.preset !== 'horizontal';
+		if (inTable) setCellBorders(view, action.preset as TableBorderPreset);
+		else setBorders(view, action.preset);
+	} else if (action.type === 'indent') setIndent(view, action.side, action.inches);
 	else if (action.type === 'insertSymbol') insertPlainText(view, action.value);
 	else if (action.type === 'dropCap') setDropCap(view, action.value);
 	else if (action.type === 'insertDateTime')

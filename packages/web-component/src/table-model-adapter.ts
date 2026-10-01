@@ -64,6 +64,7 @@ export function tableNode(
 						verticalAlign: cell.verticalAlign ?? null,
 						shadingFill: visuals.shadingFill ?? null,
 						borders: visuals.borders ? JSON.stringify(visuals.borders) : null,
+						directBorders: cell.borders ? JSON.stringify(cell.borders) : null,
 						margins: cell.margins ? JSON.stringify(cell.margins) : null,
 					},
 					children,
@@ -130,8 +131,17 @@ export function convertSimpleTable(
 				if (paragraph.type.name === 'paragraph') paragraphs.push(convertParagraph(paragraph));
 			});
 			const source = priorCells.get(String(cell.attrs.sourceCellKey || ''));
-			const { paragraphs: _previous, ...properties } = source ?? { paragraphs: [] };
-			cells.push({ ...structuredClone(properties), paragraphs });
+			const {
+				paragraphs: _previous,
+				borders: _borders,
+				...properties
+			} = source ?? { paragraphs: [] };
+			const direct = typeof cell.attrs.directBorders === 'string' ? cell.attrs.directBorders : null;
+			cells.push({
+				...structuredClone(properties),
+				...(direct ? { borders: JSON.parse(direct) as NonNullable<TableCell['borders']> } : {}),
+				paragraphs,
+			});
 		});
 		rows.push(cells);
 	});

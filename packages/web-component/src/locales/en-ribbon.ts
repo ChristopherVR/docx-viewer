@@ -98,6 +98,7 @@ export const enRibbon = {
 	'All borders': 'All borders',
 	'Outside borders': 'Outside borders',
 	'Inside horizontal border': 'Inside horizontal border',
+	'Inside vertical border': 'Inside vertical border',
 	'Shading options': 'Shading options',
 	'Borders options': 'Borders options',
 	'Header & Footer': 'Header & Footer',

@@ -4,6 +4,12 @@ import { focusView } from './focus-view';
 import type { FormatDialog } from './font-dialog';
 import { localizeElement, type EditorLocale } from './localization';
 import {
+	applyCellBorderSettings,
+	readCellBorderSettings,
+	tableBorderContext,
+	type CellBorderSettings,
+} from './table-border-commands';
+import {
 	applyBordersAndShading,
 	readBordersAndShading,
 	type BordersAndShading,
@@ -36,6 +42,12 @@ export function createBordersDialog(getView: () => EditorView | undefined): Form
 		left: checkbox('Left'),
 		right: checkbox('Right'),
 	};
+	const inside = { insideH: checkbox('Inside horizontal'), insideV: checkbox('Inside vertical') };
+	const scope = selectOf([
+		['paragraph', 'Paragraph'],
+		['cell', 'Cell'],
+		['table', 'Table'],
+	]);
 	const style = selectOf([
 		['single', 'Single'],
 		['double', 'Double'],
@@ -58,7 +70,9 @@ export function createBordersDialog(getView: () => EditorView | undefined): Form
 		heading,
 		fieldset(
 			'Borders',
+			labelled('Apply to', scope),
 			row(...Object.values(sides).map((side) => side.wrapper)),
+			row(inside.insideH.wrapper, inside.insideV.wrapper),
 			row(labelled('Style', style), labelled('Width', width)),
 			row(labelled('Color', color), automatic.wrapper),
 		),
@@ -69,6 +83,51 @@ export function createBordersDialog(getView: () => EditorView | undefined): Form
 	const content = [...element.childNodes];
 	element.replaceChildren();
 
+	const loadParagraph = (view: EditorView) => {
+		const current = readBordersAndShading(view.state);
+		for (const [name, box] of Object.entries(sides))
+			box.input.checked = Boolean(current.sides[name as 'top']);
+		style.value = current.style;
+		width.value = WIDTHS.some(([value]) => value === String(current.sizeEighthPoints))
+			? String(current.sizeEighthPoints)
+			: '4';
+		automatic.input.checked = current.color === null;
+		color.value = current.color ?? '#000000';
+		noFill.input.checked = current.fill === null;
+		fill.value = current.fill ?? '#ffff00';
+	};
+	const inTable = () => {
+		const view = getView();
+		return Boolean(view && tableBorderContext(view.state));
+	};
+	const show = () => {
+		const view = getView();
+		if (!view) return;
+		const cells = scope.value !== 'paragraph';
+		inside.insideH.wrapper.hidden = !cells;
+		inside.insideV.wrapper.hidden = !cells;
+		if (!cells) loadParagraph(view);
+		fill.disabled = cells || noFill.input.checked;
+		noFill.input.disabled = cells;
+		if (cells) {
+			const read = readCellBorderSettings(view.state, scope.value as 'cell' | 'table');
+			if (!read) return;
+			for (const [name, box] of Object.entries(sides))
+				box.input.checked = Boolean(read.sides[name as 'top']);
+			inside.insideH.input.checked = Boolean(read.sides.insideH);
+			inside.insideV.input.checked = Boolean(read.sides.insideV);
+			style.value = ['single', 'double', 'dotted', 'dashed'].includes(read.pen.style)
+				? read.pen.style
+				: 'single';
+			width.value = WIDTHS.some(([value]) => value === String(read.pen.sizeEighthPoints))
+				? String(read.pen.sizeEighthPoints)
+				: '4';
+			automatic.input.checked = !read.pen.color;
+			color.value = read.pen.color ?? '#000000';
+		}
+		syncDisabled();
+	};
+	scope.addEventListener('change', show);
 	const syncDisabled = () => {
 		color.disabled = automatic.input.checked;
 		fill.disabled = noFill.input.checked;
@@ -83,6 +142,26 @@ export function createBordersDialog(getView: () => EditorView | undefined): Form
 	ok.addEventListener('click', () => {
 		const view = getView();
 		if (!view) return;
+		if (scope.value !== 'paragraph') {
+			const cellSettings: CellBorderSettings = {
+				scope: scope.value as 'cell' | 'table',
+				sides: {
+					...Object.fromEntries(
+						Object.entries(sides).map(([name, box]) => [name, box.input.checked]),
+					),
+					insideH: inside.insideH.input.checked,
+					insideV: inside.insideV.input.checked,
+				},
+				pen: {
+					style: style.value,
+					sizeEighthPoints: Number(width.value),
+					...(automatic.input.checked ? {} : { color: color.value }),
+				},
+			};
+			applyCellBorderSettings(view, cellSettings);
+			hide();
+			return;
+		}
 		const settings: BordersAndShading = {
 			sides: Object.fromEntries(
 				Object.entries(sides).map(([name, box]) => [name, box.input.checked]),
@@ -106,18 +185,11 @@ export function createBordersDialog(getView: () => EditorView | undefined): Form
 			if (!view) return;
 			element.replaceChildren(...content);
 			localizeElement(element, locale);
-			const current = readBordersAndShading(view.state);
-			for (const [name, box] of Object.entries(sides))
-				box.input.checked = Boolean(current.sides[name as 'top']);
-			style.value = current.style;
-			width.value = WIDTHS.some(([value]) => value === String(current.sizeEighthPoints))
-				? String(current.sizeEighthPoints)
-				: '4';
-			automatic.input.checked = current.color === null;
-			color.value = current.color ?? '#000000';
-			noFill.input.checked = current.fill === null;
-			fill.value = current.fill ?? '#ffff00';
-			syncDisabled();
+			const tabled = inTable();
+			scope.parentElement!.hidden = !tabled;
+			scope.value = tabled ? 'cell' : 'paragraph';
+			loadParagraph(view);
+			show();
 			ok.disabled = !view.editable;
 			element.hidden = false;
 			sides.top.input.focus();

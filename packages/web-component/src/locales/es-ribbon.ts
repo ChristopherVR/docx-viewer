@@ -107,6 +107,7 @@ export const esRibbon: RibbonStrings = {
 	'All borders': 'Todos los bordes',
 	'Outside borders': 'Bordes exteriores',
 	'Inside horizontal border': 'Borde horizontal interior',
+	'Inside vertical border': 'Borde vertical interior',
 	'Shading options': 'Opciones de sombreado',
 	'Borders options': 'Opciones de bordes',
 	'Header & Footer': 'Encabezado y pie de página',

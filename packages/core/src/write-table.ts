@@ -1,6 +1,10 @@
 import { expectDefined } from './expect-defined.js';
 import type { Paragraph, Table, TableCell } from './model.js';
-import { patchRowProperties, patchTableMargins } from './write-table-properties.js';
+import {
+	patchCellBorders,
+	patchRowProperties,
+	patchTableMargins,
+} from './write-table-properties.js';
 import {
 	children,
 	first,
@@ -80,7 +84,6 @@ const CELL_DESCRIPTOR_KEYS = [
 	'verticalAlign',
 	'shadingFill',
 	'shadingThemeFill',
-	'borders',
 	'margins',
 ] as const;
 function pick(source: object, keys: readonly string[]): Record<string, unknown> {
@@ -118,7 +121,7 @@ function assertNoDescriptorEdits(table: Table, base: Table | undefined): void {
 				JSON.stringify(pick(source, CELL_DESCRIPTOR_KEYS))
 			)
 				throw new Error(
-					'Cannot edit table cell width, merge, vertical alignment, shading, borders, or margins on an existing cell; only cell text is supported. The original DOCX package remains unchanged.',
+					'Cannot edit table cell width, merge, vertical alignment, shading, or margins on an existing cell; only cell text and borders are supported. The original DOCX package remains unchanged.',
 				);
 		}
 }
@@ -146,7 +149,13 @@ export function writeTable(
 	)
 		throw new Error('Tables must contain rectangular rows and at least one paragraph per cell.');
 	const oldRows = children(node, 'tr');
-	type Source = { row: number; col: number; cell: XmlElement; paragraphs: Paragraph[] };
+	type Source = {
+		row: number;
+		col: number;
+		cell: XmlElement;
+		paragraphs: Paragraph[];
+		model: TableCell;
+	};
 	const sourceById = new Map<string, Source>();
 	base?.rows.forEach((row, ri) =>
 		row.forEach((cell, ci) => {
@@ -158,6 +167,7 @@ export function writeTable(
 						col: ci,
 						cell: oldCell,
 						paragraphs: cell.paragraphs,
+						model: cell,
 					});
 		}),
 	);
@@ -202,6 +212,7 @@ export function writeTable(
 			)
 				throw new Error('Moving paragraphs between table cells is not supported.');
 			const tc = source?.cell ?? makeW(doc, 'tc');
+			patchCellBorders(doc, tc, cell.borders, source?.model.borders);
 			const oldParagraphs = children(tc, 'p');
 			const nextParagraphs = cell.paragraphs.map((paragraph) => {
 				const index = source?.paragraphs.findIndex((p) => p.id === paragraph.id) ?? -1;
