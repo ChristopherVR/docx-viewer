@@ -53,7 +53,7 @@ describe('sections', () => {
 			titlePage: true,
 			verticalAlign: 'center',
 			lineNumbering: true,
-			pageBorders: true,
+			pageBorders: {},
 			pageNumbering: { start: 1, format: 'upperRoman' },
 			columns: { count: 1, equalWidth: true },
 		});

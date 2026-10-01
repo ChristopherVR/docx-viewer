@@ -1,3 +1,4 @@
+import type { PageBorders } from '@christophervr/docx-core';
 import {
 	cssFontStack,
 	ligatureCss,
@@ -9,6 +10,7 @@ import {
 } from '@christophervr/docx-layout';
 import { renderTable } from './print-table';
 import { lineNumberLabels, type PrintLineNumbering } from './print-line-numbers';
+import { pageBorderBox } from './print-page-borders';
 export type { PrintLineNumbering } from './print-line-numbers';
 
 /** One clickable line, recorded for best-effort click-to-cursor mapping. */
@@ -224,6 +226,8 @@ function footnoteArea(
 export interface PrintLayoutOptions {
 	/** Line numbering by section index; sections without an entry print no numbers. */
 	lineNumbers?: ReadonlyArray<PrintLineNumbering | undefined>;
+	/** Page borders by section index; drawn on each page they apply to. */
+	pageBorders?: ReadonlyArray<PageBorders | undefined>;
 	/** Paragraphs with effective `w:suppressLineNumbers`; omitted from the counter. */
 	suppressedLineNumberParagraphs?: ReadonlySet<string>;
 }
@@ -244,6 +248,9 @@ export function renderPrintLayout(
 		sheet.dataset.pageIndex = String(pageIndex);
 		sheet.style.width = `${page.widthPx}px`;
 		sheet.style.height = `${page.heightPx}px`;
+		const borders = options.pageBorders?.[page.sectionIndex];
+		const borderBox = borders ? pageBorderBox(page, borders) : null;
+		if (borderBox) sheet.append(borderBox);
 		for (const column of page.columns) {
 			const previous = page.columns[page.columns.indexOf(column) - 1];
 			if (page.columnSeparator && previous) {

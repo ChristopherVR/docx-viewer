@@ -70,6 +70,7 @@ export function createPrintLayoutController(
 		result = layoutDocumentModel(model, measurer);
 		handle = renderPrintLayout(result, pictureUrl, {
 			lineNumbers: (model.sections ?? []).map((section) => section.lineNumberSettings),
+			pageBorders: (model.sections ?? []).map((section) => section.pageBorders),
 			suppressedLineNumberParagraphs: new Set(
 				model.blocks
 					.filter(

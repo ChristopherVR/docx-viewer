@@ -13,6 +13,8 @@ export interface TableBorderSide {
 	themeColor?: ThemeColorToken;
 	/** Paragraph borders only: gap between the border and the text (`w:space`), in points. */
 	spacePoints?: number;
+	/** Page borders only: a Word art border (`w:art`); drawn as a plain line. */
+	art?: string;
 }
 /** Paragraph borders (`w:pBdr`); `between` separates paragraphs that share the same borders. */
 export interface ParagraphBorders {

@@ -21,6 +21,8 @@ export type {
 	HeaderFooterSlots,
 	LineNumberSettings,
 	Note,
+	PageBorders,
+	PageBorderSide,
 	SectionColumn,
 	SectionColumns,
 	SectionPageNumbering,

@@ -121,6 +121,19 @@ export class PageController {
 		);
 	}
 
+	/** Layout > Page Borders, recorded as one undoable section edit. */
+	applyPageBorders(borders: SectionProperties['pageBorders']): void {
+		const view = this.host.view();
+		if (!view?.editable || !this.host.canEditOutsideBody()) return;
+		const model = this.host.model();
+		this.dispatchSections(
+			withSection(model, currentSectionIndex(view, model), (section) => {
+				const { pageBorders: _previous, ...rest } = section;
+				return borders ? { ...rest, pageBorders: borders } : rest;
+			}),
+		);
+	}
+
 	/** Insert > Page Number: a PAGE field in the header or footer, creating the part when needed. */
 	insertPageNumber(
 		position: 'top' | 'bottom',

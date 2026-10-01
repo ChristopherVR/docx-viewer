@@ -3,6 +3,7 @@ import type { EditorView } from 'prosemirror-view';
 import { createFontDialog, type FormatDialog } from './font-dialog';
 import type { EditorLocale } from './localization';
 import { createBookmarkDialog } from './bookmark-dialog';
+import { createPageBordersDialog, type PageBordersHost } from './page-borders-dialog';
 import { createBordersDialog } from './borders-dialog';
 import { createCaptionDialog } from './caption-dialog';
 import { createCrossReferenceDialog } from './cross-reference-dialog';
@@ -28,6 +29,7 @@ export type FormatDialogKind =
 	| 'borders'
 	| 'tableProperties'
 	| 'lineNumbers'
+	| 'pageBorders'
 	| 'dropCap'
 	| 'columns'
 	| 'multilevelList';
@@ -43,6 +45,7 @@ export interface FormatDialogsHost {
 	/** View > Zoom: the current zoom and how to change it. */
 	zoom?: Omit<ZoomHost, 'restoreFocus'>;
 	lineNumbers?: Omit<LineNumberHost, 'restoreFocus'>;
+	pageBorders?: Omit<PageBordersHost, 'restoreFocus'>;
 	columns?: Omit<ColumnsHost, 'restoreFocus'>;
 }
 
@@ -80,6 +83,14 @@ export class FormatDialogs {
 			}),
 			borders: createBordersDialog(() => host.view()),
 			tableProperties: createTablePropertiesDialog(() => host.view()),
+			pageBorders: createPageBordersDialog({
+				...(host.pageBorders ?? {
+					section: () => undefined,
+					canEdit: () => false,
+					apply: () => {},
+				}),
+				restoreFocus: () => focusView(host.view()),
+			}),
 			lineNumbers: createLineNumberDialog({
 				...(host.lineNumbers ?? {
 					section: () => undefined,

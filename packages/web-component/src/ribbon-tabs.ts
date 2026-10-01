@@ -428,6 +428,12 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				'#e2efd9',
 				{ noneLabel: 'No Color' },
 			),
+			tool(
+				'Page borders',
+				'pageBorders',
+				{ type: 'formatDialog', kind: 'pageBorders' },
+				{ large: true, caption: 'Page Borders' },
+			),
 		),
 		...buildParagraphSpacing(),
 	);

@@ -116,6 +116,7 @@ const paths = {
 	caption: 'M4 5h16v11H4z M4 19h10 M8 9l2 3 2-3',
 	crossReference: 'M9 15l6-6 M8 8H5a3 3 0 0 0 0 6h3 M16 16h3a3 3 0 0 0 0-6h-3',
 	deleteComment: 'M4 5h16v11H10l-4 4v-4H4z M9 8.5l5 5 M14 8.5l-5 5',
+	pageBorders: 'M4 4h16v16H4z M7 7h10v10H7z',
 	pageColor: 'M6 3h9l3 3v15H6z M9 11h6v6H9z',
 	hyphenation: 'M4 6h16 M4 11h9 M16 11h4 M4 16h16 M13 11h3',
 	caret: 'M7 10l5 5 5-5',

@@ -3,6 +3,7 @@
 // sections, new section breaks (a paragraph-level w:sectPr copied from the following section,
 // as Word does) and removed breaks. Other section properties stay protected.
 import type { Block, HeaderFooterSlots, SectionProperties } from './model.js';
+import { patchPageBorders } from './page-borders.js';
 import { orderSectionProperties } from './element-order.js';
 import { orderParagraphProperties } from './tab-stops.js';
 import { children, first, makeW, WORD_NS, type XmlDocument, type XmlElement } from './xml.js';
@@ -27,6 +28,7 @@ const WRITABLE = new Set([
 	'pageNumbering',
 	'lineNumbering',
 	'lineNumberSettings',
+	'pageBorders',
 	'headers',
 	'footers',
 ]);
@@ -88,9 +90,15 @@ const AFTER_TITLEPG = [
 	'printerSettings',
 	'sectPrChange',
 ];
+const AFTER_PGBORDERS = ['lnNumType', ...AFTER_LNNUM];
 const AFTER_TYPE = ['pgSz', ...AFTER_PGSZ];
 
-function writeSectionProperties(doc: XmlDocument, sectPr: XmlElement, section: SectionProperties) {
+function writeSectionProperties(
+	doc: XmlDocument,
+	sectPr: XmlElement,
+	section: SectionProperties,
+	base?: SectionProperties,
+) {
 	if (section.type === 'nextPage')
 		for (const type of children(sectPr, 'type')) sectPr.removeChild(type);
 	else setW(child(doc, sectPr, 'type', AFTER_TYPE), 'val', section.type);
@@ -149,6 +157,9 @@ function writeSectionProperties(doc: XmlDocument, sectPr: XmlElement, section: S
 		else lnNum.removeAttributeNS(WORD_NS, 'restart');
 	} else if (!section.lineNumbering)
 		for (const lnNum of children(sectPr, 'lnNumType')) sectPr.removeChild(lnNum);
+	patchPageBorders(doc, sectPr, section.pageBorders, base?.pageBorders, (d, parent, name) =>
+		child(d, parent, name, AFTER_PGBORDERS),
+	);
 	const numbering = section.pageNumbering;
 	if (numbering?.format || numbering?.start !== undefined) {
 		const pgNumType = child(doc, sectPr, 'pgNumType', AFTER_PGNUMTYPE);
@@ -281,7 +292,7 @@ export function applySectionEdits(
 		}
 		assertWritable(section, previous);
 		if (!previous || JSON.stringify(previous) !== JSON.stringify(section)) {
-			writeSectionProperties(doc, sectPr, section);
+			writeSectionProperties(doc, sectPr, section, previous);
 			writeNewReferences(doc, sectPr, section, previous, references);
 			orderSectionProperties(sectPr);
 		}

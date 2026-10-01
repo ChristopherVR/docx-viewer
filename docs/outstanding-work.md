@@ -49,8 +49,7 @@ Still missing:
   numbers are drawn in Print Layout only, with per-paragraph suppression in the menu and Paragraph
   dialog, including style inheritance and explicit offs. Tables are excluded.
   The model uses visible start numbers and converts Word's zero-based `w:start` at the package boundary);
-  page borders are still protected (only their presence is
-  modeled). The continuous surface shows columns only for single-section documents (Print Layout
+  Layout > Page Borders sets a section's `w:pgBorders` (None, Box or Custom sides, one pen of single, double, dotted, dashed or thick, width, colour, distance, measured from the page edge or the text, shown on all pages, the first page or all but the first; undoable). Print Layout draws them; the continuous editing surface has no pages, so it does not. Imported art borders (`w:art`) are read, kept when untouched, drawn as plain lines, and replaced by a plain pen if the dialog is applied to that side; per-side pens, in-front/behind and Apply-to-document scopes are not offered, and the border is not clipped around headers and footers. The continuous surface shows columns only for single-section documents (Print Layout
   shows all); vertically justified sections lay out top-aligned.
 - Ctrl+Alt+F / Ctrl+Alt+D (insert footnote/endnote) are bound, but Windows browsers can report
   Ctrl+Alt as AltGr and not deliver them; the References ribbon buttons always work.
@@ -313,7 +312,7 @@ Still not at parity:
   list too). Line Spacing offers presets; the Paragraph dialog has the rest.
 - **Insert:** Cover Page galleries (one plain design exists), Shapes, Icons, 3D Models, SmartArt,
   Charts, Screenshot, inserting Text Boxes, WordArt, Equation, Signature Line, Object.
-- **Layout and References:** Manual Hyphenation and its options, Watermark, Page Borders, Position
+- **Layout and References:** Manual Hyphenation and its options, Watermark, Position
   and Wrap Text, Citations, Bibliography, Index and Table of Authorities, and
   automatic updating of `REF`, `PAGEREF` and `SEQ` results (Update Fields refreshes them on request;
   only captions renumber on insert).

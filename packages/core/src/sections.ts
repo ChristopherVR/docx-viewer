@@ -2,6 +2,7 @@
 import type { Block, SectionColumns, SectionProperties } from './model.js';
 import { children, first, getW, isElement, named, type XmlElement } from './xml.js';
 import { getRelationshipId } from './relationships.js';
+import { parsePageBorders } from './page-borders.js';
 import { isStNumberFormat, isStSectionMark, isStVerticalJc } from './generated/wml-simple-types.js';
 import { enumValue } from './parse-diagnostics.js';
 import { twips } from './units.js';
@@ -77,6 +78,11 @@ function lineNumbering(
 	};
 }
 
+function pageBordersOf(element: XmlElement | undefined) {
+	const borders = parsePageBorders(element);
+	return borders ? { pageBorders: borders } : {};
+}
+
 function parseOneSection(section: XmlElement, endsAtBlockId: string): RawSection {
 	const size = first(section, 'pgSz');
 	const margins = first(section, 'pgMar');
@@ -113,7 +119,7 @@ function parseOneSection(section: XmlElement, endsAtBlockId: string): RawSection
 				}
 			: {}),
 		...lineNumbering(first(section, 'lnNumType')),
-		...(first(section, 'pgBorders') ? { pageBorders: true } : {}),
+		...pageBordersOf(first(section, 'pgBorders')),
 		headerRefs: parseHeaderFooterRefs(section, 'headerReference'),
 		footerRefs: parseHeaderFooterRefs(section, 'footerReference'),
 	};

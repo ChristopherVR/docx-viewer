@@ -110,6 +110,11 @@ export class EditorCore {
 				canEdit: () => !this.readOnly && !this.collab.client,
 				apply: (settings) => this.pages.applyLineNumberSettings(settings),
 			},
+			pageBorders: {
+				section: () => this.pages.currentSection(),
+				canEdit: () => !this.readOnly && !this.collab.client,
+				apply: (borders) => this.pages.applyPageBorders(borders),
+			},
 			columns: {
 				section: () => this.pages.currentSection(),
 				canEdit: () => !this.readOnly && !this.collab.client,

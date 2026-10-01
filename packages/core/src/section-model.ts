@@ -2,8 +2,22 @@
 // Sections, headers/footers and footnotes/endnotes.
 import type { Block } from './model.js';
 import type { StNumberFormat, StSectionMark, StVerticalJc } from './generated/wml-simple-types.js';
+import type { TableBorderSide } from './table-model.js';
 import type { SignedTwips, Twips } from './units.js';
 
+/** A page border line; `spacePoints` is its `w:space` distance from the measured edge. */
+export type PageBorderSide = TableBorderSide;
+/** `w:pgBorders`: sides plus where they are measured from and on which pages they show. */
+export interface PageBorders {
+	top?: PageBorderSide;
+	left?: PageBorderSide;
+	bottom?: PageBorderSide;
+	right?: PageBorderSide;
+	/** `w:offsetFrom`: `page` (default) measures from the page edge, `text` from the margins. */
+	offsetFrom?: 'page' | 'text';
+	display?: 'allPages' | 'firstPage' | 'notFirstPage';
+	zOrder?: 'front' | 'back';
+}
 /** Header/footer content, parsed with the same paragraph/table parser as the body. */
 export interface HeaderFooterContent {
 	blocks: Block[];
@@ -73,8 +87,8 @@ export interface SectionProperties {
 	lineNumbering?: boolean;
 	/** The `w:lnNumType` values behind `lineNumbering`. */
 	lineNumberSettings?: LineNumberSettings;
-	/** `w:pgBorders` presence; border styling itself is not modeled. */
-	pageBorders?: boolean;
+	/** `w:pgBorders`: the section's page border lines. */
+	pageBorders?: PageBorders;
 	headers?: HeaderFooterSlots;
 	footers?: HeaderFooterSlots;
 }
