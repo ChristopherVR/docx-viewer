@@ -1,7 +1,7 @@
 # Framework bindings
 
 ::: warning Not published to npm yet
-Nothing has been released yet, so there is nothing to `npm install` today. Build from the repository (`bun install`, `bun run demo`). Each framework has its own self-contained package: `@christophervr/docx-react-viewer`, `-vue-viewer`, `-angular-viewer`, `-svelte-viewer`, `-solid-viewer` and `-vanilla-viewer`. Each bundles the editor, layout engine and legacy `.doc` reader, and needs only `@christophervr/docx-core` plus its framework as a peer. Use one editor package per application.
+Nothing has been released yet, so there is nothing to `npm install` today. Build from the repository (`bun install`, `bun run demo`). Each framework has its own self-contained package: `@christophervr/docx-react-viewer`, `-vue-viewer`, `-angular-viewer`, `-svelte-viewer`, `-solid-viewer` and `-vanilla-viewer`. Each bundles the editor, layout engine and legacy `.doc` reader, brings `@christophervr/docx-core` with it (and re-exports the model API), so it needs only its framework as a peer. Use one editor package per application.
 :::
 
 All bindings mount `<docx-editor>` through the same `mountEditor` function. A property assignment is an external document replacement, not an edit event. `document-change` carries a `DocumentModel` directly; `document-error` carries an `Error`. Both events bubble across the shadow boundary.

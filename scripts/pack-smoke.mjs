@@ -92,7 +92,7 @@ const frameworks = { react, vue, angular, solid, svelte, vanilla };
 const component = { react: 'WordEditor', vue: 'WordEditor', angular: 'WordEditorComponent', solid: 'WordEditor' };
 for (const [name, entry] of Object.entries(frameworks)) {
 	if (component[name]) assert(entry[component[name]], name + ' must export its component');
-	for (const helper of ['loadDocument', 'detectDocumentFormat', 'registerDocxEditor', 'normalizeEditorLocale'])
+	for (const helper of ['loadDocument', 'detectDocumentFormat', 'registerDocxEditor', 'normalizeEditorLocale', 'createDocument'])
 		assert.equal(typeof entry[helper], 'function', name + ' must export ' + helper);
 }
 assert.equal(typeof vanilla.mountEditor, 'function');

@@ -54,11 +54,10 @@ The DOCX logic comes from the published [`@christophervr/ooxml-core`](https://gi
 
 ### 2. Mount the editor (intended API)
 
-Install `@christophervr/docx-core` (the document model) plus one self-contained editor package for your framework, for example `npm install @christophervr/docx-react-viewer @christophervr/docx-core react`. The editor packages are `@christophervr/docx-react-viewer`, `-vue-viewer`, `-angular-viewer`, `-svelte-viewer`, `-solid-viewer` and `-vanilla-viewer`; each bundles the editor, layout engine and legacy `.doc` reader, so nothing else is required.
+Install one self-contained editor package for your framework, for example `npm install @christophervr/docx-react-viewer react`. The editor packages are `@christophervr/docx-react-viewer`, `-vue-viewer`, `-angular-viewer`, `-svelte-viewer`, `-solid-viewer` and `-vanilla-viewer`. Each one bundles the editor, layout engine and legacy `.doc` reader, brings the document model (`@christophervr/docx-core`) with it, and re-exports it, so a single install and a single import path are all an application needs. Install `@christophervr/docx-core` on its own only for headless use (parsing and serializing without an editor).
 
 ```tsx
-import { createDocument } from '@christophervr/docx-core';
-import { WordEditor } from '@christophervr/docx-react-viewer';
+import { createDocument, WordEditor } from '@christophervr/docx-react-viewer';
 
 export function Editor() {
 	const [model, setModel] = useState(() => createDocument());
@@ -72,8 +71,7 @@ export function Editor() {
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue';
-import { createDocument } from '@christophervr/docx-core';
-import { WordEditor } from '@christophervr/docx-vue-viewer';
+import { createDocument, WordEditor } from '@christophervr/docx-vue-viewer';
 
 const model = ref(createDocument());
 </script>
@@ -88,8 +86,7 @@ const model = ref(createDocument());
 <summary><strong>Angular</strong></summary>
 
 ```ts
-import { createDocument } from '@christophervr/docx-core';
-import { WordEditorComponent } from '@christophervr/docx-angular-viewer';
+import { createDocument, WordEditorComponent } from '@christophervr/docx-angular-viewer';
 
 @Component({
 	standalone: true,
@@ -108,8 +105,8 @@ export class EditorComponent {
 
 ```svelte
 <script>
-  import { createDocument } from '@christophervr/docx-core';
   import WordEditor from '@christophervr/docx-svelte-viewer';
+  import { createDocument } from '@christophervr/docx-svelte-viewer/runtime';
   let model = $state(createDocument());
 </script>
 <WordEditor documentModel={model} ondocumentchange={next => model = next} />
@@ -122,8 +119,7 @@ export class EditorComponent {
 
 ```tsx
 import { createSignal } from 'solid-js';
-import { createDocument } from '@christophervr/docx-core';
-import { WordEditor } from '@christophervr/docx-solid-viewer';
+import { createDocument, WordEditor } from '@christophervr/docx-solid-viewer';
 
 export function Editor() {
 	const [model, setModel] = createSignal(createDocument());
@@ -137,8 +133,7 @@ export function Editor() {
 <summary><strong>Vanilla JavaScript</strong></summary>
 
 ```ts
-import { createDocument } from '@christophervr/docx-core';
-import { mountEditor } from '@christophervr/docx-vanilla-viewer';
+import { createDocument, mountEditor } from '@christophervr/docx-vanilla-viewer';
 
 const editor = mountEditor(container, {
 	documentModel: createDocument(),
