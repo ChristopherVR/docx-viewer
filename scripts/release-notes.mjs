@@ -5,7 +5,7 @@
  * Single source of truth for a package's "what's new in this release" notes.
  *
  * Usage: `node scripts/release-notes.mjs <key>` where <key> is a package key in
- * release-plan.json (core, react, vue, angular, vanilla, svelte, tools, cli).
+ * release-plan.json (core, react, vue, angular, svelte, solid, vanilla).
  * Prints the release-body markdown to stdout.
  *
  * Both the GitHub release body and (in future) the friendly CHANGELOG.md draw

@@ -32,6 +32,8 @@ jobs:
       - run: bun x playwright install --with-deps chromium
       - run: bun run test:browser
       - run: bun run build:packages
+      # No published tarball may import an internal package or ole2 (they are inlined).
+      - run: bun run check:published
       - run: bun run pack:smoke
       - run: bun run check:shared
 

@@ -101,6 +101,7 @@ jobs:
         if: steps.plan.outputs.any_changed == 'true'
         run: |
           bun run build:packages
+          bun run check:published
           bun run pack:smoke
 
       # Prepend the new release section to each released package's CHANGELOG.md. Prepend (rather
@@ -327,6 +328,8 @@ jobs:
       - run: bun install --frozen-lockfile
 
       - run: bun run build:packages
+
+      - run: bun run check:published
 
       - name: Publish packages to npm
         env:

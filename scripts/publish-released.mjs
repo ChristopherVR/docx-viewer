@@ -13,6 +13,7 @@
  * Safety checks before anything is uploaded, per package:
  *   - the manifest on disk is the version being published (a re-publish checks out the tag),
  *   - no dependency range uses the `workspace:` or `file:` protocol, which no consumer can install,
+ *   - no dependency names an internal workspace package or `@christophervr/ole2` (they are bundled),
  *   - every range on another package of this repo points at the version that package ships with,
  *   - a version that already exists on the registry is skipped, so a re-run is idempotent,
  *   - a version older than the registry's `latest` is published under the `old` dist-tag so it
@@ -27,6 +28,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { forbiddenManifestEntries } from './check-published-refs.mjs';
 import { cmpSemver, PACKAGES } from './release-plan.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -66,6 +68,10 @@ export function verifyManifest(target, versions = workspaceVersions()) {
 		throw new Error(`${target.npm} is ${manifest.version} on disk, release is ${target.version}.`);
 	}
 	if (manifest.private) throw new Error(`${target.npm} is private and cannot be published.`);
+	// Internal packages and ole2 are inlined at build time; a manifest naming one is uninstallable.
+	const forbidden = forbiddenManifestEntries(manifest);
+	if (forbidden.length > 0)
+		throw new Error(`${target.npm} depends on unpublished packages: ${forbidden.join(', ')}.`);
 	for (const field of FIELDS) {
 		for (const [dep, range] of Object.entries(manifest[field] ?? {})) {
 			if (/^(?:workspace|file|link):/u.test(range)) {
@@ -108,7 +114,7 @@ function distTag(name, version) {
 
 function main() {
 	const argv = process.argv.slice(2);
-	const value = (flag) => argv[argv.indexOf(flag) + 1];
+	const value = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : undefined);
 	const dryRun = argv.includes('--dry-run');
 	const targets = resolveTargets(
 		argv.includes('--tag')

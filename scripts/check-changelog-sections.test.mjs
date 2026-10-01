@@ -11,7 +11,7 @@ const STUB = ['## 2026-08-13', '', '_Releases: _', ''].join('\n');
 const REAL = [
 	'## 2026-08-13',
 	'',
-	'_Releases: @christophervr/docx-core@2.3.6, @christophervr/docx-viewer@2.18.0_',
+	'_Releases: @christophervr/docx-core@2.3.6, @christophervr/docx-react-viewer@2.18.0_',
 	'',
 	'### Bug Fixes',
 	'',

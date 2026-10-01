@@ -170,3 +170,23 @@ test('helpers', () => {
 	assert.equal(isPublishedFile('packages/core/src/a.test.ts'), false);
 	assert.equal(isPublishedFile('packages/core/src/a.ts'), true);
 });
+
+test('a change in a bundled internal directory releases the package that inlines it', () => {
+	// `solo` stands in for a private internal package that `mid` bundles instead of depending on.
+	const bundled = {
+		core: table.core,
+		mid: { ...table.mid, triggers: ['packages/solo'] },
+	};
+	for (const meta of Object.values(bundled)) git('tag', '-f', `${meta.npm}@9.0.0`);
+	const run = () => planRelease({ root, packages: bundled, npm: () => '9.0.0' });
+	assert.equal(run().anyChanged, false);
+	commit('test(solo): cover empty input', { 'packages/solo/src/index.test.ts': 'x\n' });
+	assert.equal(run().anyChanged, false, 'a test-only change in a trigger dir is not a release');
+	commit('feat(solo): accept streams', touch('packages/solo'));
+	const p = run();
+	assert.deepEqual(released(p), ['mid']);
+	assert.equal(p.packages.mid.reason, 'bundled internal package changed');
+	assert.equal(p.packages.mid.bump, 'minor');
+	assert.equal(p.packages.mid.version, '9.1.0');
+	assert.ok(p.packages.mid.includePaths.includes('packages/solo/**'));
+});
