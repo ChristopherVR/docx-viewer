@@ -1,7 +1,8 @@
 {
 	"name": "@christophervr/docx-layout",
 	"version": "0.1.0",
-	"description": "Framework-neutral pagination and print-layout engine for DOCX documents",
+	"private": true,
+	"description": "Framework-neutral pagination and print-layout engine for DOCX documents (internal; bundled into the published framework packages)",
 	"license": "Apache-2.0",
 	"author": "ChristopherVR",
 	"repository": {
@@ -9,22 +10,8 @@
 		"url": "https://github.com/ChristopherVR/docx-viewer.git",
 		"directory": "packages/layout"
 	},
-	"files": [
-		"dist",
-		"README.md",
-		"LICENSE",
-		"NOTICE"
-	],
 	"type": "module",
-	"main": "./dist/index.js",
-	"types": "./dist/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js"
-		}
-	},
 	"dependencies": {
-		"@christophervr/docx-core": "0.1.0"
+		"@christophervr/docx-core": "workspace:*"
 	}
 }

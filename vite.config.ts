@@ -25,25 +25,6 @@ export default defineConfig({
 				find: new RegExp(`^@christophervr/docx-${name}$`),
 				replacement: fileURLToPath(new URL(`./packages/${name}/src/index.ts`, import.meta.url)),
 			})),
-			{
-				find: /^@christophervr\/docx-viewer$/,
-				replacement: fileURLToPath(new URL('./packages/viewer/src/index.ts', import.meta.url)),
-			},
-			...[
-				'core',
-				'document',
-				'legacy',
-				'web-component',
-				'vanilla',
-				'react',
-				'vue',
-				'angular',
-				'svelte',
-				'solid',
-			].map((name) => ({
-				find: new RegExp(`^@christophervr/docx-viewer/${name}$`),
-				replacement: fileURLToPath(new URL(`./packages/viewer/src/${name}.ts`, import.meta.url)),
-			})),
 		],
 	},
 	// Pre-bundle every framework the demo can mount on demand. Otherwise the first visit to a

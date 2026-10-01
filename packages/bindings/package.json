@@ -1,7 +1,8 @@
 {
 	"name": "@christophervr/docx-bindings",
 	"version": "0.1.0",
-	"description": "React, Vue, Angular, Svelte and Solid bindings for the DOCX editor",
+	"private": true,
+	"description": "React, Vue, Angular, Svelte and Solid bindings for the DOCX editor (internal; bundled into the published framework packages)",
 	"license": "Apache-2.0",
 	"author": "ChristopherVR",
 	"repository": {
@@ -9,47 +10,11 @@
 		"url": "https://github.com/ChristopherVR/docx-viewer.git",
 		"directory": "packages/bindings"
 	},
-	"files": [
-		"dist",
-		"src/index.ts",
-		"src/WordEditor.svelte",
-		"README.md",
-		"LICENSE",
-		"NOTICE"
-	],
 	"type": "module",
-	"main": "./dist/index.js",
-	"types": "./dist/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js"
-		},
-		"./react": {
-			"types": "./dist/react.d.ts",
-			"import": "./dist/react.js"
-		},
-		"./vue": {
-			"types": "./dist/vue.d.ts",
-			"import": "./dist/vue.js"
-		},
-		"./angular": {
-			"types": "./dist/angular.d.ts",
-			"import": "./dist/angular.js"
-		},
-		"./solid": {
-			"types": "./dist/solid.d.ts",
-			"import": "./dist/solid.js"
-		},
-		"./svelte": {
-			"types": "./dist/svelte.d.ts",
-			"svelte": "./src/WordEditor.svelte",
-			"import": "./src/WordEditor.svelte"
-		}
-	},
 	"dependencies": {
-		"@christophervr/docx-core": "0.1.0",
-		"@christophervr/docx-web-component": "0.1.0"
+		"@christophervr/docx-core": "workspace:*",
+		"@christophervr/docx-document": "workspace:*",
+		"@christophervr/docx-web-component": "workspace:*"
 	},
 	"peerDependencies": {
 		"@angular/core": ">=19",
