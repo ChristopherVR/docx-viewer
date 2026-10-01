@@ -3,6 +3,7 @@ import type { EditorView } from 'prosemirror-view';
 import { createFontDialog, type FormatDialog } from './font-dialog';
 import type { EditorLocale } from './localization';
 import { createBookmarkDialog } from './bookmark-dialog';
+import { createWatermarkDialog, type WatermarkHost } from './watermark-dialog';
 import { createPageBordersDialog, type PageBordersHost } from './page-borders-dialog';
 import { createTextBoxDialog } from './text-box-dialog';
 import { createBordersDialog } from './borders-dialog';
@@ -32,6 +33,7 @@ export type FormatDialogKind =
 	| 'lineNumbers'
 	| 'textBox'
 	| 'pageBorders'
+	| 'watermark'
 	| 'dropCap'
 	| 'columns'
 	| 'multilevelList';
@@ -48,6 +50,7 @@ export interface FormatDialogsHost {
 	zoom?: Omit<ZoomHost, 'restoreFocus'>;
 	lineNumbers?: Omit<LineNumberHost, 'restoreFocus'>;
 	pageBorders?: Omit<PageBordersHost, 'restoreFocus'>;
+	watermark?: Omit<WatermarkHost, 'restoreFocus'>;
 	columns?: Omit<ColumnsHost, 'restoreFocus'>;
 }
 
@@ -85,6 +88,10 @@ export class FormatDialogs {
 			}),
 			borders: createBordersDialog(() => host.view()),
 			tableProperties: createTablePropertiesDialog(() => host.view()),
+			watermark: createWatermarkDialog({
+				...(host.watermark ?? { current: () => undefined, canEdit: () => false, apply: () => {} }),
+				restoreFocus: () => focusView(host.view()),
+			}),
 			pageBorders: createPageBordersDialog({
 				...(host.pageBorders ?? {
 					section: () => undefined,

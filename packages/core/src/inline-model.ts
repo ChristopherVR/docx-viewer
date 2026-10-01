@@ -27,9 +27,20 @@ export interface InlineImage {
 	/** For a text box (`wps:txbx`): its paragraphs' text, shown read-only; the box XML is preserved on save. */
 	textBoxText?: string[];
 	/** The text box is the simple form this editor writes, so its text, size and outline can change. */
+	watermark?: WatermarkSpec;
 	textBoxEditable?: boolean;
 	/** For an editable text box: whether it draws an outline (default true). */
 	textBoxBorder?: boolean;
+}
+/** A Word text watermark (`PowerPlusWaterMarkObject`), carried by an inline object run in a header. */
+export interface WatermarkSpec {
+	text: string;
+	fontFamily?: string;
+	/** `#rrggbb`. */
+	color: string;
+	/** Drawn at half opacity. */
+	semitransparent: boolean;
+	layout: 'diagonal' | 'horizontal';
 }
 /** How a floating picture sits relative to text. */
 export interface PicturePlacement {

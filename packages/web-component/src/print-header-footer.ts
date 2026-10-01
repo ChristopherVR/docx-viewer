@@ -109,7 +109,8 @@ function paragraphElement(paragraph: Paragraph, values: PageFieldValues): HTMLEl
 	if (paragraph.direction) element.dir = paragraph.direction;
 	// Floating pictures are placed on the sheet by `decoratePages`, not in the text flow.
 	for (const run of paragraph.runs)
-		if (!run.break && !run.image?.anchored) element.append(runElement(run, values));
+		if (!run.break && !run.image?.anchored && !run.image?.watermark)
+			element.append(runElement(run, values));
 	return element;
 }
 
@@ -177,6 +178,47 @@ function floatingPictures(
 	);
 }
 
+/** The header's text watermark as a centered, rotated layer behind the page text, or null. */
+export function watermarkElement(
+	content: HeaderFooterContent,
+	page: Pick<LayoutPageBox, 'widthPx' | 'heightPx'>,
+): HTMLElement | null {
+	const spec = content.blocks
+		.flatMap((block) => (block.type === 'paragraph' ? block.runs : []))
+		.find((run) => run.image?.watermark)?.image?.watermark;
+	if (!spec?.text) return null;
+	const chars = Math.max(1, [...spec.text].length);
+	const span = Math.min(page.widthPx * (spec.layout === 'diagonal' ? 0.78 : 0.7), 560);
+	const layer = document.createElement('div');
+	layer.className = 'dve-print-watermark';
+	layer.setAttribute('aria-hidden', 'true');
+	layer.textContent = spec.text;
+	Object.assign(layer.style, {
+		position: 'absolute',
+		left: '0',
+		top: '0',
+		width: `${page.widthPx}px`,
+		height: `${page.heightPx}px`,
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+		pointerEvents: 'none',
+		userSelect: 'none',
+		whiteSpace: 'nowrap',
+		overflow: 'hidden',
+		fontSize: `${Math.max(12, Math.min(220, span / (chars * 0.6)))}px`,
+		fontWeight: '700',
+		color: /^#[0-9a-f]{6}$/i.test(spec.color) ? spec.color : '#c0c0c0',
+		opacity: spec.semitransparent ? '0.5' : '1',
+		transform: spec.layout === 'diagonal' ? 'rotate(-45deg)' : 'none',
+		zIndex: '0',
+		...(spec.fontFamily
+			? { fontFamily: `"${spec.fontFamily.replace(/["\\]/g, '')}", sans-serif` }
+			: {}),
+	});
+	return layer;
+}
+
 export function decoratePages(
 	model: DocumentModel,
 	pages: LayoutPageBox[],
@@ -215,6 +257,11 @@ export function decoratePages(
 			// Anchors in a footer sit roughly one line above its bottom distance.
 			const anchorTop = kind === 'header' ? distancePx : page.heightPx - distancePx - 20;
 			sheet.append(...floatingPictures(content, page, anchorTop, values));
+			if (kind === 'header') {
+				const mark = watermarkElement(content, page);
+				// First in the sheet so the page text paints over it, as a Word watermark sits behind text.
+				if (mark) sheet.prepend(mark);
+			}
 		}
 	});
 }

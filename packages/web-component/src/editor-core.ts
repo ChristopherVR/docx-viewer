@@ -110,6 +110,11 @@ export class EditorCore {
 				canEdit: () => !this.readOnly && !this.collab.client,
 				apply: (settings) => this.pages.applyLineNumberSettings(settings),
 			},
+			watermark: {
+				current: () => this.pages.currentWatermark(),
+				canEdit: () => !this.readOnly && !this.collab.client,
+				apply: (spec) => this.pages.applyWatermark(spec),
+			},
 			pageBorders: {
 				section: () => this.pages.currentSection(),
 				canEdit: () => !this.readOnly && !this.collab.client,

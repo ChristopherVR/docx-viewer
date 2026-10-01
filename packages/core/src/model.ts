@@ -14,7 +14,7 @@ export type {
 	TabStop,
 } from './model-paragraph.js';
 import type { Paragraph } from './model-paragraph.js';
-export type { HyperlinkInfo, InlineImage, PicturePlacement } from './inline-model.js';
+export type { HyperlinkInfo, InlineImage, PicturePlacement, WatermarkSpec } from './inline-model.js';
 import type { Note, SectionProperties } from './section-model.js';
 export type {
 	HeaderFooterContent,

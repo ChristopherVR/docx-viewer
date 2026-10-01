@@ -3,6 +3,7 @@
 // extent/alt text) for unchanged pictures, and synthesizes a minimal valid drawing for insertions.
 import type { InlineImage } from './model.js';
 import { EMU_PER_PIXEL } from './drawing.js';
+import { buildWatermarkRun } from './watermark.js';
 import { buildTextBoxDrawing, patchTextBox } from './write-text-box.js';
 import type { RelationshipAllocator } from './relationship-allocator.js';
 import {
@@ -23,7 +24,7 @@ const PICTURE_GRAPHIC_URI = 'http://schemas.openxmlformats.org/drawingml/2006/pi
 export function findDrawingChild(run: XmlElement | undefined): XmlElement | undefined {
 	if (!run) return undefined;
 	for (const child of Array.from(run.childNodes))
-		if (isElement(child) && named(child, 'drawing')) return child;
+		if (isElement(child) && (named(child, 'drawing') || named(child, 'pict'))) return child;
 	return undefined;
 }
 
@@ -193,6 +194,13 @@ export function createImageRun(
 	// A drawing this model only shows as a placeholder keeps its XML while the rest of the paragraph changes.
 	if (base && oldDrawing && image.unsupported && JSON.stringify(image) === JSON.stringify(base)) {
 		clearNonProperties(node, oldDrawing);
+		return node;
+	}
+	if (image.watermark) {
+		clearNonProperties(node);
+		node.appendChild(
+			buildWatermarkRun(doc, image.watermark, allocator?.docPrIds.next() ?? '1').lastChild!,
+		);
 		return node;
 	}
 	if (!base && image.textBoxEditable && !image.partName) {

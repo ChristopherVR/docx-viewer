@@ -118,6 +118,7 @@ What each tab offers that Word also has:
   Footer and Page Number (creates the part, relationship, content type and `sectPr` reference on
   save, for existing packages and new documents), Date and Time (inserted as text in the display
   locale, not an updating field) and Symbol (27 common glyphs, not the full Symbol dialog).
+- **Watermark (Layout):** a text watermark in the headers, as Word's Printed Watermark: text (with presets), font, colour, Diagonal or Horizontal, Semitransparent, or none. It is Word's `PowerPlusWaterMarkObject` VML shape in the header paragraph (Word COM reads it as a watermark with the same text, 315° rotation and 50% transparency), set in the first section's default header (created if missing) and every other header story the document has, as one undoable edit. Existing Word watermarks are read as a labelled "Watermark" run, kept byte-for-byte while the header text changes and replaced when the dialog applies. Print Layout draws a centred, rotated layer behind the text; the editing surface shows only the labelled run in the header preview. Picture watermarks, size and scale options, per-section watermarks and the exact Word glyph fitting are not offered (the layer's font size is an estimate).
 - **Layout:** a Page Setup dialog (custom margins, gutter, header and footer distances,
   orientation, paper size and custom width and height, validated so text keeps room), Margins (Normal, Narrow, Moderate, Wide), Size (Letter, Legal, Tabloid, Executive,
   A3, A4, A5, B5), Orientation, Vertical alignment, Columns (One, Two, Three, Left and Right;
@@ -311,7 +312,7 @@ Still not at parity:
   list too). Line Spacing offers presets; the Paragraph dialog has the rest.
 - **Insert:** Cover Page galleries (one plain design exists), Shapes, Icons, 3D Models, SmartArt,
   Charts, Screenshot, floating or formatted Text Boxes, WordArt, Equation, Signature Line, Object.
-- **Layout and References:** Manual Hyphenation and its options, Watermark, Position
+- **Layout and References:** Manual Hyphenation and its options, Position
   and Wrap Text, Citations, Bibliography, Index and Table of Authorities, and
   automatic updating of `REF`, `PAGEREF` and `SEQ` results (Update Fields refreshes them on request;
   only captions renumber on insert).

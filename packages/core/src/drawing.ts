@@ -10,6 +10,7 @@ import {
 	type Relationship,
 } from './package-parts.js';
 import { definedProps } from './defined-props.js';
+import { parseWatermarkShape } from './watermark.js';
 import { isSimpleTextBox, textBoxHasBorder } from './write-text-box.js';
 import { getR, isElement, type XmlElement } from './xml.js';
 import { isStRelFromH, isStRelFromV } from './generated/wml-simple-types.js';
@@ -226,6 +227,8 @@ function parsePlacement(anchor: XmlElement): PicturePlacement {
 function parseVmlPicture(node: XmlElement, context: DrawingContext): InlineImage {
 	const imagedata = descendantNS(node, VML_NS, 'imagedata');
 	const shape = descendantNS(node, VML_NS, 'shape');
+	const watermark = parseWatermarkShape(shape ?? undefined);
+	if (watermark) return watermark;
 	const style = shape?.getAttribute('style') ?? '';
 	const width = /width:\s*([\d.]+)pt/i.exec(style);
 	const height = /height:\s*([\d.]+)pt/i.exec(style);

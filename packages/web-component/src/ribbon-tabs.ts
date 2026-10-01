@@ -435,6 +435,12 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 				{ noneLabel: 'No Color' },
 			),
 			tool(
+				'Watermark',
+				'watermark',
+				{ type: 'formatDialog', kind: 'watermark' },
+				{ large: true, caption: 'Watermark' },
+			),
+			tool(
 				'Page borders',
 				'pageBorders',
 				{ type: 'formatDialog', kind: 'pageBorders' },

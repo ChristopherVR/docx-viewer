@@ -1,4 +1,4 @@
-import type { DocumentModel, SectionProperties } from '@christophervr/docx-core';
+import type { DocumentModel, SectionProperties, WatermarkSpec } from '@christophervr/docx-core';
 import { closeHistory } from 'prosemirror-history';
 import { applyPageSetup, type PageSetupValues } from './page-setup-model';
 import { emit } from './events';
@@ -12,6 +12,7 @@ import {
 	sectionsOf,
 	withSection,
 } from './section-commands';
+import { currentWatermark, withWatermark } from './watermark-commands';
 import { newHeaderFooterId, withBlankHeaderFooter, withPageNumber } from './header-footer-commands';
 import { pageSetupChange } from './page-setup-change';
 import { pageSizeOf } from './page-size';
@@ -119,6 +120,16 @@ export class PageController {
 				return settings ? { ...rest, lineNumbering: true, lineNumberSettings: settings } : rest;
 			}),
 		);
+	}
+
+	/** Layout > Watermark: a text watermark in every header (or none), one undoable step. */
+	applyWatermark(spec: WatermarkSpec | undefined): void {
+		this.changeHeaderFooter((model) => withWatermark(model, spec, newHeaderFooterId));
+	}
+
+	/** The document's current watermark, for the Watermark dialog. */
+	currentWatermark(): WatermarkSpec | undefined {
+		return currentWatermark(this.host.model());
 	}
 
 	/** Layout > Page Borders, recorded as one undoable section edit. */
