@@ -50,7 +50,8 @@ test('Left and Right presets render unequal widths and More Columns edits them',
 	const editor = page.locator('docx-editor');
 	const surface = editor.locator('.ProseMirror');
 	await surface.click();
-	await page.keyboard.type(
+	// Typing ~6,000 characters key by key exceeds the test timeout on slow CI runners.
+	await page.keyboard.insertText(
 		'A paragraph with words that wrap through unequal columns. '.repeat(100),
 	);
 	await editor.getByRole('tab', { name: 'Layout', exact: true }).click();

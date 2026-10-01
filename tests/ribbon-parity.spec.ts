@@ -52,8 +52,13 @@ test.describe('Word-style ribbon', () => {
 		await page.keyboard.press('End');
 		await page.keyboard.press('Control+Shift+ArrowLeft');
 		await expect(painter).toHaveAttribute('aria-pressed', 'false');
-		// 'alpha ' was bold; painting 'beta' extends the bold run over the whole text.
-		await expect(surface.locator('strong')).toHaveText('alpha beta');
+		// Painting 'beta' extends the bold over the whole text. Word selection includes the trailing
+		// space on Windows but not on Linux, so compare the bold text without whitespace.
+		await expect
+			.poll(async () =>
+				(await surface.locator('strong').allTextContents()).join('').replace(/\s+/g, ''),
+			)
+			.toBe('alphabeta');
 	});
 
 	test('the Styles gallery lists styles and applies one to the paragraph', async ({ page }) => {

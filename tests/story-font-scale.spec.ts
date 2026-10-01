@@ -61,7 +61,11 @@ test('inherited scale renders in header/footer/note previews, editors and after 
 	const beforeFont = await advance();
 	expect(beforeFont.advance).toBeCloseTo(beforeFont.width, 0);
 	await page.evaluate(async () => {
-		const font = new FontFace('DVE Scale Story', 'local("Courier New")');
+		const font = new FontFace(
+			'DVE Scale Story',
+			// Any local monospace face works; Courier New is not installed on Linux runners.
+			'local("Courier New"), local("Liberation Mono"), local("DejaVu Sans Mono"), local("Cousine")',
+		);
 		await font.load();
 		document.fonts.add(font);
 		document.fonts.dispatchEvent(new Event('loadingdone'));
