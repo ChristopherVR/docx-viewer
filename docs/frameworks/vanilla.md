@@ -1,13 +1,13 @@
 # Vanilla JavaScript
 
 ::: warning Not published to npm yet
-The Word packages are unpublished, so there is nothing to `npm install` today. Build from the repository (`bun install`, `bun run demo`). The imports below show the intended API of the `@christophervr/docx-viewer` package, with the matching framework as an application-level peer.
+Nothing has been released yet, so there is nothing to `npm install` today. Build from the repository (`bun install`, `bun run demo`). The imports below are the intended API of the self-contained `@christophervr/docx-vanilla-viewer` package; it needs only `@christophervr/docx-core` next to it.
 :::
 
 Import the vanilla mount adapter and provide a host element. The returned handle includes load, save, update, destroy, and the custom element.
 
 ```ts
-import { mountEditor } from '@christophervr/docx-viewer/vanilla';
+import { mountEditor } from '@christophervr/docx-vanilla-viewer';
 
 const editor = await mountEditor(document.querySelector('#editor'), {
 	documentModel: model,

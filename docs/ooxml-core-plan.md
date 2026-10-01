@@ -114,6 +114,7 @@ Exit: pptx's 17 chart and 112 SmartArt ground-truth slides unchanged (acceptance
 
 - `@christophervr/ooxml-core@0.1.0` is published to npm from the public `ChristopherVR/ooxml-core` repository (releases publish from CI with OIDC). It holds the units, colour, geometry, XML, OPC, `docx` and `pptx` areas as one package.
 - docx-viewer consumes it as a normal `^0.1.0` dependency of `@christophervr/docx-core`; the pack smoke test installs it from the registry. CI no longer clones the core.
+- docx-viewer publishes only `@christophervr/docx-core` (thin re-export of `/docx` and `/docx/embedded`) and six self-contained framework packages (`docx-<framework>-viewer`). The UI packages (`document`, `layout`, `legacy`, `web-component`, `bindings`) are private and bundled into each; the `@christophervr/ole2` codecs are inlined too, so `ole2` is not a dependency of anything published. See `docs/releasing.md`.
 - Remaining plan: move Word layout and collaboration logic into the core, then xlsx and Visio areas.
 
 ## Next steps

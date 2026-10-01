@@ -29,10 +29,10 @@ Commits **must** follow [Conventional Commits](https://www.conventionalcommits.o
 ```
 
 - **type**: `feat` (minor bump); `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`, `style`, `chore`, `revert` (patch bump). A `!` after the type/scope, or a `BREAKING CHANGE:` footer, bumps major.
-- **scope**: the package or area: `core`, `legacy`, `document`, `layout`, `web-component`, `bindings`, `viewer`, `demo`, `ci`, `deps`, `docs`.
+- **scope**: the package or area: `core`, `react`, `vue`, `angular`, `svelte`, `solid`, `vanilla`, or an internal package (`legacy`, `document`, `layout`, `web-component`, `bindings`), `demo`, `ci`, `deps`, `docs`.
 - **subject**: imperative, lower-case, no trailing period, header at most 72 characters.
 
-Which package a commit versions is decided by the **paths it touches**, not by its scope, so keep a commit within one package where practical. A change to a package also re-releases every package that depends on it (see [docs/releasing.md](docs/releasing.md)). Changes that only touch tests, docs or the demos never release anything, whatever their type.
+Which package a commit versions is decided by the **paths it touches**, not by its scope, so keep a commit within one package where practical. A change to `core` or to any internal package (`legacy`, `document`, `layout`, `web-component`, `bindings`) re-releases every framework package, because their code is bundled into each one (see [docs/releasing.md](docs/releasing.md)). Changes that only touch tests, docs or the demos never release anything, whatever their type.
 
 Examples: `feat(web-component): add a table properties dialog`, `fix(legacy): read headers of fast-saved .doc files`, `feat(core)!: rename the section model`.
 
