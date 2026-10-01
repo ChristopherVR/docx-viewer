@@ -3,6 +3,7 @@ import type {
 	AbstractNumDefinition,
 	NumberingCatalog,
 	NumberingLevelDefinition,
+	NumberingMarkerFormat,
 	NumDefinition,
 	NumLevelOverride,
 } from './numbering-model.js';
@@ -19,6 +20,20 @@ function byName(root: XmlElement, local: string): XmlElement[] {
 	return Array.from(root.getElementsByTagName('*')).filter(
 		(node): node is XmlElement => node.nodeType === 1 && named(node as XmlElement, local),
 	);
+}
+
+function parseMarkerFormat(rPr: XmlElement | undefined): NumberingMarkerFormat | undefined {
+	if (!rPr) return undefined;
+	const format: NumberingMarkerFormat = {};
+	const family = getW(first(rPr, 'rFonts'), 'ascii');
+	if (family) format.fontFamily = family;
+	const size = parseInteger(getW(first(rPr, 'sz'), 'val'));
+	if (size !== undefined && size > 0) format.fontSizeHalfPoints = size;
+	if (onOffElement(first(rPr, 'b')) === true) format.bold = true;
+	if (onOffElement(first(rPr, 'i')) === true) format.italic = true;
+	const color = getW(first(rPr, 'color'), 'val');
+	if (color && /^[0-9a-f]{6}$/i.test(color)) format.color = `#${color.toLowerCase()}`;
+	return Object.keys(format).length ? format : undefined;
 }
 
 export function parseNumberingLevel(lvl: XmlElement): NumberingLevelDefinition {
@@ -43,6 +58,8 @@ export function parseNumberingLevel(lvl: XmlElement): NumberingLevelDefinition {
 	if (flag(first(lvl, 'isLgl'))) result.isLgl = true;
 	const restart = getW(first(lvl, 'lvlRestart'), 'val');
 	if (restart !== undefined) result.lvlRestart = integer(restart, 0);
+	const marker = parseMarkerFormat(first(lvl, 'rPr'));
+	if (marker) result.markerFormat = marker;
 	result.suffix = suffRaw === 'space' ? 'space' : suffRaw === 'nothing' ? 'none' : 'tab';
 	return result;
 }

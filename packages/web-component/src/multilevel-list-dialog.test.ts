@@ -81,3 +81,25 @@ it('rechecks editing permission at submission and localizes dialog controls', ()
 	expect(s.dialog.element.querySelector('[aria-label="Niveau à modifier"]')).not.toBeNull();
 	s.view.destroy();
 });
+
+it('stores marker font settings on the level and rejects an invalid colour', () => {
+	const s = setup();
+	s.dialog.open();
+	s.set('Color (#rrggbb, blank for automatic)', 'blue');
+	expect(s.button('OK').disabled).toBe(true);
+	s.set('Color (#rrggbb, blank for automatic)', '#1F4E79');
+	s.set('Font', 'Georgia');
+	s.set('Size (pt)', '14');
+	s.field('Bold').checked = true;
+	s.field('Bold').dispatchEvent(new Event('input'));
+	expect(s.button('OK').disabled).toBe(false);
+	s.button('OK').click();
+	const level = s.model.numberingCatalog!.abstractNums['0']!.levels[0]!;
+	expect(level.markerFormat).toEqual({
+		fontFamily: 'Georgia',
+		fontSizeHalfPoints: 28,
+		color: '#1f4e79',
+		bold: true,
+	});
+	s.view.destroy();
+});

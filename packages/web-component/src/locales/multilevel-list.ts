@@ -21,6 +21,13 @@ const keys = [
 	'Enter a start from 0 to 32767, positions within 22 inches and placeholders for this level or its ancestors.',
 	'Level',
 	'Bullet',
+	'Number font',
+	'Font',
+	'Size (pt)',
+	'Color (#rrggbb, blank for automatic)',
+	'Bold',
+	'Italic',
+	'Enter a font size from 1 to 400 and a colour such as #1F4E79.',
 ] as const;
 type Key = (typeof keys)[number];
 const from = (values: readonly string[]): Record<Key, string> =>
@@ -49,6 +56,13 @@ export const frMultilevelList = from([
 	'Saisissez un début de 0 à 32767, des positions dans la limite de 22 pouces et des marqueurs pour ce niveau ou ses ancêtres.',
 	'Niveau',
 	'Puce',
+	'Police du numéro',
+	'Police',
+	'Taille (pt)',
+	'Couleur (#rrggbb, vide pour automatique)',
+	'Gras',
+	'Italique',
+	'Saisissez une taille de 1 à 400 et une couleur telle que #1F4E79.',
 ]);
 export const deMultilevelList = from([
 	'Neue Liste mit mehreren Ebenen definieren',
@@ -73,6 +87,13 @@ export const deMultilevelList = from([
 	'Geben Sie einen Anfang von 0 bis 32767, Positionen innerhalb von 22 Zoll und Platzhalter für diese Ebene oder ihre Vorgänger ein.',
 	'Ebene',
 	'Aufzählungszeichen',
+	'Schrift der Zahl',
+	'Schriftart',
+	'Größe (pt)',
+	'Farbe (#rrggbb, leer für automatisch)',
+	'Fett',
+	'Kursiv',
+	'Geben Sie eine Größe von 1 bis 400 und eine Farbe wie #1F4E79 ein.',
 ]);
 export const esMultilevelList = from([
 	'Definir nueva lista multinivel',
@@ -97,6 +118,13 @@ export const esMultilevelList = from([
 	'Introduzca un inicio de 0 a 32767, posiciones dentro de 22 pulgadas y marcadores para este nivel o sus antecesores.',
 	'Nivel',
 	'Viñeta',
+	'Fuente del número',
+	'Fuente',
+	'Tamaño (pt)',
+	'Color (#rrggbb, vacío para automático)',
+	'Negrita',
+	'Cursiva',
+	'Introduzca un tamaño de 1 a 400 y un color como #1F4E79.',
 ]);
 export const zhMultilevelList = from([
 	'定义新的多级列表',
@@ -121,4 +149,11 @@ export const zhMultilevelList = from([
 	'请输入 0 至 32767 的起始值、22 英寸范围内的位置以及本级或上级的占位符。',
 	'级别',
 	'项目符号',
+	'编号字体',
+	'字体',
+	'大小（磅）',
+	'颜色（#rrggbb，留空为自动）',
+	'加粗',
+	'倾斜',
+	'请输入 1 到 400 的字号和类似 #1F4E79 的颜色。',
 ]);

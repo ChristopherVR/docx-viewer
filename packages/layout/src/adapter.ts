@@ -160,18 +160,19 @@ export function adaptDocumentModel(
 	/** The list label run (number or bullet plus its suffix), formatted like the paragraph's text. */
 	function labelRun(paragraph: Paragraph, label: ParagraphListLabel): LayoutRun {
 		const first = adaptRun(paragraph.runs[0] ?? { text: '' }, paragraph.style);
+		const marker = label.markerFormat;
 		const suffix = label.suffix === 'tab' ? '\t' : label.suffix === 'space' ? ' ' : '';
 		return {
 			text: `${displayListLabel(label.text)}${suffix}`,
 			synthetic: true,
 			marker: { length: displayListLabel(label.text).length, alignment: label.alignment ?? 'left' },
 			...definedProps({
-				bold: first.bold,
-				italic: first.italic,
-				fontFamily: first.fontFamily,
-				fontSizePt: first.fontSizePt,
+				bold: marker?.bold ?? first.bold,
+				italic: marker?.italic ?? first.italic,
+				fontFamily: marker?.fontFamily ?? first.fontFamily,
+				fontSizePt: marker?.fontSizeHalfPoints ? marker.fontSizeHalfPoints / 2 : first.fontSizePt,
 			}),
-			...(first.color ? { color: first.color } : {}),
+			...(marker?.color || first.color ? { color: marker?.color ?? first.color! } : {}),
 		};
 	}
 	const betweenBorders = new Map<LayoutParagraph, LayoutParagraphBorders['top']>();

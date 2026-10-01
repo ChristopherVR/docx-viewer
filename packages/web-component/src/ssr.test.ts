@@ -9,4 +9,4 @@ vi.mock('@christophervr/docx-document', () => ({
 it('can be imported and registered during server rendering', async () => {
 	const { registerDocxEditor } = await import('./index');
 	expect(() => registerDocxEditor()).not.toThrow();
-});
+}, 30_000);

@@ -274,8 +274,11 @@ indivisible and does not repeat it on a continuation page. Editor markers are ge
 so they never become editable characters. Browser contracts compare editor and Print Layout
 positions and verify typing at the paragraph start in all six bindings. The editor refreshes
 its marker font measurements when web fonts load. Right-to-left marker placement and precise
-editor positioning at center/right/decimal custom tabs remain approximate; marker-font
-definitions and inherited numbering fonts still need the controls and preservation work below.
+editor positioning at center/right/decimal custom tabs remain approximate; The dialog's
+Number font group sets a level's marker font family, size, bold, italic and colour (`w:lvl/w:rPr`,
+written in schema order for new definitions, parsed from imports, and applied to the editor and Print
+Layout markers over the paragraph's text formatting). Other `rPr` properties (underline, effects,
+theme colours, East Asian fonts) and style-inherited marker fonts are not modeled or editable.
 
 Imported heading outlines now resolve `w:lvl/w:pStyle` associations, rather than treating every
 style-inherited item as level one. Direct paragraph numbering and explicit `numId=0` removal
@@ -292,7 +295,7 @@ Still not at parity:
 
 - **Home:** Text Effects; Multilevel List offers two styles (1. 1.1. 1.1.1. and 1. a) i.), not Word's gallery of
   heading-linked and bullet outlines. Define New Multilevel List still needs heading/style links,
-  marker Font controls, an explicit tab-stop position, Word's graphical number placeholders and
+  an explicit tab-stop position, Word's graphical number placeholders and
   its apply-to/list-style options. Text Highlight keeps the 17-colour list (Word's is a short
   list too). Line Spacing offers presets; the Paragraph dialog has the rest.
 - **Insert:** Cover Page galleries (one plain design exists), Shapes, Icons, 3D Models, SmartArt,

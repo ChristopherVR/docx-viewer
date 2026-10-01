@@ -29,14 +29,18 @@ export function listMarkerDisplay(
 		paragraphCatalog: model.paragraphStyles,
 		paragraphStyleId: paragraph.style,
 	});
+	const own = label.markerFormat;
+	const bold = own?.bold ?? format.bold;
+	const italic = own?.italic ?? format.italic;
 	const font = {
-		family: format.fontFamily ?? themeFontOf(format, model.theme) ?? 'Calibri',
-		sizePx: ((format.fontSize ?? 11) * 4) / 3,
-		...(format.bold ? { bold: true } : {}),
-		...(format.italic ? { italic: true } : {}),
+		family: own?.fontFamily ?? format.fontFamily ?? themeFontOf(format, model.theme) ?? 'Calibri',
+		sizePx: ((own?.fontSizeHalfPoints ? own.fontSizeHalfPoints / 2 : (format.fontSize ?? 11)) * 4) / 3,
+		...(bold ? { bold: true } : {}),
+		...(italic ? { italic: true } : {}),
 	};
 	const text = displayListLabel(label.text);
 	const color =
+		own?.color ??
 		format.color ??
 		(format.colorTheme && model.theme
 			? resolveThemeColorReference(format.colorTheme, model.theme)

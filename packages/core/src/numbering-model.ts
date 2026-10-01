@@ -1,6 +1,16 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 import type { StNumberFormat } from './generated/wml-simple-types.js';
 import type { SignedTwips, Twips } from './units.js';
+/** Character formatting of a level's marker (`w:lvl/w:rPr`); absent fields follow the paragraph's text. */
+export interface NumberingMarkerFormat {
+	fontFamily?: string;
+	/** `w:sz` in half-points. */
+	fontSizeHalfPoints?: number;
+	bold?: boolean;
+	italic?: boolean;
+	/** `#rrggbb`; automatic colour is represented by omission. */
+	color?: string;
+}
 /** A single `w:lvl` definition, fully resolved from an abstractNum (and any lvlOverride). */
 export interface NumberingLevelDefinition {
 	/** 0-based `w:ilvl`. */
@@ -22,6 +32,8 @@ export interface NumberingLevelDefinition {
 	lvlRestart?: number;
 	/** Marker-to-text separator from `w:suff` (defaults to `tab`). */
 	suffix?: 'tab' | 'space' | 'none';
+	/** Marker formatting from `w:rPr`. */
+	markerFormat?: NumberingMarkerFormat;
 }
 export interface AbstractNumDefinition {
 	id: string;
@@ -54,4 +66,5 @@ export interface ParagraphListLabel {
 	indentLeftTwips?: SignedTwips;
 	hangingTwips?: Twips;
 	firstLineTwips?: Twips;
+	markerFormat?: NumberingMarkerFormat;
 }

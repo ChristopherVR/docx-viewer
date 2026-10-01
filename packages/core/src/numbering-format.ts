@@ -197,6 +197,7 @@ export function computeListLabels(model: DocumentModel): Map<string, ParagraphLi
 				indentLeftTwips: def.indentLeftTwips,
 				hangingTwips: def.hangingTwips,
 				firstLineTwips: def.firstLineTwips,
+				markerFormat: def.markerFormat,
 			}),
 		});
 	}

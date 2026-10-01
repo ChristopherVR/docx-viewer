@@ -68,6 +68,12 @@ export function createMultilevelListDialog(
 		['space', 'Space'],
 		['none', 'Nothing'],
 	]);
+	const markerFont = textInput();
+	const markerSize = numberInput(1, 400, 0.5);
+	const markerColor = textInput();
+	markerColor.placeholder = '#rrggbb';
+	const markerBold = checkbox('Bold');
+	const markerItalic = checkbox('Italic');
 	const hint = document.createElement('p');
 	hint.style.cssText = 'font-size:12px;margin:4px 0';
 	hint.textContent = 'Use %1 through %9 for level numbers. Creates a new list for the selection.';
@@ -104,6 +110,15 @@ export function createMultilevelListDialog(
 			),
 			labelled('Follow number with', suffix),
 		),
+		fieldset(
+			'Number font',
+			row(
+				labelled('Font', markerFont),
+				labelled('Size (pt)', markerSize),
+				labelled('Color (#rrggbb, blank for automatic)', markerColor),
+			),
+			row(markerBold.wrapper, markerItalic.wrapper),
+		),
 		message,
 		actions,
 	];
@@ -124,10 +139,17 @@ export function createMultilevelListDialog(
 		const invalidPlaceholder = [...pattern.value.matchAll(/%([1-9])/g)].some(
 			(match) => Number(match[1]) > active + 1,
 		);
-		const result = integer(start) && distance(aligned) && distance(indent) && !invalidPlaceholder;
-		message.textContent = result
-			? ''
-			: 'Enter a start from 0 to 32767, positions within 22 inches and placeholders for this level or its ancestors.';
+		const markerValid =
+			(markerSize.value === '' ||
+				(Number(markerSize.value) >= 1 && Number(markerSize.value) <= 400)) &&
+			(markerColor.value.trim() === '' || /^#[0-9a-f]{6}$/i.test(markerColor.value.trim()));
+		const result =
+			integer(start) && distance(aligned) && distance(indent) && !invalidPlaceholder && markerValid;
+		message.textContent = !markerValid
+			? 'Enter a font size from 1 to 400 and a colour such as #1F4E79.'
+			: result
+				? ''
+				: 'Enter a start from 0 to 32767, positions within 22 inches and placeholders for this level or its ancestors.';
 		localizeElement(message, locale);
 		message.hidden = result;
 		ok.disabled = !result;
@@ -144,6 +166,14 @@ export function createMultilevelListDialog(
 		if (restart.value === 'default') delete draft.lvlRestart;
 		else draft.lvlRestart = Number(restart.value);
 		draft.suffix = suffix.value as NonNullable<NumberingLevelDefinition['suffix']>;
+		const marker: NonNullable<NumberingLevelDefinition['markerFormat']> = {};
+		if (markerFont.value.trim()) marker.fontFamily = markerFont.value.trim();
+		if (markerSize.value !== '') marker.fontSizeHalfPoints = Math.round(Number(markerSize.value) * 2);
+		if (markerColor.value.trim()) marker.color = markerColor.value.trim().toLowerCase();
+		if (markerBold.input.checked) marker.bold = true;
+		if (markerItalic.input.checked) marker.italic = true;
+		if (Object.keys(marker).length) draft.markerFormat = marker;
+		else delete draft.markerFormat;
 		draft.indentLeftTwips = signedTwips(Math.round(Number(indent.value) * 1440));
 		const difference = Math.round((Number(indent.value) - Number(aligned.value)) * 1440);
 		delete draft.hangingTwips;
@@ -189,6 +219,12 @@ export function createMultilevelListDialog(
 				1440,
 		);
 		suffix.value = draft.suffix ?? 'tab';
+		const marker = draft.markerFormat;
+		markerFont.value = marker?.fontFamily ?? '';
+		markerSize.value = marker?.fontSizeHalfPoints ? String(marker.fontSizeHalfPoints / 2) : '';
+		markerColor.value = marker?.color ?? '';
+		markerBold.input.checked = Boolean(marker?.bold);
+		markerItalic.input.checked = Boolean(marker?.italic);
 		legal.input.checked = Boolean(draft.isLgl);
 		restart.replaceChildren(
 			new Option('Previous level (default)', 'default'),
@@ -223,6 +259,11 @@ export function createMultilevelListDialog(
 		aligned,
 		indent,
 		suffix,
+		markerFont,
+		markerSize,
+		markerColor,
+		markerBold.input,
+		markerItalic.input,
 	])
 		control.addEventListener('input', () => {
 			if (store()) renderPreview();

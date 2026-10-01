@@ -59,6 +59,23 @@ function buildLevelElement(doc: XmlDocument, def: NumberingLevelDefinition): Xml
 		pPr.appendChild(ind);
 		lvl.appendChild(pPr);
 	}
+	const marker = def.markerFormat;
+	if (marker && Object.keys(marker).length) {
+		// CT_RPr order: rFonts, b, i, color, sz.
+		const rPr = makeW(doc, 'rPr');
+		if (marker.fontFamily) {
+			const fonts = makeW(doc, 'rFonts');
+			setAttribute(fonts, 'ascii', marker.fontFamily);
+			setAttribute(fonts, 'hAnsi', marker.fontFamily);
+			rPr.appendChild(fonts);
+		}
+		if (marker.bold) rPr.appendChild(makeW(doc, 'b'));
+		if (marker.italic) rPr.appendChild(makeW(doc, 'i'));
+		if (marker.color) rPr.appendChild(valueElement(doc, 'color', marker.color.slice(1).toUpperCase()));
+		if (marker.fontSizeHalfPoints)
+			rPr.appendChild(valueElement(doc, 'sz', String(marker.fontSizeHalfPoints)));
+		lvl.appendChild(rPr);
+	}
 	return lvl;
 }
 
