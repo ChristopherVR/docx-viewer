@@ -69,7 +69,11 @@ export function Editor() {
 
 ```vue
 <script setup lang="ts">
+import { ref } from 'vue';
+import { createDocument } from '@christophervr/docx-viewer/core';
 import { WordEditor } from '@christophervr/docx-viewer/vue';
+
+const model = ref(createDocument());
 </script>
 <template>
 	<WordEditor :document-model="model" @document-change="model = $event" />
@@ -90,7 +94,7 @@ import { WordEditorComponent } from '@christophervr/docx-viewer/angular';
 	template: '<word-editor [documentModel]="model" (documentChange)="model = $event" />',
 })
 export class EditorComponent {
-	model = initialDocument;
+	model = createDocument(); // from '@christophervr/docx-viewer/core'
 }
 ```
 
@@ -101,8 +105,9 @@ export class EditorComponent {
 
 ```svelte
 <script>
+  import { createDocument } from '@christophervr/docx-viewer/core';
   import WordEditor from '@christophervr/docx-viewer/svelte';
-  let model = $state(initialDocument);
+  let model = $state(createDocument());
 </script>
 <WordEditor documentModel={model} ondocumentchange={next => model = next} />
 ```
@@ -114,10 +119,13 @@ export class EditorComponent {
 
 ```tsx
 import { createSignal } from 'solid-js';
+import { createDocument } from '@christophervr/docx-viewer/core';
 import { WordEditor } from '@christophervr/docx-viewer/solid';
 
-const [model, setModel] = createSignal(initialDocument);
-// <WordEditor documentModel={model()} onDocumentChange={setModel} />
+export function Editor() {
+	const [model, setModel] = createSignal(createDocument());
+	return <WordEditor documentModel={model()} onDocumentChange={setModel} />;
+}
 ```
 
 </details>
