@@ -2,6 +2,7 @@ import { closeHistory } from 'prosemirror-history';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import type { Transaction } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
+import { refreshFieldResults } from './field-update';
 import { schema } from './schema';
 
 /** Word's built-in caption labels; the SEQ identifier is the English label. */
@@ -77,7 +78,8 @@ export function insertCaption(view: EditorView, options: CaptionOptions): boolea
 		content,
 	);
 	const tr = view.state.tr.insert(at, paragraph);
-	renumberCaptions(tr, options.label);
+	// Renumber every caption of the label, and bring REF results that quote them up to date.
+	refreshFieldResults(tr, undefined, true);
 	view.dispatch(closeHistory(tr).scrollIntoView());
 	return true;
 }

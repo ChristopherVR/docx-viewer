@@ -314,8 +314,9 @@ Still not at parity:
   Charts, Screenshot, floating or formatted Text Boxes, WordArt, Equation, Signature Line, Object.
 - **Layout and References:** Manual Hyphenation and its options, Position
   and Wrap Text, Citations, Bibliography, Index and Table of Authorities, and
-  automatic updating of `REF`, `PAGEREF` and `SEQ` results (Update Fields refreshes them on request;
-  only captions renumber on insert).
+  automatic updating of `REF`, `PAGEREF` and `SEQ` results (Update Fields refreshes them on request; inserting a caption
+  also renumbers the label's captions and refreshes `REF` results that quote a caption, in the same undo step; `PAGEREF`, table of contents and
+  other results change only through Update Fields).
 - **Review and View:** Editor pane, Thesaurus, Translate, Accessibility, Compare, Protect, Ink;
   Read Mode, Web and Outline views, New Window,
   Split and Macros.

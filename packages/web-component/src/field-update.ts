@@ -1,5 +1,6 @@
 import { closeHistory } from 'prosemirror-history';
 import type { Mark, Node as ProseMirrorNode } from 'prosemirror-model';
+import type { Transaction } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { renumberCaptions, seqLabelOf } from './caption-commands';
 import { schema } from './schema';
@@ -90,6 +91,22 @@ export function updateFields(
 ): boolean {
 	if (!view.editable) return false;
 	const tr = view.state.tr;
+	refreshFieldResults(tr, pageOf);
+	if (!tr.docChanged) return false;
+	view.dispatch(closeHistory(tr));
+	return true;
+}
+
+/**
+ * The refresh behind `updateFields`, applied to `tr` so other commands (a new caption) can include
+ * it in their own undo step. Without `pageOf`, `PAGEREF` results are left alone: pages need a layout.
+ * With `captionsOnly`, only references that quote a caption are refreshed.
+ */
+export function refreshFieldResults(
+	tr: Transaction,
+	pageOf?: (id: string) => string | undefined,
+	captionsOnly = false,
+): Transaction {
 	for (const label of new Set(
 		fieldRuns(tr.doc)
 			.map((run) => seqLabelOf(schema.text('x', [run.mark])))
@@ -103,9 +120,9 @@ export function updateFields(
 		const match = REFERENCE.exec(String(run.mark.attrs.instr ?? ''));
 		if (!match || !plainSwitches(match[3] ?? '')) continue;
 		const target = targets.get((match[2] ?? '').replace(/^"|"$/g, ''));
-		if (!target) continue;
+		if (!target || (captionsOnly && captionLabel(target) === undefined)) continue;
 		let text: string | undefined;
-		if (match[1]!.toUpperCase() === 'PAGEREF') text = pageOf(String(target.attrs.id));
+		if (match[1]!.toUpperCase() === 'PAGEREF') text = pageOf?.(String(target.attrs.id));
 		else {
 			const label = captionLabel(target);
 			const whole = target.textContent.trim();
@@ -116,7 +133,5 @@ export function updateFields(
 	// Later fields first, so replacing one never shifts the positions still to be processed.
 	for (const { run, text } of changes.reverse())
 		tr.replaceWith(run.from, run.to, schema.text(text, run.marks));
-	if (!tr.docChanged) return false;
-	view.dispatch(closeHistory(tr));
-	return true;
+	return tr;
 }
