@@ -20,12 +20,12 @@ export const FRAMEWORKS: FrameworkSample[] = [
 	{
 		id: 'react',
 		label: 'React',
-		entry: '@christophervr/docx-viewer/react',
+		entry: '@christophervr/docx-react-viewer',
 		file: 'Editor.tsx',
 		docsHref: '/frameworks/react',
 		code: `import { useState } from 'react';
-import { createDocument } from '@christophervr/docx-viewer/core';
-import { WordEditor } from '@christophervr/docx-viewer/react';
+import { createDocument } from '@christophervr/docx-core';
+import { WordEditor } from '@christophervr/docx-react-viewer';
 
 export function Editor() {
   const [model, setModel] = useState(() => createDocument());
@@ -41,13 +41,13 @@ export function Editor() {
 	{
 		id: 'vue',
 		label: 'Vue 3',
-		entry: '@christophervr/docx-viewer/vue',
+		entry: '@christophervr/docx-vue-viewer',
 		file: 'Editor.vue',
 		docsHref: '/frameworks/vue',
 		code: `<script setup lang="ts">
 import { ref } from 'vue';
-import { createDocument } from '@christophervr/docx-viewer/core';
-import { WordEditor } from '@christophervr/docx-viewer/vue';
+import { createDocument } from '@christophervr/docx-core';
+import { WordEditor } from '@christophervr/docx-vue-viewer';
 
 const model = ref(createDocument());
 </script>
@@ -59,12 +59,12 @@ const model = ref(createDocument());
 	{
 		id: 'angular',
 		label: 'Angular',
-		entry: '@christophervr/docx-viewer/angular',
+		entry: '@christophervr/docx-angular-viewer',
 		file: 'editor.component.ts',
 		docsHref: '/frameworks/angular',
 		code: `import { Component } from '@angular/core';
-import { createDocument } from '@christophervr/docx-viewer/core';
-import { WordEditorComponent } from '@christophervr/docx-viewer/angular';
+import { createDocument } from '@christophervr/docx-core';
+import { WordEditorComponent } from '@christophervr/docx-angular-viewer';
 
 @Component({
   selector: 'app-editor',
@@ -79,12 +79,12 @@ export class EditorComponent {
 	{
 		id: 'svelte',
 		label: 'Svelte 5',
-		entry: '@christophervr/docx-viewer/svelte',
+		entry: '@christophervr/docx-svelte-viewer',
 		file: 'Editor.svelte',
 		docsHref: '/frameworks/svelte',
 		code: `<script lang="ts">
-  import { createDocument } from '@christophervr/docx-viewer/core';
-  import WordEditor from '@christophervr/docx-viewer/svelte';
+  import { createDocument } from '@christophervr/docx-core';
+  import WordEditor from '@christophervr/docx-svelte-viewer';
 
   let model = $state(createDocument());
 </script>
@@ -94,12 +94,12 @@ export class EditorComponent {
 	{
 		id: 'solid',
 		label: 'SolidJS',
-		entry: '@christophervr/docx-viewer/solid',
+		entry: '@christophervr/docx-solid-viewer',
 		file: 'Editor.tsx',
 		docsHref: '/frameworks/solid',
 		code: `import { createSignal } from 'solid-js';
-import { createDocument } from '@christophervr/docx-viewer/core';
-import { WordEditor } from '@christophervr/docx-viewer/solid';
+import { createDocument } from '@christophervr/docx-core';
+import { WordEditor } from '@christophervr/docx-solid-viewer';
 
 export function Editor() {
   const [model, setModel] = createSignal(createDocument());
@@ -109,10 +109,11 @@ export function Editor() {
 	{
 		id: 'vanilla',
 		label: 'Vanilla JS',
-		entry: '@christophervr/docx-viewer',
+		entry: '@christophervr/docx-vanilla-viewer',
 		file: 'main.ts',
 		docsHref: '/frameworks/vanilla',
-		code: `import { createDocument, mountEditor } from '@christophervr/docx-viewer';
+		code: `import { createDocument } from '@christophervr/docx-core';
+import { mountEditor } from '@christophervr/docx-vanilla-viewer';
 
 const editor = mountEditor(document.querySelector('#editor')!, {
   documentModel: createDocument(),
@@ -127,9 +128,9 @@ editor.destroy();`,
 ];
 
 /** Load and save outside any UI: the framework-neutral document API. */
-export const CORE_SAMPLE = `import { loadDocument } from '@christophervr/docx-viewer/document';
+export const CORE_SAMPLE = `import { loadDocument } from '@christophervr/docx-vanilla-viewer';
 
-// Detects DOCX or legacy DOC from the bytes.
+// Any editor package bundles this loader; it detects DOCX or legacy DOC from the bytes.
 const loaded = await loadDocument(bytes);
 console.log(loaded.model.blocks.length);
 

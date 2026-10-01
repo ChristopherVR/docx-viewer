@@ -1,6 +1,7 @@
 # Working agreements
 
 - One framework-neutral document model and one web-component editor. UI bindings are lifecycle/event adapters only.
+- Published packages (like pptx-viewer): `@christophervr/docx-core` and one self-contained `@christophervr/docx-<framework>-viewer` per framework (react, vue, angular, svelte, solid, vanilla; vanilla also owns the plain `<docx-editor>` entry and `mountEditor`). `document`, `layout`, `legacy`, `web-component` and `bindings` are `private: true` internal packages bundled into every framework package by `scripts/build-packages.mjs`, together with the `@christophervr/ole2` codecs; a published tarball may import only `@christophervr/docx-core`, ProseMirror and its framework peers (`bun run check:published`, `bun run pack:smoke`). Never add `@christophervr/ole2` or an internal package to a published manifest, and keep `ole2` a dependency of the private `legacy` package so the planner sees a bump as a change.
 - Keep source modules below 300 lines where practical. Add meaningful regression tests for parsing, preservation, editing and binding contracts.
 - Unsupported document features must be reported honestly. Never silently claim Word layout parity or lossless export.
 - Shared OLE and legacy Word implementations live in ../ole2. Both viewers consume that package; do not fork these implementations. PowerPoint may be changed to integrate shared code while preserving its public API. Record extraction provenance.

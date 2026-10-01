@@ -3,17 +3,22 @@
 ## Dependency direction
 
 ```text
-React | Vue | Angular | Svelte | vanilla bindings
+published, one per framework (self-contained bundles)
+  docx-react-viewer | -vue-viewer | -angular-viewer | -svelte-viewer | -solid-viewer | -vanilla-viewer
+  ------------------------------------------------------------------------------------------------
+  internal, private, inlined into every bundle:
+        bindings (lifecycle and events only)
                          |
-                  web component editor
+                  web-component editor ---- layout engine
                          |
                  document detection
                   /              \
-       @christophervr/docx-core   legacy DOC adapter
-                                       |
-                           @christophervr/ole2
-                            CFB and binary DOC only
+     docx-core (external)      legacy DOC adapter
+   published, thin re-export             |
+   of ooxml-core/docx        @christophervr/ole2 (inlined; CFB and binary DOC only)
 ```
+
+Only `@christophervr/docx-core` and the six `*-viewer` packages are published. `document`, `layout`, `legacy`, `web-component` and `bindings` are `private` workspace packages: they are the shared source of the editor, never an npm install target. `scripts/build-packages.mjs` bundles them (and the `@christophervr/ole2` legacy codecs) into each framework package, so a tarball imports only `@christophervr/docx-core`, the ProseMirror libraries and its framework peers. `scripts/check-published-refs.mjs` and the pack smoke test fail the build if an internal package or `ole2` leaks into a tarball.
 
 The canonical document model, DOCX parser, and serializer live in the `docx` area of the private `@christophervr/ooxml-core`; `@christophervr/docx-core` is a thin published entry point that re-exports it. The editable model is a deliberately small projection of OOXML. A loaded session owns the original package plus the baseline model, so saving supported edits can preserve parts outside that projection. No-op save returns original bytes.
 
@@ -31,9 +36,9 @@ The shared `ole2` package has no React, Word, or PowerPoint UI dependency and ow
 
 ## Build and release boundary
 
-The current release scope is `@christophervr/ole2` only. Word package publication and PowerPoint's migration to `@christophervr/docx-core/embedded` are deferred until the shared dependency and consumer integration are ready. The shared CFB package contains no DOCX codec.
+Seven packages are published (`docx-core` and the six framework packages; see [releasing](/releasing)), and nothing has been released yet. PowerPoint's migration to `@christophervr/docx-core/embedded` is deferred until the Word packages are published and its consumer integration is ready. The shared CFB package contains no DOCX codec.
 
-Bundled dependencies are included in application package output where needed, so downstream consumers do not need sibling source checkouts.
+`@christophervr/docx-core` stays a real dependency of every framework package rather than being bundled: applications import `createDocument` and the model types from it directly, so one shared copy keeps `DocumentModel` identical on both sides. The ProseMirror libraries are real dependencies too, not bundled, so a package manager can dedupe one copy for the editor and for any other ProseMirror code in the application. Everything else internal, including `@christophervr/ole2`, is bundled so downstream consumers need no sibling source checkouts and no unpublished packages.
 
 The package names in the integration guides use the `@christophervr` registry scope. The Pages examples are built from this workspace and do not imply the Word packages have been published.
 
