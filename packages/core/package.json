@@ -29,6 +29,6 @@
 		}
 	},
 	"dependencies": {
-		"@christophervr/ooxml-core": "file:../../../ooxml-core"
+		"@christophervr/ooxml-core": "^0.1.0"
 	}
 }

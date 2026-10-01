@@ -36,14 +36,6 @@ jobs:
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
       - run: npm install --global npm@^11.5.1
-      - name: Check out ooxml-core (private, pinned revision)
-        env:
-          OOXML_CORE_TOKEN: ${{ secrets.OOXML_CORE_TOKEN }}
-          OOXML_CORE_REF: b4f83e123d492414258261095e72c8113459a630
-        run: |
-          git clone "https://x-access-token:${OOXML_CORE_TOKEN}@github.com/ChristopherVR/ooxml-core.git" ../ooxml-core
-          git -C ../ooxml-core checkout "$OOXML_CORE_REF"
-          (cd ../ooxml-core && bun install --frozen-lockfile && bun run build)
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run test

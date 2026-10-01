@@ -39,14 +39,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Check out ooxml-core (private, pinned revision)
-        env:
-          OOXML_CORE_TOKEN: ${{ secrets.OOXML_CORE_TOKEN }}
-          OOXML_CORE_REF: b4f83e123d492414258261095e72c8113459a630
-        run: |
-          git clone "https://x-access-token:${OOXML_CORE_TOKEN}@github.com/ChristopherVR/ooxml-core.git" ../ooxml-core
-          git -C ../ooxml-core checkout "$OOXML_CORE_REF"
-          (cd ../ooxml-core && bun install --frozen-lockfile && bun run build)
       - name: Install workspace dependencies
         run: bun install --frozen-lockfile
       - name: Install documentation dependencies

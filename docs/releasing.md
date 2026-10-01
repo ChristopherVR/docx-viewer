@@ -48,8 +48,3 @@ git push origin v0.1.0
 ```
 
 The tag starts the [release workflow](https://github.com/ChristopherVR/docx-viewer/blob/main/.github/workflows/release.yml), which validates the version and publishes the six Word packages. A manual workflow dispatch accepts the version as `0.1.0` or `v0.1.0`.
-
-## Blocker: `@christophervr/ooxml-core`
-
-`@christophervr/docx-core` depends on the private `@christophervr/ooxml-core` through a development-time `file:` path to a sibling checkout. The pack smoke test tolerates that one dependency so CI can run, but the Word packages cannot be published until `ooxml-core` is published and the dependency is replaced by a version range.
-

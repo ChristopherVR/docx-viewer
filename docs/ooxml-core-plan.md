@@ -110,15 +110,11 @@ Exit: pptx's 17 chart and 112 SmartArt ground-truth slides unchanged (acceptance
 - **Concurrent work in the pptx tree:** extraction PRs must not be cut from a dirty working tree.
 - **Word-side honesty:** until Phase 4 lands, charts and SmartArt in Word documents stay placeholders and say so, as they do today.
 
-## Status (2026-10-01)
+## Status (2026-10-02)
 
-- `ooxml-core` exists as a **private** repository (`ChristopherVR/ooxml-core`) with `@christophervr/ooxml-units` built to `dist`.
-- docx-viewer consumed it first through a re-export shim (`units.ts`, since replaced by the DOCX move below), `EMU_PER_PIXEL` comes from the shared constants, and only the Word-model unit tests remain here. Typecheck, 1150 unit tests, `build:packages` and the browser specs run pass.
-- The dependency is a `file:` path to the sibling checkout. **Publishing docx-core requires publishing `@christophervr/ooxml-units` first** (its type declarations name the unit types); that is a release decision, not made yet.
-- CI clones `ooxml-core` at a pinned revision and builds it; this needs a read-only token stored as the repository secret `OOXML_CORE_TOKEN` before CI can pass. Not yet created.
-- `pack:smoke` fails on a Windows `tar` error with or without this change (pre-existing).
-
-- **DOCX core moved (2026-10-01):** all of `packages/core/src` (model, parser, serializer, editing, validation, `embedded.ts`, generated types, tests), the ECMA-376 schemas and the schema-type generator now live in `ooxml-core/src/docx` (provenance in its `PROVENANCE.md`, source commit `f4a557d`). `packages/core` (`@christophervr/docx-core`) is a thin re-export of `@christophervr/ooxml-core/docx` and `/docx/embedded`. The 401 core unit tests run in ooxml-core; this repository keeps 749.
+- `@christophervr/ooxml-core@0.1.0` is published to npm from the public `ChristopherVR/ooxml-core` repository (releases publish from CI with OIDC). It holds the units, colour, geometry, XML, OPC, `docx` and `pptx` areas as one package.
+- docx-viewer consumes it as a normal `^0.1.0` dependency of `@christophervr/docx-core`; the pack smoke test installs it from the registry. CI no longer clones the core.
+- Remaining plan: move Word layout and collaboration logic into the core, then xlsx and Visio areas.
 
 ## Next steps
 

@@ -50,7 +50,7 @@ bun install
 bun run demo   # vanilla demo; add ?framework=react|vue|angular|svelte|solid
 ```
 
-Development resolves the private `@christophervr/ooxml-core` from a sibling checkout; see [AGENTS.md](AGENTS.md) and the [ooxml-core plan](docs/ooxml-core-plan.md).
+The DOCX logic comes from the published [`@christophervr/ooxml-core`](https://github.com/ChristopherVR/ooxml-core) package; see [AGENTS.md](AGENTS.md) and the [ooxml-core plan](docs/ooxml-core-plan.md).
 
 ### 2. Mount the editor (intended API)
 
@@ -162,7 +162,7 @@ See the [bindings guide](docs/bindings.md) for props, events, saving and file co
 | `@christophervr/docx-web-component` | The shared `<docx-editor>` (`packages/web-component`).                                                                            |
 | `@christophervr/docx-bindings`      | Framework lifecycle and event adapters (`packages/bindings`).                                                                     |
 
-None of these are published yet. Roadmap: shared OOXML logic is moving into the private `@christophervr/ooxml-core`, leaving this repository with only the UI. That migration is in progress, not a shipped feature.
+None of these are published yet. Roadmap: shared OOXML logic is moving into the public `@christophervr/ooxml-core`, leaving this repository with only the UI. That migration is in progress, not a shipped feature.
 
 ## Development
 

@@ -43,16 +43,6 @@ try {
 	const tarballs = [];
 	const peers = new Map();
 	await mkdir(scope, { recursive: true });
-	// `@christophervr/ooxml-core` is not published yet: pack the sibling checkout and make every
-	// package that depends on it by `file:` path depend on that tarball instead.
-	const corePacked = JSON.parse(
-		run('npm', ['pack', '--json', '--pack-destination', work, path.resolve(root, '../ooxml-core')]),
-	)[0];
-	const coreTarball = path.join(work, corePacked.filename);
-	tarballs.push(coreTarball);
-	const coreTarget = path.join(scope, 'ooxml-core');
-	await mkdir(coreTarget, { recursive: true });
-	run('tar', ['-xzf', coreTarball, '--strip-components=1', '-C', coreTarget]);
 	for (const name of [
 		'core',
 		'legacy',
@@ -62,23 +52,7 @@ try {
 		'bindings',
 		'viewer',
 	]) {
-		let packageDir = path.join(root, 'packages', name);
-		const sourceManifest = JSON.parse(
-			await readFile(path.join(packageDir, 'package.json'), 'utf8'),
-		);
-		if (
-			String(sourceManifest.dependencies?.['@christophervr/ooxml-core'] ?? '').startsWith('file:')
-		) {
-			const copy = path.join(work, `pack-${name}`);
-			await mkdir(copy, { recursive: true });
-			for (const entry of ['dist', 'README.md', 'LICENSE', 'NOTICE'])
-				await cp(path.join(packageDir, entry), path.join(copy, entry), {
-					recursive: true,
-				}).catch(() => {});
-			sourceManifest.dependencies['@christophervr/ooxml-core'] = `file:${coreTarball}`;
-			await writeFile(path.join(copy, 'package.json'), JSON.stringify(sourceManifest, null, '	'));
-			packageDir = copy;
-		}
+		const packageDir = path.join(root, 'packages', name);
 		const packed = JSON.parse(
 			run('npm', ['pack', '--json', '--pack-destination', work, packageDir]),
 		)[0];
@@ -100,15 +74,12 @@ try {
 		);
 		const manifest = JSON.parse(await readFile(path.join(target, 'package.json'), 'utf8'));
 		assert(!JSON.stringify(manifest).includes('workspace:'));
-		// The manifest was packed from a copy that points at the ooxml-core tarball (not a path);
-		// the tarball spec is the one `file:` reference tolerated until ooxml-core is published.
-		const unpublished = new Set(['@christophervr/ooxml-core']);
 		for (const [dependency, version] of Object.entries(manifest.dependencies ?? {}))
 			assert(
-				!String(version).includes('file:') || unpublished.has(dependency),
+				!String(version).includes('file:'),
 				`${packed.name} depends on ${dependency} through ${version}`,
 			);
-		assert(!JSON.stringify({ ...manifest, dependencies: undefined }).includes('file:'));
+		assert(!JSON.stringify(manifest).includes('file:'));
 		await assertPublishedImports(path.join(target, 'dist'), packed.name);
 		for (const [dependency, version] of Object.entries(manifest.peerDependencies ?? {}))
 			peers.set(dependency, version);
