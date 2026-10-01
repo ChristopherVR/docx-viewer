@@ -14,7 +14,7 @@ import {
 	type Twips,
 } from './index.js';
 
-// The unit types themselves are tested in ooxml-core (`@christophervr/ooxml-units`); these checks
+// The unit types themselves are tested in ooxml-core (`@christophervr/ooxml-core/units`); these checks
 // cover that the Word model's fields carry the brands.
 describe('Word model unit safety', () => {
 	it('model fields carry the brands', () => {

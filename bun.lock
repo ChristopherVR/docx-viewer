@@ -68,9 +68,7 @@
       "name": "@christophervr/docx-core",
       "version": "0.1.0",
       "dependencies": {
-        "@christophervr/ooxml-opc": "file:../../../ooxml-core/packages/opc",
-        "@christophervr/ooxml-units": "file:../../../ooxml-core/packages/units",
-        "@christophervr/ooxml-xml": "file:../../../ooxml-core/packages/xml",
+        "@christophervr/ooxml-core": "file:../../../ooxml-core",
         "jszip": "^3.10.2",
       },
       "devDependencies": {
@@ -719,11 +717,7 @@
 
     "zimmerframe": ["zimmerframe@1.1.5", "", {}, "sha512-msJxIvYDYcoNL+PJsu+7qmpDWsYmAxTY+2TNYXXF0hzBzBk0BMecOqDOG/EckUoKCuKwObfbugIl8QpqHDXeFA=="],
 
-    "@christophervr/docx-core/@christophervr/ooxml-opc": ["@christophervr/ooxml-opc@file:../ooxml-core/packages/opc", { "dependencies": { "@christophervr/ooxml-xml": "file:../xml", "jszip": "^3.10.2" } }],
-
-    "@christophervr/docx-core/@christophervr/ooxml-units": ["@christophervr/ooxml-units@file:../ooxml-core/packages/units", {}],
-
-    "@christophervr/docx-core/@christophervr/ooxml-xml": ["@christophervr/ooxml-xml@file:../ooxml-core/packages/xml", { "dependencies": { "@xmldom/xmldom": "^0.9.12" } }],
+    "@christophervr/docx-core/@christophervr/ooxml-core": ["@christophervr/ooxml-core@file:../ooxml-core", { "dependencies": { "@xmldom/xmldom": "^0.9.12", "jszip": "^3.10.2" }, "devDependencies": { "@types/node": "^22.0.0", "oxfmt": "*", "typescript": "^5.9.3", "vitest": "^3.2.0" } }],
 
     "@tailwindcss/oxide-wasm32-wasi/@emnapi/core": ["@emnapi/core@1.11.3", "", { "dependencies": { "@emnapi/wasi-threads": "1.2.3", "tslib": "^2.4.0" }, "bundled": true }, "sha512-zLpS5asjEb7lq8jYLq37N6XKaE41DIexlY1rF/z4/tIl3wo13Sqm28fRyfIsKZD+NZ8mM5RoKkpW/rBcuoSZSg=="],
 
@@ -745,6 +739,8 @@
 
     "vitest/tinypool": ["tinypool@1.1.1", "", {}, "sha512-Zba82s87IFq9A9XmjiX5uZA/ARWDrB03OHlq+Vw1fSdt0I+4/Kutwy8BP4Y/y/aORMo61FQ0vIb5j44vSo5Pkg=="],
 
-    "@christophervr/docx-core/@christophervr/ooxml-opc/@christophervr/ooxml-xml": ["@christophervr/ooxml-xml@file:..\\ooxml-core\\packages\\xml", {}],
+    "@christophervr/docx-core/@christophervr/ooxml-core/@types/node": ["@types/node@22.20.4", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-zJRE40jpHtKqE/C4fgHrAKQLJuSpzEnP9ff9Y7YtoR3Wd2pwqzlekDeEuUQXjRd+QCYnVnNwuJYmhdk9XV8gvA=="],
+
+    "@christophervr/docx-core/@christophervr/ooxml-core/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
   }
 }

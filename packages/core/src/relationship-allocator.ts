@@ -1,7 +1,7 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 // Assigns fresh relationship ids when write.ts introduces a new external hyperlink or a
 // newly inserted picture, and records what save.ts must add to word/_rels/document.xml.rels.
-import { RELATIONSHIP_TYPES, isSafeHyperlinkHref, nextRelationshipId } from '@christophervr/ooxml-opc';
+import { RELATIONSHIP_TYPES, isSafeHyperlinkHref, nextRelationshipId } from '@christophervr/ooxml-core/opc';
 import { DocPrIdAllocator } from './docpr-ids.js';
 import { isElement, REL_NS, type XmlDocument, type XmlElement } from './xml.js';
 

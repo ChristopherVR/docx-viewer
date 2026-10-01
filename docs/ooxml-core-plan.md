@@ -2,6 +2,12 @@
 
 Status: proposal for review, 2026-10-01. Based on read-only reviews of `pptx-viewer-new` (main, 17d75540e, with 79 uncommitted files that were not touched), the three stale 3D worktrees, `docx-viewer/packages/core` and `ole2`. Counts are approximate and several were sampled, not exhaustively read.
 
+## Update (2026-10-01, later): one package, all the logic
+
+`ooxml-core` is **one published package**, `@christophervr/ooxml-core`, with an area per subpath (`/xml`, `/opc`, `/units`, `/color`, `/geometry`, and later `/drawingml`, `/chart`, `/diagram`, `/docx`, `/pptx`, `/xlsx`, `/collab`). It is the home of **all** logic for the Office products, including the document models, parsers, serializers, editing commands, layout and the Yjs collaboration and sync protocol. `docx-viewer` and `pptx-viewer` keep **only the UI**. This supersedes the multi-package table in "Proposed shape" below: read those packages as areas of the one package.
+
+Consequences for the phases: the Word and PowerPoint cores (`docx-core`, `pptx-viewer-core`) and the collaboration logic move into the new package's `docx`, `pptx` and `collab` areas, not only the shared layers; the viewers' own packages shrink to adapters and views. The GitHub secret `OOXML_CORE_TOKEN` now exists for docx-viewer CI.
+
 ## Decisions (confirmed 2026-10-01)
 
 1. **Repositories:** one repository per Office type (`docx-viewer`, `pptx-viewer`, `xlsx-viewer` later), plus a **separate `ooxml-core` repository**, a sibling of `ole2` at `D:\Development\ooxml-core`. It is scaffolded (strict TypeScript, Vitest, oxfmt, `AGENTS.md`, `PROVENANCE.md`) with its first package, `@christophervr/ooxml-units`. Nothing is committed or published yet.
@@ -12,7 +18,6 @@ Status: proposal for review, 2026-10-01. Based on read-only reviews of `pptx-vie
 
 ## Earlier decisions
 
-
 - A **new project** holds shared modern OOXML. `ole2` stays legacy-only (CFB, binary DOC/XLS/PPT, RC4/MD4). Nothing modern moves into it, and the reverse.
 - Word and PowerPoint keep their own document cores (`docx-core`, `pptx-viewer-core`). They consume `ooxml-core` for what is not specific to either.
 - Public APIs of both viewers are preserved (re-export shims) throughout.
@@ -20,6 +25,7 @@ Status: proposal for review, 2026-10-01. Based on read-only reviews of `pptx-vie
 ## What the review found
 
 **pptx-viewer** (`packages/core`, ~243k LOC; `packages/shared`, ~320k LOC)
+
 - A monolith around a `PptxHandler` mixin chain whose base class owns the JSZip instance, the `fast-xml-parser` instance and theme/rels maps. Generic DrawingML code sits in the same flat folders as slide code; only file names separate them. Root `index.ts` re-exports everything, so generic helpers are already public API.
 - Generic and reusable, roughly by cleanliness of the boundary:
   - **Pure, no XML library:** `color/` (1.2k), `geometry/` (22.8k preset shapes, guide formulas, custom geometry, connectors, boolean ops), `smartart-engine/` (6-8k layout algorithms), OMML to LaTeX/MathML, font metrics and substitution, media-duration, png/gif/tiff utilities, `ooxml-crypto*` (1.6k).
@@ -30,9 +36,11 @@ Status: proposal for review, 2026-10-01. Based on read-only reviews of `pptx-vie
 - 3D: `three-d-parity-push` is merged into main. `three-d-charts`, `three-d-smartart` and `three-d-bindings` are ~587 commits behind, conflict in the same files, and are superseded; treat as retired. Ground truth for rendering is small (17 chart slides, 112 SmartArt slides over 8 layouts).
 
 **docx-viewer** (`packages/core`, ~120 flat modules)
+
 - Strict TypeScript (`exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`), branded units (Twips, Emu...), `@xmldom/xmldom` 0.9 DOM, schema-ordered writes that patch only changed XML, generated `ST_*` types from ECMA-376 XSDs, xmllint-wasm schema-validity tests, ESM only.
 
 **Duplication that is real today**
+
 - Units/EMU constants, relationship parsing/allocation, `[Content_Types].xml` handling, core/app properties, theme colour scheme, hyperlink safe-href, number-format tables, validation issue shape, MCE (`mc:AlternateContent`) handling, OOXML agile-encryption primitives.
 - `ole2` holds a copy of the modern OOXML crypto primitives and a stale comment about a `docx` editor. PPT record parsing exists in both `ole2/src/ppt` and pptx core and has drifted. docx pins `ole2` 0.2.0, pptx 0.3.0.
 
@@ -54,20 +62,20 @@ Sequence, so nothing breaks while it happens:
 
 One repository, `ooxml-core`, Bun workspaces, Apache-2.0, ESM + CJS (pptx publishes both). Scope `@christophervr/ooxml-*`, one package per boundary so consumers pull only what they use:
 
-| Package | Contents | Depends on |
-| --- | --- | --- |
-| `ooxml-units` | branded Emu/Twips/points, EMU constants, rounding | none |
-| `ooxml-color` | colour parsing and DrawingML transforms (lum/sat/tint/shade) | units |
-| `ooxml-geometry` | preset shapes, guide evaluator, custom geometry, connectors | units |
-| `ooxml-opc` | zip package, parts, content types, relationships, allocator, core/app properties, MCE, strict-to-transitional map, validator (OPC/MCE) | jszip |
-| `ooxml-xml` | `XmlReader/Writer` interface, DOM adapter, object-tree adapter, schema-order helpers, entity/whitespace helpers | none (adapters optional peers) |
-| `ooxml-drawingml` | models + parse/serialize: fills, lines, effects, text body (shared subset), theme, blip/xfrm, VML, InkML, fonts/embedded fonts | xml, opc, color, geometry |
-| `ooxml-chart` | chart models, ChartML/chartex parse and serialize, colour/style parts, embedded workbook, 2D view-model | drawingml |
-| `ooxml-diagram` | SmartArt models, data/layout/colors/quickStyle/drawing parts, layout engine, fabrication | drawingml |
-| `ooxml-chart-3d`, `ooxml-diagram-3d`, `ooxml-three-view` | three.js scene builders and host (three stays an optional lazy peer) | chart, diagram |
-| `ooxml-math` | OMML <-> LaTeX/MathML | none |
-| `ooxml-crypto` | agile/standard encryption primitives (moved from ole2/pptx copies) | none |
-| `ooxml-schema` | the XSD-driven type generator, extended from WML to DML, PML, chart, diagram | build-time only |
+| Package                                                  | Contents                                                                                                                               | Depends on                     |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `ooxml-units`                                            | branded Emu/Twips/points, EMU constants, rounding                                                                                      | none                           |
+| `ooxml-color`                                            | colour parsing and DrawingML transforms (lum/sat/tint/shade)                                                                           | units                          |
+| `ooxml-geometry`                                         | preset shapes, guide evaluator, custom geometry, connectors                                                                            | units                          |
+| `ooxml-opc`                                              | zip package, parts, content types, relationships, allocator, core/app properties, MCE, strict-to-transitional map, validator (OPC/MCE) | jszip                          |
+| `ooxml-xml`                                              | `XmlReader/Writer` interface, DOM adapter, object-tree adapter, schema-order helpers, entity/whitespace helpers                        | none (adapters optional peers) |
+| `ooxml-drawingml`                                        | models + parse/serialize: fills, lines, effects, text body (shared subset), theme, blip/xfrm, VML, InkML, fonts/embedded fonts         | xml, opc, color, geometry      |
+| `ooxml-chart`                                            | chart models, ChartML/chartex parse and serialize, colour/style parts, embedded workbook, 2D view-model                                | drawingml                      |
+| `ooxml-diagram`                                          | SmartArt models, data/layout/colors/quickStyle/drawing parts, layout engine, fabrication                                               | drawingml                      |
+| `ooxml-chart-3d`, `ooxml-diagram-3d`, `ooxml-three-view` | three.js scene builders and host (three stays an optional lazy peer)                                                                   | chart, diagram                 |
+| `ooxml-math`                                             | OMML <-> LaTeX/MathML                                                                                                                  | none                           |
+| `ooxml-crypto`                                           | agile/standard encryption primitives (moved from ole2/pptx copies)                                                                     | none                           |
+| `ooxml-schema`                                           | the XSD-driven type generator, extended from WML to DML, PML, chart, diagram                                                           | build-time only                |
 
 A part loader interface (read XML part, resolve a relationship, read binary, theme and colour-map lookup) replaces `slidePath`/`PptxHandlerRuntime` in chart and SmartArt parsing. Word implements it over `word/document.xml` rels (`c:chart r:id`, `dgm:relIds`); PowerPoint over its slide rels. Renderers take narrow `ChartModel`/`DiagramModel` inputs, not `PptxElement`.
 
@@ -78,15 +86,15 @@ Engineering rules carried over from this repo: modules under 300 lines where pra
 **Phase 0: ground rules (days).** Create the repo and CI. Fix tsconfig policy (strict for all new packages; products may stay looser and consume `.d.ts`). Settle xmldom 0.9 vs 0.8, ESM+CJS output, and package naming. Decide how pptx's 79 uncommitted files are handled before touching that tree (they belong to someone's in-progress work).
 
 **Phase 1: pure packages (1-2 weeks).** `ooxml-units`, `ooxml-color`, `ooxml-geometry`, `ooxml-math`, `ooxml-crypto`, font metrics. Move with their existing tests; pptx re-exports from its old paths so its API does not change; docx adopts units and colour where it has gaps. Remove the crypto copy and stale comment from `ole2`.
-  Exit: both products build and pass tests on the shared packages; no behaviour change.
+Exit: both products build and pass tests on the shared packages; no behaviour change.
 
 **Phase 2: OPC + unified XML (3-4 weeks).** `ooxml-opc` from docx's relationship/allocator/content-type/core-property code (pure, tested) plus pptx's validator and MCE helpers; `ooxml-xml` as the single node tree with the temporary object-tree compatibility view. docx adopts it directly (it already uses DOM nodes); pptx starts consuming it through the compatibility view.
-  Exit: round-trip byte-identity tests (docx no-op saves, pptx fixtures) unchanged.
+Exit: round-trip byte-identity tests (docx no-op saves, pptx fixtures) unchanged.
 
 **Phase 3: DrawingML shared layer (4-6 weeks, includes the first pptx ports).** Fills, lines, effects, theme, blip/xfrm, VML, shared text-body subset, written once against `ooxml-xml`; pptx's matching parsers are ported and its reorder code removed as each lands. This is also where docx gets a real `wps` text-box/shape model instead of the inline-only text box added now, and a drawing-anchor model for floating objects.
 
 **Phase 4: charts and SmartArt (4-6 weeks).** Move models, parse/serialize, the layout engine and fabrication. Introduce the part loader and narrow render inputs; pptx keeps its `PptxElement` wrappers over them. docx gains inline/anchored `c:chart` and `dgm` parsing, rendering and (initially) read-only round-trip.
-  Exit: pptx's 17 chart and 112 SmartArt ground-truth slides unchanged (acceptance gate); docx fixtures render and survive save byte-for-byte when untouched.
+Exit: pptx's 17 chart and 112 SmartArt ground-truth slides unchanged (acceptance gate); docx fixtures render and survive save byte-for-byte when untouched.
 
 **Phase 5: 3D renderers (2-3 weeks).** Move chart/SmartArt 3D scene code and `three-view` once their inputs are narrow models. Keep three lazy and optional.
 

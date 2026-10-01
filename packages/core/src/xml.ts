@@ -1,5 +1,5 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
-// Word-specific view of the shared XML model in `@christophervr/ooxml-xml`: the same parser and
+// Word-specific view of the shared XML model in `@christophervr/ooxml-core/xml`: the same parser and
 // DOM, with the WordprocessingML namespace as the default for the element/attribute helpers.
 import {
 	NS,
@@ -17,7 +17,7 @@ import {
 	type XmlDocument,
 	type XmlElement,
 	type XmlNode,
-} from '@christophervr/ooxml-xml';
+} from '@christophervr/ooxml-core/xml';
 
 export const WORD_NS = NS.w;
 /** OOXML relationships namespace used for `r:id`/`r:embed` attributes on drawings and hyperlinks. */
