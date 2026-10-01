@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -43,6 +43,16 @@ try {
 	const tarballs = [];
 	const peers = new Map();
 	await mkdir(scope, { recursive: true });
+	// `@christophervr/ooxml-core` is not published yet: pack the sibling checkout and make every
+	// package that depends on it by `file:` path depend on that tarball instead.
+	const corePacked = JSON.parse(
+		run('npm', ['pack', '--json', '--pack-destination', work, path.resolve(root, '../ooxml-core')]),
+	)[0];
+	const coreTarball = path.join(work, corePacked.filename);
+	tarballs.push(coreTarball);
+	const coreTarget = path.join(scope, 'ooxml-core');
+	await mkdir(coreTarget, { recursive: true });
+	run('tar', ['-xzf', coreTarball, '--strip-components=1', '-C', coreTarget]);
 	for (const name of [
 		'core',
 		'legacy',
@@ -52,7 +62,23 @@ try {
 		'bindings',
 		'viewer',
 	]) {
-		const packageDir = path.join(root, 'packages', name);
+		let packageDir = path.join(root, 'packages', name);
+		const sourceManifest = JSON.parse(
+			await readFile(path.join(packageDir, 'package.json'), 'utf8'),
+		);
+		if (
+			String(sourceManifest.dependencies?.['@christophervr/ooxml-core'] ?? '').startsWith('file:')
+		) {
+			const copy = path.join(work, `pack-${name}`);
+			await mkdir(copy, { recursive: true });
+			for (const entry of ['dist', 'README.md', 'LICENSE', 'NOTICE'])
+				await cp(path.join(packageDir, entry), path.join(copy, entry), {
+					recursive: true,
+				}).catch(() => {});
+			sourceManifest.dependencies['@christophervr/ooxml-core'] = `file:${coreTarball}`;
+			await writeFile(path.join(copy, 'package.json'), JSON.stringify(sourceManifest, null, '	'));
+			packageDir = copy;
+		}
 		const packed = JSON.parse(
 			run('npm', ['pack', '--json', '--pack-destination', work, packageDir]),
 		)[0];
@@ -74,8 +100,8 @@ try {
 		);
 		const manifest = JSON.parse(await readFile(path.join(target, 'package.json'), 'utf8'));
 		assert(!JSON.stringify(manifest).includes('workspace:'));
-		// `@christophervr/ooxml-core` is a private sibling checkout (`file:`) until it is published;
-		// that one dependency is allowed here, and publishing stays blocked on it (see docs/releasing.md).
+		// The manifest was packed from a copy that points at the ooxml-core tarball (not a path);
+		// the tarball spec is the one `file:` reference tolerated until ooxml-core is published.
 		const unpublished = new Set(['@christophervr/ooxml-core']);
 		for (const [dependency, version] of Object.entries(manifest.dependencies ?? {}))
 			assert(
