@@ -200,13 +200,18 @@ export function adaptDocumentModel(
 			runs: label ? [labelRun(paragraph, label), ...runs] : runs,
 			...(footnotes.length ? { footnotes } : {}),
 			...box,
-			...(paragraph.tabStops?.length
+			...(paragraph.tabStops?.length || label?.tabStopTwips !== undefined
 				? {
-						tabStops: paragraph.tabStops.map((stop) => ({
-							posPx: twipsToPx(stop.posTwips),
-							align: stop.align,
-							...(stop.leader ? { leader: stop.leader } : {}),
-						})),
+						tabStops: [
+							...(paragraph.tabStops ?? []).map((stop) => ({
+								posPx: twipsToPx(stop.posTwips),
+								align: stop.align,
+								...(stop.leader ? { leader: stop.leader } : {}),
+							})),
+							...(label?.tabStopTwips !== undefined
+								? [{ posPx: twipsToPx(label.tabStopTwips), align: 'left' as const }]
+								: []),
+						].sort((a, b) => a.posPx - b.posPx),
 					}
 				: {}),
 			...floatsOf(paragraph),

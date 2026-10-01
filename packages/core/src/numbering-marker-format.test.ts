@@ -3,6 +3,7 @@ import JSZip from 'jszip';
 import { loadDocx } from './parse.js';
 import { ensureListDefinition } from './numbering-editing.js';
 import { computeListLabels } from './numbering-format.js';
+import { twips } from './units.js';
 
 const WORD_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
@@ -50,5 +51,18 @@ describe('numbering marker format', () => {
 			italic: true,
 			color: '#ff0000',
 		});
+	});
+
+	it('round-trips a level tab stop before the indent', async () => {
+		const loaded = await loadDocx(await fixture());
+		const added = ensureListDefinition(loaded.model.numberingCatalog, 'decimal');
+		const id = added.catalog.nums[added.numId]!.abstractNumId;
+		added.catalog.abstractNums[id]!.levels[0]!.tabStopTwips = twips(1440);
+		loaded.model.numberingCatalog = added.catalog;
+		const output = await JSZip.loadAsync(await loaded.save());
+		const xml = (await output.file('word/numbering.xml')?.async('string')) ?? '';
+		expect(xml).toMatch(/<w:pPr><w:tabs><w:tab w:val="num" w:pos="1440"\/><\/w:tabs><w:ind /);
+		const reopened = await loadDocx(await output.generateAsync({ type: 'uint8array' }));
+		expect(reopened.model.numberingCatalog!.abstractNums[id]!.levels[0]!.tabStopTwips).toBe(1440);
 	});
 });

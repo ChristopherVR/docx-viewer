@@ -120,3 +120,14 @@ it('links a level to a paragraph style once per list and updates the style numbe
 	expect(s.model.paragraphStyles!.styles.Heading1!.numbering).toEqual({ numId: 1, level: 1 });
 	s.view.destroy();
 });
+
+it('stores an explicit tab stop and rejects one beyond 22 inches', () => {
+	const s = setup();
+	s.dialog.open();
+	s.set('Add tab stop at (inches)', '23');
+	expect(s.button('OK').disabled).toBe(true);
+	s.set('Add tab stop at (inches)', '1.5');
+	s.button('OK').click();
+	expect(s.model.numberingCatalog!.abstractNums['0']!.levels[0]!.tabStopTwips).toBe(2160);
+	s.view.destroy();
+});

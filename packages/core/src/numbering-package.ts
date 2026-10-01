@@ -46,17 +46,26 @@ function buildLevelElement(doc: XmlDocument, def: NumberingLevelDefinition): Xml
 	lvl.appendChild(valueElement(doc, 'lvlText', def.lvlText));
 	if (def.lvlJc) lvl.appendChild(valueElement(doc, 'lvlJc', def.lvlJc));
 	if (
+		def.tabStopTwips !== undefined ||
 		def.indentLeftTwips !== undefined ||
 		def.hangingTwips !== undefined ||
 		def.firstLineTwips !== undefined
 	) {
 		const pPr = makeW(doc, 'pPr');
+		if (def.tabStopTwips !== undefined) {
+			const tabs = makeW(doc, 'tabs');
+			const tab = makeW(doc, 'tab');
+			setAttribute(tab, 'val', 'num');
+			setAttribute(tab, 'pos', String(def.tabStopTwips));
+			tabs.appendChild(tab);
+			pPr.appendChild(tabs);
+		}
 		const ind = makeW(doc, 'ind');
 		if (def.indentLeftTwips !== undefined) setAttribute(ind, 'left', String(def.indentLeftTwips));
 		if (def.hangingTwips !== undefined) setAttribute(ind, 'hanging', String(def.hangingTwips));
 		if (def.firstLineTwips !== undefined)
 			setAttribute(ind, 'firstLine', String(def.firstLineTwips));
-		pPr.appendChild(ind);
+		if (ind.attributes.length) pPr.appendChild(ind);
 		lvl.appendChild(pPr);
 	}
 	const marker = def.markerFormat;
@@ -71,7 +80,8 @@ function buildLevelElement(doc: XmlDocument, def: NumberingLevelDefinition): Xml
 		}
 		if (marker.bold) rPr.appendChild(makeW(doc, 'b'));
 		if (marker.italic) rPr.appendChild(makeW(doc, 'i'));
-		if (marker.color) rPr.appendChild(valueElement(doc, 'color', marker.color.slice(1).toUpperCase()));
+		if (marker.color)
+			rPr.appendChild(valueElement(doc, 'color', marker.color.slice(1).toUpperCase()));
 		if (marker.fontSizeHalfPoints)
 			rPr.appendChild(valueElement(doc, 'sz', String(marker.fontSizeHalfPoints)));
 		lvl.appendChild(rPr);

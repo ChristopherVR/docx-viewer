@@ -34,7 +34,8 @@ export function listMarkerDisplay(
 	const italic = own?.italic ?? format.italic;
 	const font = {
 		family: own?.fontFamily ?? format.fontFamily ?? themeFontOf(format, model.theme) ?? 'Calibri',
-		sizePx: ((own?.fontSizeHalfPoints ? own.fontSizeHalfPoints / 2 : (format.fontSize ?? 11)) * 4) / 3,
+		sizePx:
+			((own?.fontSizeHalfPoints ? own.fontSizeHalfPoints / 2 : (format.fontSize ?? 11)) * 4) / 3,
 		...(bold ? { bold: true } : {}),
 		...(italic ? { italic: true } : {}),
 	};
@@ -58,8 +59,13 @@ export function listMarkerDisplay(
 	let body = end;
 	if (label.suffix === 'space') body += measurer.widthOf(' ', font);
 	if (label.suffix === 'tab') {
-		const custom = paragraph.tabStops
-			?.filter(
+		const custom = [
+			...(paragraph.tabStops ?? []),
+			...(label.tabStopTwips !== undefined
+				? [{ posTwips: label.tabStopTwips, align: 'left' as const }]
+				: []),
+		]
+			.filter(
 				(stop) => stop.align !== 'clear' && stop.align !== 'bar' && stop.posTwips / 15 > end + 0.5,
 			)
 			.sort((a, b) => a.posTwips - b.posTwips)[0];

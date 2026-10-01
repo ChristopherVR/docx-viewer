@@ -55,6 +55,12 @@ export function parseNumberingLevel(lvl: XmlElement): NumberingLevelDefinition {
 	if (hanging !== undefined) result.hangingTwips = parseTwips(hanging) ?? twips(0);
 	const firstLine = getW(ind, 'firstLine');
 	if (firstLine !== undefined) result.firstLineTwips = parseTwips(firstLine) ?? twips(0);
+	const tabs = first(first(lvl, 'pPr'), 'tabs');
+	const tab = tabs
+		? children(tabs, 'tab').find((stop) => getW(stop, 'val') !== 'clear')
+		: undefined;
+	const tabPos = tab ? parseTwips(getW(tab, 'pos')) : undefined;
+	if (tabPos !== undefined) result.tabStopTwips = tabPos;
 	if (flag(first(lvl, 'isLgl'))) result.isLgl = true;
 	const restart = getW(first(lvl, 'lvlRestart'), 'val');
 	if (restart !== undefined) result.lvlRestart = integer(restart, 0);

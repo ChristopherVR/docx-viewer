@@ -32,6 +32,8 @@ export interface NumberingLevelDefinition {
 	lvlRestart?: number;
 	/** Marker-to-text separator from `w:suff` (defaults to `tab`). */
 	suffix?: 'tab' | 'space' | 'none';
+	/** Explicit tab stop for the marker's tab suffix (`w:pPr/w:tabs/w:tab`, `w:val="num"`). */
+	tabStopTwips?: Twips;
 	/** Marker formatting from `w:rPr`. */
 	markerFormat?: NumberingMarkerFormat;
 }
@@ -66,5 +68,6 @@ export interface ParagraphListLabel {
 	indentLeftTwips?: SignedTwips;
 	hangingTwips?: Twips;
 	firstLineTwips?: Twips;
+	tabStopTwips?: Twips;
 	markerFormat?: NumberingMarkerFormat;
 }

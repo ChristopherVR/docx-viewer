@@ -69,6 +69,7 @@ export function createMultilevelListDialog(
 		['none', 'Nothing'],
 	]);
 	const linkedStyle = selectOf([['', '(No style)']]);
+	const tabStop = numberInput(0, 22, 0.01);
 	const markerFont = textInput();
 	const markerSize = numberInput(1, 400, 0.5);
 	const markerColor = textInput();
@@ -82,7 +83,7 @@ export function createMultilevelListDialog(
 	preview.setAttribute('role', 'group');
 	preview.setAttribute('aria-label', 'List preview');
 	preview.style.cssText =
-		'max-height:84px;overflow:auto;padding:8px;border:1px solid var(--dve-border,#ccc)';
+		'max-height:70px;overflow:auto;padding:8px;border:1px solid var(--dve-border,#ccc)';
 	const message = document.createElement('p');
 	message.setAttribute('role', 'alert');
 	const ok = dialogButton('OK', true),
@@ -117,6 +118,7 @@ export function createMultilevelListDialog(
 				labelled('Number alignment', alignment),
 				labelled('Aligned at (inches)', aligned),
 				labelled('Text indent at (inches)', indent),
+				labelled('Add tab stop at (inches)', tabStop),
 			),
 			row(
 				labelled('Follow number with', suffix),
@@ -149,8 +151,15 @@ export function createMultilevelListDialog(
 			(markerSize.value === '' ||
 				(Number(markerSize.value) >= 1 && Number(markerSize.value) <= 400)) &&
 			(markerColor.value.trim() === '' || /^#[0-9a-f]{6}$/i.test(markerColor.value.trim()));
+		const tabOk =
+			tabStop.value === '' || (Number(tabStop.value) >= 0 && Number(tabStop.value) <= 22);
 		const result =
-			integer(start) && distance(aligned) && distance(indent) && !invalidPlaceholder && markerValid;
+			tabOk &&
+			integer(start) &&
+			distance(aligned) &&
+			distance(indent) &&
+			!invalidPlaceholder &&
+			markerValid;
 		message.textContent = !markerValid
 			? 'Enter a font size from 1 to 400 and a colour such as #1F4E79.'
 			: result
@@ -171,6 +180,8 @@ export function createMultilevelListDialog(
 		draft.isLgl = legal.input.checked;
 		if (restart.value === 'default') delete draft.lvlRestart;
 		else draft.lvlRestart = Number(restart.value);
+		if (tabStop.value === '') delete draft.tabStopTwips;
+		else draft.tabStopTwips = twips(Math.round(Number(tabStop.value) * 1440));
 		if (linkedStyle.value) {
 			draft.paragraphStyleId = linkedStyle.value;
 			// A style belongs to one level of a list.
@@ -182,7 +193,8 @@ export function createMultilevelListDialog(
 		draft.suffix = suffix.value as NonNullable<NumberingLevelDefinition['suffix']>;
 		const marker: NonNullable<NumberingLevelDefinition['markerFormat']> = {};
 		if (markerFont.value.trim()) marker.fontFamily = markerFont.value.trim();
-		if (markerSize.value !== '') marker.fontSizeHalfPoints = Math.round(Number(markerSize.value) * 2);
+		if (markerSize.value !== '')
+			marker.fontSizeHalfPoints = Math.round(Number(markerSize.value) * 2);
 		if (markerColor.value.trim()) marker.color = markerColor.value.trim().toLowerCase();
 		if (markerBold.input.checked) marker.bold = true;
 		if (markerItalic.input.checked) marker.italic = true;
@@ -243,6 +255,7 @@ export function createMultilevelListDialog(
 		if (draft.paragraphStyleId && !styles.some((item) => item.id === draft.paragraphStyleId))
 			linkedStyle.append(new Option(draft.paragraphStyleId, draft.paragraphStyleId));
 		linkedStyle.value = draft.paragraphStyleId ?? '';
+		tabStop.value = draft.tabStopTwips !== undefined ? String(draft.tabStopTwips / 1440) : '';
 		const marker = draft.markerFormat;
 		markerFont.value = marker?.fontFamily ?? '';
 		markerSize.value = marker?.fontSizeHalfPoints ? String(marker.fontSizeHalfPoints / 2) : '';
@@ -283,6 +296,7 @@ export function createMultilevelListDialog(
 		aligned,
 		indent,
 		suffix,
+		tabStop,
 		linkedStyle,
 		markerFont,
 		markerSize,
