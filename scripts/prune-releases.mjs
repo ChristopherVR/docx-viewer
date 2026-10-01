@@ -36,12 +36,12 @@ import { execFileSync } from 'node:child_process';
 /** Published npm names, mirroring PACKAGES in scripts/release-plan.mjs. */
 const NPM_NAMES = [
 	'@christophervr/docx-core',
-	'@christophervr/docx-legacy',
-	'@christophervr/docx-document',
-	'@christophervr/docx-layout',
-	'@christophervr/docx-web-component',
-	'@christophervr/docx-bindings',
-	'@christophervr/docx-viewer',
+	'@christophervr/docx-react-viewer',
+	'@christophervr/docx-vue-viewer',
+	'@christophervr/docx-angular-viewer',
+	'@christophervr/docx-svelte-viewer',
+	'@christophervr/docx-solid-viewer',
+	'@christophervr/docx-vanilla-viewer',
 ];
 
 const DEFAULT_KEEP = 1;

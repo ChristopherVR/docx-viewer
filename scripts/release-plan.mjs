@@ -32,21 +32,58 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /**
+ * Internal, `private` workspace packages. They are never published: their code is bundled into
+ * every framework package (and `legacy` also inlines the shared `@christophervr/ole2` codecs, a
+ * regular dependency of that private package so a version bump of ole2 shows up as a change). A
+ * change in any of them therefore changes what every framework package ships.
+ */
+export const INTERNAL_DIRS = [
+	'packages/document',
+	'packages/layout',
+	'packages/legacy',
+	'packages/web-component',
+	'packages/bindings',
+];
+
+/**
  * Publishable packages, in the order the planner reports them. `dir` is the source directory
  * and `npm` the published name. Dependencies between these packages are NOT listed here: any
  * `dependencies` / `peerDependencies` / `optionalDependencies` entry naming another package of
- * this table is an internal dependency, and releasing it re-releases the dependent.
+ * this table is an internal dependency, and releasing it re-releases the dependent (every
+ * framework package depends on `docx-core`, so a core release releases all of them).
+ * `triggers` (optional) are other directories whose published files also force a release of this
+ * package, because their code is inlined into it. Same shape as pptx-viewer's SHARED_DIR trigger.
  * `paths` (optional) narrows what counts as a published file, for a package that is the repo
  * root: entries ending in `/` are directories, anything else a single file.
  */
 export const PACKAGES = {
 	core: { dir: 'packages/core', npm: '@christophervr/docx-core' },
-	legacy: { dir: 'packages/legacy', npm: '@christophervr/docx-legacy' },
-	document: { dir: 'packages/document', npm: '@christophervr/docx-document' },
-	layout: { dir: 'packages/layout', npm: '@christophervr/docx-layout' },
-	'web-component': { dir: 'packages/web-component', npm: '@christophervr/docx-web-component' },
-	bindings: { dir: 'packages/bindings', npm: '@christophervr/docx-bindings' },
-	viewer: { dir: 'packages/viewer', npm: '@christophervr/docx-viewer' },
+	react: {
+		dir: 'packages/react',
+		npm: '@christophervr/docx-react-viewer',
+		triggers: INTERNAL_DIRS,
+	},
+	vue: { dir: 'packages/vue', npm: '@christophervr/docx-vue-viewer', triggers: INTERNAL_DIRS },
+	angular: {
+		dir: 'packages/angular',
+		npm: '@christophervr/docx-angular-viewer',
+		triggers: INTERNAL_DIRS,
+	},
+	svelte: {
+		dir: 'packages/svelte',
+		npm: '@christophervr/docx-svelte-viewer',
+		triggers: INTERNAL_DIRS,
+	},
+	solid: {
+		dir: 'packages/solid',
+		npm: '@christophervr/docx-solid-viewer',
+		triggers: INTERNAL_DIRS,
+	},
+	vanilla: {
+		dir: 'packages/vanilla',
+		npm: '@christophervr/docx-vanilla-viewer',
+		triggers: INTERNAL_DIRS,
+	},
 };
 
 /**
@@ -136,6 +173,9 @@ export function planRelease({ root, packages: table, globalTriggers = [], npm })
 	const manifestPath = (meta) => join(root, meta.dir, 'package.json');
 	const names = new Set(Object.values(table).map((m) => m.npm));
 	const scopeOf = (meta) => meta.paths ?? [meta.dir];
+	const triggersOf = (meta) => meta.triggers ?? [];
+	/** Own files plus the internal directories bundled into the package. */
+	const fullScopeOf = (meta) => [...scopeOf(meta), ...triggersOf(meta)];
 	const under = (file, target) =>
 		file === target || file.startsWith(target.endsWith('/') ? target : `${target}/`);
 	const touches = (files, targets) => files.some((f) => targets.some((t) => under(f, t)));
@@ -240,11 +280,12 @@ export function planRelease({ root, packages: table, globalTriggers = [], npm })
 			scopeKeys.add(dep);
 			plan[dep].scopeKeys.forEach((k) => scopeKeys.add(k));
 		}
-		const scope = [...[...scopeKeys].flatMap((k) => scopeOf(table[k])), ...globalTriggers];
+		const scope = [...[...scopeKeys].flatMap((k) => fullScopeOf(table[k])), ...globalTriggers];
 		const via = (cond, why) => (cond ? why : null);
 		const reason =
 			via(!base, 'no previous tag') ||
 			via(touches(files, scopeOf(meta)), 'own files changed') ||
+			via(touches(files, triggersOf(meta)), 'bundled internal package changed') ||
 			via(
 				deps.some((d) => plan[d].release),
 				'internal dependency released',
@@ -279,11 +320,12 @@ export function planRelease({ root, packages: table, globalTriggers = [], npm })
 			dependsOn: deps,
 			scopeKeys: [...scopeKeys],
 			includePaths: [
-				...[...scopeKeys].flatMap((k) =>
-					table[k].paths
+				...[...scopeKeys].flatMap((k) => [
+					...(table[k].paths
 						? table[k].paths.map((p) => (p.endsWith('/') ? `${p}**` : p))
-						: [`${table[k].dir}/**`],
-				),
+						: [`${table[k].dir}/**`]),
+					...triggersOf(table[k]).map((dir) => `${dir}/**`),
+				]),
 				...globalTriggers,
 			],
 		};
