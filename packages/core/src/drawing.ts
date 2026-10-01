@@ -23,7 +23,8 @@ const WPS_NS = 'http://schemas.microsoft.com/office/word/2010/wordprocessingShap
 const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const PICTURE_GRAPHIC_URI = 'http://schemas.openxmlformats.org/drawingml/2006/picture';
 /** 914400 EMU per inch, 96 CSS px per inch. */
-export const EMU_PER_PIXEL = 9525;
+export { EMU_PER_PIXEL } from './units.js';
+import { EMU_PER_PIXEL } from './units.js';
 
 export interface DrawingContext {
 	rels: ReadonlyMap<string, Relationship>;
