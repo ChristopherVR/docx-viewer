@@ -56,6 +56,7 @@ export async function writeNewRelationships(
 	let contentTypesXml = await zip.file(CONTENT_TYPES_PART)?.async('string');
 	for (const relationship of created) {
 		relationships.set(relationship.id, {
+			id: relationship.id,
 			target: relationship.target,
 			mode: relationship.mode,
 			type: relationship.type,

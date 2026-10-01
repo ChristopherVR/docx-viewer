@@ -68,6 +68,7 @@
       "name": "@christophervr/docx-core",
       "version": "0.1.0",
       "dependencies": {
+        "@christophervr/ooxml-opc": "file:../../../ooxml-core/packages/opc",
         "@christophervr/ooxml-units": "file:../../../ooxml-core/packages/units",
         "@christophervr/ooxml-xml": "file:../../../ooxml-core/packages/xml",
         "jszip": "^3.10.2",
@@ -718,6 +719,8 @@
 
     "zimmerframe": ["zimmerframe@1.1.5", "", {}, "sha512-msJxIvYDYcoNL+PJsu+7qmpDWsYmAxTY+2TNYXXF0hzBzBk0BMecOqDOG/EckUoKCuKwObfbugIl8QpqHDXeFA=="],
 
+    "@christophervr/docx-core/@christophervr/ooxml-opc": ["@christophervr/ooxml-opc@file:../ooxml-core/packages/opc", { "dependencies": { "@christophervr/ooxml-xml": "file:../xml", "jszip": "^3.10.2" } }],
+
     "@christophervr/docx-core/@christophervr/ooxml-units": ["@christophervr/ooxml-units@file:../ooxml-core/packages/units", {}],
 
     "@christophervr/docx-core/@christophervr/ooxml-xml": ["@christophervr/ooxml-xml@file:../ooxml-core/packages/xml", { "dependencies": { "@xmldom/xmldom": "^0.9.12" } }],
@@ -741,5 +744,7 @@
     "@vue/compiler-sfc/estree-walker": ["estree-walker@2.0.2", "", {}, "sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w=="],
 
     "vitest/tinypool": ["tinypool@1.1.1", "", {}, "sha512-Zba82s87IFq9A9XmjiX5uZA/ARWDrB03OHlq+Vw1fSdt0I+4/Kutwy8BP4Y/y/aORMo61FQ0vIb5j44vSo5Pkg=="],
+
+    "@christophervr/docx-core/@christophervr/ooxml-opc/@christophervr/ooxml-xml": ["@christophervr/ooxml-xml@file:..\\ooxml-core\\packages\\xml", {}],
   }
 }

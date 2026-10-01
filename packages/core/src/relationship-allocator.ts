@@ -1,22 +1,13 @@
 // Canonical modern DOCX implementation; legacy CFB codecs live in ole2.
 // Assigns fresh relationship ids when write.ts introduces a new external hyperlink or a
 // newly inserted picture, and records what save.ts must add to word/_rels/document.xml.rels.
+import { RELATIONSHIP_TYPES, isSafeHyperlinkHref, nextRelationshipId } from '@christophervr/ooxml-opc';
 import { DocPrIdAllocator } from './docpr-ids.js';
 import { isElement, REL_NS, type XmlDocument, type XmlElement } from './xml.js';
 
-export const HYPERLINK_RELATIONSHIP_TYPE =
-	'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink';
-export const IMAGE_RELATIONSHIP_TYPE =
-	'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image';
-
-const SAFE_HYPERLINK_SCHEMES = new Set(['http:', 'https:', 'mailto:']);
-
-/** Only http(s) and mailto targets are accepted; anything else (notably `javascript:`) is rejected. */
-export function isSafeHyperlinkHref(href: string): boolean {
-	const match = /^([a-z][a-z0-9+.-]*:)/i.exec(href.trim());
-	const scheme = match?.[1];
-	return scheme !== undefined && SAFE_HYPERLINK_SCHEMES.has(scheme.toLowerCase());
-}
+export const HYPERLINK_RELATIONSHIP_TYPE = RELATIONSHIP_TYPES.hyperlink;
+export const IMAGE_RELATIONSHIP_TYPE = RELATIONSHIP_TYPES.image;
+export { isSafeHyperlinkHref };
 
 export interface NewRelationship {
 	id: string;
@@ -54,9 +45,7 @@ export class RelationshipAllocator {
 	}
 
 	private nextId(): string {
-		let index = 1;
-		while (this.used.has(`rId${index}`)) index++;
-		const id = `rId${index}`;
+		const id = nextRelationshipId(this.used);
 		this.used.add(id);
 		return id;
 	}

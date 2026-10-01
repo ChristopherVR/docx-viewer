@@ -32,6 +32,7 @@
 		"gen:schema-types": "bun scripts/gen-schema-types.ts"
 	},
 	"dependencies": {
+		"@christophervr/ooxml-opc": "file:../../../ooxml-core/packages/opc",
 		"@christophervr/ooxml-units": "file:../../../ooxml-core/packages/units",
 		"@christophervr/ooxml-xml": "file:../../../ooxml-core/packages/xml",
 		"jszip": "^3.10.2"
