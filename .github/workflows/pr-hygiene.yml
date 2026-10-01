@@ -1,0 +1,56 @@
+name: PR hygiene
+
+# Adapted from ChristopherVR/pptx-viewer .github/workflows/pr-hygiene.yml (Apache-2.0); only the
+# Conventional Commits job is carried over (the labeler and parity jobs are pptx-specific).
+#
+# Runs on `pull_request_target` so the check also works on PRs from forks, which get a read-only
+# token under the plain `pull_request` trigger.
+#
+# SECURITY: nothing here may ever check out, build, or execute the PR's code. `actions/checkout`
+# resolves to the BASE branch (the default for this trigger), so every script that runs is trusted
+# repo code. The PR is only ever read as DATA through the API (commit subjects, title). A job that
+# needs the PR's contents belongs in ci.yml under `pull_request`.
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: pr-hygiene-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # Commit types drive published package version bumps and changelog inclusion, so this job fails
+  # the PR. Make `Conventional Commits` a required check in the `main` ruleset.
+  commits:
+    name: Conventional Commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Collect the PR title and commit subjects
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const commits = await github.paginate(github.rest.pulls.listCommits, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+
+            // Both are validated: a squash merge can take either the PR title or the commit
+            // messages, and a merge/rebase keeps the individual commits.
+            const subjects = [
+              context.payload.pull_request.title,
+              ...commits.map((c) => c.commit.message.split('\n')[0]),
+            ];
+
+            require('node:fs').writeFileSync('subjects.json', JSON.stringify(subjects));
+            core.info(`Validating ${subjects.length} subject(s).`);
+
+      - name: Validate
+        run: node scripts/check-conventional-commits.mjs subjects.json

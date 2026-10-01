@@ -11,14 +11,18 @@
 		"test": "vitest run",
 		"build:packages": "node scripts/build-packages.mjs",
 		"pack:smoke": "node scripts/pack-smoke.mjs",
-		"release:check": "node scripts/release.mjs --check",
-		"release:publish": "node scripts/release.mjs --publish",
+		"release:plan": "node scripts/release-plan.mjs",
+		"release:publish": "node scripts/publish-released.mjs",
 		"build": "vite build demos/demo-vanilla --config vite.config.ts",
 		"demo": "vite demos/demo-vanilla --config vite.config.ts --host 127.0.0.1",
 		"test:browser": "playwright test",
 		"check:shared": "node scripts/check-shared.mjs",
 		"fmt": "oxfmt",
-		"fmt:check": "oxfmt --check"
+		"fmt:check": "oxfmt --check",
+		"test:scripts": "node --test 'scripts/*.test.mjs'",
+		"check:changelog": "node scripts/check-changelog-sections.mjs",
+		"changelog:unreleased": "bunx git-cliff --config cliff-root.toml --unreleased",
+		"changelog:latest": "bunx git-cliff --config cliff-root.toml --latest --strip header"
 	},
 	"dependencies": {
 		"@angular/common": "^21.0.0",
