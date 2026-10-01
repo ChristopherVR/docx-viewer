@@ -1,10 +1,8 @@
 # Angular
 
-Install the entry-point package once, then add the matching framework if your application does not already include it:
-
-```sh
-npm install @christophervr/docx-viewer
-```
+::: warning Not published to npm yet
+The Word packages are unpublished, so there is nothing to `npm install` today. Build from the repository (`bun install`, `bun run demo`). The imports below show the intended API of the `@christophervr/docx-viewer` package, with the matching framework as an application-level peer.
+:::
 
 Import the standalone component and bind its document input and change output.
 

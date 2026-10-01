@@ -1,7 +1,10 @@
-import DefaultTheme from 'vitepress/theme';
 import type { Theme } from 'vitepress';
+import DefaultTheme from 'vitepress/theme';
+
+import LandingHome from './landing/LandingHome.vue';
+
 import './custom.css';
-import LandingHome from './LandingHome.vue';
+import './landing/landing.css';
 
 export default {
 	extends: DefaultTheme,
