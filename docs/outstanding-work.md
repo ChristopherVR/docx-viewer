@@ -110,8 +110,7 @@ What each tab offers that Word also has:
   fields you changed and show mixed selections as blank or indeterminate.
 - **Insert:** Text boxes in an opened document (`wps:txbx`, including ones inside
   `mc:AlternateContent`) show their text read-only in a boxed placeholder on the editing surface and
-  are kept byte-for-byte on save; they cannot be inserted or edited, and Print Layout does not draw
-  them (it says so). Drop Cap (Dropped or In margin, with font, line count and distance options: the first letter moves into its own
+  are kept byte-for-byte on save. Insert > Text Box adds an inline box (text lines, width, height, optional outline; `wp:inline` with `wps:wsp`, which Word opens as a shape with the same text); selecting the box and choosing Text Box again edits it. Only this simple form is editable (plain paragraphs of plain runs, not floating), including such boxes read back from a saved file; Word-authored, formatted, floating or `mc:AlternateContent` boxes stay read-only and untouched. Boxes are inline only (no wrapping or floating), have no per-run formatting, and Print Layout does not draw them (it says so). Drop Cap (Dropped or In margin, with font, line count and distance options: the first letter moves into its own
   `w:framePr` paragraph as in Word; the editing surface floats it, while Print Layout folds it into the
   next paragraph as a raised initial with a warning), Table (a size grid with keyboard control and typed rows and columns), Cover Page (one
   plain design), Pictures, Format picture, Link, Bookmark (add, move, delete, go to, Word's naming
@@ -311,7 +310,7 @@ Still not at parity:
   honoured by the marker's tab suffix in the editor and Print Layout.) Text Highlight keeps the 17-colour list (Word's is a short
   list too). Line Spacing offers presets; the Paragraph dialog has the rest.
 - **Insert:** Cover Page galleries (one plain design exists), Shapes, Icons, 3D Models, SmartArt,
-  Charts, Screenshot, inserting Text Boxes, WordArt, Equation, Signature Line, Object.
+  Charts, Screenshot, floating or formatted Text Boxes, WordArt, Equation, Signature Line, Object.
 - **Layout and References:** Manual Hyphenation and its options, Watermark, Position
   and Wrap Text, Citations, Bibliography, Index and Table of Authorities, and
   automatic updating of `REF`, `PAGEREF` and `SEQ` results (Update Fields refreshes them on request;

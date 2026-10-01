@@ -3,6 +3,7 @@
 // extent/alt text) for unchanged pictures, and synthesizes a minimal valid drawing for insertions.
 import type { InlineImage } from './model.js';
 import { EMU_PER_PIXEL } from './drawing.js';
+import { buildTextBoxDrawing, patchTextBox } from './write-text-box.js';
 import type { RelationshipAllocator } from './relationship-allocator.js';
 import {
 	isElement,
@@ -184,6 +185,22 @@ export function createImageRun(
 		throw new Error(
 			'Cannot safely insert a picture here: this position lines up with a different existing picture. Edit further away from surrounding pictures, then save.',
 		);
+	if (base && oldDrawing && image.textBoxEditable && base.textBoxEditable) {
+		patchTextBox(doc, oldDrawing, image, base);
+		clearNonProperties(node, oldDrawing);
+		return node;
+	}
+	// A drawing this model only shows as a placeholder keeps its XML while the rest of the paragraph changes.
+	if (base && oldDrawing && image.unsupported && JSON.stringify(image) === JSON.stringify(base)) {
+		clearNonProperties(node, oldDrawing);
+		return node;
+	}
+	if (!base && image.textBoxEditable && !image.partName) {
+		if (!allocator) throw new Error('Cannot insert a text box without an id allocator.');
+		clearNonProperties(node);
+		node.appendChild(buildTextBoxDrawing(doc, image, allocator.docPrIds.next()));
+		return node;
+	}
 	if (base && oldDrawing && sameUnderlyingImage(base, image)) {
 		if (image.widthPx !== base.widthPx || image.heightPx !== base.heightPx)
 			updateExtent(oldDrawing, image.widthPx, image.heightPx);

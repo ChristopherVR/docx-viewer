@@ -67,6 +67,9 @@ export const imageNodeSpec: NodeSpec = {
 		unsupported: { default: null },
 		/** A text box's paragraphs as a JSON string array; shown read-only inside its placeholder. */
 		textBoxText: { default: null },
+		/** The text box is the simple editable form; `textBoxBorder` is its outline. */
+		textBoxEditable: { default: null },
+		textBoxBorder: { default: null },
 	},
 	parseDOM: [
 		{

@@ -154,6 +154,12 @@ export function buildOtherPanels(panels: Map<string, HTMLElement>): void {
 		),
 		group(
 			'Text',
+			tool(
+				'Text box',
+				'textBox',
+				{ type: 'formatDialog', kind: 'textBox' },
+				{ inline: true, caption: 'Text Box' },
+			),
 			menuSelect(
 				'Drop cap',
 				'dropCap',

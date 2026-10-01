@@ -26,6 +26,10 @@ export interface InlineImage {
 	unsupported?: string;
 	/** For a text box (`wps:txbx`): its paragraphs' text, shown read-only; the box XML is preserved on save. */
 	textBoxText?: string[];
+	/** The text box is the simple form this editor writes, so its text, size and outline can change. */
+	textBoxEditable?: boolean;
+	/** For an editable text box: whether it draws an outline (default true). */
+	textBoxBorder?: boolean;
 }
 /** How a floating picture sits relative to text. */
 export interface PicturePlacement {

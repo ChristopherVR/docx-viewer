@@ -1,4 +1,4 @@
-import type { Node as ProseMirrorNode } from 'prosemirror-model';
+import { DOMSerializer, type Node as ProseMirrorNode } from 'prosemirror-model';
 import type { EditorView, NodeView } from 'prosemirror-view';
 import { schema } from './schema';
 import { placementClass } from './inline-content-schema';
@@ -51,16 +51,9 @@ export function resizePicture(view: EditorView, pos: number, widthPx: number, he
 }
 
 function renderSpec(node: ProseMirrorNode): HTMLElement {
-	const spec = schema.nodes.image.spec.toDOM!(node) as [
-		string,
-		Record<string, string>,
-		...unknown[],
-	];
-	const [tag, attrs, ...content] = spec;
-	const dom = document.createElement(tag);
-	for (const [name, value] of Object.entries(attrs)) dom.setAttribute(name, value);
-	if (typeof content[0] === 'string') dom.textContent = content[0];
-	return dom;
+	// The placeholder spec carries child spans (a text box's lines), so render the whole spec.
+	return DOMSerializer.renderSpec(document, schema.nodes.image.spec.toDOM!(node))
+		.dom as HTMLElement;
 }
 
 /**
@@ -70,7 +63,8 @@ function renderSpec(node: ProseMirrorNode): HTMLElement {
 export function imageNodeView(cache: ImageMediaCache, options: ImageNodeViewOptions = {}) {
 	return (node: ProseMirrorNode, view: EditorView, getPos: () => number | undefined): NodeView => {
 		const content = renderSpec(node);
-		if (content.tagName !== 'IMG') return { dom: content };
+		// A placeholder (unsupported drawing or text box) shows static child text that ProseMirror must leave alone.
+		if (content.tagName !== 'IMG') return { dom: content, ignoreMutation: () => true };
 		const src =
 			(node.attrs.svgPartName && cache.urlFor(String(node.attrs.svgPartName), 'image/svg+xml')) ||
 			cache.urlFor(String(node.attrs.partName), String(node.attrs.contentType));

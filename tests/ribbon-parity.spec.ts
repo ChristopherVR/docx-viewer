@@ -88,6 +88,8 @@ test.describe('Word-style ribbon', () => {
 	});
 
 	test('Insert, Review, View and Layout commands act on the document', async ({ page }) => {
+		// The Insert tab is wide (Text Box, Symbols...); this test is not about overflow folding.
+		await page.setViewportSize({ width: 1500, height: 800 });
 		const editor = page.locator('docx-editor');
 		const surface = editor.locator('.ProseMirror');
 		await surface.click();

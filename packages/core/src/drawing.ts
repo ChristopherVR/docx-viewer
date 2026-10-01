@@ -10,6 +10,7 @@ import {
 	type Relationship,
 } from './package-parts.js';
 import { definedProps } from './defined-props.js';
+import { isSimpleTextBox, textBoxHasBorder } from './write-text-box.js';
 import { getR, isElement, type XmlElement } from './xml.js';
 import { isStRelFromH, isStRelFromV } from './generated/wml-simple-types.js';
 import { enumValue } from './parse-diagnostics.js';
@@ -163,6 +164,9 @@ function parseModernDrawing(node: XmlElement, context: DrawingContext): InlineIm
 		...definedProps({ altText, title, anchored }),
 		unsupported: textBox ? 'Text box' : unsupportedKindLabel(uri),
 		...(textBox ? { textBoxText: textBox } : {}),
+		...(textBox && isSimpleTextBox(graphicData, Boolean(anchored))
+			? { textBoxEditable: true, textBoxBorder: textBoxHasBorder(graphicData) }
+			: {}),
 	};
 }
 

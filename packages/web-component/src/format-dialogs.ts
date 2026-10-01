@@ -4,6 +4,7 @@ import { createFontDialog, type FormatDialog } from './font-dialog';
 import type { EditorLocale } from './localization';
 import { createBookmarkDialog } from './bookmark-dialog';
 import { createPageBordersDialog, type PageBordersHost } from './page-borders-dialog';
+import { createTextBoxDialog } from './text-box-dialog';
 import { createBordersDialog } from './borders-dialog';
 import { createCaptionDialog } from './caption-dialog';
 import { createCrossReferenceDialog } from './cross-reference-dialog';
@@ -29,6 +30,7 @@ export type FormatDialogKind =
 	| 'borders'
 	| 'tableProperties'
 	| 'lineNumbers'
+	| 'textBox'
 	| 'pageBorders'
 	| 'dropCap'
 	| 'columns'
@@ -91,6 +93,7 @@ export class FormatDialogs {
 				}),
 				restoreFocus: () => focusView(host.view()),
 			}),
+			textBox: createTextBoxDialog(() => host.view()),
 			lineNumbers: createLineNumberDialog({
 				...(host.lineNumbers ?? {
 					section: () => undefined,
