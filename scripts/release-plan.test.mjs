@@ -103,6 +103,17 @@ test('a scripts-only manifest change is not a release trigger', () => {
 	assert.equal(plan(() => '1.0.0').anyChanged, false);
 });
 
+test('reordering manifest keys is not a release trigger', () => {
+	const path = 'packages/solo/package.json';
+	const manifest = JSON.parse(readFileSync(join(root, path), 'utf8'));
+	const reordered = Object.fromEntries(Object.entries(manifest).reverse());
+	commit('style(solo): sort the manifest keys', {
+		[path]: `${JSON.stringify(reordered, null, '	')}
+`,
+	});
+	assert.equal(plan(() => '1.0.0').anyChanged, false);
+});
+
 test('a fix in a leaf releases only that package, as a patch', () => {
 	commit('fix(solo): handle empty input', touch('packages/solo'));
 	const p = plan(() => '1.0.0');

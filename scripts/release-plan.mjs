@@ -95,6 +95,14 @@ export function isPublishedFile(path) {
 	return !path.includes('/__tests__/') && !path.includes('/e2e/');
 }
 
+/** JSON text with object keys sorted, so reordering a manifest is not a change. */
+const canonical = (value) =>
+	JSON.stringify(value, (_key, v) =>
+		v && typeof v === 'object' && !Array.isArray(v)
+			? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+			: v,
+	);
+
 const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'));
 const writeJson = (path, data) => writeFileSync(path, `${JSON.stringify(data, null, '\t')}\n`);
 
@@ -184,7 +192,7 @@ export function planRelease({ root, packages: table, globalTriggers = [], npm })
 						if (names.has(dep)) delete data[field][dep];
 					}
 				}
-				return JSON.stringify(data);
+				return canonical(data);
 			};
 			return strip(git(['show', `${base}:${path}`])) === strip(git(['show', `HEAD:${path}`]));
 		} catch {
