@@ -42,7 +42,7 @@ jobs:
       - name: Check out ooxml-core (private, pinned revision)
         env:
           OOXML_CORE_TOKEN: ${{ secrets.OOXML_CORE_TOKEN }}
-          OOXML_CORE_REF: a47f7bfaaa5c57e91cf078a26780dbc087dedc09
+          OOXML_CORE_REF: 239a61d1955d7cab38457aa0e31c54cc6bcce5be
         run: |
           git clone "https://x-access-token:${OOXML_CORE_TOKEN}@github.com/ChristopherVR/ooxml-core.git" ../ooxml-core
           git -C ../ooxml-core checkout "$OOXML_CORE_REF"

@@ -69,10 +69,11 @@
       "version": "0.1.0",
       "dependencies": {
         "@christophervr/ooxml-units": "file:../../../ooxml-core/packages/units",
-        "@xmldom/xmldom": "^0.9.12",
+        "@christophervr/ooxml-xml": "file:../../../ooxml-core/packages/xml",
         "jszip": "^3.10.2",
       },
       "devDependencies": {
+        "@xmldom/xmldom": "^0.9.12",
         "xmllint-wasm": "5.3.0",
       },
     },
@@ -718,6 +719,8 @@
     "zimmerframe": ["zimmerframe@1.1.5", "", {}, "sha512-msJxIvYDYcoNL+PJsu+7qmpDWsYmAxTY+2TNYXXF0hzBzBk0BMecOqDOG/EckUoKCuKwObfbugIl8QpqHDXeFA=="],
 
     "@christophervr/docx-core/@christophervr/ooxml-units": ["@christophervr/ooxml-units@file:../ooxml-core/packages/units", {}],
+
+    "@christophervr/docx-core/@christophervr/ooxml-xml": ["@christophervr/ooxml-xml@file:../ooxml-core/packages/xml", { "dependencies": { "@xmldom/xmldom": "^0.9.12" } }],
 
     "@tailwindcss/oxide-wasm32-wasi/@emnapi/core": ["@emnapi/core@1.11.3", "", { "dependencies": { "@emnapi/wasi-threads": "1.2.3", "tslib": "^2.4.0" }, "bundled": true }, "sha512-zLpS5asjEb7lq8jYLq37N6XKaE41DIexlY1rF/z4/tIl3wo13Sqm28fRyfIsKZD+NZ8mM5RoKkpW/rBcuoSZSg=="],
 
