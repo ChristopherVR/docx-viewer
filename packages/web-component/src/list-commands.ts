@@ -8,6 +8,9 @@ import type {
 } from '@christophervr/docx-core';
 import {
 	createListDefinition,
+	headingListLevels,
+	isHeadingListKind,
+	type HeadingListKind,
 	linkStylesToList,
 	ensureListDefinition,
 	resolveNumberingLevel,
@@ -166,6 +169,7 @@ export type ListAction =
 	| 'number'
 	| 'multilevel'
 	| 'outline'
+	| HeadingListKind
 	| 'increaseLevel'
 	| 'decreaseLevel'
 	| 'remove';
@@ -193,7 +197,20 @@ export function runListAction(view: EditorView, key: ListAction, model: Document
 	if (key === 'remove') removeList(view);
 	else if (key === 'increaseLevel') changeListLevel(view, 1);
 	else if (key === 'decreaseLevel') changeListLevel(view, -1);
-	else if (key === 'multilevel' || key === 'outline') {
+	else if (isHeadingListKind(key)) {
+		toggleList(view, false, () => {
+			const levels = headingListLevels(key).map((level) =>
+				model.paragraphStyles?.styles[level.paragraphStyleId!]
+					? level
+					: (({ paragraphStyleId: _removed, ...rest }) => rest)(level),
+			);
+			const created = createListDefinition(model.numberingCatalog, levels);
+			model.numberingCatalog = created.catalog;
+			const linked = linkStylesToList(model.paragraphStyles, levels, created.numId);
+			if (linked) model.paragraphStyles = linked;
+			return created.numId;
+		});
+	} else if (key === 'multilevel' || key === 'outline') {
 		// A gallery choice always starts a new list of that style, like Word.
 		toggleList(view, false, () => {
 			const created = ensureListDefinition(model.numberingCatalog, key);

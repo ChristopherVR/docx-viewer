@@ -50,6 +50,9 @@ export type RibbonAction =
 				| 'number'
 				| 'multilevel'
 				| 'outline'
+				| 'headings'
+				| 'article'
+				| 'roman'
 				| 'increaseLevel'
 				| 'decreaseLevel'
 				| 'remove';

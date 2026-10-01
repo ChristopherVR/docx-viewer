@@ -38,6 +38,11 @@ export {
 	resolveParagraphNumbering,
 } from './numbering-format.js';
 export {
+	headingListLevels,
+	isHeadingListKind,
+	type HeadingListKind,
+} from './heading-list-kinds.js';
+export {
 	ensureListDefinition,
 	createListDefinition,
 	linkStylesToList,

@@ -297,8 +297,8 @@ the (retained) definition. Creating new styles from the dialog is not supported.
 
 Still not at parity:
 
-- **Home:** Text Effects; Multilevel List offers two styles (1. 1.1. 1.1.1. and 1. a) i.), not Word's gallery of
-  heading-linked and bullet outlines. Define New Multilevel List still needs an explicit tab-stop position, Word's graphical number placeholders and
+- **Home:** Text Effects; Multilevel List offers five styles (1. 1.1. 1.1.1., 1. a) i., and heading-linked 1 / 1.1,
+  Article I. / Section 1.1 and I. / A. outlines that link the document's existing Heading styles), not Word's full gallery (no bullet outlines or previews; "Section 1.01" shows as 1.1). Define New Multilevel List still needs an explicit tab-stop position, Word's graphical number placeholders and
   its apply-to/list-style options. Text Highlight keeps the 17-colour list (Word's is a short
   list too). Line Spacing offers presets; the Paragraph dialog has the rest.
 - **Insert:** Cover Page galleries (one plain design exists), Shapes, Icons, 3D Models, SmartArt,

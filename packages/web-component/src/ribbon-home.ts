@@ -213,6 +213,9 @@ export function buildHomePanel(panels: Map<string, HTMLElement>): void {
 					[
 						['multilevel', '1. 1.1. 1.1.1.'],
 						['outline', '1. a) i.'],
+						['headings', '1 Heading 1, 1.1 Heading 2'],
+						['article', 'Article I. Heading 1, Section 1.1'],
+						['roman', 'I. Heading 1, A. Heading 2'],
 						['define', 'Define New Multilevel List…'],
 					],
 					(value) =>
