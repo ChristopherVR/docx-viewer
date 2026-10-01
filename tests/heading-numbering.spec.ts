@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import {
 	headingLabels,
 	headingNumberingFixture,
-} from '../packages/core/src/test-support/heading-numbering-fixture';
+} from './support/heading-numbering-fixture';
 import { fileInput } from './helpers';
 
 for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid']) {

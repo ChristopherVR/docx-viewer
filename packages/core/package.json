@@ -1,7 +1,7 @@
 {
 	"name": "@christophervr/docx-core",
 	"version": "0.1.0",
-	"description": "Framework-neutral DOCX document model, parser and serializer",
+	"description": "Framework-neutral DOCX document model, parser and serializer (thin entry point over @christophervr/ooxml-core/docx)",
 	"license": "Apache-2.0",
 	"author": "ChristopherVR",
 	"repository": {
@@ -28,15 +28,7 @@
 			"import": "./dist/embedded.js"
 		}
 	},
-	"scripts": {
-		"gen:schema-types": "bun scripts/gen-schema-types.ts"
-	},
 	"dependencies": {
-		"@christophervr/ooxml-core": "file:../../../ooxml-core",
-		"jszip": "^3.10.2"
-	},
-	"devDependencies": {
-		"@xmldom/xmldom": "^0.9.12",
-		"xmllint-wasm": "5.3.0"
+		"@christophervr/ooxml-core": "file:../../../ooxml-core"
 	}
 }

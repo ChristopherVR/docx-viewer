@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { restartCases, restartFixture } from '../packages/core/src/test-support/restart-fixture';
+import { restartCases, restartFixture } from './support/restart-fixture';
 import { fileInput } from './helpers';
 
 for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid']) {

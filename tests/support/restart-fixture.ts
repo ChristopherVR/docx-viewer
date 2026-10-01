@@ -1,3 +1,4 @@
+// Copy of the fixture in ooxml-core (src/docx/test-support); the browser specs cannot import test-only code from the published package.
 import JSZip from 'jszip';
 
 export const restartSequence = [0, 1, 2, 2, 0, 2, 1, 2];

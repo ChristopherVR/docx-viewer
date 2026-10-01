@@ -15,7 +15,7 @@ React | Vue | Angular | Svelte | vanilla bindings
                             CFB and binary DOC only
 ```
 
-`@christophervr/docx-core` owns the canonical document model, DOCX parser, and serializer. The editable model is a deliberately small projection of OOXML. A loaded session owns the original package plus the baseline model, so saving supported edits can preserve parts outside that projection. No-op save returns original bytes.
+The canonical document model, DOCX parser, and serializer live in the `docx` area of the private `@christophervr/ooxml-core`; `@christophervr/docx-core` is a thin published entry point that re-exports it. The editable model is a deliberately small projection of OOXML. A loaded session owns the original package plus the baseline model, so saving supported edits can preserve parts outside that projection. No-op save returns original bytes.
 
 `document` detects container signatures and selects DOCX or legacy DOC. `legacy` extracts main-body paragraphs from Word 97-2003 files, uses `ole2` for CFB and binary Word structures, and translates extracted text into the common model. Its editing path accepts plain paragraph text only when the safety checks pass.
 
@@ -25,9 +25,9 @@ React | Vue | Angular | Svelte | vanilla bindings
 
 ## Sharing across the two viewers
 
-CFB reader/writer and Word binary internals are canonical in the sibling `../ole2` package `@christophervr/ole2`. DOCX model, parser, writer, and the planned embedded-DOCX API are canonical in `@christophervr/docx-core`. PowerPoint keeps its existing embedded-DOCX adapter until the Word core is published and its consumer migration is ready. No modern DOCX implementation belongs in `ole2`.
+CFB reader/writer and Word binary internals are canonical in the sibling `../ole2` package `@christophervr/ole2`. DOCX model, parser, writer, and the planned embedded-DOCX API are canonical in `@christophervr/ooxml-core/docx` (re-exported by `@christophervr/docx-core`). PowerPoint keeps its existing embedded-DOCX adapter until the Word core is published and its consumer migration is ready. No modern DOCX implementation belongs in `ole2`.
 
-The shared `ole2` package has no React, Word, or PowerPoint UI dependency and owns only CFB and legacy Word binary formats. DOCX is OOXML and belongs to `docx-core`.
+The shared `ole2` package has no React, Word, or PowerPoint UI dependency and owns only CFB and legacy Word binary formats. DOCX is OOXML and belongs to `ooxml-core/docx`.
 
 ## Build and release boundary
 

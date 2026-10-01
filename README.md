@@ -155,7 +155,7 @@ See the [bindings guide](docs/bindings.md) for props, events, saving and file co
 | Package                             | What it is                                                                                                                        |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `@christophervr/docx-viewer`        | Umbrella entry point (`packages/viewer`): editor API plus `/react`, `/vue`, `/angular`, `/svelte`, `/solid`, `/vanilla` subpaths. |
-| `@christophervr/docx-core`          | DOCX model, parser and preserving serializer (`packages/core`).                                                                   |
+| `@christophervr/docx-core`          | DOCX model, parser and preserving serializer (`packages/core`, a thin entry point over `@christophervr/ooxml-core/docx`).         |
 | `@christophervr/docx-document`      | Format detection and loading (`packages/document`).                                                                               |
 | `@christophervr/docx-legacy`        | Legacy `.doc` adapter built on `@christophervr/ole2` (`packages/legacy`).                                                         |
 | `@christophervr/docx-layout`        | Pagination engine behind Print Layout (`packages/layout`).                                                                        |

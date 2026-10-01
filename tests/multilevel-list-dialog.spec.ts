@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import JSZip from 'jszip';
 import { readFile } from 'node:fs/promises';
 import { computeListLabels, loadDocx } from '../packages/core/src/index';
-import { restartFixture } from '../packages/core/src/test-support/restart-fixture';
+import { restartFixture } from './support/restart-fixture';
 import { fileInput, reveal, saveButton } from './helpers';
 
 for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid']) {
