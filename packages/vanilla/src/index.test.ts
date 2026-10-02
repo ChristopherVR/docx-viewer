@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import * as vanilla from './index';
 
 const legacyFixture = new URL(
-	'../../legacy/src/__tests__/fixtures/ole-word-97.doc',
+	'../../../tests/support/ole-word-97.doc',
 	import.meta.url,
 );
 

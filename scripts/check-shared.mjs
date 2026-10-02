@@ -10,11 +10,6 @@ async function sources(directory) {
 	}
 	return result;
 }
-const legacy = await readFile(new URL('packages/legacy/src/index.ts', root), 'utf8');
-assert(
-	legacy.includes('@christophervr/ole2/'),
-	'Legacy adapter must consume the shared ole2 codecs',
-);
 const core = JSON.parse(await readFile(new URL('packages/core/package.json', root), 'utf8'));
 assert(!core.dependencies?.['@christophervr/ole2'], 'Modern DOCX core must not depend on ole2');
 assert(core.exports['./embedded'], 'Embedded DOCX API must be shared with PowerPoint');
@@ -37,10 +32,14 @@ assert(
 	'docx-core must hold no logic; it lives in @christophervr/ooxml-core/docx',
 );
 const PUBLISHED = ['core', 'react', 'vue', 'angular', 'svelte', 'solid', 'vanilla'];
-const INTERNAL = ['legacy', 'document', 'layout', 'web-component', 'bindings'];
+const INTERNAL = ['web-component', 'bindings'];
 for (const name of [...PUBLISHED, ...INTERNAL]) {
 	const manifest = JSON.parse(
 		await readFile(new URL(`packages/${name}/package.json`, root), 'utf8'),
+	);
+	assert(
+		!JSON.stringify(manifest).includes('@christophervr/ole2'),
+		`packages/${name} must not name ole2; the legacy codecs are inlined by ooxml-core`,
 	);
 	if (INTERNAL.includes(name)) {
 		assert.equal(manifest.private, true, `packages/${name} is internal and must be private`);
@@ -63,7 +62,7 @@ for (const name of [...PUBLISHED, ...INTERNAL]) {
 	for (const file of await sources(new URL(`packages/${name}/src/`, root))) {
 		const source = await readFile(file, 'utf8');
 		assert(
-			!source.includes('@christophervr/ole2/docx'),
+			!source.includes('@christophervr/ole2'),
 			`Modern DOCX must remain in ooxml-core/docx: ${file}`,
 		);
 		assert(
@@ -74,4 +73,4 @@ for (const name of [...PUBLISHED, ...INTERNAL]) {
 		);
 	}
 }
-console.log('Verified thin docx-core entry points and published legacy codec boundaries.');
+console.log('Verified thin docx-core entry points and that ole2 and legacy codecs stay out of this repository.');

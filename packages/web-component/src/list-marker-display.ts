@@ -7,7 +7,7 @@ import {
 	type ParagraphListLabel,
 	type TextRun,
 } from '@christophervr/docx-core';
-import { cssFontStack, type TextMeasurer } from '@christophervr/docx-layout';
+import { cssFontStack, type TextMeasurer } from '@christophervr/ooxml-core/docx/layout';
 import type { Node } from 'prosemirror-model';
 import { appendInlineNode } from './run-adapter';
 import { themeFontOf } from './run-styles';

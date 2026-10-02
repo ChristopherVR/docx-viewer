@@ -1,9 +1,9 @@
 import { collab, getVersion, receiveTransaction, sendableSteps } from 'prosemirror-collab';
 import { Plugin, type EditorState, type Transaction } from 'prosemirror-state';
+import { IdempotencyCache, classifyVersion, isValidId } from '@christophervr/ooxml-core/collab';
 import {
 	freezeBatch,
 	parseBatch,
-	validId,
 	type CollaborationConfig,
 	type StepBatch,
 } from './collaboration-protocol';
@@ -43,10 +43,10 @@ export class CollaborationClient {
 	private readonly config: CollaborationConfig;
 	private sequence = 0;
 	private pending?: StepBatch | undefined;
-	private received = new Map<string, string>();
+	private readonly received = new IdempotencyCache(MAX_RECENT_BATCHES);
 
 	constructor(config: CollaborationConfig) {
-		if (!validId(config.sessionId) || !validId(config.clientId))
+		if (!isValidId(config.sessionId) || !isValidId(config.clientId))
 			throw new Error('Collaboration sessionId and clientId must be non-empty strings');
 		const version = config.version ?? 0;
 		if (!Number.isSafeInteger(version) || version < 0) throw new Error('Invalid starting version');
@@ -83,12 +83,11 @@ export class CollaborationClient {
 		if (typeof parsed === 'string') return { status: 'invalid', reason: parsed };
 		const { batch, steps, fingerprint } = parsed;
 		if (batch.sessionId !== this.sessionId) return { status: 'wrong-session' };
-		const key = `${batch.clientId}\u0000${batch.batchId}`;
-		const previous = this.received.get(key);
-		if (previous) return previous === fingerprint ? { status: 'duplicate' } : { status: 'invalid' };
-		const current = collaborationVersion(state);
-		if (batch.version < current) return { status: 'stale' };
-		if (batch.version > current) return { status: 'out-of-order' };
+		const seen = this.received.check(batch.clientId, batch.batchId, fingerprint);
+		if (seen.status === 'duplicate') return { status: 'duplicate' };
+		if (seen.status === 'reused') return { status: 'invalid' };
+		const order = classifyVersion(batch.version, collaborationVersion(state));
+		if (order === 'stale' || order === 'out-of-order') return { status: order };
 		if (batch.clientId === this.clientId) {
 			const sendable = sendableSteps(state);
 			const acknowledged = JSON.stringify(steps.map((step) => step.toJSON()));
@@ -116,9 +115,7 @@ export class CollaborationClient {
 				reason: cause instanceof Error ? cause.message : 'Could not apply collaboration steps',
 			};
 		}
-		this.received.set(key, fingerprint);
-		if (this.received.size > MAX_RECENT_BATCHES)
-			this.received.delete(this.received.keys().next().value!);
+		this.received.remember(batch.clientId, batch.batchId, fingerprint, undefined);
 		if (batch.clientId === this.clientId && this.pending?.batchId === batch.batchId)
 			this.pending = undefined;
 		return { status: 'applied', transaction };

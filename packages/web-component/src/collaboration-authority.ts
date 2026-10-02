@@ -1,7 +1,8 @@
 import type { Node as ProseMirrorNode, Schema } from 'prosemirror-model';
 import { Step, Transform } from 'prosemirror-transform';
 import { expectDefined } from './defined';
-import { freezeBatch, parseBatch, validId, type StepBatch } from './collaboration-protocol';
+import { IdempotencyCache, classifyVersion, isValidId } from '@christophervr/ooxml-core/collab';
+import { freezeBatch, parseBatch, type StepBatch } from './collaboration-protocol';
 
 export interface CollaborationAuthorityConfig {
 	sessionId: string;
@@ -38,10 +39,10 @@ export class CollaborationAuthority {
 	private version: number;
 	private documents = new Map<number, ProseMirrorNode>();
 	private records: RecordStep[] = [];
-	private requests = new Map<string, { fingerprint: string; batch: StepBatch }>();
+	private readonly requests = new IdempotencyCache<StepBatch>(MAX_CACHED_REQUESTS);
 
 	constructor(config: CollaborationAuthorityConfig) {
-		if (!validId(config.sessionId)) throw new Error('Collaboration sessionId must be non-empty');
+		if (!isValidId(config.sessionId)) throw new Error('Collaboration sessionId must be non-empty');
 		const version = config.version ?? 0;
 		if (!Number.isSafeInteger(version) || version < 0) throw new Error('Invalid starting version');
 		this.sessionId = config.sessionId;
@@ -66,13 +67,11 @@ export class CollaborationAuthority {
 		if (typeof parsed === 'string') return { status: 'rejected', reason: parsed };
 		const { batch, steps, fingerprint } = parsed;
 		if (batch.sessionId !== this.sessionId) return { status: 'rejected', reason: 'wrong-session' };
-		const key = `${batch.clientId}\u0000${batch.batchId}`;
-		const prior = this.requests.get(key);
-		if (prior)
-			return prior.fingerprint === fingerprint
-				? { status: 'duplicate', batch: prior.batch }
-				: { status: 'rejected', reason: 'batch-id-reused' };
-		if (batch.version > this.version) return { status: 'rejected', reason: 'out-of-order' };
+		const prior = this.requests.check(batch.clientId, batch.batchId, fingerprint);
+		if (prior.status === 'duplicate') return { status: 'duplicate', batch: prior.value };
+		if (prior.status === 'reused') return { status: 'rejected', reason: 'batch-id-reused' };
+		if (classifyVersion(batch.version, this.version) === 'out-of-order')
+			return { status: 'rejected', reason: 'out-of-order' };
 		const oldestVersion = this.records[0]?.version ?? this.version;
 		if (batch.version < oldestVersion || !this.documents.has(batch.version))
 			return { status: 'rejected', reason: 'stale' };
@@ -135,9 +134,7 @@ export class CollaborationAuthority {
 					: expectDefined(transform.docs[committedStart + index + 1], 'committed document');
 			this.documents.set(this.version, doc);
 		}
-		this.requests.set(key, { fingerprint, batch: committedBatch });
-		if (this.requests.size > MAX_CACHED_REQUESTS)
-			this.requests.delete(this.requests.keys().next().value!);
+		this.requests.remember(batch.clientId, batch.batchId, fingerprint, committedBatch);
 		this.pruneHistory();
 		return { status: 'accepted', batch: committedBatch };
 	}

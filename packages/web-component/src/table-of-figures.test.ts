@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import { createDocument, type DocumentModel, type Paragraph } from '@christophervr/docx-core';
-import { createFakeMeasurer } from '@christophervr/docx-layout';
+import { createFakeMeasurer } from '@christophervr/ooxml-core/docx/layout';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { docToModel, modelToDoc } from './model-adapter';

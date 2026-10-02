@@ -1,10 +1,10 @@
 import type { DocumentModel } from '@christophervr/docx-core';
 import { resolveParagraphFormatting } from '@christophervr/docx-core';
 import {
-	createCanvasMeasurer,
 	layoutDocumentModel,
 	type LayoutResult,
-} from '@christophervr/docx-layout';
+} from '@christophervr/ooxml-core/docx/layout';
+import { createCanvasMeasurer } from './canvas-measurer';
 import { renderPrintLayout, type PictureUrl, type PrintLayoutHandle } from './print-layout.js';
 import { decoratePages } from './print-header-footer';
 

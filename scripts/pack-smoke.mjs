@@ -65,8 +65,8 @@ async function inspectTarball(name, packed, directory) {
 	if (name !== 'core') {
 		assert.deepEqual(
 			Object.keys(manifest.dependencies).filter((dep) => dep.startsWith('@christophervr/')),
-			['@christophervr/docx-core'],
-			`${packed.name} may depend on no other project package`,
+			['@christophervr/docx-core', '@christophervr/ooxml-core'],
+			`${packed.name} may depend on no project package but docx-core and ooxml-core`,
 		);
 	}
 	for (const file of await files(path.join(directory, 'dist'))) {
@@ -117,7 +117,7 @@ for (const [name, entry] of Object.entries(frameworks)) {
 	loaded.model.blocks[0].lineSpacingTwips = 300;
 	const edited = await entry.loadDocument(await loaded.save());
 	assert.equal(edited.model.blocks[0].lineSpacingRule, 'exact', name);
-	// Legacy .doc through the inlined ole2 codecs: no package here depends on @christophervr/ole2.
+	// Legacy .doc through ooxml-core/docx/load, which inlines the ole2 codecs: nothing depends on ole2.
 	assert.equal(entry.detectDocumentFormat(doc), 'doc');
 	const legacy = await entry.loadDocument(doc);
 	assert(legacy.model.blocks.length > 0 && legacy.model.blocks[0].type === 'paragraph', name + ' legacy .doc');
@@ -215,7 +215,7 @@ try {
 	await mkdir(path.join(work, 'fixtures'));
 	await writeFile(
 		path.join(work, 'fixtures', 'ole-word-97.doc'),
-		await readFile(path.join(root, 'packages/legacy/src/__tests__/fixtures/ole-word-97.doc')),
+		await readFile(path.join(root, 'tests/support/ole-word-97.doc')),
 	);
 	await writeFile(path.join(work, 'consumer.mjs'), consumerSource);
 	run('node', [path.join(work, 'consumer.mjs')], { cwd: work });

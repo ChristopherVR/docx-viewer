@@ -7,7 +7,7 @@ import {
 	type LayoutLine,
 	type LayoutParagraphFrame,
 	type LayoutResult,
-} from '@christophervr/docx-layout';
+} from '@christophervr/ooxml-core/docx/layout';
 import { renderTable } from './print-table';
 import { lineNumberLabels, type PrintLineNumbering } from './print-line-numbers';
 import { pageBorderBox } from './print-page-borders';

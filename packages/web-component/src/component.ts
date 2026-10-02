@@ -2,7 +2,7 @@ import { applyShellLabels } from './shell-labels';
 import { EditorState } from 'prosemirror-state';
 import type { DocumentModel } from '@christophervr/docx-core';
 import { createDocument } from '@christophervr/docx-core';
-import { loadDocument } from '@christophervr/docx-document';
+import { loadDocument } from '@christophervr/ooxml-core/docx/load';
 import { setRibbonLocale } from './ribbon';
 import type { CollaborationConfig, ClientReceiveResult, StepBatch } from './collaboration';
 import { normalizeEditorLocale } from './localization';

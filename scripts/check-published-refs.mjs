@@ -1,8 +1,8 @@
 /**
  * Guard: nothing a published package ships may import a module its manifest does not declare.
  *
- * The framework packages inline every internal workspace package (document, layout, legacy,
- * web-component, bindings) and the shared @christophervr/ole2 legacy codecs. If bundling or
+ * The framework packages inline every internal workspace package (web-component, bindings); the
+ * shared logic is imported from @christophervr/ooxml-core, which inlines ole2 itself. If bundling or
  * declaration flattening misses one, the tarball imports an unpublished package a consumer cannot
  * install. Modelled on pptx-viewer `scripts/check-published-shared-refs.mjs`, generalised from one
  * private package to "anything not in dependencies/peerDependencies".

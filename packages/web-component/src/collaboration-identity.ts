@@ -1,18 +1,10 @@
 import type { EditorState, Transaction } from 'prosemirror-state';
-
-function clientKey(clientId: string): string {
-	if (!clientId || clientId.length > 160) throw new Error('Invalid collaboration client ID');
-	return Array.from(clientId, (character) => character.codePointAt(0)!.toString(16)).join('_');
-}
+import { createIdGenerator } from '@christophervr/ooxml-core/collab';
 
 /** Generates collision-resistant document IDs within one unique client session. */
 export function createCollaborationIdGenerator(clientId: string): (kind: string) => string {
-	const key = clientKey(clientId);
-	let counter = 0;
-	return (kind) => {
-		const safeKind = kind.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 24) || 'item';
-		return `dve-${safeKind}-${key}-${++counter}`;
-	};
+	// The `dve` prefix keeps ids wire-compatible with documents written before the shared area.
+	return createIdGenerator(clientId, 'dve');
 }
 
 /** Repairs missing or duplicate block IDs on local transactions. */

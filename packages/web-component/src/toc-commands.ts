@@ -13,10 +13,10 @@ import {
 	type Paragraph,
 } from '@christophervr/docx-core';
 import {
-	createCanvasMeasurer,
 	layoutDocumentModel,
 	type TextMeasurer,
-} from '@christophervr/docx-layout';
+} from '@christophervr/ooxml-core/docx/layout';
+import { createCanvasMeasurer } from './canvas-measurer';
 import { closeHistory } from 'prosemirror-history';
 import type { EditorView } from 'prosemirror-view';
 import { modelToDoc } from './model-adapter';

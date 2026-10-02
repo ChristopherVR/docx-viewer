@@ -35,7 +35,7 @@ An early implementation: not Microsoft Word parity, and not lossless export.
 | **Print Layout**       | Paginated view with line breaking, widow/orphan and keep rules, columns, table row splitting and printing. An approximation of Word, not Word's pagination.             |
 | **Document structure** | Styles, lists and numbering, tables, sections and columns, headers and footers, footnotes and fields such as TOC. Inline text boxes, header watermark and page borders. |
 | **Review**             | Tracked changes (accept, reject, navigate) and a comments pane with replies and resolve.                                                                                |
-| **File formats**       | DOCX, and legacy Word 97-2003 `.doc` via the shared `ole2` codecs (main-body text and constrained paragraph edits). Password-protected files are unsupported.           |
+| **File formats**       | DOCX, and legacy Word 97-2003 `.doc` via the shared `ole2` codecs inside `@christophervr/ooxml-core` (main-body text and constrained paragraph edits). Password-protected files are unsupported.           |
 | **Collaboration**      | A transport-neutral protocol over validated ProseMirror steps with transient presence. Your application owns networking, identity, permissions and storage.             |
 | **Localization**       | Editor interface in English, French, German, Spanish and Simplified Chinese through a `locale` option. Document content is never translated.                            |
 
@@ -163,9 +163,9 @@ Seven packages are published (nothing has been released yet), each versioned ind
 | `@christophervr/docx-solid-viewer`   | Solid component (`packages/solid`).                                                                                                  |
 | `@christophervr/docx-vanilla-viewer` | `mountEditor` and the plain `<docx-editor>` web component, no framework (`packages/vanilla`).                                        |
 
-Each `*-viewer` package is self-contained: the editor, layout engine, document loading and the legacy `.doc` reader (including the shared `@christophervr/ole2` codecs) are bundled in. A package depends only on `@christophervr/docx-core`, the ProseMirror libraries and its framework peer, so `@christophervr/ole2` does not need to be published or installed. DOCX and legacy `.doc` files are both opened by every editor package.
+Each `*-viewer` package is self-contained: the editor, layout engine, document loading and the legacy `.doc` reader come from `@christophervr/ooxml-core` (`/docx/layout`, `/docx/load`, which inlines the shared ole2 codecs). A package depends on `@christophervr/docx-core`, `@christophervr/ooxml-core`, the ProseMirror libraries and its framework peer, so `@christophervr/ole2` does not need to be published or installed. DOCX and legacy `.doc` files are both opened by every editor package.
 
-The workspace also holds **private** packages that are never published and are inlined into each editor package at build time: `document` (format detection), `legacy` (the `.doc` adapter over `@christophervr/ole2`), `layout` (the pagination engine behind Print Layout), `web-component` (the shared `<docx-editor>`) and `bindings` (framework lifecycle and event adapters). Shared OOXML logic is moving into the public `@christophervr/ooxml-core`, leaving this repository with only the UI; that migration is in progress, not a shipped feature.
+The workspace also holds **private** packages that are never published and are inlined into each editor package at build time: `web-component` (the shared `<docx-editor>`, including the browser text measurer behind Print Layout) and `bindings` (framework lifecycle and event adapters). The pagination engine, document loading and collaboration helpers are in `@christophervr/ooxml-core`. Shared OOXML logic is moving into the public `@christophervr/ooxml-core`, leaving this repository with only the UI; that migration is in progress, not a shipped feature.
 
 ## Development
 

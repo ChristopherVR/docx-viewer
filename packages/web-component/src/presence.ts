@@ -2,7 +2,7 @@ import { getVersion, sendableSteps } from 'prosemirror-collab';
 import { DecorationSet } from 'prosemirror-view';
 import { peerDecorations } from './presence-decorations';
 import { Plugin, PluginKey, type EditorState, type Transaction } from 'prosemirror-state';
-import { validId } from './collaboration-protocol';
+import { SequenceTracker, classifyVersion, isValidId, validateDisplayName } from '@christophervr/ooxml-core/collab';
 import type { EditorLocale } from './localization';
 
 export const PRESENCE_PALETTE = [
@@ -16,10 +16,18 @@ export const PRESENCE_PALETTE = [
 	'#a16207',
 ] as const;
 
+/** The shared area validates names; the palette stays the Word one so older peers keep working. */
+function displayName(name: string): string | null {
+	try {
+		return validateDisplayName(name);
+	} catch {
+		return null;
+	}
+}
+
 export function validatePresenceProfile(profile: { name: string; color: string }) {
-	const name = profile.name.trim();
-	if (!name || name.length > 80 || /[\u0000-\u001f\u007f]/.test(name))
-		throw new Error('Presence name must contain 1 to 80 printable characters');
+	const name = displayName(profile.name);
+	if (name === null) throw new Error('Presence name must contain 1 to 80 printable characters');
 	if (!PRESENCE_PALETTE.includes(profile.color as (typeof PRESENCE_PALETTE)[number]))
 		throw new Error('Presence color must be from the shared palette');
 	return { name, color: profile.color };
@@ -118,11 +126,11 @@ export class PresenceClient {
 	readonly plugin: Plugin;
 	readonly sessionId: string;
 	readonly clientId: string;
-	private readonly received = new Map<string, { sequence: number; fingerprint: string }>();
+	private readonly received = new SequenceTracker(MAX_RECENT);
 	private sequence = 0;
 
 	constructor(config: PresenceConfig) {
-		if (!validId(config.sessionId) || !validId(config.clientId))
+		if (!isValidId(config.sessionId) || !isValidId(config.clientId))
 			throw new Error('Presence sessionId and clientId must be non-empty strings');
 		this.sessionId = config.sessionId;
 		this.clientId = config.clientId;
@@ -161,12 +169,9 @@ export class PresenceClient {
 		const parsed = parsePresence(input, this.sessionId, state);
 		if ('status' in parsed) return parsed;
 		if (parsed.clientId === this.clientId) return { status: 'duplicate' };
-		const previousMessage = this.received.get(parsed.clientId);
-		if (previousMessage && parsed.sequence < previousMessage.sequence) return { status: 'stale' };
-		if (previousMessage && parsed.sequence === previousMessage.sequence)
-			return previousMessage.fingerprint === parsed.fingerprint
-				? { status: 'duplicate' }
-				: { status: 'invalid', reason: 'Presence sequence was reused' };
+		const order = this.received.classify(parsed.clientId, parsed.sequence, parsed.fingerprint);
+		if (order === 'stale' || order === 'duplicate') return { status: order };
+		if (order === 'invalid') return { status: 'invalid', reason: 'Presence sequence was reused' };
 		const previous = presenceKey.getState(state)?.get(parsed.clientId);
 		if (
 			parsed.kind === 'selection' &&
@@ -178,11 +183,7 @@ export class PresenceClient {
 			presenceKey,
 			parsed.kind === 'leave' ? { remove: parsed.clientId } : { peer: parsed },
 		);
-		this.received.set(parsed.clientId, {
-			sequence: parsed.sequence,
-			fingerprint: parsed.fingerprint,
-		});
-		if (this.received.size > MAX_RECENT) this.received.delete(this.received.keys().next().value!);
+		this.received.commit(parsed.clientId, parsed.sequence, parsed.fingerprint);
 		return { status: 'applied', transaction };
 	}
 }
@@ -206,7 +207,7 @@ function parsePresence(
 	if (!input || typeof input !== 'object' || Array.isArray(input))
 		return { status: 'invalid', reason: 'Presence message must be an object' };
 	const message = input as Record<string, unknown>;
-	if (message.protocol !== 1 || !validId(message.clientId))
+	if (message.protocol !== 1 || !isValidId(message.clientId))
 		return { status: 'invalid', reason: 'Invalid presence protocol or client ID' };
 	if (message.sessionId !== sessionId) return { status: 'wrong-session' };
 	if (message.kind !== 'selection' && message.kind !== 'leave')
@@ -215,10 +216,10 @@ function parsePresence(
 		return { status: 'invalid', reason: 'Invalid presence sequence' };
 	if (!Number.isSafeInteger(message.version) || Number(message.version) < 0)
 		return { status: 'invalid', reason: 'Invalid presence version' };
-	const current = versionOf(state);
-	if (message.kind !== 'leave' && Number(message.version) < current) return { status: 'stale' };
-	if (message.kind !== 'leave' && Number(message.version) > current)
-		return { status: 'out-of-order' };
+	if (message.kind !== 'leave') {
+		const order = classifyVersion(Number(message.version), versionOf(state));
+		if (order === 'stale' || order === 'out-of-order') return { status: order };
+	}
 	if (message.kind === 'leave')
 		return {
 			kind: 'leave',
@@ -226,9 +227,8 @@ function parsePresence(
 			sequence: Number(message.sequence),
 			fingerprint: JSON.stringify(message),
 		};
-	const name = typeof message.name === 'string' ? message.name.trim() : '';
-	if (!name || name.length > 80 || /[\u0000-\u001f\u007f]/.test(name))
-		return { status: 'invalid', reason: 'Invalid peer name' };
+	const name = typeof message.name === 'string' ? displayName(message.name) : null;
+	if (name === null) return { status: 'invalid', reason: 'Invalid peer name' };
 	if (!PRESENCE_PALETTE.includes(message.color as (typeof PRESENCE_PALETTE)[number]))
 		return { status: 'invalid', reason: 'Color must be from the shared palette' };
 	if (

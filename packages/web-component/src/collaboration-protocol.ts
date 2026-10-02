@@ -1,5 +1,6 @@
 import type { Schema } from 'prosemirror-model';
 import { Step } from 'prosemirror-transform';
+import { freezeDeep, isValidId } from '@christophervr/ooxml-core/collab';
 
 export interface CollaborationConfig {
 	sessionId: string;
@@ -19,26 +20,14 @@ export interface StepBatch {
 
 export type ParsedBatch = { batch: StepBatch; steps: Step[]; fingerprint: string };
 
-export function validId(value: unknown, max = 160): value is string {
-	return typeof value === 'string' && value.length > 0 && value.length <= max;
-}
-
-export function freezeBatch(batch: StepBatch): StepBatch {
-	const freeze = (value: unknown): unknown => {
-		if (value && typeof value === 'object' && !Object.isFrozen(value)) {
-			for (const child of Object.values(value)) freeze(child);
-			Object.freeze(value);
-		}
-		return value;
-	};
-	return freeze(batch) as StepBatch;
-}
+/** Freezing comes from the shared collab area. */
+export const freezeBatch = (batch: StepBatch): StepBatch => freezeDeep(batch);
 
 export function parseBatch(value: unknown, schema: Schema): ParsedBatch | string {
 	if (!value || typeof value !== 'object' || Array.isArray(value)) return 'Batch must be an object';
 	const input = value as Record<string, unknown>;
 	if (input.protocol !== 1) return 'Unsupported collaboration protocol';
-	if (!validId(input.sessionId) || !validId(input.batchId) || !validId(input.clientId))
+	if (!isValidId(input.sessionId) || !isValidId(input.batchId) || !isValidId(input.clientId))
 		return 'Session, batch, and client IDs must be non-empty strings';
 	if (!Number.isSafeInteger(input.version) || Number(input.version) < 0)
 		return 'Version must be a non-negative safe integer';

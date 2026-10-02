@@ -58,7 +58,7 @@ Field names are unchanged.
   negative table indents routinely); `TableCellMargins.top/bottom/left/right` are `SignedTwips`.
 - **Borders**: `TableBorderSide.sizeEighthPoints` is `EighthPoints`.
 - **Runs**: `TextRun.characterSpacingTwips` is `SignedTwips`.
-- **Layout input** (`@christophervr/docx-layout`): the paragraph `*Twips` fields on
+- **Layout input** (`@christophervr/ooxml-core/docx/layout`): the paragraph `*Twips` fields on
   `LayoutParagraph` use the same brands as the model.
 
 ### Fields that are deliberately not branded
@@ -105,7 +105,7 @@ Exported signature changes:
   `Twips | undefined`.
 - `twips(n)` now also rejects negative numbers; use `signedTwips(n)` for signed values.
 - `TocOptions.contentWidthTwips` is `Twips`.
-- `@christophervr/docx-layout`: `twipsToPx` takes `SignedTwips`; `pxToTwips` returns `SignedTwips`
+- `@christophervr/ooxml-core/docx/layout`: `twipsToPx` takes `SignedTwips`; `pxToTwips` returns `SignedTwips`
   (rounded); new `NO_TWIPS`; `paragraphFloats` moved to its own module but is still exported from the
   package root.
 

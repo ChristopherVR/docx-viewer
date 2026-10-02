@@ -33,14 +33,11 @@ import { fileURLToPath } from 'node:url';
 
 /**
  * Internal, `private` workspace packages. They are never published: their code is bundled into
- * every framework package (and `legacy` also inlines the shared `@christophervr/ole2` codecs, a
- * regular dependency of that private package so a version bump of ole2 shows up as a change). A
- * change in any of them therefore changes what every framework package ships.
+ * every framework package. A change in either therefore changes what every framework package
+ * ships. (Layout, document loading and legacy .doc support live in `@christophervr/ooxml-core`, a
+ * regular dependency of the framework packages, so a core bump shows up in their manifests.)
  */
 export const INTERNAL_DIRS = [
-	'packages/document',
-	'packages/layout',
-	'packages/legacy',
 	'packages/web-component',
 	'packages/bindings',
 ];

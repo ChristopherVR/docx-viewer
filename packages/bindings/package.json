@@ -13,7 +13,7 @@
 	"type": "module",
 	"dependencies": {
 		"@christophervr/docx-core": "workspace:*",
-		"@christophervr/docx-document": "workspace:*",
+		"@christophervr/ooxml-core": "^0.2.0",
 		"@christophervr/docx-web-component": "workspace:*"
 	},
 	"peerDependencies": {

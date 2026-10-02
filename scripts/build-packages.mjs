@@ -8,10 +8,11 @@ import { dts } from 'rollup-plugin-dts';
 
 /**
  * Builds the published packages: `core` (a thin entry over @christophervr/ooxml-core/docx) and
- * one self-contained package per framework. Every internal workspace package (document, layout,
- * legacy, web-component, bindings) is `private` and is inlined into each framework bundle, along
- * with the shared @christophervr/ole2 legacy codecs, so a tarball only imports `docx-core`, the
- * prosemirror libraries and its framework peers. Declarations are flattened the same way.
+ * one package per framework. The internal workspace packages (web-component, bindings) are
+ * `private` and are inlined into each framework bundle. Layout, document loading and the legacy
+ * .doc reader live in @christophervr/ooxml-core (which inlines the ole2 codecs itself), so a
+ * tarball only imports `docx-core`, `ooxml-core`, the prosemirror libraries and its framework
+ * peers. Declarations are flattened the same way.
  */
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packagesDir = path.join(root, 'packages');
@@ -37,9 +38,6 @@ const BINDING_ENTRIES = {
 	common: 'common.ts',
 };
 export const INTERNAL_SOURCES = new Map([
-	['@christophervr/docx-document', 'packages/document/src/index.ts'],
-	['@christophervr/docx-layout', 'packages/layout/src/index.ts'],
-	['@christophervr/docx-legacy', 'packages/legacy/src/index.ts'],
 	['@christophervr/docx-web-component', 'packages/web-component/src/index.ts'],
 	['@christophervr/docx-bindings', 'packages/bindings/src/index.ts'],
 	...Object.entries(BINDING_ENTRIES).map(([name, file]) => [
@@ -167,7 +165,7 @@ async function main() {
 	}
 	await rm(typesDir, { recursive: true, force: true });
 	console.log(
-		`Built ${Object.keys(PUBLISHED).length} publishable packages (docx-core and six self-contained framework packages).`,
+		`Built ${Object.keys(PUBLISHED).length} publishable packages (docx-core and six framework packages).`,
 	);
 }
 

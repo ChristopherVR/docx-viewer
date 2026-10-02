@@ -21,7 +21,7 @@ export default defineConfig({
 				find: /^@christophervr\/docx-core\/embedded$/,
 				replacement: fileURLToPath(new URL('./packages/core/src/embedded.ts', import.meta.url)),
 			},
-			...['core', 'legacy', 'web-component', 'document', 'layout'].map((name) => ({
+			...['core', 'web-component'].map((name) => ({
 				find: new RegExp(`^@christophervr/docx-${name}$`),
 				replacement: fileURLToPath(new URL(`./packages/${name}/src/index.ts`, import.meta.url)),
 			})),

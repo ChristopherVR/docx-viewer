@@ -9,7 +9,7 @@ import {
 	type Paragraph,
 	type SectionProperties,
 } from '@christophervr/docx-core';
-import type { LayoutPageBox } from '@christophervr/docx-layout';
+import type { LayoutPageBox } from '@christophervr/ooxml-core/docx/layout';
 import { decoratePages, headerFooterForPage, pageNumbers } from './print-header-footer';
 import { at, must, paragraphAt } from './test-support';
 

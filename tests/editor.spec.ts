@@ -61,9 +61,9 @@ test('imports and saves legacy DOC as DOC and exports visible text as DOCX', asy
 	await page.goto('/');
 	await (
 		await fileInput(page)
-	).setInputFiles('packages/legacy/src/__tests__/fixtures/ole-word-97.doc');
+	).setInputFiles('tests/support/ole-word-97.doc');
 	await expect(fileNameLabel(page)).toHaveText('ole-word-97.doc');
-	const original = await readFile('packages/legacy/src/__tests__/fixtures/ole-word-97.doc');
+	const original = await readFile('tests/support/ole-word-97.doc');
 	const pending = page.waitForEvent('download');
 	await saveButton(page).click();
 	const download = await pending;

@@ -49,6 +49,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@christophervr/docx-core": "^0.1.0",
+        "@christophervr/ooxml-core": "^0.2.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -67,8 +68,8 @@
       "version": "0.1.0",
       "dependencies": {
         "@christophervr/docx-core": "workspace:*",
-        "@christophervr/docx-document": "workspace:*",
         "@christophervr/docx-web-component": "workspace:*",
+        "@christophervr/ooxml-core": "^0.2.0",
       },
       "peerDependencies": {
         "@angular/core": ">=19",
@@ -89,30 +90,7 @@
       "name": "@christophervr/docx-core",
       "version": "0.1.0",
       "dependencies": {
-        "@christophervr/ooxml-core": "^0.1.0",
-      },
-    },
-    "packages/document": {
-      "name": "@christophervr/docx-document",
-      "version": "0.1.0",
-      "dependencies": {
-        "@christophervr/docx-core": "workspace:*",
-        "@christophervr/docx-legacy": "workspace:*",
-      },
-    },
-    "packages/layout": {
-      "name": "@christophervr/docx-layout",
-      "version": "0.1.0",
-      "dependencies": {
-        "@christophervr/docx-core": "workspace:*",
-      },
-    },
-    "packages/legacy": {
-      "name": "@christophervr/docx-legacy",
-      "version": "0.1.0",
-      "dependencies": {
-        "@christophervr/docx-core": "workspace:*",
-        "@christophervr/ole2": "0.2.0",
+        "@christophervr/ooxml-core": "^0.2.0",
       },
     },
     "packages/react": {
@@ -120,6 +98,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@christophervr/docx-core": "^0.1.0",
+        "@christophervr/ooxml-core": "^0.2.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -138,6 +117,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@christophervr/docx-core": "^0.1.0",
+        "@christophervr/ooxml-core": "^0.2.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -156,6 +136,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@christophervr/docx-core": "^0.1.0",
+        "@christophervr/ooxml-core": "^0.2.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -174,6 +155,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@christophervr/docx-core": "^0.1.0",
+        "@christophervr/ooxml-core": "^0.2.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -189,6 +171,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@christophervr/docx-core": "^0.1.0",
+        "@christophervr/ooxml-core": "^0.2.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -207,8 +190,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@christophervr/docx-core": "workspace:*",
-        "@christophervr/docx-document": "workspace:*",
-        "@christophervr/docx-layout": "workspace:*",
+        "@christophervr/ooxml-core": "^0.2.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -247,12 +229,6 @@
 
     "@christophervr/docx-core": ["@christophervr/docx-core@workspace:packages/core"],
 
-    "@christophervr/docx-document": ["@christophervr/docx-document@workspace:packages/document"],
-
-    "@christophervr/docx-layout": ["@christophervr/docx-layout@workspace:packages/layout"],
-
-    "@christophervr/docx-legacy": ["@christophervr/docx-legacy@workspace:packages/legacy"],
-
     "@christophervr/docx-react-viewer": ["@christophervr/docx-react-viewer@workspace:packages/react"],
 
     "@christophervr/docx-solid-viewer": ["@christophervr/docx-solid-viewer@workspace:packages/solid"],
@@ -265,9 +241,7 @@
 
     "@christophervr/docx-web-component": ["@christophervr/docx-web-component@workspace:packages/web-component"],
 
-    "@christophervr/ole2": ["@christophervr/ole2@0.2.0", "", {}, "sha512-rMFBcdZRDfjnLt1iH4HMYO1L8BkCa0uklG1tDPMiZr4qQ8/lhcsIaoDhjsxCyTdd3v2rUwNTZLy6PskWFBxEJQ=="],
-
-    "@christophervr/ooxml-core": ["@christophervr/ooxml-core@0.1.0", "", { "dependencies": { "@xmldom/xmldom": "^0.9.12", "emf-converter": "^3.3.0", "fast-xml-parser": "^5.11.1", "jszip": "^3.10.2", "mtx-decompressor": "^1.6.0", "utif": "3.1.0" }, "peerDependencies": { "@napi-rs/canvas": "^1.0.9", "node-forge": "^1.3.0", "xml-crypto": "^6.0.0" }, "optionalPeers": ["@napi-rs/canvas", "node-forge", "xml-crypto"], "bin": { "pptx": "dist/pptx/cli/index.mjs" } }, "sha512-dEZR22/eq18ZQcTR1Mhd6ai9mYIPcWaFQI8Bf25plHy+xb+p0zA7bNaz/FzkY3rCIuv82PAhchFCsvs0bW9NYA=="],
+    "@christophervr/ooxml-core": ["@christophervr/ooxml-core@0.2.0", "", { "dependencies": { "@xmldom/xmldom": "^0.9.12", "emf-converter": "^3.3.0", "fast-xml-parser": "^5.11.1", "jszip": "^3.10.2", "lib0": "^0.2.117", "mtx-decompressor": "^1.6.0", "utif": "3.1.0", "y-protocols": "^1.0.7", "yjs": "^13.6.32" }, "peerDependencies": { "@napi-rs/canvas": "^1.0.9", "node-forge": "^1.3.0", "xml-crypto": "^6.0.0" }, "optionalPeers": ["@napi-rs/canvas", "node-forge", "xml-crypto"], "bin": { "pptx": "dist/pptx/cli/index.mjs" } }, "sha512-+35OgSrGkQW2VfVaVib5RcHlTXbMiAWKfeiArIsR8QkCq1k0CvEyfTMzvm5TqKhdbOEAP7FuMN9z2DwjuyVvQw=="],
 
     "@csstools/color-helpers": ["@csstools/color-helpers@5.1.0", "", {}, "sha512-S11EXWJyy0Mz5SYvRmY8nJYTFFd1LCNV+7cXyAgQtOOuzb4EsgfqDufL+9esx72/eLhsRdGZwaldu/h+E4t4BA=="],
 
@@ -611,6 +585,8 @@
 
     "isarray": ["isarray@1.0.0", "", {}, "sha512-VLghIWNM6ELQzo7zwmcg0NmTVyWKYjvIeM83yjp0wRDTmUnrM678fQbcKBo6n2CJEF0szoG//ytg+TKla89ALQ=="],
 
+    "isomorphic.js": ["isomorphic.js@0.2.5", "", {}, "sha512-PIeMbHqMt4DnUP3MA/Flc0HElYjMXArsw1qwJZcm9sqR8mq3l8NYizFMty0pWwE/tzIGH3EKK5+jes5mAr85yw=="],
+
     "jiti": ["jiti@2.7.0", "", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ=="],
 
     "js-tokens": ["js-tokens@10.0.0", "", {}, "sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q=="],
@@ -618,6 +594,8 @@
     "jsdom": ["jsdom@26.1.0", "", { "dependencies": { "cssstyle": "^4.2.1", "data-urls": "^5.0.0", "decimal.js": "^10.5.0", "html-encoding-sniffer": "^4.0.0", "http-proxy-agent": "^7.0.2", "https-proxy-agent": "^7.0.6", "is-potential-custom-element-name": "^1.0.1", "nwsapi": "^2.2.16", "parse5": "^7.2.1", "rrweb-cssom": "^0.8.0", "saxes": "^6.0.0", "symbol-tree": "^3.2.4", "tough-cookie": "^5.1.1", "w3c-xmlserializer": "^5.0.0", "webidl-conversions": "^7.0.0", "whatwg-encoding": "^3.1.1", "whatwg-mimetype": "^4.0.0", "whatwg-url": "^14.1.1", "ws": "^8.18.0", "xml-name-validator": "^5.0.0" }, "peerDependencies": { "canvas": "^3.0.0" }, "optionalPeers": ["canvas"] }, "sha512-Cvc9WUhxSMEo4McES3P7oK3QaXldCfNWp7pl2NNeiIFlCoLr3kfq9kb1fxftiwk1FLV7CvpvDfonxtzUDeSOPg=="],
 
     "jszip": ["jszip@3.10.2", "", { "dependencies": { "lie": "~3.3.0", "pako": "~1.0.2", "readable-stream": "~2.3.6", "setimmediate": "^1.0.5" } }, "sha512-3l+rb15IOWtUhU0H5MFqES/T6Kh7abYwjosBey/vD6hDt8zoEffkSC5Ws5SGtgVw3gBx2NEbhTeSW1+kWkpyTQ=="],
+
+    "lib0": ["lib0@0.2.119", "", { "dependencies": { "isomorphic.js": "^0.2.4" }, "bin": { "0serve": "bin/0serve.js", "0gentesthtml": "bin/gentesthtml.js", "0ecdsa-generate-keypair": "bin/0ecdsa-generate-keypair.js" } }, "sha512-vh+TiejVy8Xm+hCdnRfn9BthGNvNUZdEXltNjVZL3TzRIKP3s1lnQh8pWd/Q0wCgY0FPAGVVjFF4ZiHUV3LFgA=="],
 
     "lie": ["lie@3.3.0", "", { "dependencies": { "immediate": "~3.0.5" } }, "sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ=="],
 
@@ -830,6 +808,10 @@
     "xml-naming": ["xml-naming@0.3.0", "", {}, "sha512-ghig2TBE/H11aOVgmahA3MhimvkBr6JIYknH/Dhdk10nXwdbIqBJsbfMxpvFPG8bAw77gN29aQWvKpmVoPlvPQ=="],
 
     "xmlchars": ["xmlchars@2.2.0", "", {}, "sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw=="],
+
+    "y-protocols": ["y-protocols@1.0.7", "", { "dependencies": { "lib0": "^0.2.85" }, "peerDependencies": { "yjs": "^13.0.0" } }, "sha512-YSVsLoXxO67J6eE/nV4AtFtT3QEotZf5sK5BHxFBXso7VDUT3Tx07IfA6hsu5Q5OmBdMkQVmFZ9QOA7fikWvnw=="],
+
+    "yjs": ["yjs@13.6.33", "", { "dependencies": { "lib0": "^0.2.99" } }, "sha512-q/UYvr1gOk4XII+Cu1CW2dINjYqJJFifTzogEaIARznrvX7uOlHsdTEXcnOBMuIsrCGEEKdNxi74kyMLZlKVfw=="],
 
     "zimmerframe": ["zimmerframe@1.1.5", "", {}, "sha512-msJxIvYDYcoNL+PJsu+7qmpDWsYmAxTY+2TNYXXF0hzBzBk0BMecOqDOG/EckUoKCuKwObfbugIl8QpqHDXeFA=="],
 

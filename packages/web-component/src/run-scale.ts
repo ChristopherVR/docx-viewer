@@ -1,10 +1,10 @@
 import type { RunFormatting } from '@christophervr/docx-core';
 import {
-	createCanvasMeasurer,
 	cssFontStack,
 	tokenizeRun,
 	type TextMeasurer,
-} from '@christophervr/docx-layout';
+} from '@christophervr/ooxml-core/docx/layout';
+import { createCanvasMeasurer } from './canvas-measurer';
 
 const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 export interface ScaledSegment {
