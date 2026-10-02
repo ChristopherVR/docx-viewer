@@ -7,10 +7,10 @@ import { rollup } from 'rollup';
 import { dts } from 'rollup-plugin-dts';
 
 /**
- * Builds the published packages: `core` (a thin entry over @christophervr/ooxml-core/docx) and
+ * Builds the published packages: `core` (a thin entry over ooxml-core/docx) and
  * one package per framework. The internal workspace packages (web-component, bindings) are
  * `private` and are inlined into each framework bundle. Layout, document loading and the legacy
- * .doc reader live in @christophervr/ooxml-core (which inlines the ole2 codecs itself), so a
+ * .doc reader live in ooxml-core (which inlines the ole2 codecs itself), so a
  * tarball only imports `docx-core`, `ooxml-core`, the prosemirror libraries and its framework
  * peers. Declarations are flattened the same way.
  */

@@ -3,7 +3,7 @@ import type { EditorState, Transaction } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import type { DocumentModel } from 'docx-core';
 import { createDocument } from 'docx-core';
-import type { loadDocument } from '@christophervr/ooxml-core/docx/load';
+import type { loadDocument } from 'ooxml-core/docx/load';
 import { refreshEditorControls } from './editor-controls';
 import { assignMissingParagraphIds, docToModel } from './model-adapter';
 import type { SearchPanelHandle } from './search-panel';

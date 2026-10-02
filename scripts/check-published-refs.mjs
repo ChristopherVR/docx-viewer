@@ -2,7 +2,7 @@
  * Guard: nothing a published package ships may import a module its manifest does not declare.
  *
  * The framework packages inline every internal workspace package (web-component, bindings); the
- * shared logic is imported from @christophervr/ooxml-core, which inlines ole2 itself. If bundling or
+ * shared logic is imported from ooxml-core, which inlines ole2 itself. If bundling or
  * declaration flattening misses one, the tarball imports an unpublished package a consumer cannot
  * install. Modelled on pptx-viewer `scripts/check-published-shared-refs.mjs`, generalised from one
  * private package to "anything not in dependencies/peerDependencies".
@@ -53,7 +53,7 @@ export function undeclaredImports(source, manifest) {
 /** Manifest entries a consumer cannot install: internal packages, ole2 and local protocols. */
 export function forbiddenManifestEntries(manifest) {
 	const forbidden = (name) =>
-		/^(?:@christophervr\/(?!ooxml-core$|office-ui$)|docx-(?!core$))/u.test(name);
+		/^(?:@christophervr\/|docx-(?!core$)|ooxml-(?!core$|ui$))/u.test(name);
 	const found = [];
 	for (const field of ['dependencies', 'peerDependencies', 'optionalDependencies']) {
 		for (const [name, range] of Object.entries(manifest[field] ?? {})) {

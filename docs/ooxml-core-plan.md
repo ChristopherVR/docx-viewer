@@ -4,7 +4,7 @@ Status: proposal for review, 2026-10-01. Based on read-only reviews of `pptx-vie
 
 ## Update (2026-10-01, later): one package, all the logic
 
-`ooxml-core` is **one published package**, `@christophervr/ooxml-core`, with an area per subpath (`/xml`, `/opc`, `/units`, `/color`, `/geometry`, and later `/drawingml`, `/chart`, `/diagram`, `/docx`, `/pptx`, `/xlsx`, `/collab`). It is the home of **all** logic for the Office products, including the document models, parsers, serializers, editing commands, layout and the Yjs collaboration and sync protocol. `docx-viewer` and `pptx-viewer` keep **only the UI**. This supersedes the multi-package table in "Proposed shape" below: read those packages as areas of the one package.
+`ooxml-core` is **one published package**, `ooxml-core`, with an area per subpath (`/xml`, `/opc`, `/units`, `/color`, `/geometry`, and later `/drawingml`, `/chart`, `/diagram`, `/docx`, `/pptx`, `/xlsx`, `/collab`). It is the home of **all** logic for the Office products, including the document models, parsers, serializers, editing commands, layout and the Yjs collaboration and sync protocol. `docx-viewer` and `pptx-viewer` keep **only the UI**. This supersedes the multi-package table in "Proposed shape" below: read those packages as areas of the one package.
 
 Consequences for the phases: the Word and PowerPoint cores (`docx-core`, `pptx-viewer-core`) and the collaboration logic move into the new package's `docx`, `pptx` and `collab` areas, not only the shared layers; the viewers' own packages shrink to adapters and views. The GitHub secret `OOXML_CORE_TOKEN` now exists for docx-viewer CI.
 
@@ -108,11 +108,11 @@ Exit: pptx's 17 chart and 112 SmartArt ground-truth slides unchanged (acceptance
 - **Rendering regressions:** pptx ground-truth MAE numbers (whole-slide 3-4.7, worst 8.64) are the baseline; any change that moves them is rejected.
 - **Strictness mismatch:** consuming strict packages from a looser project is fine; the reverse is not, so shared code is strict from the start.
 - **Concurrent work in the pptx tree:** extraction PRs must not be cut from a dirty working tree.
-- **Word-side honesty:** charts stay placeholders and say so. SmartArt in Word documents is shown read-only from its cached drawing (`@christophervr/office-ui`'s `<office-ui-smartart>`); it is not recomputed or editable, and its approximations are listed in the editor.
+- **Word-side honesty:** charts stay placeholders and say so. SmartArt in Word documents is shown read-only from its cached drawing (`ooxml-ui`'s `<office-ui-smartart>`); it is not recomputed or editable, and its approximations are listed in the editor.
 
 ## Status (2026-10-02)
 
-- `@christophervr/ooxml-core@0.1.0` is published to npm from the public `ChristopherVR/ooxml-core` repository (releases publish from CI with OIDC). It holds the units, colour, geometry, XML, OPC, `docx` and `pptx` areas as one package.
+- `ooxml-core@0.1.0` is published to npm from the public `ChristopherVR/ooxml-core` repository (releases publish from CI with OIDC). It holds the units, colour, geometry, XML, OPC, `docx` and `pptx` areas as one package.
 - docx-viewer consumes it as a normal `^0.1.0` dependency of `docx-core`; the pack smoke test installs it from the registry. CI no longer clones the core.
 - docx-viewer publishes only `docx-core` (thin re-export of `/docx` and `/docx/embedded`) and six self-contained framework packages (`docx-<framework>-viewer`). The UI packages (`document`, `layout`, `legacy`, `web-component`, `bindings`) are private and bundled into each; the `@christophervr/ole2` codecs are inlined too, so `ole2` is not a dependency of anything published. See `docs/releasing.md`.
 - Remaining plan: move Word layout and collaboration logic into the core, then xlsx and Visio areas.

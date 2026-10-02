@@ -13,7 +13,7 @@ import {
 	floatPosition,
 	paragraphFloats,
 	type LayoutPageBox,
-} from '@christophervr/ooxml-core/docx/layout';
+} from 'ooxml-core/docx/layout';
 import type { PictureUrl } from './print-layout';
 
 /** Page facts a header or footer field can show. */

@@ -1,6 +1,6 @@
 import type { DocumentModel } from 'docx-core';
 import { resolveParagraphFormatting } from 'docx-core';
-import { layoutDocumentModel, type LayoutResult } from '@christophervr/ooxml-core/docx/layout';
+import { layoutDocumentModel, type LayoutResult } from 'ooxml-core/docx/layout';
 import { createCanvasMeasurer } from './canvas-measurer';
 import { renderPrintLayout, type PictureUrl, type PrintLayoutHandle } from './print-layout.js';
 import { decoratePages } from './print-header-footer';

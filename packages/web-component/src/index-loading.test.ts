@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDocument } from 'docx-core';
-import { loadDocument } from '@christophervr/ooxml-core/docx/load';
+import { loadDocument } from 'ooxml-core/docx/load';
 import { DocxEditorElement } from './index';
 import { at, paragraphAt } from './test-support';
 
-vi.mock('@christophervr/ooxml-core/docx/load', () => ({ loadDocument: vi.fn() }));
+vi.mock('ooxml-core/docx/load', () => ({ loadDocument: vi.fn() }));
 const loadMock = vi.mocked(loadDocument);
 
 describe('DocxEditorElement loading', () => {

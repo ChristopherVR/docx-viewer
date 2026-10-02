@@ -3,8 +3,8 @@
 // .doc file (the model API comes from `docx-core`, which installs with the editor).
 export * from 'docx-core';
 export * from 'docx-web-component';
-export { detectDocumentFormat, loadDocument } from '@christophervr/ooxml-core/docx/load';
-export type { DocumentFormat } from '@christophervr/ooxml-core/docx/load';
+export { detectDocumentFormat, loadDocument } from 'ooxml-core/docx/load';
+export type { DocumentFormat } from 'ooxml-core/docx/load';
 export type {
 	EditorBinding,
 	EditorEventOptions,

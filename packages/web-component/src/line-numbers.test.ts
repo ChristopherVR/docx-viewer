@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { LayoutResult } from '@christophervr/ooxml-core/docx/layout';
+import type { LayoutResult } from 'ooxml-core/docx/layout';
 import { describe, expect, it } from 'vitest';
 import { createDocument } from 'docx-core';
 import { renderPrintLayout } from './print-layout';

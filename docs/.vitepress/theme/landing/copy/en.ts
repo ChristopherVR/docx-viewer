@@ -71,7 +71,7 @@ export const en: LandingCopy = {
 		link: { text: 'Support roadmap', href: '/parity-roadmap' },
 		roadmapTitle: 'Roadmap note',
 		roadmapCopy:
-			'Shared OOXML logic is being moved into the private @christophervr/ooxml-core package, so this repository can end up holding only the UI. That migration is in progress and is not a shipped feature.',
+			'Shared OOXML logic is being moved into the private ooxml-core package, so this repository can end up holding only the UI. That migration is in progress and is not a shipped feature.',
 		roadmapLink: { text: 'The ooxml-core plan', href: '/ooxml-core-plan' },
 	},
 	quickstart: {

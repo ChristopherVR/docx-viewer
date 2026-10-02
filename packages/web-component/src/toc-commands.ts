@@ -12,7 +12,7 @@ import {
 	type DocumentModel,
 	type Paragraph,
 } from 'docx-core';
-import { layoutDocumentModel, type TextMeasurer } from '@christophervr/ooxml-core/docx/layout';
+import { layoutDocumentModel, type TextMeasurer } from 'ooxml-core/docx/layout';
 import { createCanvasMeasurer } from './canvas-measurer';
 import { closeHistory } from 'prosemirror-history';
 import type { EditorView } from 'prosemirror-view';

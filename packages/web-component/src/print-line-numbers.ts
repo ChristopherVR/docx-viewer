@@ -1,4 +1,4 @@
-import type { LayoutResult } from '@christophervr/ooxml-core/docx/layout';
+import type { LayoutResult } from 'ooxml-core/docx/layout';
 
 /** Line numbering of a section, as the section model gives it. */
 export interface PrintLineNumbering {

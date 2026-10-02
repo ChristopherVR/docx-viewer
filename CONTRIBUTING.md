@@ -1,6 +1,6 @@
 # Contributing to docx-viewer
 
-Read [AGENTS.md](AGENTS.md) for the working agreements (one framework-neutral model, one web-component editor, honest reporting of unsupported features, no logic that belongs in `@christophervr/ooxml-core`).
+Read [AGENTS.md](AGENTS.md) for the working agreements (one framework-neutral model, one web-component editor, honest reporting of unsupported features, no logic that belongs in `ooxml-core`).
 
 ## Getting set up
 

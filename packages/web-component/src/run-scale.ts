@@ -3,7 +3,7 @@ import {
 	cssFontStack,
 	tokenizeRun,
 	type TextMeasurer,
-} from '@christophervr/ooxml-core/docx/layout';
+} from 'ooxml-core/docx/layout';
 import { createCanvasMeasurer } from './canvas-measurer';
 
 const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });

@@ -51,9 +51,9 @@ test('flags inlined internal packages and ole2 that leaked into a tarball', () =
 
 test('rejects internal, ole2 and workspace entries in a published manifest', () => {
 	assert.deepEqual(forbiddenManifestEntries(manifest), []);
-	// office-ui is a registry dependency like docx-core: never inlined, never forbidden.
+	// ooxml-ui is a registry dependency like docx-core: never inlined, never forbidden.
 	assert.deepEqual(
-		forbiddenManifestEntries({ dependencies: { '@christophervr/office-ui': '^0.1.1' } }),
+		forbiddenManifestEntries({ dependencies: { 'ooxml-ui': '^0.1.1' } }),
 		[],
 	);
 	assert.deepEqual(

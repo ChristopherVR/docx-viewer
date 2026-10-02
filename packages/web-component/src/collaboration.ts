@@ -1,6 +1,6 @@
 import { collab, getVersion, receiveTransaction, sendableSteps } from 'prosemirror-collab';
 import { Plugin, type EditorState, type Transaction } from 'prosemirror-state';
-import { IdempotencyCache, classifyVersion, isValidId } from '@christophervr/ooxml-core/collab';
+import { IdempotencyCache, classifyVersion, isValidId } from 'ooxml-core/collab';
 import {
 	freezeBatch,
 	parseBatch,

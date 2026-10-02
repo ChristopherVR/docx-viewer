@@ -4,7 +4,7 @@ import type {
 	LayoutParagraphBox,
 	LayoutTableBox,
 	LayoutTableRowBox,
-} from '@christophervr/ooxml-core/docx/layout';
+} from 'ooxml-core/docx/layout';
 
 const cssBorder = (border: LayoutBorder | undefined) =>
 	border ? `${border.widthPx}px ${border.style} ${border.color}` : '';

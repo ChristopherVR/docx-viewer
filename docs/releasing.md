@@ -4,17 +4,17 @@ Seven unscoped packages are published to npm (named like pptx-viewer's `pptx-*` 
 
 | Package               | Dir                | Depends on (published)                                 | Internal packages bundled in |
 | --------------------- | ------------------ | ------------------------------------------------------ | ---------------------------- |
-| `docx-core`           | `packages/core`    | `@christophervr/ooxml-core`                            | none                         |
-| `docx-react-viewer`   | `packages/react`   | `docx-core`, `office-ui`, ProseMirror, `react`         | all five (below)             |
-| `docx-vue-viewer`     | `packages/vue`     | `docx-core`, `office-ui`, ProseMirror, `vue`           | all five                     |
-| `docx-angular-viewer` | `packages/angular` | `docx-core`, `office-ui`, ProseMirror, `@angular/core` | all five                     |
-| `docx-svelte-viewer`  | `packages/svelte`  | `docx-core`, `office-ui`, ProseMirror, `svelte`        | all five                     |
-| `docx-solid-viewer`   | `packages/solid`   | `docx-core`, `office-ui`, ProseMirror, `solid-js`      | all five                     |
+| `docx-core`           | `packages/core`    | `ooxml-core`                            | none                         |
+| `docx-react-viewer`   | `packages/react`   | `docx-core`, `ooxml-ui`, ProseMirror, `react`         | all five (below)             |
+| `docx-vue-viewer`     | `packages/vue`     | `docx-core`, `ooxml-ui`, ProseMirror, `vue`           | all five                     |
+| `docx-angular-viewer` | `packages/angular` | `docx-core`, `ooxml-ui`, ProseMirror, `@angular/core` | all five                     |
+| `docx-svelte-viewer`  | `packages/svelte`  | `docx-core`, `ooxml-ui`, ProseMirror, `svelte`        | all five                     |
+| `docx-solid-viewer`   | `packages/solid`   | `docx-core`, `ooxml-ui`, ProseMirror, `solid-js`      | all five                     |
 | `docx-vanilla-viewer` | `packages/vanilla` | `docx-core`, ProseMirror                               | all five                     |
 
-The internal packages are `private: true` and are never published: `web-component` and `bindings`. `scripts/build-packages.mjs` bundles them into every framework package, so a published tarball imports only `docx-core`, `@christophervr/ooxml-core`, `@christophervr/office-ui`, the ProseMirror libraries and its framework peer. `ole2` is inlined inside `ooxml-core`, so it is not a dependency of anything published and does not have to be released first. `@christophervr/office-ui` (the shared controls that draw SmartArt) is a real registry dependency of every framework package, never bundled, like `docx-core`; it is not a workspace package, so the planner treats it as external: a change to its range in a manifest releases that package only, and the packaging checks (`check:published`, `pack:smoke`) allow exactly `docx-core`, `office-ui` and `ooxml-core` as project dependencies. The ProseMirror libraries stay real dependencies (not bundled) so a package manager can dedupe one copy of them with other ProseMirror code in the application; `docx-core` stays a dependency (not bundled) so `DocumentModel` is the same module on both sides of the application's own imports.
+The internal packages are `private: true` and are never published: `web-component` and `bindings`. `scripts/build-packages.mjs` bundles them into every framework package, so a published tarball imports only `docx-core`, `ooxml-core`, `ooxml-ui`, the ProseMirror libraries and its framework peer. `ole2` is inlined inside `ooxml-core`, so it is not a dependency of anything published and does not have to be released first. `ooxml-ui` (the shared controls that draw SmartArt) is a real registry dependency of every framework package, never bundled, like `docx-core`; it is not a workspace package, so the planner treats it as external: a change to its range in a manifest releases that package only, and the packaging checks (`check:published`, `pack:smoke`) allow exactly `docx-core`, `ooxml-ui` and `ooxml-core` as project dependencies. The ProseMirror libraries stay real dependencies (not bundled) so a package manager can dedupe one copy of them with other ProseMirror code in the application; `docx-core` stays a dependency (not bundled) so `DocumentModel` is the same module on both sides of the application's own imports.
 
-Dependencies between published packages are read from the manifests, never from a hand-kept list; the directories that are bundled in are the `triggers` of each package in `scripts/release-plan.mjs`. All DOCX logic lives in `@christophervr/ooxml-core` (a separate repository with its own releases); `@christophervr/ole2` is released from its own repository.
+Dependencies between published packages are read from the manifests, never from a hand-kept list; the directories that are bundled in are the `triggers` of each package in `scripts/release-plan.mjs`. All DOCX logic lives in `ooxml-core` (a separate repository with its own releases); `@christophervr/ole2` is released from its own repository.
 
 ## Status: not published yet
 
@@ -36,7 +36,7 @@ bun run release:plan            # or: node scripts/release-plan.mjs --no-npm   (
 For each package it finds the newest `<npm-name>@x.y.z` tag that is an ancestor of `HEAD` (the baseline) and looks at the files changed since:
 
 - **Own files.** Any non-test file under `packages/<name>/` releases that package. Test files, `__tests__`, `CHANGELOG.md` and manifest edits that only touch `version`, `scripts`, `devDependencies` or ranges on sibling packages never do (so a release commit cannot retrigger a release).
-- **Bundled internal packages (triggers).** A non-test change under `packages/web-component` or `bindings` releases **every** framework package, because each one ships that code. A bump of the `@christophervr/ooxml-core` range changes each framework manifest and releases them too.
+- **Bundled internal packages (triggers).** A non-test change under `packages/web-component` or `bindings` releases **every** framework package, because each one ships that code. A bump of the `ooxml-core` range changes each framework manifest and releases them too.
 - **Published dependencies.** A package re-releases whenever a package it depends on is released, because its dependency range changes. Releasing `docx-core` therefore releases all six framework packages; releasing one framework package releases nothing else.
 - **Shared build pipeline.** `scripts/build-packages.mjs` and `tsconfig.release.json` change every artifact and release everything.
 - **Never published.** A package with no tag that is not on npm releases at its manifest version.
@@ -98,7 +98,7 @@ Like pptx-viewer, the release job does not repeat typecheck, unit and browser te
 
 ## Before the first release
 
-- Make sure `@christophervr/ooxml-core@^0.2.0` and `@christophervr/office-ui@^0.1.1` are on npm; `docx-core` depends on it. `@christophervr/ole2` does not need to be published: its codecs are bundled into the framework packages.
+- Make sure `ooxml-core@^0.2.0` and `ooxml-ui@^0.1.1` are on npm; `docx-core` depends on it. `@christophervr/ole2` does not need to be published: its codecs are bundled into the framework packages.
 - Check the plan: `bun run release:plan` should list seven packages at `0.1.0` with bump `initial` and no internal package.
 - Dispatch the workflow by hand. The seven packages are tagged `docx-core@0.1.0` and `docx-<framework>-viewer@0.1.0`, and published with `docx-core` first.
 

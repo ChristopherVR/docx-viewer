@@ -1,7 +1,7 @@
 {
 	"name": "docx-core",
 	"version": "0.1.0",
-	"description": "Framework-neutral DOCX document model, parser and serializer (thin entry point over @christophervr/ooxml-core/docx)",
+	"description": "Framework-neutral DOCX document model, parser and serializer (thin entry point over ooxml-core/docx)",
 	"license": "Apache-2.0",
 	"author": "ChristopherVR",
 	"repository": {
@@ -29,6 +29,6 @@
 		}
 	},
 	"dependencies": {
-		"@christophervr/ooxml-core": "^0.2.0"
+		"ooxml-core": "^0.2.0"
 	}
 }

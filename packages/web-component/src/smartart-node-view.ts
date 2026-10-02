@@ -1,7 +1,7 @@
 import type { DocxDiagram, ThemeCatalog } from 'docx-core';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import type { NodeView } from 'prosemirror-view';
-import { defineSmartArt } from '@christophervr/office-ui/smartart';
+import { defineSmartArt } from 'ooxml-ui/smartart';
 import { placementClass } from './inline-content-schema';
 import { themeDrawing } from './smartart-theme';
 

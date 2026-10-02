@@ -6,7 +6,7 @@ import { TextSelection } from 'prosemirror-state';
 import { DocxEditorElement, registerDocxEditor } from './index';
 import { at, paragraphAt } from './test-support';
 
-vi.mock('@christophervr/ooxml-core/docx/load', () => ({ loadDocument: vi.fn() }));
+vi.mock('ooxml-core/docx/load', () => ({ loadDocument: vi.fn() }));
 
 describe('DocxEditorElement', () => {
 	afterEach(() => {

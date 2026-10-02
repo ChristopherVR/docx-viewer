@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { createFakeMeasurer } from '@christophervr/ooxml-core/docx/layout';
+import { createFakeMeasurer } from 'ooxml-core/docx/layout';
 import { signedTwips } from 'docx-core';
 import { scaledSegments } from './run-scale';
 

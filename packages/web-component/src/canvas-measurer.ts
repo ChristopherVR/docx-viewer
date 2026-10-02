@@ -4,7 +4,7 @@ import {
 	ligatureCss,
 	type LayoutFontSpec,
 	type TextMeasurer,
-} from '@christophervr/ooxml-core/docx/layout';
+} from 'ooxml-core/docx/layout';
 
 /**
  * Browser measurer backed by an offscreen `<canvas>` 2D context. Falls back to

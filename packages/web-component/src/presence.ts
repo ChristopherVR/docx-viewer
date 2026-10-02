@@ -2,7 +2,7 @@ import { getVersion, sendableSteps } from 'prosemirror-collab';
 import { DecorationSet } from 'prosemirror-view';
 import { peerDecorations } from './presence-decorations';
 import { Plugin, PluginKey, type EditorState, type Transaction } from 'prosemirror-state';
-import { SequenceTracker, classifyVersion, isValidId, validateDisplayName } from '@christophervr/ooxml-core/collab';
+import { SequenceTracker, classifyVersion, isValidId, validateDisplayName } from 'ooxml-core/collab';
 import type { EditorLocale } from './localization';
 
 export const PRESENCE_PALETTE = [

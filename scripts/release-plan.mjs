@@ -34,7 +34,7 @@ import { fileURLToPath } from 'node:url';
 /**
  * Internal, `private` workspace packages. They are never published: their code is bundled into
  * every framework package. A change in either therefore changes what every framework package
- * ships. (Layout, document loading and legacy .doc support live in `@christophervr/ooxml-core`, a
+ * ships. (Layout, document loading and legacy .doc support live in `ooxml-core`, a
  * regular dependency of the framework packages, so a core bump shows up in their manifests.)
  */
 export const INTERNAL_DIRS = ['packages/web-component', 'packages/bindings'];
@@ -45,8 +45,8 @@ export const INTERNAL_DIRS = ['packages/web-component', 'packages/bindings'];
  * `dependencies` / `peerDependencies` / `optionalDependencies` entry naming another package of
  * this table is an internal dependency, and releasing it re-releases the dependent (every
  * framework package depends on `docx-core`, so a core release releases all of them).
- * Registry dependencies absent from this table (`@christophervr/ooxml-core`, and
- * `@christophervr/office-ui` in every framework package) are external: a range change in a
+ * Registry dependencies absent from this table (`ooxml-core`, and
+ * `ooxml-ui` in every framework package) are external: a range change in a
  * manifest releases that package only, as for any third-party dependency.
  * `triggers` (optional) are other directories whose published files also force a release of this
  * package, because their code is inlined into it. Same shape as pptx-viewer's SHARED_DIR trigger.

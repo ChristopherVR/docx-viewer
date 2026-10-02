@@ -104,7 +104,7 @@ test('a scripts-only manifest change is not a release trigger', () => {
 });
 
 test('an external dependency change releases only the package whose manifest names it', () => {
-	// office-ui and ooxml-core are registry dependencies, not workspace packages: like a docx-core
+	// ooxml-ui and ooxml-core are registry dependencies, not workspace packages: like a docx-core
 	// range they reach consumers only through the manifest that declares them.
 	const path = 'packages/solo/package.json';
 	const manifest = JSON.parse(readFileSync(join(root, path), 'utf8'));

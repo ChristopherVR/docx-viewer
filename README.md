@@ -35,7 +35,7 @@ An early implementation: not Microsoft Word parity, and not lossless export.
 | **Print Layout**       | Paginated view with line breaking, widow/orphan and keep rules, columns, table row splitting and printing. An approximation of Word, not Word's pagination.                                                                      |
 | **Document structure** | Styles, lists and numbering, tables, sections and columns, headers and footers, footnotes and fields such as TOC. Inline text boxes, header watermark and page borders. SmartArt shows its saved drawing, read-only (see below). |
 | **Review**             | Tracked changes (accept, reject, navigate) and a comments pane with replies and resolve.                                                                                                                                         |
-| **File formats**       | DOCX, and legacy Word 97-2003 `.doc` via the shared `ole2` codecs inside `@christophervr/ooxml-core` (main-body text and constrained paragraph edits). Password-protected files are unsupported.                                 |
+| **File formats**       | DOCX, and legacy Word 97-2003 `.doc` via the shared `ole2` codecs inside `ooxml-core` (main-body text and constrained paragraph edits). Password-protected files are unsupported.                                 |
 | **Collaboration**      | A transport-neutral protocol over validated ProseMirror steps with transient presence. Your application owns networking, identity, permissions and storage.                                                                      |
 | **Localization**       | Editor interface in English, French, German, Spanish and Simplified Chinese through a `locale` option. Document content is never translated.                                                                                     |
 
@@ -50,7 +50,7 @@ bun install
 bun run demo   # vanilla demo; add ?framework=react|vue|angular|svelte|solid
 ```
 
-The DOCX logic comes from the published [`@christophervr/ooxml-core`](https://github.com/ChristopherVR/ooxml-core) package; see [AGENTS.md](AGENTS.md) and the [ooxml-core plan](docs/ooxml-core-plan.md).
+The DOCX logic comes from the published [`ooxml-core`](https://github.com/ChristopherVR/ooxml-core) package; see [AGENTS.md](AGENTS.md) and the [ooxml-core plan](docs/ooxml-core-plan.md).
 
 ### 2. Mount the editor (intended API)
 
@@ -155,7 +155,7 @@ Seven packages are published (nothing has been released yet), each versioned ind
 
 | Package               | What it is                                                                                                                           |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `docx-core`           | DOCX model, parser and preserving serializer (`packages/core`, a thin entry point over `@christophervr/ooxml-core/docx`). DOCX only. |
+| `docx-core`           | DOCX model, parser and preserving serializer (`packages/core`, a thin entry point over `ooxml-core/docx`). DOCX only. |
 | `docx-react-viewer`   | React component (`packages/react`).                                                                                                  |
 | `docx-vue-viewer`     | Vue 3 component (`packages/vue`).                                                                                                    |
 | `docx-angular-viewer` | Angular standalone component (`packages/angular`).                                                                                   |
@@ -163,9 +163,9 @@ Seven packages are published (nothing has been released yet), each versioned ind
 | `docx-solid-viewer`   | Solid component (`packages/solid`).                                                                                                  |
 | `docx-vanilla-viewer` | `mountEditor` and the plain `<docx-editor>` web component, no framework (`packages/vanilla`).                                        |
 
-Each `*-viewer` package is self-contained: the editor, layout engine, document loading and the legacy `.doc` reader come from `@christophervr/ooxml-core` (`/docx/layout`, `/docx/load`, which inlines the shared ole2 codecs). A package depends on `docx-core`, `@christophervr/ooxml-core`, `@christophervr/office-ui` (the shared web components that draw SmartArt; installed for you, never imported by your code), the ProseMirror libraries and its framework peer, so `@christophervr/ole2` does not need to be published or installed. DOCX and legacy `.doc` files are both opened by every editor package.
+Each `*-viewer` package is self-contained: the editor, layout engine, document loading and the legacy `.doc` reader come from `ooxml-core` (`/docx/layout`, `/docx/load`, which inlines the shared ole2 codecs). A package depends on `docx-core`, `ooxml-core`, `ooxml-ui` (the shared web components that draw SmartArt; installed for you, never imported by your code), the ProseMirror libraries and its framework peer, so `@christophervr/ole2` does not need to be published or installed. DOCX and legacy `.doc` files are both opened by every editor package.
 
-The workspace also holds **private** packages that are never published and are inlined into each editor package at build time: `web-component` (the shared `<docx-editor>`, including the browser text measurer behind Print Layout) and `bindings` (framework lifecycle and event adapters). The pagination engine, document loading and collaboration helpers are in `@christophervr/ooxml-core`. Shared OOXML logic is moving into the public `@christophervr/ooxml-core`, leaving this repository with only the UI; that migration is in progress, not a shipped feature.
+The workspace also holds **private** packages that are never published and are inlined into each editor package at build time: `web-component` (the shared `<docx-editor>`, including the browser text measurer behind Print Layout) and `bindings` (framework lifecycle and event adapters). The pagination engine, document loading and collaboration helpers are in `ooxml-core`. Shared OOXML logic is moving into the public `ooxml-core`, leaving this repository with only the UI; that migration is in progress, not a shipped feature.
 
 ## SmartArt
 

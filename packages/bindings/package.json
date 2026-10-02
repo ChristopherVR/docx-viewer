@@ -12,7 +12,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@christophervr/ooxml-core": "^0.2.0",
+		"ooxml-core": "^0.2.0",
 		"docx-core": "workspace:*",
 		"docx-web-component": "workspace:*"
 	},

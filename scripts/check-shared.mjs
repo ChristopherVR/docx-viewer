@@ -14,12 +14,12 @@ const core = JSON.parse(await readFile(new URL('packages/core/package.json', roo
 assert(!core.dependencies?.['@christophervr/ole2'], 'Modern DOCX core must not depend on ole2');
 assert(core.exports['./embedded'], 'Embedded DOCX API must be shared with PowerPoint');
 assert(
-	core.dependencies?.['@christophervr/ooxml-core'] && Object.keys(core.dependencies).length === 1,
-	'docx-core must depend only on @christophervr/ooxml-core',
+	core.dependencies?.['ooxml-core'] && Object.keys(core.dependencies).length === 1,
+	'docx-core must depend only on ooxml-core',
 );
 for (const [entry, target] of [
-	['index.ts', '@christophervr/ooxml-core/docx'],
-	['embedded.ts', '@christophervr/ooxml-core/docx/embedded'],
+	['index.ts', 'ooxml-core/docx'],
+	['embedded.ts', 'ooxml-core/docx/embedded'],
 ]) {
 	const thin = await readFile(new URL(`packages/core/src/${entry}`, root), 'utf8');
 	assert(
@@ -29,7 +29,7 @@ for (const [entry, target] of [
 }
 assert(
 	(await sources(new URL('packages/core/src/', root))).length === 2,
-	'docx-core must hold no logic; it lives in @christophervr/ooxml-core/docx',
+	'docx-core must hold no logic; it lives in ooxml-core/docx',
 );
 const PUBLISHED = ['core', 'react', 'vue', 'angular', 'svelte', 'solid', 'vanilla'];
 const INTERNAL = ['web-component', 'bindings'];
@@ -48,7 +48,7 @@ for (const name of [...PUBLISHED, ...INTERNAL]) {
 	assert.notEqual(manifest.private, true, `packages/${name} is published and must not be private`);
 	for (const dep of Object.keys({ ...manifest.dependencies, ...manifest.peerDependencies })) {
 		assert(
-			!/^(?:@christophervr\/(?!ooxml-core$|office-ui$)|docx-(?!core$))/.test(dep),
+			!/^(?:@christophervr\/|docx-(?!core$)|ooxml-(?!core$|ui$))/.test(dep),
 			`packages/${name} must not depend on ${dep}; internal packages and ole2 are bundled`,
 		);
 	}

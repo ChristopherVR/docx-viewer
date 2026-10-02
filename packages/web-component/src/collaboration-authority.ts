@@ -1,7 +1,7 @@
 import type { Node as ProseMirrorNode, Schema } from 'prosemirror-model';
 import { Step, Transform } from 'prosemirror-transform';
 import { expectDefined } from './defined';
-import { IdempotencyCache, classifyVersion, isValidId } from '@christophervr/ooxml-core/collab';
+import { IdempotencyCache, classifyVersion, isValidId } from 'ooxml-core/collab';
 import { freezeBatch, parseBatch, type StepBatch } from './collaboration-protocol';
 
 export interface CollaborationAuthorityConfig {
