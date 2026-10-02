@@ -4,17 +4,11 @@ name: Release
 # docs/releasing.md for the whole flow.
 
 on:
-  # SCHEDULE DISABLED ON PURPOSE. The Word packages have never been published and their npm trusted
-  # publishers are not configured yet, so nothing here may run unattended. Uncomment the two lines
-  # below once every package listed in docs/releasing.md has its trusted publisher, the `npm`
-  # environment exists and the NPM_PUBLISH / RELEASE_TOKEN settings are in place. Until then the
-  # workflow only runs when dispatched by hand.
-  #
-  # The planner is cumulative (each package is diffed from its own last tag), so everything merged
-  # since the previous run lands in one release per changed package, and a run with no changes
-  # exits at the planning step.
-  # schedule:
-  #   - cron: '0 * * * *' # hourly, on the hour
+  # Hourly. The planner is cumulative (each package is diffed from its own last tag), so everything
+  # merged since the previous run lands in one release per changed package, and a run with no
+  # changes exits at the planning step.
+  schedule:
+    - cron: '0 * * * *' # hourly, on the hour
   #
   # Manual runs, two modes:
   #   - no input: cut a release now (same as the schedule would).

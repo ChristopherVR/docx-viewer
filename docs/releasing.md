@@ -16,14 +16,9 @@ The internal packages are `private: true` and are never published: `web-componen
 
 Dependencies between published packages are read from the manifests, never from a hand-kept list; the directories that are bundled in are the `triggers` of each package in `scripts/release-plan.mjs`. All DOCX logic lives in `ooxml-core` (a separate repository with its own releases); `@christophervr/ole2` is released from its own repository.
 
-## Status: not published yet
+## Status
 
-None of these packages has ever been published, and their npm trusted publishers are **not configured**, so:
-
-- the scheduled trigger in `.github/workflows/release.yml` is commented out (manual dispatch only), and
-- the first release of each package publishes its manifest version (`0.1.0`) as is, with no bump.
-
-Enable the schedule only after the checklist under [One-time setup](#one-time-setup) is complete.
+All seven packages are on npm at `0.1.0`. That first version was published by hand (npm only allows a trusted publisher on a package that exists, so it has no provenance) from the commit tagged `<npm-name>@0.1.0`. Every later version is published by the hourly `release.yml` through trusted publishing (OIDC) with provenance.
 
 ## How a release is decided
 
