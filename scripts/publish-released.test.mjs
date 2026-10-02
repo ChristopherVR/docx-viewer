@@ -45,9 +45,12 @@ test('the manifest on disk must be the version being published', () => {
 
 test('exactly the packages in the release table are public; every other workspace package is private', async () => {
 	const { readdir, readFile } = await import('node:fs/promises');
+	const { existsSync } = await import('node:fs');
 	const published = new Set(Object.values(PACKAGES).map((p) => p.dir.replace('packages/', '')));
 	assert.equal(published.size, 7);
 	for (const dir of await readdir('packages')) {
+		// Skip leftovers of removed packages (untracked node_modules) that have no manifest.
+		if (!existsSync(`packages/${dir}/package.json`)) continue;
 		const manifest = JSON.parse(await readFile(`packages/${dir}/package.json`, 'utf8'));
 		assert.equal(
 			Boolean(manifest.private),
