@@ -2,15 +2,15 @@
 
 Seven packages are published under the `@christophervr` npm scope: `@christophervr/docx-core` and one self-contained editor package per framework. Each has its **own version line**, bumped only when it actually changes, and its own git tag `<npm-name>@<version>` (for example `@christophervr/docx-core@0.2.0`). The flow is the one used by [pptx-viewer](https://github.com/ChristopherVR/pptx-viewer), adapted to this repository; the scripts that are copies are marked in their header comments. Like pptx-viewer, only user-facing packages are published: the shared internals are private and bundled into each framework package.
 
-| Package                              | Dir                | Depends on (published)                         | Internal packages bundled in |
-| ------------------------------------ | ------------------ | ---------------------------------------------- | ---------------------------- |
-| `@christophervr/docx-core`           | `packages/core`    | `@christophervr/ooxml-core`                    | none                         |
-| `@christophervr/docx-react-viewer`   | `packages/react`   | `docx-core`, `office-ui`, ProseMirror, `react` | all five (below)             |
-| `@christophervr/docx-vue-viewer`     | `packages/vue`     | `docx-core`, ProseMirror, `vue`                | all five                     |
-| `@christophervr/docx-angular-viewer` | `packages/angular` | `docx-core`, ProseMirror, `@angular/core`      | all five                     |
-| `@christophervr/docx-svelte-viewer`  | `packages/svelte`  | `docx-core`, ProseMirror, `svelte`             | all five                     |
-| `@christophervr/docx-solid-viewer`   | `packages/solid`   | `docx-core`, ProseMirror, `solid-js`           | all five                     |
-| `@christophervr/docx-vanilla-viewer` | `packages/vanilla` | `docx-core`, ProseMirror                       | all five                     |
+| Package                              | Dir                | Depends on (published)                                 | Internal packages bundled in |
+| ------------------------------------ | ------------------ | ------------------------------------------------------ | ---------------------------- |
+| `@christophervr/docx-core`           | `packages/core`    | `@christophervr/ooxml-core`                            | none                         |
+| `@christophervr/docx-react-viewer`   | `packages/react`   | `docx-core`, `office-ui`, ProseMirror, `react`         | all five (below)             |
+| `@christophervr/docx-vue-viewer`     | `packages/vue`     | `docx-core`, `office-ui`, ProseMirror, `vue`           | all five                     |
+| `@christophervr/docx-angular-viewer` | `packages/angular` | `docx-core`, `office-ui`, ProseMirror, `@angular/core` | all five                     |
+| `@christophervr/docx-svelte-viewer`  | `packages/svelte`  | `docx-core`, `office-ui`, ProseMirror, `svelte`        | all five                     |
+| `@christophervr/docx-solid-viewer`   | `packages/solid`   | `docx-core`, `office-ui`, ProseMirror, `solid-js`      | all five                     |
+| `@christophervr/docx-vanilla-viewer` | `packages/vanilla` | `docx-core`, ProseMirror                               | all five                     |
 
 The internal packages are `private: true` and are never published: `web-component` and `bindings`. `scripts/build-packages.mjs` bundles them into every framework package, so a published tarball imports only `@christophervr/docx-core`, `@christophervr/ooxml-core`, `@christophervr/office-ui`, the ProseMirror libraries and its framework peer. `ole2` is inlined inside `ooxml-core`, so it is not a dependency of anything published and does not have to be released first. `@christophervr/office-ui` (the shared controls that draw SmartArt) is a real registry dependency of every framework package, never bundled, like `docx-core`; it is not a workspace package, so the planner treats it as external: a change to its range in a manifest releases that package only, and the packaging checks (`check:published`, `pack:smoke`) allow exactly `docx-core`, `office-ui` and `ooxml-core` as project dependencies. The ProseMirror libraries stay real dependencies (not bundled) so a package manager can dedupe one copy of them with other ProseMirror code in the application; `docx-core` stays a dependency (not bundled) so `DocumentModel` is the same module on both sides of the application's own imports.
 
