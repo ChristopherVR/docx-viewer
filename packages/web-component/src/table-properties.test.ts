@@ -1,13 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-	createDocument,
-	loadDocx,
-	saveDocx,
-	twips,
-	signedTwips,
-	type Table,
-} from '@christophervr/docx-core';
+import { createDocument, loadDocx, saveDocx, twips, signedTwips, type Table } from 'docx-core';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { history, undo } from 'prosemirror-history';

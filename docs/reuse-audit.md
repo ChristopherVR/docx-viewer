@@ -1,6 +1,6 @@
 # PowerPoint repository reuse audit
 
-CFB/OLE2 primitives and Word 97-2003 binary helpers live in `D:/Development/ole2` as package `@christophervr/ole2`. The extracted source records its provenance and Apache-2.0 licensing. DOCX is a separate OOXML format and its model, parser, and serializer are canonical in Word's `@christophervr/docx-core` package. No modern DOCX code is part of `ole2`.
+CFB/OLE2 primitives and Word 97-2003 binary helpers live in `D:/Development/ole2` as package `@christophervr/ole2`. The extracted source records its provenance and Apache-2.0 licensing. DOCX is a separate OOXML format and its model, parser, and serializer are canonical in Word's `docx-core` package. No modern DOCX code is part of `ole2`.
 
 ## Shared package API
 
@@ -22,7 +22,7 @@ The DOCX legacy API extracts main-body paragraph text, preserves exact source by
 
 ## DOCX consolidation
 
-The ordered DOCX model/parser/writer and embedded-DOCX API live in Word's `@christophervr/docx-core` package. PowerPoint's current embedded-DOCX adapter remains in place; migration to the core API is deferred until the package is published and consumer integration is ready. `@christophervr/ole2` remains limited to CFB and legacy binary formats.
+The ordered DOCX model/parser/writer and embedded-DOCX API live in Word's `docx-core` package. PowerPoint's current embedded-DOCX adapter remains in place; migration to the core API is deferred until the package is published and consumer integration is ready. `@christophervr/ole2` remains limited to CFB and legacy binary formats.
 
 ## Next shared package boundary
 

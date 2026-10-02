@@ -40,7 +40,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** A dated root section: `## 2026-08-13`. Per-package headings are versioned. */
 const DATED_HEADING_RE = /^##\s+\d{4}-\d{2}-\d{2}\s*$/u;
-/** The root changelog's release-list line, e.g. `_Releases: @christophervr/docx-core@2.3.6_`. */
+/** The root changelog's release-list line, e.g. `_Releases: docx-core@2.3.6_`. */
 const RELEASES_RE = /^_Releases:(?<list>.*)_$/u;
 
 /**

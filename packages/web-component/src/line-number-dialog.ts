@@ -1,4 +1,4 @@
-import { twips, type SectionProperties } from '@christophervr/docx-core';
+import { twips, type SectionProperties } from 'docx-core';
 import {
 	checkbox,
 	dialogButton,

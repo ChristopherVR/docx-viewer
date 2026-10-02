@@ -1,4 +1,4 @@
-import { saveDocx, type DocumentModel } from '@christophervr/docx-core';
+import { saveDocx, type DocumentModel } from 'docx-core';
 import { createBackstage, type Backstage } from './backstage';
 import {
 	announceFileCommand,

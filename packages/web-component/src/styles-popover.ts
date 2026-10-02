@@ -1,4 +1,4 @@
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
 import { localeOf, translate } from './localization';
 import { mountPopover } from './ribbon-popover';
 import { ribbonIcon } from './ribbon-icons';

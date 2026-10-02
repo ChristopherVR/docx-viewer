@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import { createFakeMeasurer } from '@christophervr/ooxml-core/docx/layout';
-import { signedTwips } from '@christophervr/docx-core';
+import { signedTwips } from 'docx-core';
 import { scaledSegments } from './run-scale';
 
 const measurer = createFakeMeasurer({ charWidthFactor: 0.5 });

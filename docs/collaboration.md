@@ -32,7 +32,7 @@ Presence messages carry the shared session ID, sender client ID, committed colla
 For the shared custom element, presence is enabled by `startCollaboration`:
 
 ```ts
-import { PRESENCE_PALETTE } from '@christophervr/docx-vanilla-viewer';
+import { PRESENCE_PALETTE } from 'docx-vanilla-viewer';
 
 editor.addEventListener('presence-send', (event) => {
 	transport.sendPresence(event.detail); // Application-owned transport

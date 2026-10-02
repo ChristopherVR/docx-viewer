@@ -3,7 +3,7 @@
 // id, because vertical-merge continuation cells and nested-table previews have no 1:1 visible
 // ProseMirror node to rebuild from; simple tables keep the existing rebuild-from-doc path.
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
-import type { Paragraph, Table, TableCell, TableStyleCatalog } from '@christophervr/docx-core';
+import type { Paragraph, Table, TableCell, TableStyleCatalog } from 'docx-core';
 import { schema } from './schema';
 import { resolveCellVisuals } from './table-visuals';
 

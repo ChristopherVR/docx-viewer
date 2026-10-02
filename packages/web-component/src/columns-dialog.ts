@@ -1,4 +1,4 @@
-import { twips, type SectionColumns, type SectionProperties } from '@christophervr/docx-core';
+import { twips, type SectionColumns, type SectionProperties } from 'docx-core';
 import { checkbox, dialogButton, fieldset, labelled, numberInput, row } from './dialog-fields';
 import {
 	changeColumnGap,

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { createDocument, loadDocx, saveDocx } from '@christophervr/docx-core';
+import { createDocument, loadDocx, saveDocx } from 'docx-core';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { docToModel, modelToDoc } from './model-adapter';
 import { insertPageBreak, insertColumnBreak } from './page-break-command';

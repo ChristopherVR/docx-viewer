@@ -1,14 +1,14 @@
-# @christophervr/docx-vanilla-viewer
+# docx-vanilla-viewer
 
-The DOCX editor for plain JavaScript. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the plain JavaScript adapter are bundled in, so you install nothing else from this project except `@christophervr/docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
+The DOCX editor for plain JavaScript. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the plain JavaScript adapter are bundled in, so you install nothing else from this project except `docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
 
 ```sh
-npm install @christophervr/docx-vanilla-viewer @christophervr/docx-core
+npm install docx-vanilla-viewer docx-core
 ```
 
 ```ts
-import { createDocument } from '@christophervr/docx-core';
-import { mountEditor } from '@christophervr/docx-vanilla-viewer';
+import { createDocument } from 'docx-core';
+import { mountEditor } from 'docx-vanilla-viewer';
 
 const editor = mountEditor(container, {
 	documentModel: createDocument(),

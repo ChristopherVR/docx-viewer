@@ -1,8 +1,4 @@
-import {
-	resolveParagraphFormatting,
-	type DocumentModel,
-	type Paragraph,
-} from '@christophervr/docx-core';
+import { resolveParagraphFormatting, type DocumentModel, type Paragraph } from 'docx-core';
 import { closeHistory } from 'prosemirror-history';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import type { EditorState } from 'prosemirror-state';

@@ -1,5 +1,5 @@
 {
-	"name": "@christophervr/docx-vanilla-viewer",
+	"name": "docx-vanilla-viewer",
 	"version": "0.1.0",
 	"description": "The plain <docx-editor> web component and mountEditor() for the DOCX editor, with no framework. Self-contained: includes the editor, layout engine and legacy .doc reader.",
 	"keywords": [
@@ -14,7 +14,7 @@
 	"author": "ChristopherVR",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ChristopherVR/docx-viewer.git",
+		"url": "git+https://github.com/ChristopherVR/docx-viewer.git",
 		"directory": "packages/vanilla"
 	},
 	"files": [
@@ -37,9 +37,9 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@christophervr/docx-core": "^0.1.0",
 		"@christophervr/office-ui": "^0.1.1",
 		"@christophervr/ooxml-core": "^0.2.0",
+		"docx-core": "^0.1.0",
 		"prosemirror-collab": "^1.3.1",
 		"prosemirror-commands": "^1.7.1",
 		"prosemirror-history": "^1.4.1",

@@ -45,12 +45,12 @@
       },
     },
     "packages/angular": {
-      "name": "@christophervr/docx-angular-viewer",
+      "name": "docx-angular-viewer",
       "version": "0.1.0",
       "dependencies": {
-        "@christophervr/docx-core": "^0.1.0",
         "@christophervr/office-ui": "^0.1.1",
         "@christophervr/ooxml-core": "^0.2.0",
+        "docx-core": "^0.1.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -65,12 +65,12 @@
       },
     },
     "packages/bindings": {
-      "name": "@christophervr/docx-bindings",
+      "name": "docx-bindings",
       "version": "0.1.0",
       "dependencies": {
-        "@christophervr/docx-core": "workspace:*",
-        "@christophervr/docx-web-component": "workspace:*",
         "@christophervr/ooxml-core": "^0.2.0",
+        "docx-core": "workspace:*",
+        "docx-web-component": "workspace:*",
       },
       "peerDependencies": {
         "@angular/core": ">=19",
@@ -88,19 +88,19 @@
       ],
     },
     "packages/core": {
-      "name": "@christophervr/docx-core",
+      "name": "docx-core",
       "version": "0.1.0",
       "dependencies": {
         "@christophervr/ooxml-core": "^0.2.0",
       },
     },
     "packages/react": {
-      "name": "@christophervr/docx-react-viewer",
+      "name": "docx-react-viewer",
       "version": "0.1.0",
       "dependencies": {
-        "@christophervr/docx-core": "^0.1.0",
         "@christophervr/office-ui": "^0.1.1",
         "@christophervr/ooxml-core": "^0.2.0",
+        "docx-core": "^0.1.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -115,12 +115,12 @@
       },
     },
     "packages/solid": {
-      "name": "@christophervr/docx-solid-viewer",
+      "name": "docx-solid-viewer",
       "version": "0.1.0",
       "dependencies": {
-        "@christophervr/docx-core": "^0.1.0",
         "@christophervr/office-ui": "^0.1.1",
         "@christophervr/ooxml-core": "^0.2.0",
+        "docx-core": "^0.1.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -135,12 +135,12 @@
       },
     },
     "packages/svelte": {
-      "name": "@christophervr/docx-svelte-viewer",
+      "name": "docx-svelte-viewer",
       "version": "0.1.0",
       "dependencies": {
-        "@christophervr/docx-core": "^0.1.0",
         "@christophervr/office-ui": "^0.1.1",
         "@christophervr/ooxml-core": "^0.2.0",
+        "docx-core": "^0.1.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -155,12 +155,12 @@
       },
     },
     "packages/vanilla": {
-      "name": "@christophervr/docx-vanilla-viewer",
+      "name": "docx-vanilla-viewer",
       "version": "0.1.0",
       "dependencies": {
-        "@christophervr/docx-core": "^0.1.0",
         "@christophervr/office-ui": "^0.1.1",
         "@christophervr/ooxml-core": "^0.2.0",
+        "docx-core": "^0.1.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -172,12 +172,12 @@
       },
     },
     "packages/vue": {
-      "name": "@christophervr/docx-vue-viewer",
+      "name": "docx-vue-viewer",
       "version": "0.1.0",
       "dependencies": {
-        "@christophervr/docx-core": "^0.1.0",
         "@christophervr/office-ui": "^0.1.1",
         "@christophervr/ooxml-core": "^0.2.0",
+        "docx-core": "^0.1.0",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -192,12 +192,12 @@
       },
     },
     "packages/web-component": {
-      "name": "@christophervr/docx-web-component",
+      "name": "docx-web-component",
       "version": "0.1.0",
       "dependencies": {
-        "@christophervr/docx-core": "workspace:*",
         "@christophervr/office-ui": "^0.1.1",
         "@christophervr/ooxml-core": "^0.2.0",
+        "docx-core": "workspace:*",
         "prosemirror-collab": "^1.3.1",
         "prosemirror-commands": "^1.7.1",
         "prosemirror-history": "^1.4.1",
@@ -229,24 +229,6 @@
     "@babel/parser": ["@babel/parser@7.29.9", "", { "dependencies": { "@babel/types": "^7.29.8" }, "bin": "./bin/babel-parser.js" }, "sha512-CjXrNHTnvqBVqHgdBysY3vk2T8tpJHb5/RMeHJBTyVa9xgugCB0CJTx/3oO8RV2QRQP391RWpB7D6hLjm8V9uA=="],
 
     "@babel/types": ["@babel/types@7.29.8", "", { "dependencies": { "@babel/helper-string-parser": "^7.29.7", "@babel/helper-validator-identifier": "^7.29.7" } }, "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="],
-
-    "@christophervr/docx-angular-viewer": ["@christophervr/docx-angular-viewer@workspace:packages/angular"],
-
-    "@christophervr/docx-bindings": ["@christophervr/docx-bindings@workspace:packages/bindings"],
-
-    "@christophervr/docx-core": ["@christophervr/docx-core@workspace:packages/core"],
-
-    "@christophervr/docx-react-viewer": ["@christophervr/docx-react-viewer@workspace:packages/react"],
-
-    "@christophervr/docx-solid-viewer": ["@christophervr/docx-solid-viewer@workspace:packages/solid"],
-
-    "@christophervr/docx-svelte-viewer": ["@christophervr/docx-svelte-viewer@workspace:packages/svelte"],
-
-    "@christophervr/docx-vanilla-viewer": ["@christophervr/docx-vanilla-viewer@workspace:packages/vanilla"],
-
-    "@christophervr/docx-vue-viewer": ["@christophervr/docx-vue-viewer@workspace:packages/vue"],
-
-    "@christophervr/docx-web-component": ["@christophervr/docx-web-component@workspace:packages/web-component"],
 
     "@christophervr/office-ui": ["@christophervr/office-ui@0.1.1", "", { "dependencies": { "@christophervr/ooxml-core": "^0.2.0" } }, "sha512-Bwe1MnRMIe9AsC/qtM9C5LEOnEenglGkjIaMvtLP41bWBvtEKmUvCSD+EYhYfuEaZzTxBNZmrR6VvVWQ0Nq7Lg=="],
 
@@ -545,6 +527,24 @@
     "detect-libc": ["detect-libc@2.1.2", "", {}, "sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ=="],
 
     "devalue": ["devalue@5.9.4", "", {}, "sha512-sPAT4pztbu6586/hrhOnMKS17IJrvg12mXiSPSS3W5qDeN2RGgvZ0diZCm31dBbnevfVmujNO3IM2wrS4Y2Rhg=="],
+
+    "docx-angular-viewer": ["docx-angular-viewer@workspace:packages/angular"],
+
+    "docx-bindings": ["docx-bindings@workspace:packages/bindings"],
+
+    "docx-core": ["docx-core@workspace:packages/core"],
+
+    "docx-react-viewer": ["docx-react-viewer@workspace:packages/react"],
+
+    "docx-solid-viewer": ["docx-solid-viewer@workspace:packages/solid"],
+
+    "docx-svelte-viewer": ["docx-svelte-viewer@workspace:packages/svelte"],
+
+    "docx-vanilla-viewer": ["docx-vanilla-viewer@workspace:packages/vanilla"],
+
+    "docx-vue-viewer": ["docx-vue-viewer@workspace:packages/vue"],
+
+    "docx-web-component": ["docx-web-component@workspace:packages/web-component"],
 
     "emf-converter": ["emf-converter@3.5.1", "", { "peerDependencies": { "@napi-rs/canvas": "^1.0.9" }, "optionalPeers": ["@napi-rs/canvas"] }, "sha512-ujLWqrNg1y6U9/zJTOzyehCc+yqncys8PecF0fJbtQh7sRK0aKTlqav8O5LT9K67l8L31nigwEr2Xl139ZFo0w=="],
 

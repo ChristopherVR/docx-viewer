@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { createDocument, type Paragraph, type TextRun } from '@christophervr/docx-core';
+import { createDocument, type Paragraph, type TextRun } from 'docx-core';
 import { Slice, Fragment } from 'prosemirror-model';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { docToModel, modelToDoc } from './model-adapter';

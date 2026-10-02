@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { signedTwips, twips } from '@christophervr/docx-core';
+import { signedTwips, twips } from 'docx-core';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import {
@@ -8,7 +8,7 @@ import {
 	type DocumentModel,
 	type Paragraph,
 	type SectionProperties,
-} from '@christophervr/docx-core';
+} from 'docx-core';
 import type { LayoutPageBox } from '@christophervr/ooxml-core/docx/layout';
 import { decoratePages, headerFooterForPage, pageNumbers } from './print-header-footer';
 import { at, must, paragraphAt } from './test-support';

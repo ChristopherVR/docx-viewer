@@ -1,15 +1,15 @@
-# @christophervr/docx-react-viewer
+# docx-react-viewer
 
-The DOCX editor for React. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the React adapter are bundled in, so you install nothing else from this project except `@christophervr/docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
+The DOCX editor for React. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the React adapter are bundled in, so you install nothing else from this project except `docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
 
 ```sh
-npm install @christophervr/docx-react-viewer @christophervr/docx-core react
+npm install docx-react-viewer docx-core react
 ```
 
 ```tsx
 import { useState } from 'react';
-import { createDocument } from '@christophervr/docx-core';
-import { WordEditor } from '@christophervr/docx-react-viewer';
+import { createDocument } from 'docx-core';
+import { WordEditor } from 'docx-react-viewer';
 
 export function Editor() {
 	const [model, setModel] = useState(() => createDocument());

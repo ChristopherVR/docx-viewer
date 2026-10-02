@@ -1,4 +1,4 @@
-import type { Block, SectionProperties } from '@christophervr/docx-core';
+import type { Block, SectionProperties } from 'docx-core';
 
 /** Section layout without header/footer content, as stored on the editor document for undo. */
 export function sectionLayoutJson(sections: SectionProperties[]): string {

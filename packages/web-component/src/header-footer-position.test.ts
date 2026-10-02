@@ -1,4 +1,4 @@
-import { createDocument, twips } from '@christophervr/docx-core';
+import { createDocument, twips } from 'docx-core';
 import { expect, it } from 'vitest';
 import { withBlankHeaderFooter } from './header-footer-commands';
 import { withHeaderFooterDistance } from './header-footer-position';

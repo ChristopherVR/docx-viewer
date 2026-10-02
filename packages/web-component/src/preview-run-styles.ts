@@ -1,9 +1,4 @@
-import {
-	resolveRunFormatting,
-	type Block,
-	type DocumentModel,
-	type Paragraph,
-} from '@christophervr/docx-core';
+import { resolveRunFormatting, type Block, type DocumentModel, type Paragraph } from 'docx-core';
 import { DOMSerializer, Fragment } from 'prosemirror-model';
 import { runToInlineNodes } from './run-adapter';
 import { runFormattingCss, themeFontOf } from './run-styles';

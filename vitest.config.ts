@@ -16,15 +16,15 @@ export default defineConfig({
 				),
 			},
 			{
-				find: /^@christophervr\/docx-core\/embedded$/,
+				find: /^docx-core\/embedded$/,
 				replacement: fileURLToPath(new URL('./packages/core/src/embedded.ts', import.meta.url)),
 			},
 			{
-				find: /^@christophervr\/docx-bindings\/(react|vue|angular|solid|common)$/,
+				find: /^docx-bindings\/(react|vue|angular|solid|common)$/,
 				replacement: fileURLToPath(new URL('./packages/bindings/src/$1', import.meta.url)),
 			},
 			...['core', 'web-component', 'bindings'].map((name) => ({
-				find: new RegExp(`^@christophervr/docx-${name}$`),
+				find: new RegExp(`^docx-${name}$`),
 				replacement: fileURLToPath(new URL(`./packages/${name}/src/index.ts`, import.meta.url)),
 			})),
 		],

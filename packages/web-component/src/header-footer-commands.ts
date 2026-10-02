@@ -1,9 +1,4 @@
-import type {
-	Block,
-	DocumentModel,
-	HeaderFooterContent,
-	Paragraph,
-} from '@christophervr/docx-core';
+import type { Block, DocumentModel, HeaderFooterContent, Paragraph } from 'docx-core';
 import { sectionsOf } from './section-commands';
 
 export type HeaderFooterKind = 'headers' | 'footers';

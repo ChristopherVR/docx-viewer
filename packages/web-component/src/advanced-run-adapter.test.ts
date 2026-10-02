@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDocument, halfPoints } from '@christophervr/docx-core';
+import { createDocument, halfPoints } from 'docx-core';
 import { EditorState } from 'prosemirror-state';
 import { docToModel, modelToDoc } from './model-adapter';
 import { schema } from './schema';

@@ -1,4 +1,4 @@
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
 import { closeHistory } from 'prosemirror-history';
 import type { EditorView } from 'prosemirror-view';
 

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { twips } from '@christophervr/docx-core';
+import { twips } from 'docx-core';
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
-import { createDocument, loadDocx, type DocumentModel, type Table } from '@christophervr/docx-core';
+import { createDocument, loadDocx, type DocumentModel, type Table } from 'docx-core';
 import { EditorState } from 'prosemirror-state';
 import { docToModel, modelToDoc } from './model-adapter';
 import { at } from './test-support';

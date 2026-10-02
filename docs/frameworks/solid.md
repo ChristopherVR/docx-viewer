@@ -1,13 +1,13 @@
 # SolidJS
 
 ::: warning Not published to npm yet
-Nothing has been released yet, so there is nothing to `npm install` today. Build from the repository (`bun install`, `bun run demo`). The imports below are the intended API of the self-contained `@christophervr/docx-solid-viewer` package; it needs only `@christophervr/docx-core` and solid-js next to it.
+Nothing has been released yet, so there is nothing to `npm install` today. Build from the repository (`bun install`, `bun run demo`). The imports below are the intended API of the self-contained `docx-solid-viewer` package; it needs only `docx-core` and solid-js next to it.
 :::
 
 The SolidJS adapter mounts the shared `<docx-editor>` element and forwards model changes through `onDocumentChange`.
 
 ```tsx
-import { WordEditor } from '@christophervr/docx-solid-viewer';
+import { WordEditor } from 'docx-solid-viewer';
 
 function Editor(props) {
 	return (

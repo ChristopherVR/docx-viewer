@@ -1,4 +1,4 @@
-import { createDocument, twips } from '@christophervr/docx-core';
+import { createDocument, twips } from 'docx-core';
 import { describe, expect, it } from 'vitest';
 import { pageSetupChange } from './page-setup-change';
 import { PAGE_SIZES, pageSizeOf, setPageSize } from './page-size';

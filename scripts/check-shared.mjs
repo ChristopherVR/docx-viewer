@@ -48,7 +48,7 @@ for (const name of [...PUBLISHED, ...INTERNAL]) {
 	assert.notEqual(manifest.private, true, `packages/${name} is published and must not be private`);
 	for (const dep of Object.keys({ ...manifest.dependencies, ...manifest.peerDependencies })) {
 		assert(
-			!/^@christophervr\/(?!docx-core$|ooxml-core$)/.test(dep),
+			!/^(?:@christophervr\/(?!ooxml-core$|office-ui$)|docx-(?!core$))/.test(dep),
 			`packages/${name} must not depend on ${dep}; internal packages and ole2 are bundled`,
 		);
 	}
@@ -73,4 +73,6 @@ for (const name of [...PUBLISHED, ...INTERNAL]) {
 		);
 	}
 }
-console.log('Verified thin docx-core entry points and that ole2 and legacy codecs stay out of this repository.');
+console.log(
+	'Verified thin docx-core entry points and that ole2 and legacy codecs stay out of this repository.',
+);

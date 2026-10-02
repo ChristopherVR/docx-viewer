@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createDocument, loadDocx, type DocumentModel } from '@christophervr/docx-core';
+import { createDocument, loadDocx, type DocumentModel } from 'docx-core';
 import { DocxEditorElement, registerDocxEditor } from './index';
 import {
 	RIBBON_ACTION_IDS,

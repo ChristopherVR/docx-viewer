@@ -1,4 +1,4 @@
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
 import { history } from 'prosemirror-history';
 import { keymap } from 'prosemirror-keymap';
 import type { Plugin } from 'prosemirror-state';

@@ -1,4 +1,4 @@
-import { resolveRunFormatting } from '@christophervr/docx-core';
+import { resolveRunFormatting } from 'docx-core';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import type { EditorState } from 'prosemirror-state';
 import { findLocalizedControl } from './localization';

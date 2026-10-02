@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import type { DocumentModel, ParagraphStyleCatalog } from '@christophervr/docx-core';
+import type { DocumentModel, ParagraphStyleCatalog } from 'docx-core';
 import { syncStylePicker, paragraphStylesPlugin } from './paragraph-styles';
 import { schema } from './schema';
 import { paragraphAt } from './test-support';

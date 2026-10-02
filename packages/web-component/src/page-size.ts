@@ -1,4 +1,4 @@
-import { twips, type DocumentModel, type SectionProperties } from '@christophervr/docx-core';
+import { twips, type DocumentModel, type SectionProperties } from 'docx-core';
 import { withSection } from './section-commands';
 
 /** Word's Layout > Size presets, portrait width by height in twips (1/1440 inch). */

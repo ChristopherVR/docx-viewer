@@ -20,7 +20,7 @@ on:
   #   - no input: cut a release now (same as the schedule would).
   #   - tag=<npm-name>@<version>: re-publish ONLY that existing tag to npm, skipping the release
   #     job. Useful when a publish was skipped or failed:
-  #       gh workflow run release.yml -f tag=@christophervr/docx-core@0.1.0
+  #       gh workflow run release.yml -f tag=docx-core@0.1.0
   workflow_dispatch:
     inputs:
       tag:

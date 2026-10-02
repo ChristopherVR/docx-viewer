@@ -1,4 +1,4 @@
-import { resolveParagraphNumbering, type DocumentModel } from '@christophervr/docx-core';
+import { resolveParagraphNumbering, type DocumentModel } from 'docx-core';
 import type { Node } from 'prosemirror-model';
 
 /** Resolve a live paragraph's direct or inherited list without adding model properties. */

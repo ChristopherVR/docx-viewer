@@ -1,4 +1,4 @@
-import { headingLevel, type DocumentModel, type Paragraph } from '@christophervr/docx-core';
+import { headingLevel, type DocumentModel, type Paragraph } from 'docx-core';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import { NodeSelection, TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';

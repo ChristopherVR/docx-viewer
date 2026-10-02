@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { loadDocx, type DocxDiagram, type TextRun } from '@christophervr/docx-core';
+import { loadDocx, type DocxDiagram, type TextRun } from 'docx-core';
 import { EditorState } from 'prosemirror-state';
 import { docToModel, modelToDoc } from './model-adapter';
 import { appendInlineNode, runToInlineNodes } from './run-adapter';

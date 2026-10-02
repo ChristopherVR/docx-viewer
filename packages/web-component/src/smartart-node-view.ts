@@ -1,4 +1,4 @@
-import type { DocxDiagram, ThemeCatalog } from '@christophervr/docx-core';
+import type { DocxDiagram, ThemeCatalog } from 'docx-core';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import type { NodeView } from 'prosemirror-view';
 import { defineSmartArt } from '@christophervr/office-ui/smartart';

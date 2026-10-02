@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { createDocument, halfPoints, signedTwips } from '@christophervr/docx-core';
+import { createDocument, halfPoints, signedTwips } from 'docx-core';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { describe, expect, it } from 'vitest';

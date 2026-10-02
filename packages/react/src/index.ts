@@ -1,2 +1,2 @@
-export * from '@christophervr/docx-bindings/react';
-export * from '@christophervr/docx-bindings/common';
+export * from 'docx-bindings/react';
+export * from 'docx-bindings/common';

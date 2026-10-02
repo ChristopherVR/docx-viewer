@@ -1,6 +1,6 @@
 import { applyShellLabels } from './shell-labels';
-import type { DocumentModel } from '@christophervr/docx-core';
-import { createDocument } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
+import { createDocument } from 'docx-core';
 import type { EditorCore } from './editor-core';
 import { emit, on } from './events';
 import { createRibbon } from './ribbon';

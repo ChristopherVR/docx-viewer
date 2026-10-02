@@ -1,4 +1,4 @@
-import { saveDocx } from '@christophervr/docx-core';
+import { saveDocx } from 'docx-core';
 import type { EditorCore } from './editor-core';
 import { reflectAttribute } from './editor-attributes';
 import { downloadBytes, wordBlob } from './file-commands';

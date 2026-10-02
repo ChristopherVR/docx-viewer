@@ -6,7 +6,7 @@ import {
 	type Paragraph,
 	type ParagraphListLabel,
 	type TextRun,
-} from '@christophervr/docx-core';
+} from 'docx-core';
 import { cssFontStack, type TextMeasurer } from '@christophervr/ooxml-core/docx/layout';
 import type { Node } from 'prosemirror-model';
 import { appendInlineNode } from './run-adapter';

@@ -1,8 +1,4 @@
-import {
-	ST_NumberFormat,
-	type DocumentModel,
-	type SectionProperties,
-} from '@christophervr/docx-core';
+import { ST_NumberFormat, type DocumentModel, type SectionProperties } from 'docx-core';
 import { setPageSize } from './page-size';
 import { unequalColumnPreset } from './column-settings';
 import type { RibbonAction } from './ribbon-action';

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { createDocument, twips } from '@christophervr/docx-core';
+import { createDocument, twips } from 'docx-core';
 import { describe, expect, it, vi } from 'vitest';
 import { createColumnsDialog } from './columns-dialog';
 import { sectionsOf } from './section-commands';

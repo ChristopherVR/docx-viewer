@@ -1,4 +1,4 @@
-import { createDocument } from '@christophervr/docx-core';
+import { createDocument } from 'docx-core';
 import { describe, expect, it } from 'vitest';
 import {
 	changeColumnGap,

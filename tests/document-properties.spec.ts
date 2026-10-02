@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { expect, test } from '@playwright/test';
-import type { DocxEditorElement } from '@christophervr/docx-web-component';
+import type { DocxEditorElement } from 'docx-web-component';
 import { openSample } from './helpers';
 
 test('File > Info edits the title and author, marks the document dirty and saves them', async ({

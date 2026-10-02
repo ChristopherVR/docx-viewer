@@ -16,15 +16,15 @@
 		"useDefineForClassFields": false,
 		"baseUrl": ".",
 		"paths": {
-			"@christophervr/docx-core": ["packages/core/src/index.ts"],
-			"@christophervr/docx-core/embedded": ["packages/core/src/embedded.ts"],
-			"@christophervr/docx-web-component": ["packages/web-component/src/index.ts"],
-			"@christophervr/docx-bindings": ["packages/bindings/src/index.ts"],
-			"@christophervr/docx-bindings/react": ["packages/bindings/src/react.tsx"],
-			"@christophervr/docx-bindings/vue": ["packages/bindings/src/vue.ts"],
-			"@christophervr/docx-bindings/angular": ["packages/bindings/src/angular.ts"],
-			"@christophervr/docx-bindings/solid": ["packages/bindings/src/solid.ts"],
-			"@christophervr/docx-bindings/common": ["packages/bindings/src/common.ts"]
+			"docx-core": ["packages/core/src/index.ts"],
+			"docx-core/embedded": ["packages/core/src/embedded.ts"],
+			"docx-web-component": ["packages/web-component/src/index.ts"],
+			"docx-bindings": ["packages/bindings/src/index.ts"],
+			"docx-bindings/react": ["packages/bindings/src/react.tsx"],
+			"docx-bindings/vue": ["packages/bindings/src/vue.ts"],
+			"docx-bindings/angular": ["packages/bindings/src/angular.ts"],
+			"docx-bindings/solid": ["packages/bindings/src/solid.ts"],
+			"docx-bindings/common": ["packages/bindings/src/common.ts"]
 		},
 		"types": ["node", "vitest/globals", "vite/client"]
 	},

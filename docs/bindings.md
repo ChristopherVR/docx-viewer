@@ -1,7 +1,7 @@
 # Framework bindings
 
 ::: warning Not published to npm yet
-Nothing has been released yet, so there is nothing to `npm install` today. Build from the repository (`bun install`, `bun run demo`). Each framework has its own self-contained package: `@christophervr/docx-react-viewer`, `-vue-viewer`, `-angular-viewer`, `-svelte-viewer`, `-solid-viewer` and `-vanilla-viewer`. Each bundles the editor, layout engine and legacy `.doc` reader, brings `@christophervr/docx-core` with it (and re-exports the model API), so it needs only its framework as a peer. Use one editor package per application.
+Nothing has been released yet, so there is nothing to `npm install` today. Build from the repository (`bun install`, `bun run demo`). Each framework has its own self-contained package: `docx-react-viewer`, `-vue-viewer`, `-angular-viewer`, `-svelte-viewer`, `-solid-viewer` and `-vanilla-viewer`. Each bundles the editor, layout engine and legacy `.doc` reader, brings `docx-core` with it (and re-exports the model API), so it needs only its framework as a peer. Use one editor package per application.
 :::
 
 All bindings mount `<docx-editor>` through the same `mountEditor` function. A property assignment is an external document replacement, not an edit event. `document-change` carries a `DocumentModel` directly; `document-error` carries an `Error`. Both events bubble across the shadow boundary.
@@ -9,7 +9,7 @@ All bindings mount `<docx-editor>` through the same `mountEditor` function. A pr
 React:
 
 ```tsx
-import { WordEditor } from '@christophervr/docx-react-viewer';
+import { WordEditor } from 'docx-react-viewer';
 <WordEditor documentModel={model} readOnly={false} onDocumentChange={setModel} />;
 ```
 
@@ -19,7 +19,7 @@ Vue:
 
 ```vue
 <script setup>
-import { WordEditor } from '@christophervr/docx-vue-viewer';
+import { WordEditor } from 'docx-vue-viewer';
 </script>
 <template>
 	<WordEditor :document-model="model" @document-change="model = $event" />
@@ -29,7 +29,7 @@ import { WordEditor } from '@christophervr/docx-vue-viewer';
 Angular:
 
 ```ts
-import { WordEditorComponent } from '@christophervr/docx-angular-viewer';
+import { WordEditorComponent } from 'docx-angular-viewer';
 // Add WordEditorComponent to your standalone component imports.
 ```
 
@@ -41,7 +41,7 @@ Svelte 5:
 
 ```svelte
 <script>
-  import WordEditor from '@christophervr/docx-svelte-viewer';
+  import WordEditor from 'docx-svelte-viewer';
   let model = $state(initialDocument);
 </script>
 <WordEditor documentModel={model} ondocumentchange={next => model = next} />
@@ -51,7 +51,7 @@ SolidJS:
 
 ```tsx
 import { createSignal } from 'solid-js';
-import { WordEditor } from '@christophervr/docx-solid-viewer';
+import { WordEditor } from 'docx-solid-viewer';
 
 function DocumentEditor() {
 	const [model, setModel] = createSignal(initialDocument);
@@ -67,14 +67,14 @@ the editor and its listeners when the component unmounts.
 Custom element:
 
 ```ts
-import { registerDocxEditor } from '@christophervr/docx-vanilla-viewer';
+import { registerDocxEditor } from 'docx-vanilla-viewer';
 registerDocxEditor();
 const element = document.createElement('docx-editor');
 element.documentModel = model;
 document.body.append(element);
 ```
 
-The vanilla mount adapter is exported from `@christophervr/docx-vanilla-viewer` and returns update, destroy, load, save, and element operations. It avoids feedback resets when a parent returns the emitted model. Supply a new object for external model changes; mutating a model in place is not a supported reactivity mechanism.
+The vanilla mount adapter is exported from `docx-vanilla-viewer` and returns update, destroy, load, save, and element operations. It avoids feedback resets when a parent returns the emitted model. Supply a new object for external model changes; mutating a model in place is not a supported reactivity mechanism.
 
 Framework packages use their own native lifecycle and ref APIs. No framework template contains a toolbar, page renderer or document command implementation. SSR imports do not register elements; mounting is a client operation. The current browser contract validates the installed versions, not every historical peer version.
 

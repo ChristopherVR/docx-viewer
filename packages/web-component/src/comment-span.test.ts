@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
-import { createDocument, saveDocx } from '@christophervr/docx-core';
+import { createDocument, saveDocx } from 'docx-core';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { addComment } from './comment-commands';

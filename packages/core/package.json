@@ -1,12 +1,12 @@
 {
-	"name": "@christophervr/docx-core",
+	"name": "docx-core",
 	"version": "0.1.0",
 	"description": "Framework-neutral DOCX document model, parser and serializer (thin entry point over @christophervr/ooxml-core/docx)",
 	"license": "Apache-2.0",
 	"author": "ChristopherVR",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ChristopherVR/docx-viewer.git",
+		"url": "git+https://github.com/ChristopherVR/docx-viewer.git",
 		"directory": "packages/core"
 	},
 	"files": [

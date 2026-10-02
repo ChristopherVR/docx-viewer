@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import type { DocxEditorElement } from '@christophervr/docx-web-component';
+import type { DocxEditorElement } from 'docx-web-component';
 import { openSample } from './helpers';
 
 const editor = (page: Page) => page.locator('docx-editor');

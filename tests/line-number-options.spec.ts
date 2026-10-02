@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
 import type { EditorView } from 'prosemirror-view';
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
 import { newDocument, reveal, saveButton } from './helpers';
 
 test('Line Numbering Options, paragraph suppression, undo and DOCX export agree', async ({

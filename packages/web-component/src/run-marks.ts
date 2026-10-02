@@ -1,4 +1,4 @@
-import type { TextRun } from '@christophervr/docx-core';
+import type { TextRun } from 'docx-core';
 import type { Mark } from 'prosemirror-model';
 import { schema } from './schema';
 import { extraRunProperties } from './run-extra-mark';

@@ -1,4 +1,4 @@
-import { signedTwips, twips, type TableCellMargins } from '@christophervr/docx-core';
+import { signedTwips, twips, type TableCellMargins } from 'docx-core';
 import type { EditorView } from 'prosemirror-view';
 import {
 	checkbox,

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { createDocument } from '@christophervr/docx-core';
+import { createDocument } from 'docx-core';
 import { EditorState } from 'prosemirror-state';
 import { docToModel, modelToDoc } from './model-adapter';
 import { createRibbon, type RibbonAction } from './ribbon';

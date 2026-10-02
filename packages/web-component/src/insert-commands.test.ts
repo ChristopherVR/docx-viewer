@@ -1,12 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
-import {
-	createDocument,
-	loadDocx,
-	type DocumentModel,
-	type Paragraph,
-} from '@christophervr/docx-core';
+import { createDocument, loadDocx, type DocumentModel, type Paragraph } from 'docx-core';
 import { TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { DocxEditorElement, registerDocxEditor } from './index';

@@ -1,9 +1,4 @@
-import {
-	signedTwips,
-	twips,
-	type DocumentModel,
-	type SectionProperties,
-} from '@christophervr/docx-core';
+import { signedTwips, twips, type DocumentModel, type SectionProperties } from 'docx-core';
 import { pageSizeOf } from './page-size';
 import { withSection } from './section-commands';
 

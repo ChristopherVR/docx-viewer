@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { signedTwips, twips } from '@christophervr/docx-core';
+import { signedTwips, twips } from 'docx-core';
 import { afterEach, describe, expect, it } from 'vitest';
-import { createDocument } from '@christophervr/docx-core';
+import { createDocument } from 'docx-core';
 import { TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { DocxEditorElement, registerDocxEditor } from './index';

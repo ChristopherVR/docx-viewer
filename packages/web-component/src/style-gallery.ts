@@ -1,4 +1,4 @@
-import { resolveRunFormatting, type DocumentModel, type TextRun } from '@christophervr/docx-core';
+import { resolveRunFormatting, type DocumentModel, type TextRun } from 'docx-core';
 
 /** One tile: a style id (`''` is the paragraph's own default) and the name shown under its sample. */
 export interface GalleryStyle {

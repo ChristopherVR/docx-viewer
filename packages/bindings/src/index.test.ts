@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createDocument } from '@christophervr/docx-core';
+import { createDocument } from 'docx-core';
 import {
 	EDITOR_EVENT_NAMES,
 	EDITOR_PROP_KEYS,
@@ -8,7 +8,7 @@ import {
 	mountEditor,
 	pickEditorProps,
 } from './index';
-import { DOCX_EDITOR_EVENTS } from '@christophervr/docx-web-component';
+import { DOCX_EDITOR_EVENTS } from 'docx-web-component';
 afterEach(() => document.body.replaceChildren());
 describe('shared binding lifecycle', () => {
 	it('forwards theme to the element and defaults back to auto', () => {

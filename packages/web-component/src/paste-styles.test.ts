@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { DOMParser } from 'prosemirror-model';
-import { createDocument, saveDocx } from '@christophervr/docx-core';
+import { createDocument, saveDocx } from 'docx-core';
 import { schema } from './schema';
 import { paragraphAt } from './test-support';
 

@@ -1,4 +1,4 @@
-import type { Comment, DocumentModel } from '@christophervr/docx-core';
+import type { Comment, DocumentModel } from 'docx-core';
 import {
 	localizeElement,
 	normalizeEditorLocale,

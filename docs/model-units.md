@@ -10,7 +10,7 @@ assignable to `number`, so arithmetic, comparison and JSON serialization are unc
 
 ## Brands
 
-All brands are exported from `@christophervr/docx-core`.
+All brands are exported from `docx-core`.
 
 | Type           | Unit                         | Schema type             | Constructor (strict) | Rounding constructor   |
 | -------------- | ---------------------------- | ----------------------- | -------------------- | ---------------------- |
@@ -84,7 +84,7 @@ table.grid = [3000, 3000];
 side.sizeEighthPoints = 8;
 
 // After
-import { twips, eighthPoints, roundTwips, twipsFromPixels } from '@christophervr/docx-core';
+import { twips, eighthPoints, roundTwips, twipsFromPixels } from 'docx-core';
 paragraph.spacingAfterTwips = twips(240);
 table.grid = [twips(3000), twips(3000)];
 side.sizeEighthPoints = eighthPoints(8);

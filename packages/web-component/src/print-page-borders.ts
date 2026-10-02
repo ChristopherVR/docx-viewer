@@ -1,4 +1,4 @@
-import type { PageBorders } from '@christophervr/docx-core';
+import type { PageBorders } from 'docx-core';
 import { cssBorderSide } from './table-render';
 
 /** The page geometry the border box is measured from (pixels at 96 DPI). */

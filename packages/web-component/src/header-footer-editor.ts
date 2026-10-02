@@ -7,7 +7,7 @@ import {
 	type Block,
 	type DocumentModel,
 	type HeaderFooterContent,
-} from '@christophervr/docx-core';
+} from 'docx-core';
 import { assignMissingParagraphIds, docToModel, modelToDoc } from './model-adapter';
 import { editorKeymap } from './editor-commands';
 import { focusView } from './focus-view';

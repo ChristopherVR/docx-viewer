@@ -1,5 +1,5 @@
 import { closeHistory } from 'prosemirror-history';
-import type { Paragraph } from '@christophervr/docx-core';
+import type { Paragraph } from 'docx-core';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import { TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';

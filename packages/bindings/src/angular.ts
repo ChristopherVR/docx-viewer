@@ -9,12 +9,8 @@ import {
 	type OnChanges,
 	type OnDestroy,
 } from '@angular/core';
-import type { DocumentModel } from '@christophervr/docx-core';
-import type {
-	EditorThemeMode,
-	PageChangeDetail,
-	RibbonActionInput,
-} from '@christophervr/docx-web-component';
+import type { DocumentModel } from 'docx-core';
+import type { EditorThemeMode, PageChangeDetail, RibbonActionInput } from 'docx-web-component';
 import { eventOptions, mountEditor, pickEditorProps, type EditorBinding } from './index';
 @Component({ selector: 'word-editor', standalone: true, template: '' })
 export class WordEditorComponent implements AfterViewInit, OnChanges, OnDestroy {

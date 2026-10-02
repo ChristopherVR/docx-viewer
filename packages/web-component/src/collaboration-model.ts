@@ -1,4 +1,4 @@
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
 import { CollaborationAuthority, type CollaborationAuthorityConfig } from './collaboration';
 import { modelToDoc } from './model-adapter';
 

@@ -1,4 +1,4 @@
-import { createDocument, type DocumentModel, type Paragraph } from '@christophervr/docx-core';
+import { createDocument, type DocumentModel, type Paragraph } from 'docx-core';
 import { describe, expect, it } from 'vitest';
 import {
 	nextPartName,

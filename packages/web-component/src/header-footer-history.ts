@@ -1,4 +1,4 @@
-import type { Block, SectionProperties } from '@christophervr/docx-core';
+import type { Block, SectionProperties } from 'docx-core';
 import { sectionLayoutJson, sectionsFromLayout } from './section-layout';
 import { DocAttrStep, StepMap } from 'prosemirror-transform';
 import type { Node } from 'prosemirror-model';

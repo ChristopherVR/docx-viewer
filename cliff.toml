@@ -13,7 +13,7 @@
 # The `tag_pattern` default here is used only by per-package changelog runs
 # triggered by the Release workflow (each run overrides it with the package tag).
 # Root changelog scripts use cliff-root.toml instead (a tag_pattern that matches every
-# per-package `@christophervr/docx-<name>@x.y.z` tag).
+# per-package `docx-<name>@x.y.z` tag).
 #
 # Conventional Commit format is documented in CONTRIBUTING.md, "Commit conventions".
 
@@ -96,7 +96,7 @@ protect_breaking_commits = false
 topo_order = false
 sort_commits = "oldest"
 # Only consider semver tags like v1.2.3 as releases.
-tag_pattern = "^@christophervr/docx-[a-z-]+@[0-9]"
+tag_pattern = "^docx-[a-z-]+@[0-9]"
 # Never treat the auto-generated changelog commit as a feature/fix.
 skip_tags = ""
 ignore_tags = ""

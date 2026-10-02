@@ -1,4 +1,4 @@
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
 import type { StepBatch } from './collaboration';
 import type { FileCommandDetail } from './file-commands';
 import type { PageChangeDetail } from './page-sync';

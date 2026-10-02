@@ -1,8 +1,4 @@
-import type {
-	DocumentModel,
-	HeaderFooterContent,
-	HeaderFooterSlots,
-} from '@christophervr/docx-core';
+import type { DocumentModel, HeaderFooterContent, HeaderFooterSlots } from 'docx-core';
 import {
 	nextPartName,
 	newHeaderFooterId,

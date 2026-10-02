@@ -1,4 +1,4 @@
-import { twips, type SectionColumns, type SectionProperties } from '@christophervr/docx-core';
+import { twips, type SectionColumns, type SectionProperties } from 'docx-core';
 
 export const columnTextWidth = (section: SectionProperties): number =>
 	section.pageWidthTwips -

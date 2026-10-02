@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { expect, it, vi } from 'vitest';
-import { createDocument } from '@christophervr/docx-core';
+import { createDocument } from 'docx-core';
 
 vi.mock('@christophervr/ooxml-core/docx/load', () => ({
 	loadDocument: async () => ({ model: createDocument(), save: async () => new Uint8Array() }),

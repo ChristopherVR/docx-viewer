@@ -1,4 +1,4 @@
-import type { PageBorders, SectionProperties } from '@christophervr/docx-core';
+import type { PageBorders, SectionProperties } from 'docx-core';
 import {
 	checkbox,
 	dialogButton,

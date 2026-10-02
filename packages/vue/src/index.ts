@@ -1,2 +1,2 @@
-export * from '@christophervr/docx-bindings/vue';
-export * from '@christophervr/docx-bindings/common';
+export * from 'docx-bindings/vue';
+export * from 'docx-bindings/common';

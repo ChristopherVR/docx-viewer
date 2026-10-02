@@ -1,7 +1,7 @@
 # git-cliff configuration for the root consolidated CHANGELOG.md.
 #
 # Extends cliff.toml but uses a tag_pattern that covers every per-package tag
-# (`@christophervr/docx-core@x.y.z`, `@christophervr/docx-react-viewer@x.y.z`, etc.).
+# (`docx-core@x.y.z`, `docx-react-viewer@x.y.z`, etc.).
 #
 # Used by:
 #   bun run changelog:unreleased  # preview commits since the last release run
@@ -75,9 +75,9 @@ filter_commits = false
 protect_breaking_commits = false
 topo_order = false
 sort_commits = "oldest"
-# Per-package tags only (`@christophervr/docx-<name>@x.y.z`). Keeps the root CHANGELOG.md growing as
+# Per-package tags only (`docx-<name>@x.y.z`). Keeps the root CHANGELOG.md growing as
 # new per-package releases are cut.
-tag_pattern = "^@christophervr/docx-[a-z-]+@[0-9]"
+tag_pattern = "^docx-[a-z-]+@[0-9]"
 skip_tags = ""
 ignore_tags = ""
 

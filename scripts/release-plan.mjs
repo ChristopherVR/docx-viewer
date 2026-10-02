@@ -11,7 +11,7 @@
  * repo-specific part): the same file is vendored in ooxml-core.
  *
  * Every published package carries its own version and its own git tag `<npm-name>@<version>`
- * (e.g. `@christophervr/docx-core@0.2.0`). From the history since each package's last tag this
+ * (e.g. `docx-core@0.2.0`). From the history since each package's last tag this
  * script computes which packages changed (directly, or because an internal dependency is being
  * released) and the next version for each. The bump level follows Conventional Commits: a
  * breaking change (`!` or a BREAKING CHANGE footer) bumps major, `feat` bumps minor, anything
@@ -37,10 +37,7 @@ import { fileURLToPath } from 'node:url';
  * ships. (Layout, document loading and legacy .doc support live in `@christophervr/ooxml-core`, a
  * regular dependency of the framework packages, so a core bump shows up in their manifests.)
  */
-export const INTERNAL_DIRS = [
-	'packages/web-component',
-	'packages/bindings',
-];
+export const INTERNAL_DIRS = ['packages/web-component', 'packages/bindings'];
 
 /**
  * Publishable packages, in the order the planner reports them. `dir` is the source directory
@@ -57,31 +54,31 @@ export const INTERNAL_DIRS = [
  * root: entries ending in `/` are directories, anything else a single file.
  */
 export const PACKAGES = {
-	core: { dir: 'packages/core', npm: '@christophervr/docx-core' },
+	core: { dir: 'packages/core', npm: 'docx-core' },
 	react: {
 		dir: 'packages/react',
-		npm: '@christophervr/docx-react-viewer',
+		npm: 'docx-react-viewer',
 		triggers: INTERNAL_DIRS,
 	},
-	vue: { dir: 'packages/vue', npm: '@christophervr/docx-vue-viewer', triggers: INTERNAL_DIRS },
+	vue: { dir: 'packages/vue', npm: 'docx-vue-viewer', triggers: INTERNAL_DIRS },
 	angular: {
 		dir: 'packages/angular',
-		npm: '@christophervr/docx-angular-viewer',
+		npm: 'docx-angular-viewer',
 		triggers: INTERNAL_DIRS,
 	},
 	svelte: {
 		dir: 'packages/svelte',
-		npm: '@christophervr/docx-svelte-viewer',
+		npm: 'docx-svelte-viewer',
 		triggers: INTERNAL_DIRS,
 	},
 	solid: {
 		dir: 'packages/solid',
-		npm: '@christophervr/docx-solid-viewer',
+		npm: 'docx-solid-viewer',
 		triggers: INTERNAL_DIRS,
 	},
 	vanilla: {
 		dir: 'packages/vanilla',
-		npm: '@christophervr/docx-vanilla-viewer',
+		npm: 'docx-vanilla-viewer',
 		triggers: INTERNAL_DIRS,
 	},
 };

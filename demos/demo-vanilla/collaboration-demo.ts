@@ -1,11 +1,11 @@
 import './style.css';
 import './collaboration.css';
-import { createDocument } from '@christophervr/docx-core';
+import { createDocument } from 'docx-core';
 import {
 	createCollaborationAuthority,
 	type StepBatch,
 	type PresenceMessage,
-} from '@christophervr/docx-web-component';
+} from 'docx-web-component';
 import { mountFramework } from './framework';
 import { initTheme } from './theme';
 

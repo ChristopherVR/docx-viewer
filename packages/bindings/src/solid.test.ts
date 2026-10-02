@@ -2,7 +2,7 @@
 import { createRoot, createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createDocument } from '@christophervr/docx-core';
+import { createDocument } from 'docx-core';
 import { WordEditor } from './solid';
 
 afterEach(() => document.body.replaceChildren());

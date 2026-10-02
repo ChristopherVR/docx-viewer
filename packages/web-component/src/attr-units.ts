@@ -4,7 +4,7 @@ import {
 	type Paragraph,
 	type SignedTwips,
 	type Twips,
-} from '@christophervr/docx-core';
+} from 'docx-core';
 
 // ProseMirror node attributes are untyped, so measurements cross into the branded model here:
 // values are rounded to whole twips, and anything that is not a finite number (or is negative

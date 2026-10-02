@@ -54,10 +54,10 @@ The DOCX logic comes from the published [`@christophervr/ooxml-core`](https://gi
 
 ### 2. Mount the editor (intended API)
 
-Install one self-contained editor package for your framework, for example `npm install @christophervr/docx-react-viewer react`. The editor packages are `@christophervr/docx-react-viewer`, `-vue-viewer`, `-angular-viewer`, `-svelte-viewer`, `-solid-viewer` and `-vanilla-viewer`. Each one bundles the editor, layout engine and legacy `.doc` reader, brings the document model (`@christophervr/docx-core`) with it, and re-exports it, so a single install and a single import path are all an application needs. Install `@christophervr/docx-core` on its own only for headless use (parsing and serializing without an editor).
+Install one self-contained editor package for your framework, for example `npm install docx-react-viewer react`. The editor packages are `docx-react-viewer`, `-vue-viewer`, `-angular-viewer`, `-svelte-viewer`, `-solid-viewer` and `-vanilla-viewer`. Each one bundles the editor, layout engine and legacy `.doc` reader, brings the document model (`docx-core`) with it, and re-exports it, so a single install and a single import path are all an application needs. Install `docx-core` on its own only for headless use (parsing and serializing without an editor).
 
 ```tsx
-import { createDocument, WordEditor } from '@christophervr/docx-react-viewer';
+import { createDocument, WordEditor } from 'docx-react-viewer';
 
 export function Editor() {
 	const [model, setModel] = useState(() => createDocument());
@@ -71,7 +71,7 @@ export function Editor() {
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue';
-import { createDocument, WordEditor } from '@christophervr/docx-vue-viewer';
+import { createDocument, WordEditor } from 'docx-vue-viewer';
 
 const model = ref(createDocument());
 </script>
@@ -86,7 +86,7 @@ const model = ref(createDocument());
 <summary><strong>Angular</strong></summary>
 
 ```ts
-import { createDocument, WordEditorComponent } from '@christophervr/docx-angular-viewer';
+import { createDocument, WordEditorComponent } from 'docx-angular-viewer';
 
 @Component({
 	standalone: true,
@@ -105,8 +105,8 @@ export class EditorComponent {
 
 ```svelte
 <script>
-  import WordEditor from '@christophervr/docx-svelte-viewer';
-  import { createDocument } from '@christophervr/docx-svelte-viewer/runtime';
+  import WordEditor from 'docx-svelte-viewer';
+  import { createDocument } from 'docx-svelte-viewer/runtime';
   let model = $state(createDocument());
 </script>
 <WordEditor documentModel={model} ondocumentchange={next => model = next} />
@@ -119,7 +119,7 @@ export class EditorComponent {
 
 ```tsx
 import { createSignal } from 'solid-js';
-import { createDocument, WordEditor } from '@christophervr/docx-solid-viewer';
+import { createDocument, WordEditor } from 'docx-solid-viewer';
 
 export function Editor() {
 	const [model, setModel] = createSignal(createDocument());
@@ -133,7 +133,7 @@ export function Editor() {
 <summary><strong>Vanilla JavaScript</strong></summary>
 
 ```ts
-import { createDocument, mountEditor } from '@christophervr/docx-vanilla-viewer';
+import { createDocument, mountEditor } from 'docx-vanilla-viewer';
 
 const editor = mountEditor(container, {
 	documentModel: createDocument(),
@@ -153,17 +153,17 @@ See the [bindings guide](docs/bindings.md) for props, events, saving and file co
 
 Seven packages are published (nothing has been released yet), each versioned independently:
 
-| Package                              | What it is                                                                                                                           |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `@christophervr/docx-core`           | DOCX model, parser and preserving serializer (`packages/core`, a thin entry point over `@christophervr/ooxml-core/docx`). DOCX only. |
-| `@christophervr/docx-react-viewer`   | React component (`packages/react`).                                                                                                  |
-| `@christophervr/docx-vue-viewer`     | Vue 3 component (`packages/vue`).                                                                                                    |
-| `@christophervr/docx-angular-viewer` | Angular standalone component (`packages/angular`).                                                                                   |
-| `@christophervr/docx-svelte-viewer`  | Svelte 5 component (`packages/svelte`).                                                                                              |
-| `@christophervr/docx-solid-viewer`   | Solid component (`packages/solid`).                                                                                                  |
-| `@christophervr/docx-vanilla-viewer` | `mountEditor` and the plain `<docx-editor>` web component, no framework (`packages/vanilla`).                                        |
+| Package               | What it is                                                                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `docx-core`           | DOCX model, parser and preserving serializer (`packages/core`, a thin entry point over `@christophervr/ooxml-core/docx`). DOCX only. |
+| `docx-react-viewer`   | React component (`packages/react`).                                                                                                  |
+| `docx-vue-viewer`     | Vue 3 component (`packages/vue`).                                                                                                    |
+| `docx-angular-viewer` | Angular standalone component (`packages/angular`).                                                                                   |
+| `docx-svelte-viewer`  | Svelte 5 component (`packages/svelte`).                                                                                              |
+| `docx-solid-viewer`   | Solid component (`packages/solid`).                                                                                                  |
+| `docx-vanilla-viewer` | `mountEditor` and the plain `<docx-editor>` web component, no framework (`packages/vanilla`).                                        |
 
-Each `*-viewer` package is self-contained: the editor, layout engine, document loading and the legacy `.doc` reader come from `@christophervr/ooxml-core` (`/docx/layout`, `/docx/load`, which inlines the shared ole2 codecs). A package depends on `@christophervr/docx-core`, `@christophervr/ooxml-core`, `@christophervr/office-ui` (the shared web components that draw SmartArt; installed for you, never imported by your code), the ProseMirror libraries and its framework peer, so `@christophervr/ole2` does not need to be published or installed. DOCX and legacy `.doc` files are both opened by every editor package.
+Each `*-viewer` package is self-contained: the editor, layout engine, document loading and the legacy `.doc` reader come from `@christophervr/ooxml-core` (`/docx/layout`, `/docx/load`, which inlines the shared ole2 codecs). A package depends on `docx-core`, `@christophervr/ooxml-core`, `@christophervr/office-ui` (the shared web components that draw SmartArt; installed for you, never imported by your code), the ProseMirror libraries and its framework peer, so `@christophervr/ole2` does not need to be published or installed. DOCX and legacy `.doc` files are both opened by every editor package.
 
 The workspace also holds **private** packages that are never published and are inlined into each editor package at build time: `web-component` (the shared `<docx-editor>`, including the browser text measurer behind Print Layout) and `bindings` (framework lifecycle and event adapters). The pagination engine, document loading and collaboration helpers are in `@christophervr/ooxml-core`. Shared OOXML logic is moving into the public `@christophervr/ooxml-core`, leaving this repository with only the UI; that migration is in progress, not a shipped feature.
 

@@ -1,4 +1,4 @@
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
 import { group, stack, tool, spinner } from './ribbon-parts';
 import type { HeaderFooterKind, HeaderFooterSlot } from './header-footer-commands';
 

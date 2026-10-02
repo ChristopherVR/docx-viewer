@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { createDocument, type Paragraph } from '@christophervr/docx-core';
+import { createDocument, type Paragraph } from 'docx-core';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { docToModel, modelToDoc } from './model-adapter';
 import { runStylesPlugin } from './run-styles';

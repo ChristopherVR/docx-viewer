@@ -1,11 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import {
-	createDocument,
-	type DocumentModel,
-	type Paragraph,
-	type WatermarkSpec,
-} from '@christophervr/docx-core';
+import { createDocument, type DocumentModel, type Paragraph, type WatermarkSpec } from 'docx-core';
 import { createWatermarkDialog } from './watermark-dialog';
 import { currentWatermark, withWatermark } from './watermark-commands';
 import { watermarkElement } from './print-header-footer';

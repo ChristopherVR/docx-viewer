@@ -1,4 +1,4 @@
-import { twips, type DocumentModel } from '@christophervr/docx-core';
+import { twips, type DocumentModel } from 'docx-core';
 import { sectionsOf } from './section-commands';
 
 /** Match Page Setup's measure range while preserving every other property exactly. */

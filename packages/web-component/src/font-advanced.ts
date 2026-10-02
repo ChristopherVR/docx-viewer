@@ -8,7 +8,7 @@ import {
 	setTriState,
 } from './dialog-fields';
 import type { FontFormat, FontFormatState } from './font-format';
-import { LIGATURE_VALUES, isLigatures } from '@christophervr/docx-core';
+import { LIGATURE_VALUES, isLigatures } from 'docx-core';
 import { ligatureCss } from './ligature-style';
 
 /** Word's Advanced character spacing controls. Untouched mixed values stay mixed. */

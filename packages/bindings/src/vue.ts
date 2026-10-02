@@ -1,6 +1,6 @@
 import { defineComponent, h, onBeforeUnmount, onMounted, ref, watch, type PropType } from 'vue';
-import type { DocumentModel } from '@christophervr/docx-core';
-import type { EditorThemeMode, RibbonActionInput } from '@christophervr/docx-web-component';
+import type { DocumentModel } from 'docx-core';
+import type { EditorThemeMode, RibbonActionInput } from 'docx-web-component';
 import {
 	EDITOR_EVENT_NAMES,
 	EDITOR_PROP_KEYS,

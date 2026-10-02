@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
-import { loadDocx, type Paragraph, type Table } from '@christophervr/docx-core';
+import { loadDocx, type Paragraph, type Table } from 'docx-core';
 import { docToModel, modelToDoc } from './model-adapter';
 import { at, paragraphAt, tableAt } from './test-support';
 

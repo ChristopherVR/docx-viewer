@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { type PageBorders, type SectionProperties } from '@christophervr/docx-core';
+import { type PageBorders, type SectionProperties } from 'docx-core';
 import { createPageBordersDialog } from './page-borders-dialog';
 import { pageBorderBox } from './print-page-borders';
 

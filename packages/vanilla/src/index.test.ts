@@ -2,12 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import * as vanilla from './index';
 
-const legacyFixture = new URL(
-	'../../../tests/support/ole-word-97.doc',
-	import.meta.url,
-);
+const legacyFixture = new URL('../../../tests/support/ole-word-97.doc', import.meta.url);
 
-describe('@christophervr/docx-vanilla-viewer entry', () => {
+describe('docx-vanilla-viewer entry', () => {
 	it('owns the web-component entry, the mount helper and the document loaders', () => {
 		for (const name of [
 			'mountEditor',

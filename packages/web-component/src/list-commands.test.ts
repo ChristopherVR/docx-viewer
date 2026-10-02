@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import type { NumberingCatalog } from '@christophervr/docx-core';
+import type { NumberingCatalog } from 'docx-core';
 import { schema } from './schema';
 import {
 	changeListLevel,

@@ -6,7 +6,7 @@ import {
 	twips,
 	type DocumentModel,
 	type NumberingLevelDefinition,
-} from '@christophervr/docx-core';
+} from 'docx-core';
 import type { EditorView } from 'prosemirror-view';
 import { applyCustomList } from './list-commands';
 import { nodeNumbering } from './node-numbering';

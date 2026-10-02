@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { createDocument } from '@christophervr/docx-core';
+import { createDocument } from 'docx-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createPageSetupDialog } from './page-setup-dialog';
 import {

@@ -1,11 +1,7 @@
 import type { Command } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { closeHistory } from 'prosemirror-history';
-import type {
-	DocumentModel,
-	NumberingCatalog,
-	NumberingLevelDefinition,
-} from '@christophervr/docx-core';
+import type { DocumentModel, NumberingCatalog, NumberingLevelDefinition } from 'docx-core';
 import {
 	createListDefinition,
 	headingListLevels,
@@ -14,7 +10,7 @@ import {
 	linkStylesToList,
 	ensureListDefinition,
 	resolveNumberingLevel,
-} from '@christophervr/docx-core';
+} from 'docx-core';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 
 export type ListKind = 'bullet' | 'decimal';

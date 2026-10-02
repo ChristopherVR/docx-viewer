@@ -1,5 +1,5 @@
 import type { EditorView } from 'prosemirror-view';
-import type { InlineImage, PendingMediaPart } from '@christophervr/docx-core';
+import type { InlineImage, PendingMediaPart } from 'docx-core';
 import { schema } from './schema';
 
 /** Raster formats Word stores directly; SVG would need a PNG fallback part, which is not produced. */

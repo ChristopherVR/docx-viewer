@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { eighthPoints } from '@christophervr/docx-core';
+import { eighthPoints } from 'docx-core';
 import { afterEach, describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import {
@@ -9,7 +9,7 @@ import {
 	type DocumentModel,
 	type Table,
 	type TableStyleCatalog,
-} from '@christophervr/docx-core';
+} from 'docx-core';
 import type { EditorView } from 'prosemirror-view';
 import { DocxEditorElement, registerDocxEditor } from './index';
 import { insertTable } from './ribbon-commands';

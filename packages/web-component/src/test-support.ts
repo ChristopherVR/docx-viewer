@@ -1,4 +1,4 @@
-import type { Block, Paragraph, Table } from '@christophervr/docx-core';
+import type { Block, Paragraph, Table } from 'docx-core';
 import { expectDefined } from './defined';
 
 /** The element at `index`, failing the test with a clear message when the list is too short. */

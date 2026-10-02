@@ -52,7 +52,8 @@ export function undeclaredImports(source, manifest) {
 
 /** Manifest entries a consumer cannot install: internal packages, ole2 and local protocols. */
 export function forbiddenManifestEntries(manifest) {
-	const forbidden = (name) => /^@christophervr\/(?!docx-core$|ooxml-core$|office-ui$)/u.test(name);
+	const forbidden = (name) =>
+		/^(?:@christophervr\/(?!ooxml-core$|office-ui$)|docx-(?!core$))/u.test(name);
 	const found = [];
 	for (const field of ['dependencies', 'peerDependencies', 'optionalDependencies']) {
 		for (const [name, range] of Object.entries(manifest[field] ?? {})) {

@@ -1,4 +1,4 @@
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
 import type { EditorView } from 'prosemirror-view';
 import { CAPTION_LABELS, insertCaption } from './caption-commands';
 import { dialogButton, labelled, selectOf, textInput } from './dialog-fields';

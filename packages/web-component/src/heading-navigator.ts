@@ -1,4 +1,4 @@
-import { tocEntries, type DocumentModel } from '@christophervr/docx-core';
+import { tocEntries, type DocumentModel } from 'docx-core';
 import type { EditorView } from 'prosemirror-view';
 import { translate, type EditorLocale } from './localization';
 

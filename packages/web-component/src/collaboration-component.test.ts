@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
-import { createDocument, saveDocx } from '@christophervr/docx-core';
+import { createDocument, saveDocx } from 'docx-core';
 import type { EditorView } from 'prosemirror-view';
 import { undo } from 'prosemirror-history';
 import { CollaborationAuthority, DocxEditorElement } from './index';

@@ -1,4 +1,4 @@
-import type { Block, Note, Paragraph, TextRun } from '@christophervr/docx-core';
+import type { Block, Note, Paragraph, TextRun } from 'docx-core';
 import { translateUiText } from './localization';
 import { openBlocksEditor, type InlineEditorOptions } from './header-footer-editor';
 

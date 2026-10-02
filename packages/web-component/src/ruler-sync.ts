@@ -1,4 +1,4 @@
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
 import type { EditorView } from 'prosemirror-view';
 import { resolvedAttrs } from './paragraph-format';
 import { updateRuler, type RulerGeometry } from './ruler';

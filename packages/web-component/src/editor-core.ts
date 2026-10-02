@@ -1,8 +1,8 @@
 import { FormatDialogs } from './format-dialogs';
 import type { EditorState, Transaction } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
-import type { DocumentModel } from '@christophervr/docx-core';
-import { createDocument } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
+import { createDocument } from 'docx-core';
 import type { loadDocument } from '@christophervr/ooxml-core/docx/load';
 import { refreshEditorControls } from './editor-controls';
 import { assignMissingParagraphIds, docToModel } from './model-adapter';

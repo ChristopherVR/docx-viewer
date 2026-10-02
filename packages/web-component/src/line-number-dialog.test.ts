@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createLineNumberDialog, type LineNumberSettings } from './line-number-dialog';
 import { sectionsOf } from './section-commands';
-import { createDocument } from '@christophervr/docx-core';
+import { createDocument } from 'docx-core';
 
 function setup(settings?: LineNumberSettings) {
 	const section = sectionsOf(createDocument())[0]!;

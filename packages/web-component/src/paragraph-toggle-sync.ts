@@ -1,5 +1,5 @@
-import type { DocumentModel, Paragraph } from '@christophervr/docx-core';
-import { resolveParagraphFormatting } from '@christophervr/docx-core';
+import type { DocumentModel, Paragraph } from 'docx-core';
+import { resolveParagraphFormatting } from 'docx-core';
 import type { EditorView } from 'prosemirror-view';
 import { findLocalizedControl } from './localization';
 import { selectionIsListKind } from './list-commands';

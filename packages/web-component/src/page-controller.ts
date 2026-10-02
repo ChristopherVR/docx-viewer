@@ -1,4 +1,4 @@
-import type { DocumentModel, SectionProperties, WatermarkSpec } from '@christophervr/docx-core';
+import type { DocumentModel, SectionProperties, WatermarkSpec } from 'docx-core';
 import { closeHistory } from 'prosemirror-history';
 import { applyPageSetup, type PageSetupValues } from './page-setup-model';
 import { emit } from './events';

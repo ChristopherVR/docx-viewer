@@ -1,5 +1,5 @@
-import { diagramColorTheme, resolveDiagramColor, type DocxDiagram } from '@christophervr/docx-core';
-import type { ThemeCatalog } from '@christophervr/docx-core';
+import { diagramColorTheme, resolveDiagramColor, type DocxDiagram } from 'docx-core';
+import type { ThemeCatalog } from 'docx-core';
 
 type Drawing = NonNullable<DocxDiagram['drawing']>;
 

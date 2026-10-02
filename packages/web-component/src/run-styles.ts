@@ -9,7 +9,7 @@ import {
 	type RunFormatting,
 	type Table,
 	type TextRun,
-} from '@christophervr/docx-core';
+} from 'docx-core';
 import { appendInlineNode } from './run-adapter';
 import { ligatureStyle } from './ligature-style';
 import { scaledSegments, scaleMeasurer } from './run-scale';

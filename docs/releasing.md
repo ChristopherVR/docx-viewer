@@ -1,18 +1,18 @@
 # Releasing packages
 
-Seven packages are published under the `@christophervr` npm scope: `@christophervr/docx-core` and one self-contained editor package per framework. Each has its **own version line**, bumped only when it actually changes, and its own git tag `<npm-name>@<version>` (for example `@christophervr/docx-core@0.2.0`). The flow is the one used by [pptx-viewer](https://github.com/ChristopherVR/pptx-viewer), adapted to this repository; the scripts that are copies are marked in their header comments. Like pptx-viewer, only user-facing packages are published: the shared internals are private and bundled into each framework package.
+Seven unscoped packages are published to npm (named like pptx-viewer's `pptx-*` packages): `docx-core` and one self-contained editor package per framework. Each has its **own version line**, bumped only when it actually changes, and its own git tag `<npm-name>@<version>` (for example `docx-core@0.2.0`). The flow is the one used by [pptx-viewer](https://github.com/ChristopherVR/pptx-viewer), adapted to this repository; the scripts that are copies are marked in their header comments. Like pptx-viewer, only user-facing packages are published: the shared internals are private and bundled into each framework package.
 
-| Package                              | Dir                | Depends on (published)                                 | Internal packages bundled in |
-| ------------------------------------ | ------------------ | ------------------------------------------------------ | ---------------------------- |
-| `@christophervr/docx-core`           | `packages/core`    | `@christophervr/ooxml-core`                            | none                         |
-| `@christophervr/docx-react-viewer`   | `packages/react`   | `docx-core`, `office-ui`, ProseMirror, `react`         | all five (below)             |
-| `@christophervr/docx-vue-viewer`     | `packages/vue`     | `docx-core`, `office-ui`, ProseMirror, `vue`           | all five                     |
-| `@christophervr/docx-angular-viewer` | `packages/angular` | `docx-core`, `office-ui`, ProseMirror, `@angular/core` | all five                     |
-| `@christophervr/docx-svelte-viewer`  | `packages/svelte`  | `docx-core`, `office-ui`, ProseMirror, `svelte`        | all five                     |
-| `@christophervr/docx-solid-viewer`   | `packages/solid`   | `docx-core`, `office-ui`, ProseMirror, `solid-js`      | all five                     |
-| `@christophervr/docx-vanilla-viewer` | `packages/vanilla` | `docx-core`, ProseMirror                               | all five                     |
+| Package               | Dir                | Depends on (published)                                 | Internal packages bundled in |
+| --------------------- | ------------------ | ------------------------------------------------------ | ---------------------------- |
+| `docx-core`           | `packages/core`    | `@christophervr/ooxml-core`                            | none                         |
+| `docx-react-viewer`   | `packages/react`   | `docx-core`, `office-ui`, ProseMirror, `react`         | all five (below)             |
+| `docx-vue-viewer`     | `packages/vue`     | `docx-core`, `office-ui`, ProseMirror, `vue`           | all five                     |
+| `docx-angular-viewer` | `packages/angular` | `docx-core`, `office-ui`, ProseMirror, `@angular/core` | all five                     |
+| `docx-svelte-viewer`  | `packages/svelte`  | `docx-core`, `office-ui`, ProseMirror, `svelte`        | all five                     |
+| `docx-solid-viewer`   | `packages/solid`   | `docx-core`, `office-ui`, ProseMirror, `solid-js`      | all five                     |
+| `docx-vanilla-viewer` | `packages/vanilla` | `docx-core`, ProseMirror                               | all five                     |
 
-The internal packages are `private: true` and are never published: `web-component` and `bindings`. `scripts/build-packages.mjs` bundles them into every framework package, so a published tarball imports only `@christophervr/docx-core`, `@christophervr/ooxml-core`, `@christophervr/office-ui`, the ProseMirror libraries and its framework peer. `ole2` is inlined inside `ooxml-core`, so it is not a dependency of anything published and does not have to be released first. `@christophervr/office-ui` (the shared controls that draw SmartArt) is a real registry dependency of every framework package, never bundled, like `docx-core`; it is not a workspace package, so the planner treats it as external: a change to its range in a manifest releases that package only, and the packaging checks (`check:published`, `pack:smoke`) allow exactly `docx-core`, `office-ui` and `ooxml-core` as project dependencies. The ProseMirror libraries stay real dependencies (not bundled) so a package manager can dedupe one copy of them with other ProseMirror code in the application; `docx-core` stays a dependency (not bundled) so `DocumentModel` is the same module on both sides of the application's own imports.
+The internal packages are `private: true` and are never published: `web-component` and `bindings`. `scripts/build-packages.mjs` bundles them into every framework package, so a published tarball imports only `docx-core`, `@christophervr/ooxml-core`, `@christophervr/office-ui`, the ProseMirror libraries and its framework peer. `ole2` is inlined inside `ooxml-core`, so it is not a dependency of anything published and does not have to be released first. `@christophervr/office-ui` (the shared controls that draw SmartArt) is a real registry dependency of every framework package, never bundled, like `docx-core`; it is not a workspace package, so the planner treats it as external: a change to its range in a manifest releases that package only, and the packaging checks (`check:published`, `pack:smoke`) allow exactly `docx-core`, `office-ui` and `ooxml-core` as project dependencies. The ProseMirror libraries stay real dependencies (not bundled) so a package manager can dedupe one copy of them with other ProseMirror code in the application; `docx-core` stays a dependency (not bundled) so `DocumentModel` is the same module on both sides of the application's own imports.
 
 Dependencies between published packages are read from the manifests, never from a hand-kept list; the directories that are bundled in are the `triggers` of each package in `scripts/release-plan.mjs`. All DOCX logic lives in `@christophervr/ooxml-core` (a separate repository with its own releases); `@christophervr/ole2` is released from its own repository.
 
@@ -44,14 +44,14 @@ For each package it finds the newest `<npm-name>@x.y.z` tag that is an ancestor 
 On the first run the plan is seven packages, all `0.1.0` with bump `initial`, and no internal package appears in it:
 
 ```text
-core           0.1.0 -> 0.1.0 (initial; no previous tag)  tag @christophervr/docx-core@0.1.0
-react          0.1.0 -> 0.1.0 (initial; no previous tag)  tag @christophervr/docx-react-viewer@0.1.0
+core           0.1.0 -> 0.1.0 (initial; no previous tag)  tag docx-core@0.1.0
+react          0.1.0 -> 0.1.0 (initial; no previous tag)  tag docx-react-viewer@0.1.0
 vue            ... angular ... svelte ... solid ... vanilla   (same shape)
 ```
 
 The bump level is the highest Conventional Commit level among commits since the baseline that touch published files in the package's scope (its own directory, its bundled internal directories and its dependencies'): `!` / `BREAKING CHANGE:` is major, `feat` is minor, anything else is patch. A test-only `feat` does not raise the level. The new version is that bump applied to the highest of the package's tags, the npm `latest` and its manifest version.
 
-`--write` (used by the workflow) stamps the new versions and repoints every sibling dependency range at the version being released, keeping an existing `^` or `~` prefix. The framework packages depend on `@christophervr/docx-core` with a `^` range (`^0.1.0` today); `--write` rewrites it to the exact version being released, so the tarball a consumer installs resolves a `docx-core` released in the same run. The private packages use `workspace:*` and are never rewritten.
+`--write` (used by the workflow) stamps the new versions and repoints every sibling dependency range at the version being released, keeping an existing `^` or `~` prefix. The framework packages depend on `docx-core` with a `^` range (`^0.1.0` today); `--write` rewrites it to the exact version being released, so the tarball a consumer installs resolves a `docx-core` released in the same run. The private packages use `workspace:*` and are never rewritten.
 
 ## Commit conventions
 
@@ -74,7 +74,7 @@ The bump level comes from the commit type, so conforming commits are enforced. R
 **Manual dispatch with `tag`** re-publishes one existing tag (skips the `release` job), for when a publish failed or was skipped:
 
 ```sh
-gh workflow run release.yml -f tag=@christophervr/docx-core@0.1.0
+gh workflow run release.yml -f tag=docx-core@0.1.0
 ```
 
 `scripts/publish-released.mjs` publishes in dependency order with `npm publish --provenance --access public`. For each package it first checks that the manifest on disk is the version being published, that no dependency uses `workspace:` or `file:`, that no dependency names an internal package or `@christophervr/ole2`, that sibling ranges match the siblings' versions, and that the version is not already on npm (it is skipped if so, making re-runs safe). A version older than the registry's `latest` is published under the `old` dist-tag. `--dry-run` prints the commands without publishing.
@@ -93,14 +93,14 @@ Like pptx-viewer, the release job does not repeat typecheck, unit and browser te
 2. **`RELEASE_TOKEN` secret**: a fine-grained personal access token with `Contents: Read and write` on this repository, owned by a repository admin. The default `GITHUB_TOKEN` cannot be granted ruleset bypass, so without it the release commit cannot be pushed.
 3. **`NPM_PUBLISH` repository variable** set to `true`.
 4. **`npm` environment** (Settings, Environments), optionally with required reviewers.
-5. **npm trusted publisher for each of the seven packages** (`@christophervr/docx-core`, `-react-viewer`, `-vue-viewer`, `-angular-viewer`, `-svelte-viewer`, `-solid-viewer`, `-vanilla-viewer`; none of the internal packages, they are never published) (package settings on npmjs.com, "Trusted Publisher", GitHub Actions): organization/user `ChristopherVR`, repository `docx-viewer`, workflow `release.yml`, environment `npm`. Unverified: npm may only allow configuring a trusted publisher on a package that already exists. If so, the very first version of each package must be bootstrapped once by other means (a short-lived granular token, then revoke it) before the workflow can publish; the planner treats an already-published `0.1.0` as released only once its tag exists, so create the `<npm-name>@0.1.0` tags on the commit that was published.
+5. **npm trusted publisher for each of the seven packages** (`docx-core`, `-react-viewer`, `-vue-viewer`, `-angular-viewer`, `-svelte-viewer`, `-solid-viewer`, `-vanilla-viewer`; none of the internal packages, they are never published) (package settings on npmjs.com, "Trusted Publisher", GitHub Actions): organization/user `ChristopherVR`, repository `docx-viewer`, workflow `release.yml`, environment `npm`. Unverified: npm may only allow configuring a trusted publisher on a package that already exists. If so, the very first version of each package must be bootstrapped once by other means (a short-lived granular token, then revoke it) before the workflow can publish; the planner treats an already-published `0.1.0` as released only once its tag exists, so create the `<npm-name>@0.1.0` tags on the commit that was published.
 6. Uncomment the `schedule` trigger in `.github/workflows/release.yml` (hourly), and run the workflow once by hand first.
 
 ## Before the first release
 
 - Make sure `@christophervr/ooxml-core@^0.2.0` and `@christophervr/office-ui@^0.1.1` are on npm; `docx-core` depends on it. `@christophervr/ole2` does not need to be published: its codecs are bundled into the framework packages.
 - Check the plan: `bun run release:plan` should list seven packages at `0.1.0` with bump `initial` and no internal package.
-- Dispatch the workflow by hand. The seven packages are tagged `@christophervr/docx-core@0.1.0` and `@christophervr/docx-<framework>-viewer@0.1.0`, and published with `docx-core` first.
+- Dispatch the workflow by hand. The seven packages are tagged `docx-core@0.1.0` and `docx-<framework>-viewer@0.1.0`, and published with `docx-core` first.
 
 Local checks before dispatching:
 

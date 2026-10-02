@@ -1,4 +1,4 @@
-import type { Table, TableCellMargins } from '@christophervr/docx-core';
+import type { Table, TableCellMargins } from 'docx-core';
 import { closeHistory } from 'prosemirror-history';
 import type { EditorState } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';

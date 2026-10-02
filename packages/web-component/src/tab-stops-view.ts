@@ -1,4 +1,4 @@
-import type { TabStop } from '@christophervr/docx-core';
+import type { TabStop } from 'docx-core';
 import { placeTab, type LayoutTabStop } from '@christophervr/ooxml-core/docx/layout';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import { Plugin, PluginKey, type EditorState } from 'prosemirror-state';

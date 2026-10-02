@@ -1,5 +1,5 @@
 import { Schema, type DOMOutputSpec } from 'prosemirror-model';
-import { isWordHighlightToken, type WordHighlightToken } from '@christophervr/docx-core';
+import { isWordHighlightToken, type WordHighlightToken } from 'docx-core';
 import { fieldMarkerNodeSpec, noteReferenceNodeSpec, pageBreakNodeSpec } from './break-note-schema';
 import { paragraphBoxCss, tableStyle, tableCellStyle } from './table-render';
 import { imageNodeSpec } from './inline-content-schema';

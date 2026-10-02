@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { expect, test } from '@playwright/test';
-import type { DocxEditorElement } from '@christophervr/docx-web-component';
+import type { DocxEditorElement } from 'docx-web-component';
 import { openSample } from './helpers';
 
 test.describe('save API and dirty tracking', () => {

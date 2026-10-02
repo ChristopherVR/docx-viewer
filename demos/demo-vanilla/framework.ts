@@ -3,7 +3,7 @@ import {
 	type EditorOptions,
 	type EditorHandle,
 } from '../../packages/bindings/src/index';
-import type { DocxEditorElement } from '@christophervr/docx-web-component';
+import type { DocxEditorElement } from 'docx-web-component';
 /** Demo-only harness: actual framework mounts exercise each public adapter. */
 export async function mountFramework(
 	host: HTMLElement,

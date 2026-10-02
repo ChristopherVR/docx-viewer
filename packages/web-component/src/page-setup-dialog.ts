@@ -1,4 +1,4 @@
-import type { SectionProperties } from '@christophervr/docx-core';
+import type { SectionProperties } from 'docx-core';
 import { dialogButton, fieldset, labelled, numberInput, row, selectOf } from './dialog-fields';
 import type { FormatDialog } from './font-dialog';
 import { localizeElement, type EditorLocale } from './localization';

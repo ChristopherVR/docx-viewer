@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { createDocument, type Paragraph, type TextRun } from '@christophervr/docx-core';
+import { createDocument, type Paragraph, type TextRun } from 'docx-core';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import {
 	deleteAroundMarkers,

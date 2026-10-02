@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, expectTypeOf, it } from 'vitest';
-import { createDocument, type DocumentModel } from '@christophervr/docx-core';
+import { createDocument, type DocumentModel } from 'docx-core';
 import { DocxEditorElement, registerDocxEditor } from './index';
 import { DOCX_EDITOR_EVENTS, emit, on, type DocxEditorEventMap } from './events';
 import type { FileCommandDetail } from './file-commands';

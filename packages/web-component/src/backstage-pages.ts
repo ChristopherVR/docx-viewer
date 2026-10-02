@@ -1,4 +1,4 @@
-import { PROPERTY_FIELDS, type DocumentModel } from '@christophervr/docx-core';
+import { PROPERTY_FIELDS, type DocumentModel } from 'docx-core';
 import { icon } from './chrome-icons';
 import type { DocumentStats } from './document-stats';
 import type { FileCommand } from './file-commands';

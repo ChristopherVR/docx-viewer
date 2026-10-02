@@ -1,5 +1,5 @@
 import type { MarkSpec } from 'prosemirror-model';
-import { isWordHighlightToken, type WordHighlightToken } from '@christophervr/docx-core';
+import { isWordHighlightToken, type WordHighlightToken } from 'docx-core';
 import { reviewMarks } from './review-schema';
 import { runPropertiesMark } from './run-extra-mark';
 import { linkMarkSpec } from './inline-content-schema';

@@ -38,10 +38,10 @@ const BINDING_ENTRIES = {
 	common: 'common.ts',
 };
 export const INTERNAL_SOURCES = new Map([
-	['@christophervr/docx-web-component', 'packages/web-component/src/index.ts'],
-	['@christophervr/docx-bindings', 'packages/bindings/src/index.ts'],
+	['docx-web-component', 'packages/web-component/src/index.ts'],
+	['docx-bindings', 'packages/bindings/src/index.ts'],
 	...Object.entries(BINDING_ENTRIES).map(([name, file]) => [
-		`@christophervr/docx-bindings/${name}`,
+		`docx-bindings/${name}`,
 		`packages/bindings/src/${file}`,
 	]),
 ]);
@@ -152,7 +152,7 @@ async function main() {
 		'--project',
 		'tsconfig.release.json',
 	]);
-	// core first: the framework packages leave @christophervr/docx-core as an import.
+	// core first: the framework packages leave docx-core as an import.
 	for (const name of Object.keys(PUBLISHED)) {
 		const distDir = path.join(packagesDir, name, 'dist');
 		await rm(distDir, { recursive: true, force: true });

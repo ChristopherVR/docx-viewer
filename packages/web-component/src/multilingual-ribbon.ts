@@ -1,6 +1,6 @@
 import type { Mark } from 'prosemirror-model';
 import type { EditorState } from 'prosemirror-state';
-import { isValidLanguageTag } from '@christophervr/docx-core';
+import { isValidLanguageTag } from 'docx-core';
 import { emit as emitEvent } from './events';
 import { schema } from './schema';
 import {

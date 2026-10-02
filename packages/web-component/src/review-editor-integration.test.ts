@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
-import { createDocument, type DocumentModel, type Paragraph } from '@christophervr/docx-core';
+import { createDocument, type DocumentModel, type Paragraph } from 'docx-core';
 import { TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { DocxEditorElement, registerDocxEditor } from './index';

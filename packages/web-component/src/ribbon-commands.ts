@@ -1,7 +1,7 @@
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
 import type { EditorView } from 'prosemirror-view';
 import { closeHistory } from 'prosemirror-history';
-import { DEFAULT_TABLE_BORDERS } from '@christophervr/docx-core';
+import { DEFAULT_TABLE_BORDERS } from 'docx-core';
 import { schema } from './schema';
 import { parseLineSpacingValue } from './line-spacing';
 import { twipsAttr } from './attr-units';

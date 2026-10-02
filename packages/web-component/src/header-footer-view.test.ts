@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { createDocument, type DocumentModel } from '@christophervr/docx-core';
+import { createDocument, type DocumentModel } from 'docx-core';
 import { buildFooterElement, buildHeaderElement } from './header-footer-view';
 import { buildNotesElement } from './notes-view';
 

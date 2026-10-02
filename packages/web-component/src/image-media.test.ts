@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { signedTwips, twips } from '@christophervr/docx-core';
+import { signedTwips, twips } from 'docx-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createDocument } from '@christophervr/docx-core';
+import { createDocument } from 'docx-core';
 import { DocxEditorElement, registerDocxEditor } from './index';
 import { placementClass } from './inline-content-schema';
 import { at } from './test-support';

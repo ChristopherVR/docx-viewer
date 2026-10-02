@@ -1,15 +1,15 @@
-# @christophervr/docx-solid-viewer
+# docx-solid-viewer
 
-The DOCX editor for Solid. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the Solid adapter are bundled in, so you install nothing else from this project except `@christophervr/docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
+The DOCX editor for Solid. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the Solid adapter are bundled in, so you install nothing else from this project except `docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
 
 ```sh
-npm install @christophervr/docx-solid-viewer @christophervr/docx-core solid-js
+npm install docx-solid-viewer docx-core solid-js
 ```
 
 ```tsx
 import { createSignal } from 'solid-js';
-import { createDocument } from '@christophervr/docx-core';
-import { WordEditor } from '@christophervr/docx-solid-viewer';
+import { createDocument } from 'docx-core';
+import { WordEditor } from 'docx-solid-viewer';
 
 export function Editor() {
 	const [model, setModel] = createSignal(createDocument());

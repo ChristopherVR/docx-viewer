@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { createDocument } from '@christophervr/docx-core';
+import { createDocument } from 'docx-core';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { afterEach, describe, expect, it } from 'vitest';
 import { syncFontControls } from './font-sync';

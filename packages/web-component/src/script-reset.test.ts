@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { createDocument, type DocumentModel } from '@christophervr/docx-core';
+import { createDocument, type DocumentModel } from 'docx-core';
 import { history, undo } from 'prosemirror-history';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';

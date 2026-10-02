@@ -7,7 +7,7 @@ import {
 	displayListLabel,
 	type DocumentModel,
 	type Paragraph,
-} from '@christophervr/docx-core';
+} from 'docx-core';
 import { paragraphStyle } from './schema';
 import { translate, translateTemplate, type EditorLocale } from './localization';
 import { menuAround, row, stack } from './ribbon-parts';

@@ -1,9 +1,4 @@
-import {
-	resolveRunFormatting,
-	isLigatures,
-	type Ligatures,
-	type RunFormatting,
-} from '@christophervr/docx-core';
+import { resolveRunFormatting, isLigatures, type Ligatures, type RunFormatting } from 'docx-core';
 import type { Mark, Node as ProseMirrorNode } from 'prosemirror-model';
 import type { EditorState } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';

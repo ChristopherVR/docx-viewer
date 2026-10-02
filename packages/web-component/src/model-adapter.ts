@@ -1,19 +1,12 @@
 import { EditorState, Transaction } from 'prosemirror-state';
-import type {
-	DocumentModel,
-	Block,
-	Paragraph,
-	SectionProperties,
-	Table,
-	TextRun,
-} from '@christophervr/docx-core';
+import type { DocumentModel, Block, Paragraph, SectionProperties, Table, TextRun } from 'docx-core';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import {
 	computeListLabels,
 	displayListLabel,
 	formatNoteNumber,
 	numberNotesInOrder,
-} from '@christophervr/docx-core';
+} from 'docx-core';
 import { schema } from './schema';
 import { paragraphTwipsFromAttrs } from './attr-units';
 import { sameJson, sameRuns } from './run-compare';

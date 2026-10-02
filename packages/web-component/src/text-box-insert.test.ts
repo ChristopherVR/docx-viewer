@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { undo } from 'prosemirror-history';
 import { history } from 'prosemirror-history';
-import { createDocument, type Paragraph } from '@christophervr/docx-core';
+import { createDocument, type Paragraph } from 'docx-core';
 import { EditorState, NodeSelection, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { docToModel, modelToDoc } from './model-adapter';

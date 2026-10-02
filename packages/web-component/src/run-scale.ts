@@ -1,4 +1,4 @@
-import type { RunFormatting } from '@christophervr/docx-core';
+import type { RunFormatting } from 'docx-core';
 import {
 	cssFontStack,
 	tokenizeRun,

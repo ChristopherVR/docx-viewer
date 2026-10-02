@@ -1,6 +1,6 @@
 import type { EditorView } from 'prosemirror-view';
 import { NodeSelection } from 'prosemirror-state';
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
 import type { EditorLocale } from './localization';
 import { formatPageStatus, formatWordCount } from './localization';
 import { syncParagraphControls, syncFormatControls } from './ribbon-controls';

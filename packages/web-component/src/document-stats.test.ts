@@ -1,4 +1,4 @@
-import { createDocument, type DocumentModel } from '@christophervr/docx-core';
+import { createDocument, type DocumentModel } from 'docx-core';
 import { describe, expect, it } from 'vitest';
 import { documentStats, plainText } from './document-stats';
 

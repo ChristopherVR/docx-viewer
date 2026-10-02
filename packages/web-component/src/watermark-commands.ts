@@ -4,7 +4,7 @@ import type {
 	HeaderFooterContent,
 	Paragraph,
 	WatermarkSpec,
-} from '@christophervr/docx-core';
+} from 'docx-core';
 import { withBlankHeaderFooter } from './header-footer-commands';
 import { sectionsOf } from './section-commands';
 

@@ -1,4 +1,4 @@
-import type { Block, DocumentModel, Paragraph } from '@christophervr/docx-core';
+import type { Block, DocumentModel, Paragraph } from 'docx-core';
 
 export interface DocumentStats {
 	paragraphs: number;

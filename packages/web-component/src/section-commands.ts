@@ -9,7 +9,7 @@ import {
 	type DocumentModel,
 	type SectionProperties,
 	type Twips,
-} from '@christophervr/docx-core';
+} from 'docx-core';
 import { expectDefined } from './defined';
 
 const px = twipsToPixels;

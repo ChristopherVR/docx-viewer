@@ -1,4 +1,4 @@
-import type { WatermarkSpec } from '@christophervr/docx-core';
+import type { WatermarkSpec } from 'docx-core';
 import {
 	checkbox,
 	dialogButton,

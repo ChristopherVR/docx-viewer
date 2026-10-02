@@ -1,4 +1,4 @@
-import { createDocument } from '@christophervr/docx-core';
+import { createDocument } from 'docx-core';
 import { expect, it } from 'vitest';
 import { withBlankHeaderFooter } from './header-footer-commands';
 import { effectiveHeaderFooter, withHeaderFooterLink } from './header-footer-link';

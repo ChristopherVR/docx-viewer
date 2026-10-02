@@ -1,10 +1,5 @@
 import { DOMSerializer } from 'prosemirror-model';
-import type {
-	Block,
-	DocumentModel,
-	HeaderFooterContent,
-	HeaderFooterSlots,
-} from '@christophervr/docx-core';
+import type { Block, DocumentModel, HeaderFooterContent, HeaderFooterSlots } from 'docx-core';
 import { schema } from './schema';
 import { runToInlineNodes } from './run-adapter';
 import { translateUiText } from './localization';

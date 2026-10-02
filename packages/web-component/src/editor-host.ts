@@ -1,6 +1,6 @@
 import { emit } from './events';
 import type { EditorView } from 'prosemirror-view';
-import type { DocumentModel } from '@christophervr/docx-core';
+import type { DocumentModel } from 'docx-core';
 import type { EditorLocale } from './localization';
 
 /** What feature controllers need from the editor element, without reaching into its internals. */

@@ -1,2 +1,2 @@
-export * from '@christophervr/docx-bindings';
-export * from '@christophervr/docx-bindings/common';
+export * from 'docx-bindings';
+export * from 'docx-bindings/common';

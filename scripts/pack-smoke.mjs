@@ -64,8 +64,10 @@ async function inspectTarball(name, packed, directory) {
 	);
 	if (name !== 'core') {
 		assert.deepEqual(
-			Object.keys(manifest.dependencies).filter((dep) => dep.startsWith('@christophervr/')),
-			['@christophervr/docx-core', '@christophervr/office-ui', '@christophervr/ooxml-core'],
+			Object.keys(manifest.dependencies)
+				.filter((dep) => dep.startsWith('@christophervr/') || dep.startsWith('docx-'))
+				.sort(),
+			['@christophervr/office-ui', '@christophervr/ooxml-core', 'docx-core'],
 			`${packed.name} may depend on no project package but docx-core, office-ui and ooxml-core`,
 		);
 	}
@@ -82,9 +84,9 @@ async function inspectTarball(name, packed, directory) {
 
 const consumerSource = `import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-${FRAMEWORKS.map((name) => `import * as ${name} from '@christophervr/${specifierOf(name)}';`).join('\n')}
-import * as core from '@christophervr/docx-core';
-import * as embedded from '@christophervr/docx-core/embedded';
+${FRAMEWORKS.map((name) => `import * as ${name} from '${specifierOf(name)}';`).join('\n')}
+import * as core from 'docx-core';
+import * as embedded from 'docx-core/embedded';
 assert.equal(typeof globalThis.document, 'undefined', 'SSR import must not require a DOM');
 assert.equal(typeof core.createDocument, 'function');
 assert.equal(typeof embedded, 'object');
@@ -129,13 +131,13 @@ assert.equal(authority.currentVersion, 0);
 assert.equal(authority.doc.firstChild.attrs.direction, 'rtl');
 `;
 
-const typingSource = `import { createDocument, resolveParagraphFormatting, type DocumentModel } from '@christophervr/docx-core';
-import { WordEditor as ReactEditor, loadDocument, type EditorOptions } from '@christophervr/docx-react-viewer';
-import { WordEditor as VueEditor } from '@christophervr/docx-vue-viewer';
-import { WordEditorComponent } from '@christophervr/docx-angular-viewer';
-import { WordEditor as SolidEditor } from '@christophervr/docx-solid-viewer';
-import SvelteEditor from '@christophervr/docx-svelte-viewer';
-import { mountEditor, PresenceClient, type EditorHandle } from '@christophervr/docx-vanilla-viewer';
+const typingSource = `import { createDocument, resolveParagraphFormatting, type DocumentModel } from 'docx-core';
+import { WordEditor as ReactEditor, loadDocument, type EditorOptions } from 'docx-react-viewer';
+import { WordEditor as VueEditor } from 'docx-vue-viewer';
+import { WordEditorComponent } from 'docx-angular-viewer';
+import { WordEditor as SolidEditor } from 'docx-solid-viewer';
+import SvelteEditor from 'docx-svelte-viewer';
+import { mountEditor, PresenceClient, type EditorHandle } from 'docx-vanilla-viewer';
 const options: EditorOptions = { documentModel: createDocument(), locale: 'fr' };
 const model: DocumentModel = options.documentModel!;
 void [model, ReactEditor, loadDocument, VueEditor, WordEditorComponent, SolidEditor, SvelteEditor, mountEditor, PresenceClient, resolveParagraphFormatting];
@@ -203,9 +205,13 @@ try {
 		],
 		{ cwd: work },
 	);
-	const installed = path.join(work, 'node_modules', '@christophervr');
+	const installed = path.join(work, 'node_modules');
+	const names = [
+		...(await readdir(installed)),
+		...(await readdir(path.join(installed, '@christophervr'))),
+	];
 	assert.deepEqual(
-		(await readdir(installed)).filter((name) =>
+		names.filter((name) =>
 			/ole2|docx-(?:legacy|document|layout|bindings|web-component|viewer)$/.test(name),
 		),
 		[],

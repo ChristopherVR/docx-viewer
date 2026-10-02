@@ -1,4 +1,4 @@
-import { resolveRunFormatting, type TextRun } from '@christophervr/docx-core';
+import { resolveRunFormatting, type TextRun } from 'docx-core';
 import { toggleMark } from 'prosemirror-commands';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import type { Command, EditorState, Transaction } from 'prosemirror-state';

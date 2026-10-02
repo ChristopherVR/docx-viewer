@@ -1,4 +1,4 @@
-import { isLigatures } from '@christophervr/docx-core';
+import { isLigatures } from 'docx-core';
 import { ligatureCss } from '@christophervr/ooxml-core/docx/layout';
 export { ligatureCss } from '@christophervr/ooxml-core/docx/layout';
 

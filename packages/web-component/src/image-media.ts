@@ -3,7 +3,7 @@ import type { EditorView, NodeView } from 'prosemirror-view';
 import { schema } from './schema';
 import { placementClass } from './inline-content-schema';
 import { parseDiagram, smartArtNodeView } from './smartart-node-view';
-import type { ThemeCatalog } from '@christophervr/docx-core';
+import type { ThemeCatalog } from 'docx-core';
 
 /**
  * Resolves inline picture bytes (kept off the JSON model by docx-core) into object URLs. URLs are

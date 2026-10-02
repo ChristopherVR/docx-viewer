@@ -1,5 +1,5 @@
 {
-	"name": "@christophervr/docx-bindings",
+	"name": "docx-bindings",
 	"version": "0.1.0",
 	"private": true,
 	"description": "React, Vue, Angular, Svelte and Solid bindings for the DOCX editor (internal; bundled into the published framework packages)",
@@ -7,14 +7,14 @@
 	"author": "ChristopherVR",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ChristopherVR/docx-viewer.git",
+		"url": "git+https://github.com/ChristopherVR/docx-viewer.git",
 		"directory": "packages/bindings"
 	},
 	"type": "module",
 	"dependencies": {
-		"@christophervr/docx-core": "workspace:*",
 		"@christophervr/ooxml-core": "^0.2.0",
-		"@christophervr/docx-web-component": "workspace:*"
+		"docx-core": "workspace:*",
+		"docx-web-component": "workspace:*"
 	},
 	"peerDependencies": {
 		"@angular/core": ">=19",

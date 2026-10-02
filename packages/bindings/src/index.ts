@@ -8,8 +8,8 @@ import {
 	type PageChangeDetail,
 	normalizeRibbonActions,
 	type RibbonActionInput,
-} from '@christophervr/docx-web-component';
-import type { DocumentModel } from '@christophervr/docx-core';
+} from 'docx-web-component';
+import type { DocumentModel } from 'docx-core';
 
 /** Editor state a framework passes down as props. */
 export interface EditorProps {

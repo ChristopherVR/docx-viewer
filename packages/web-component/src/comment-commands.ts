@@ -1,4 +1,4 @@
-import type { Comment } from '@christophervr/docx-core';
+import type { Comment } from 'docx-core';
 import type { EditorView } from 'prosemirror-view';
 import { closeHistory } from 'prosemirror-history';
 import { TextSelection } from 'prosemirror-state';

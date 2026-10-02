@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDocument, isWordHighlightToken } from '@christophervr/docx-core';
+import { createDocument, isWordHighlightToken } from 'docx-core';
 import { modelToDoc, docToModel } from './model-adapter';
 import { schema, wordHighlightColors } from './schema';
 import { paragraphAt } from './test-support';

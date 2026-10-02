@@ -1,5 +1,5 @@
-import type { DocumentModel, Note } from '@christophervr/docx-core';
-import { formatNoteNumber, numberNotesInOrder } from '@christophervr/docx-core';
+import type { DocumentModel, Note } from 'docx-core';
+import { formatNoteNumber, numberNotesInOrder } from 'docx-core';
 import { renderBlocks } from './header-footer-view';
 import { translateUiText } from './localization';
 

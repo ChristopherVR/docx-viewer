@@ -1,4 +1,4 @@
-import type { Block, HeaderFooterContent, Note } from '@christophervr/docx-core';
+import type { Block, HeaderFooterContent, Note } from 'docx-core';
 import { TextSelection, type Plugin } from 'prosemirror-state';
 import { closeHistory, undo, redo } from 'prosemirror-history';
 import { runStylesPlugin } from './run-styles';

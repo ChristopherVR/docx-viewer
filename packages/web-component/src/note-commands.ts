@@ -6,7 +6,7 @@ import {
 	type Note,
 	type Paragraph,
 	type TextRun,
-} from '@christophervr/docx-core';
+} from 'docx-core';
 import { schema } from './schema';
 
 export type NoteKind = 'footnote' | 'endnote';

@@ -1,21 +1,21 @@
-# @christophervr/docx-svelte-viewer
+# docx-svelte-viewer
 
-The DOCX editor for Svelte 5. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the Svelte 5 adapter are bundled in, so you install nothing else from this project except `@christophervr/docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
+The DOCX editor for Svelte 5. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the Svelte 5 adapter are bundled in, so you install nothing else from this project except `docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
 
 ```sh
-npm install @christophervr/docx-svelte-viewer @christophervr/docx-core svelte
+npm install docx-svelte-viewer docx-core svelte
 ```
 
 ```svelte
 <script>
-  import { createDocument } from '@christophervr/docx-core';
-  import WordEditor from '@christophervr/docx-svelte-viewer';
+  import { createDocument } from 'docx-core';
+  import WordEditor from 'docx-svelte-viewer';
   let model = $state(createDocument());
 </script>
 <WordEditor documentModel={model} ondocumentchange={next => model = next} />
 ```
 
-The package root is the component (a default export). The plain-JavaScript helpers (`mountEditor`, `loadDocument`, shared types) are under `@christophervr/docx-svelte-viewer/runtime`.
+The package root is the component (a default export). The plain-JavaScript helpers (`mountEditor`, `loadDocument`, shared types) are under `docx-svelte-viewer/runtime`.
 
 Notes:
 

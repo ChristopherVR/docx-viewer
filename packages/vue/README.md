@@ -1,16 +1,16 @@
-# @christophervr/docx-vue-viewer
+# docx-vue-viewer
 
-The DOCX editor for Vue 3. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the Vue 3 adapter are bundled in, so you install nothing else from this project except `@christophervr/docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
+The DOCX editor for Vue 3. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the Vue 3 adapter are bundled in, so you install nothing else from this project except `docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
 
 ```sh
-npm install @christophervr/docx-vue-viewer @christophervr/docx-core vue
+npm install docx-vue-viewer docx-core vue
 ```
 
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue';
-import { createDocument } from '@christophervr/docx-core';
-import { WordEditor } from '@christophervr/docx-vue-viewer';
+import { createDocument } from 'docx-core';
+import { WordEditor } from 'docx-vue-viewer';
 
 const model = ref(createDocument());
 </script>

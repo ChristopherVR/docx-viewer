@@ -1,15 +1,15 @@
-# @christophervr/docx-angular-viewer
+# docx-angular-viewer
 
-The DOCX editor for Angular. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the Angular adapter are bundled in, so you install nothing else from this project except `@christophervr/docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
+The DOCX editor for Angular. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the Angular adapter are bundled in, so you install nothing else from this project except `docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
 
 ```sh
-npm install @christophervr/docx-angular-viewer @christophervr/docx-core @angular/core
+npm install docx-angular-viewer docx-core @angular/core
 ```
 
 ```ts
 import { Component } from '@angular/core';
-import { createDocument } from '@christophervr/docx-core';
-import { WordEditorComponent } from '@christophervr/docx-angular-viewer';
+import { createDocument } from 'docx-core';
+import { WordEditorComponent } from 'docx-angular-viewer';
 
 @Component({
 	standalone: true,

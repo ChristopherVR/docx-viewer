@@ -4,7 +4,7 @@ import { syncRuler } from './ruler-sync';
 import { keymap } from 'prosemirror-keymap';
 import type { Plugin } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
-import type { DocumentModel, PendingMediaPart } from '@christophervr/docx-core';
+import type { DocumentModel, PendingMediaPart } from 'docx-core';
 import { applyCharacterStyle } from './character-style-picker';
 import { createLinkDialog, type LinkDialog } from './link-dialog';
 import { createPictureDialog, type PictureDialog } from './picture-dialog';

@@ -1,4 +1,4 @@
-import type { TextRun } from '@christophervr/docx-core';
+import type { TextRun } from 'docx-core';
 import type { MarkSpec } from 'prosemirror-model';
 import { ligatureStyle } from './ligature-style';
 

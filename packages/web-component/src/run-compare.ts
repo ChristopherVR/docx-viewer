@@ -1,4 +1,4 @@
-import type { TextRun } from '@christophervr/docx-core';
+import type { TextRun } from 'docx-core';
 import { extraRunProperties } from './run-extra-mark';
 
 export const sameJson = (left: unknown, right: unknown): boolean =>

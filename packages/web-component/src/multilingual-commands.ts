@@ -1,7 +1,7 @@
 import type { Mark } from 'prosemirror-model';
 import type { EditorView } from 'prosemirror-view';
 import { closeHistory } from 'prosemirror-history';
-import { isValidLanguageTag } from '@christophervr/docx-core';
+import { isValidLanguageTag } from 'docx-core';
 import { schema } from './schema';
 
 export type LanguageField = 'language' | 'eastAsiaLanguage' | 'bidiLanguage';
