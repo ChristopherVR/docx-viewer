@@ -1,0 +1,85 @@
+/* SmartArt: a read-only display of the diagram's saved drawing */
+.dve-smartart {
+	position: relative;
+	max-width: 100%;
+	box-sizing: border-box;
+	vertical-align: bottom;
+	line-height: normal;
+}
+.dve-smartart:not(.dve-float-left):not(.dve-float-right):not(.dve-float-block) {
+	display: inline-block;
+}
+.dve-smartart:focus-visible {
+	outline: 2px solid var(--word);
+	outline-offset: 2px;
+}
+.dve-smartart-selected {
+	outline: 2px solid var(--word);
+	outline-offset: 1px;
+}
+.dve-smartart-drawing {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+.dve-smartart-box {
+	overflow: auto;
+	border: 1px dashed var(--line);
+	background: var(--canvas);
+	color: var(--text, #1f1f1f);
+	font-size: 12px;
+}
+.dve-smartart-placeholder {
+	display: block;
+	padding: 6px 8px;
+}
+.dve-smartart-heading {
+	display: block;
+	color: var(--muted);
+	font-size: 11px;
+}
+.dve-smartart-placeholder ul,
+.dve-smartart-notes ul {
+	margin: 4px 0 0;
+	padding-left: 18px;
+}
+.dve-smartart-info {
+	position: absolute;
+	top: 2px;
+	right: 2px;
+	display: none;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	border: 1px solid var(--line);
+	border-radius: 50%;
+	background: var(--surface, #fff);
+	color: var(--muted);
+	font: italic 700 12px/1 serif;
+	cursor: pointer;
+}
+.dve-smartart:hover .dve-smartart-info,
+.dve-smartart:focus-within .dve-smartart-info,
+.dve-smartart-selected .dve-smartart-info,
+.dve-smartart-info[aria-expanded='true'] {
+	display: block;
+}
+.dve-smartart-notes {
+	position: absolute;
+	z-index: 3;
+	top: 26px;
+	right: 2px;
+	width: max-content;
+	max-width: min(320px, 90%);
+	padding: 6px 8px;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+	background: var(--surface, #fff);
+	color: var(--text, #1f1f1f);
+	font-size: 11px;
+	text-align: left;
+	box-shadow: 0 2px 8px rgb(0 0 0 / 0.18);
+}
+.dve-smartart-notes[hidden] {
+	display: none;
+}

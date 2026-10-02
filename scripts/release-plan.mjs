@@ -48,6 +48,9 @@ export const INTERNAL_DIRS = [
  * `dependencies` / `peerDependencies` / `optionalDependencies` entry naming another package of
  * this table is an internal dependency, and releasing it re-releases the dependent (every
  * framework package depends on `docx-core`, so a core release releases all of them).
+ * Registry dependencies absent from this table (`@christophervr/ooxml-core`, and
+ * `@christophervr/office-ui` in every framework package) are external: a range change in a
+ * manifest releases that package only, as for any third-party dependency.
  * `triggers` (optional) are other directories whose published files also force a release of this
  * package, because their code is inlined into it. Same shape as pptx-viewer's SHARED_DIR trigger.
  * `paths` (optional) narrows what counts as a published file, for a package that is the repo

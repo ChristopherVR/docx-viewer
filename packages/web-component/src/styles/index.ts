@@ -18,6 +18,7 @@ import statusDialogs from './status-dialogs.css?inline';
 import chromeDocument from './chrome-document.css?inline';
 import pageNavigator from './page-navigator.css?inline';
 import keyboardMenu from './keyboard-menu.css?inline';
+import smartArt from './smartart.css?inline';
 
 const declarations = (theme: EditorTheme, scheme: 'light' | 'dark') =>
 	Object.entries(themeToCssVars(theme))
@@ -52,4 +53,5 @@ export const editorStyleText = [
 	chromeDocument,
 	pageNavigator,
 	keyboardMenu,
+	smartArt,
 ].join('\n');

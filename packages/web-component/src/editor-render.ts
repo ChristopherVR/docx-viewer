@@ -39,6 +39,7 @@ export function renderDocument(core: EditorCore): void {
 			image: imageNodeView(core.imageMedia, {
 				editPicture: (pos) => core.inserts.pictureDialog.open(pos),
 				maxWidth: () => core.contentWidth(),
+				theme: () => core.model.theme,
 			}),
 		},
 		handleClick: (view, pos, event) => core.inserts.handleClick(view, pos, event),

@@ -108,7 +108,7 @@ Exit: pptx's 17 chart and 112 SmartArt ground-truth slides unchanged (acceptance
 - **Rendering regressions:** pptx ground-truth MAE numbers (whole-slide 3-4.7, worst 8.64) are the baseline; any change that moves them is rejected.
 - **Strictness mismatch:** consuming strict packages from a looser project is fine; the reverse is not, so shared code is strict from the start.
 - **Concurrent work in the pptx tree:** extraction PRs must not be cut from a dirty working tree.
-- **Word-side honesty:** until Phase 4 lands, charts and SmartArt in Word documents stay placeholders and say so, as they do today.
+- **Word-side honesty:** charts stay placeholders and say so. SmartArt in Word documents is shown read-only from its cached drawing (`@christophervr/office-ui`'s `<office-ui-smartart>`); it is not recomputed or editable, and its approximations are listed in the editor.
 
 ## Status (2026-10-02)
 

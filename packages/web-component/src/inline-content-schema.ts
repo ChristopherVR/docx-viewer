@@ -70,6 +70,8 @@ export const imageNodeSpec: NodeSpec = {
 		/** The text box is the simple editable form; `textBoxBorder` is its outline. */
 		textBoxEditable: { default: null },
 		textBoxBorder: { default: null },
+		/** A SmartArt graphic (`DocxDiagram`) as JSON; shown read-only by the SmartArt node view. */
+		diagram: { default: null },
 	},
 	parseDOM: [
 		{
@@ -93,6 +95,7 @@ export const imageNodeSpec: NodeSpec = {
 					'span',
 					{
 						'data-docx-image-placeholder': '1',
+						...(node.attrs.diagram ? { 'data-docx-smartart': '1' } : {}),
 						class: 'dve-image-placeholder',
 						style: `width:${node.attrs.widthPx}px;height:${node.attrs.heightPx}px`,
 					},

@@ -116,7 +116,9 @@ export class PartsController {
 	private editorOptions(header = false): InlineEditorOptions {
 		return {
 			contextModel: () => this.host.model(),
-			nodeViews: { image: imageNodeView(this.host.images()) },
+			nodeViews: {
+				image: imageNodeView(this.host.images(), { theme: () => this.host.model().theme }),
+			},
 			decorate: this.decorate,
 			plugins: [
 				...this.host.plugins(),

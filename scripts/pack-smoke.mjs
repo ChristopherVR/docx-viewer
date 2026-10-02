@@ -65,8 +65,8 @@ async function inspectTarball(name, packed, directory) {
 	if (name !== 'core') {
 		assert.deepEqual(
 			Object.keys(manifest.dependencies).filter((dep) => dep.startsWith('@christophervr/')),
-			['@christophervr/docx-core', '@christophervr/ooxml-core'],
-			`${packed.name} may depend on no project package but docx-core and ooxml-core`,
+			['@christophervr/docx-core', '@christophervr/office-ui', '@christophervr/ooxml-core'],
+			`${packed.name} may depend on no project package but docx-core, office-ui and ooxml-core`,
 		);
 	}
 	for (const file of await files(path.join(directory, 'dist'))) {

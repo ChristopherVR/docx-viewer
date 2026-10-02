@@ -15,6 +15,7 @@ import {
 import { EditorCore, type LoadedDocument } from './editor-core';
 import { buildShell, type ShellApi } from './editor-shell';
 import { renderDocument } from './editor-render';
+import { registerSmartArt } from './smartart-node-view';
 import { DocxEditorApi } from './element-api';
 import { emit, type DocxEditorEventMap } from './events';
 import {
@@ -286,6 +287,7 @@ declare global {
 }
 
 export function registerDocxEditor() {
+	registerSmartArt(); // no-op without a DOM and when already defined
 	if (typeof customElements === 'undefined' || typeof HTMLElement === 'undefined') return;
 	if (!customElements.get('docx-editor')) customElements.define('docx-editor', DocxEditorElement);
 }

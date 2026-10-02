@@ -2,6 +2,8 @@ import { DOMSerializer, type Node as ProseMirrorNode } from 'prosemirror-model';
 import type { EditorView, NodeView } from 'prosemirror-view';
 import { schema } from './schema';
 import { placementClass } from './inline-content-schema';
+import { parseDiagram, smartArtNodeView } from './smartart-node-view';
+import type { ThemeCatalog } from '@christophervr/docx-core';
 
 /**
  * Resolves inline picture bytes (kept off the JSON model by docx-core) into object URLs. URLs are
@@ -33,6 +35,8 @@ export interface ImageNodeViewOptions {
 	editPicture?(pos: number): void;
 	/** The widest a picture may be resized to, in CSS pixels. */
 	maxWidth?(): number;
+	/** The document theme, for resolving SmartArt colours. */
+	theme?(): ThemeCatalog | undefined;
 }
 
 const MIN_SIZE = 16;
@@ -62,6 +66,8 @@ function renderSpec(node: ProseMirrorNode): HTMLElement {
  */
 export function imageNodeView(cache: ImageMediaCache, options: ImageNodeViewOptions = {}) {
 	return (node: ProseMirrorNode, view: EditorView, getPos: () => number | undefined): NodeView => {
+		const diagram = parseDiagram(node.attrs.diagram);
+		if (diagram) return smartArtNodeView(node, diagram, options.theme?.());
 		const content = renderSpec(node);
 		// A placeholder (unsupported drawing or text box) shows static child text that ProseMirror must leave alone.
 		if (content.tagName !== 'IMG') return { dom: content, ignoreMutation: () => true };

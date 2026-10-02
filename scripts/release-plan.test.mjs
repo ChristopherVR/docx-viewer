@@ -103,6 +103,18 @@ test('a scripts-only manifest change is not a release trigger', () => {
 	assert.equal(plan(() => '1.0.0').anyChanged, false);
 });
 
+test('an external dependency change releases only the package whose manifest names it', () => {
+	// office-ui and ooxml-core are registry dependencies, not workspace packages: like a docx-core
+	// range they reach consumers only through the manifest that declares them.
+	const path = 'packages/solo/package.json';
+	const manifest = JSON.parse(readFileSync(join(root, path), 'utf8'));
+	commit('fix(solo): depend on the shared UI controls', {
+		[path]: `${JSON.stringify({ ...manifest, dependencies: { '@ext/ui': '^0.1.1' } }, null, '\t')}\n`,
+	});
+	assert.deepEqual(released(plan(() => '1.0.0')), ['solo']);
+	git('reset', '-q', '--hard', 'HEAD~1');
+});
+
 test('reordering manifest keys is not a release trigger', () => {
 	const path = 'packages/solo/package.json';
 	const manifest = JSON.parse(readFileSync(join(root, path), 'utf8'));
