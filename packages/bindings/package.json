@@ -12,9 +12,9 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"ooxml-core": "^0.2.0",
 		"docx-core": "workspace:*",
-		"docx-web-component": "workspace:*"
+		"docx-web-component": "workspace:*",
+		"ooxml-core": "^0.2.0"
 	},
 	"peerDependencies": {
 		"@angular/core": ">=19",

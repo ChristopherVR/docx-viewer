@@ -12,9 +12,9 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"ooxml-ui": "^0.1.1",
-		"ooxml-core": "^0.2.0",
 		"docx-core": "workspace:*",
+		"ooxml-core": "^0.2.0",
+		"ooxml-ui": "^0.1.1",
 		"prosemirror-collab": "^1.3.1",
 		"prosemirror-commands": "^1.7.1",
 		"prosemirror-history": "^1.4.1",

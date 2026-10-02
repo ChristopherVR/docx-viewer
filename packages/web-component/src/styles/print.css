@@ -202,7 +202,10 @@ a.dve-link[data-anchor^='_Toc'] {
 	position: absolute;
 	width: 40px;
 	text-align: right;
-	font: 10px 'Segoe UI', Arial, sans-serif;
+	font:
+		10px 'Segoe UI',
+		Arial,
+		sans-serif;
 	color: #444;
 	pointer-events: none;
 }

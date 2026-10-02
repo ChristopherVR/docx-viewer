@@ -2,15 +2,15 @@
 
 Seven unscoped packages are published to npm (named like pptx-viewer's `pptx-*` packages): `docx-core` and one self-contained editor package per framework. Each has its **own version line**, bumped only when it actually changes, and its own git tag `<npm-name>@<version>` (for example `docx-core@0.2.0`). The flow is the one used by [pptx-viewer](https://github.com/ChristopherVR/pptx-viewer), adapted to this repository; the scripts that are copies are marked in their header comments. Like pptx-viewer, only user-facing packages are published: the shared internals are private and bundled into each framework package.
 
-| Package               | Dir                | Depends on (published)                                 | Internal packages bundled in |
-| --------------------- | ------------------ | ------------------------------------------------------ | ---------------------------- |
-| `docx-core`           | `packages/core`    | `ooxml-core`                            | none                         |
+| Package               | Dir                | Depends on (published)                                | Internal packages bundled in |
+| --------------------- | ------------------ | ----------------------------------------------------- | ---------------------------- |
+| `docx-core`           | `packages/core`    | `ooxml-core`                                          | none                         |
 | `docx-react-viewer`   | `packages/react`   | `docx-core`, `ooxml-ui`, ProseMirror, `react`         | all five (below)             |
 | `docx-vue-viewer`     | `packages/vue`     | `docx-core`, `ooxml-ui`, ProseMirror, `vue`           | all five                     |
 | `docx-angular-viewer` | `packages/angular` | `docx-core`, `ooxml-ui`, ProseMirror, `@angular/core` | all five                     |
 | `docx-svelte-viewer`  | `packages/svelte`  | `docx-core`, `ooxml-ui`, ProseMirror, `svelte`        | all five                     |
 | `docx-solid-viewer`   | `packages/solid`   | `docx-core`, `ooxml-ui`, ProseMirror, `solid-js`      | all five                     |
-| `docx-vanilla-viewer` | `packages/vanilla` | `docx-core`, ProseMirror                               | all five                     |
+| `docx-vanilla-viewer` | `packages/vanilla` | `docx-core`, ProseMirror                              | all five                     |
 
 The internal packages are `private: true` and are never published: `web-component` and `bindings`. `scripts/build-packages.mjs` bundles them into every framework package, so a published tarball imports only `docx-core`, `ooxml-core`, `ooxml-ui`, the ProseMirror libraries and its framework peer. `ole2` is inlined inside `ooxml-core`, so it is not a dependency of anything published and does not have to be released first. `ooxml-ui` (the shared controls that draw SmartArt) is a real registry dependency of every framework package, never bundled, like `docx-core`; it is not a workspace package, so the planner treats it as external: a change to its range in a manifest releases that package only, and the packaging checks (`check:published`, `pack:smoke`) allow exactly `docx-core`, `ooxml-ui` and `ooxml-core` as project dependencies. The ProseMirror libraries stay real dependencies (not bundled) so a package manager can dedupe one copy of them with other ProseMirror code in the application; `docx-core` stays a dependency (not bundled) so `DocumentModel` is the same module on both sides of the application's own imports.
 

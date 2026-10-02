@@ -250,7 +250,7 @@ export const RIBBON_ACTION_LABELS: Readonly<Record<RibbonActionId, string>> = {
 	'page-color': 'Page color',
 	'text-box': 'Text box',
 	'page-borders': 'Page borders',
-	'watermark': 'Watermark',
+	watermark: 'Watermark',
 	hyphenation: 'Hyphenation',
 	'page-number-format': 'Page number format',
 	'page-numbering': 'Page numbering',

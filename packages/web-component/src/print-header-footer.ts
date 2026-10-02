@@ -9,11 +9,7 @@ import {
 	type Paragraph,
 	type TextRun,
 } from 'docx-core';
-import {
-	floatPosition,
-	paragraphFloats,
-	type LayoutPageBox,
-} from 'ooxml-core/docx/layout';
+import { floatPosition, paragraphFloats, type LayoutPageBox } from 'ooxml-core/docx/layout';
 import type { PictureUrl } from './print-layout';
 
 /** Page facts a header or footer field can show. */

@@ -1,8 +1,5 @@
 import { expect, test } from '@playwright/test';
-import {
-	headingLabels,
-	headingNumberingFixture,
-} from './support/heading-numbering-fixture';
+import { headingLabels, headingNumberingFixture } from './support/heading-numbering-fixture';
 import { fileInput } from './helpers';
 
 for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid']) {
