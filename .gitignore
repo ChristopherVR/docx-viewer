@@ -8,3 +8,4 @@ artifacts/
 .claude/worktrees/
 .playwright-mcp/
 release-plan.json
+CLAUDE.local.md
