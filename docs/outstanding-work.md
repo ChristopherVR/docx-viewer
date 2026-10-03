@@ -1,10 +1,10 @@
 # Outstanding parity work
 
-Status as of 2026-09-30. Six parity workstreams were run in parallel and are now
-all merged into `main`. Four of them were interrupted before their authors
-finished, so they were completed during integration. The gaps below are what
-remains. None of this is Word parity; see the [parity roadmap](/parity-roadmap)
-and the model warnings emitted at parse time.
+Status reviewed on 2026-10-03. The original six workstreams below are historical
+foundations; later sections record the subsequent features and their limits. The
+[parity roadmap](/parity-roadmap) gives the current baseline, next priorities and
+evidence required for Word equivalence. No full Word parity is claimed; model
+warnings identify unsupported imported content.
 
 ## Merged workstreams
 
@@ -64,11 +64,16 @@ Still missing:
 - Paragraph borders (`w:pBdr`, with `w:space` and grouped `between` lines) and shading render in both views from direct formatting and styles. Home offers presets and a Borders and Shading dialog; art borders remain missing.
   In a rectangular table the Home Borders menu (including Inside vertical) and the dialog's Apply to
   Cell or Table draw per-cell edges (`w:tcBorders`): the selected cells' rectangle, one pen, the shared edge on the
-  neighbouring cell updated too, one undo step. Existing cell XML keeps its other sides, shading and
+  neighbouring cell updated too, one undo step. Existing cell XML keeps its other sides, untouched shading and
   width; only changed sides are rewritten. Merged/nested/complex tables stay protected; table-level
   `w:tblBorders` and table styles are not edited (cells override them), pen per side, diagonal
-  borders, cell shading and a preview are not offered, and a cleared edge is written as an explicit
-  `none` rather than removed.
+  borders and a preview are not offered. Cell and Table scope now offer a solid fill or
+  No Color, applied together with borders in one undo step. Mixed fills are left untouched
+  unless changed; No Color explicitly overrides inherited table-style fills. Imported
+  pattern and theme shading is preserved until its fill is edited, when it becomes a solid fill, and a cleared edge is written as an explicit
+  `none` rather than removed. Automatic, nil and percentage table/cell widths are no longer
+  interpreted as fixed twip widths, so automatic-width tables do not collapse after saving
+  and reopening; their original width XML stays preserved.
 - Paragraph keep options (`keepNext`, `keepLines`, `widowControl`, `contextualSpacing`) are modeled from styles and direct formatting, preserved through editing and used by Print Layout pagination (headings stay with the next paragraph). The Paragraph dialog exposes these settings, including mixed selections.
 - Toggle properties follow ECMA-376: explicit offs (`w:val="0"`, `w:u w:val="none"`) are kept and cancel styles, styles inherit through basedOn and XOR across style types, and direct formatting is absolute. Bold, Italic, Underline and Strikethrough toggle what the text shows, writing an explicit off for style-inherited formatting as Word does (with a selection; a collapsed caret toggles the typing marks).
 
@@ -86,8 +91,12 @@ The **File** tab follows Word's backstage: Info (file name and save state, compa
 tracked-change and comment counts, and a properties panel of words, characters, paragraphs,
 tables, sections, page size and orientation), New, Open, Save, Save As (takes a file name and keeps
 the opened format), Print, Export (PDF through the print dialog, DOCX, plain text) and Options
-(display language, theme, review author). Not implemented: Home and recent files, Share, Account,
-Close, Protect Document, Version History, and the page count on Info (pagination is a Print Layout result).
+(display language, theme, review author). Home now shows the current file and local New/Open/Export actions. Options also controls
+spelling, ruler, paragraph marks and page thumbnails through the live editor settings.
+The backstage traps keyboard focus and restores the focused control or document selection
+on close. Options apply to this editor session and are not persisted. Not implemented:
+recent files, Share, Account, Close, Protect Document, Version History, and the page count
+on Info (pagination is a Print Layout result).
 Info edits Title, Subject, Author, Tags and Comments (`docProps/core.xml`, created when missing; other
 elements such as created/modified dates are kept untouched, and the last-modified fields are not
 updated on save). Edits mark the document dirty but are not part of undo history.
