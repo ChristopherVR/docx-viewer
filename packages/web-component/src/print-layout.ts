@@ -11,6 +11,7 @@ import {
 import { renderTable } from './print-table';
 import { lineNumberLabels, type PrintLineNumbering } from './print-line-numbers';
 import { pageBorderBox } from './print-page-borders';
+import { resolveFragmentClick, type PrintFragmentHit } from './print-fragment-hit';
 export type { PrintLineNumbering } from './print-line-numbers';
 
 /** One clickable line, recorded for best-effort click-to-cursor mapping. */
@@ -19,6 +20,7 @@ interface LineHitBox {
 	blockId: string;
 	sourceStart: number;
 	sourceEnd: number;
+	fragments: PrintFragmentHit[];
 }
 
 export interface PrintLayoutHandle {
@@ -27,11 +29,10 @@ export interface PrintLayoutHandle {
 	pageCount: number;
 	/**
 	 * Best-effort click-to-cursor mapping: given the line element under a
-	 * click and its horizontal offset, estimates a character position by
-	 * distributing the line's source character range proportionally across
-	 * its width. This is an approximation (it does not measure individual
-	 * fragments), matching the honesty requirement that Print Layout is a
-	 * read-only render synced from the editor, not a second editing surface.
+	 * click and its horizontal offset, measures the displayed text fragments
+	 * and maps to a source boundary. Falls back to proportional mapping for
+	 * older layout results. Print Layout remains a read-only render synced
+	 * from the editor, not a second editing surface.
 	 */
 	resolveClick(target: Element, clientX: number): { blockId: string; offset: number } | null;
 }
@@ -92,6 +93,7 @@ function styleFragment(el: HTMLSpanElement, fragment: LayoutLine['fragments'][nu
 	el.style.fontFamily = cssFontStack(fragment.fontFamily);
 	el.style.fontSize = `${(fragment.fontSizePt ?? DEFAULT_FONT_SIZE_PT) * (fragment.script ? 0.65 : 1)}pt`;
 	const scale = (fragment.textScalePercent ?? 100) / 100;
+	if (!fragment.text) el.style.width = `${scale ? fragment.widthPx / scale : fragment.widthPx}px`;
 	if (scale !== 1) {
 		el.style.transform = `scaleX(${scale})`;
 		el.style.transformOrigin = 'left center';
@@ -127,28 +129,34 @@ function renderLine(
 	lineEl.className = 'dve-print-line';
 	lineEl.style.top = `${line.yPx}px`;
 	lineEl.style.height = `${line.heightPx}px`;
+	const fragments: PrintFragmentHit[] = [];
 	for (const fragment of line.fragments) {
 		if (fragment.object) {
 			const picture = pictureElement(fragment.object, pictureUrl);
 			picture.style.left = `${fragment.xPx}px`;
 			picture.style.top = `${fragment.topPx ?? 0}px`;
 			lineEl.append(picture);
+			fragments.push({ element: picture, fragment });
 			continue;
 		}
 		if (fragment.leader) {
-			lineEl.append(leaderElement(fragment));
+			const leader = leaderElement(fragment);
+			lineEl.append(leader);
+			fragments.push({ element: leader, fragment });
 			continue;
 		}
 		if (!fragment.text && fragment.widthPx === 0) continue;
 		const span = document.createElement('span');
 		styleFragment(span, fragment);
 		lineEl.append(span);
+		fragments.push({ element: span, fragment });
 	}
 	hitboxes.push({
 		element: lineEl,
 		blockId,
 		sourceStart: line.sourceStart,
 		sourceEnd: line.sourceEnd,
+		fragments,
 	});
 	return lineEl;
 }
@@ -298,6 +306,8 @@ export function renderPrintLayout(
 		resolveClick(target, clientX) {
 			const hit = hitboxes.find((box) => box.element === target || box.element.contains(target));
 			if (!hit) return null;
+			const precise = resolveFragmentClick(hit.fragments, clientX);
+			if (precise !== undefined) return { blockId: hit.blockId, offset: precise };
 			const rect = hit.element.getBoundingClientRect();
 			const ratio =
 				rect.width > 0 ? Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)) : 0;

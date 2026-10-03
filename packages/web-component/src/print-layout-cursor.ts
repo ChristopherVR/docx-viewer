@@ -5,8 +5,8 @@ import { TextSelection } from 'prosemirror-state';
  * Maps a Print Layout click (`{ blockId, offset }`, from `print-layout.ts`'s
  * `resolveClick`) back to a ProseMirror document position: finds the
  * paragraph node whose `id` attribute matches, then clamps `offset` into its
- * text content. Best-effort by design (see `print-layout-view.ts`); it does
- * not attempt sub-run fragment precision.
+ * content. Print Layout resolves the fragment/glyph boundary first; this
+ * function clamps it to a valid editor position before focusing the editor.
  */
 export function moveCursorToBlock(view: EditorView, blockId: string, offset: number): boolean {
 	let target: { pos: number; size: number } | undefined;
