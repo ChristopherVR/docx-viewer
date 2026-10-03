@@ -63,9 +63,30 @@ function createChrome(core: EditorCore, api: ShellApi): EditorChrome {
 		toggleComments: () => shell.review?.handleComments('toggle'),
 		setViewMode: (mode) => core.pages.setViewMode(mode),
 		setZoom: (percent) => core.pages.setZoom(percent),
-		options: () => ({ locale: core.locale, theme: core.theme, author: core.reviewAuthor }),
-		setOption: (key, value) =>
-			element.setAttribute(key === 'author' ? 'review-author' : key, value),
+		options: () => ({
+			locale: core.locale,
+			theme: core.theme,
+			author: core.reviewAuthor,
+			spellCheck: core.view?.dom.spellcheck !== false,
+			showRuler: Boolean(shell.canvas?.querySelector('.dve-ruler')),
+			showMarks: shell.paper?.hasAttribute('data-show-marks') ?? false,
+			showThumbnails: core.viewOptions.showThumbnails,
+		}),
+		setOption: (key, value) => {
+			if (key === 'spellCheck') {
+				if (core.view) core.view.dom.spellcheck = value === 'true';
+				core.refreshControls();
+			} else if (key === 'showThumbnails')
+				element.toggleAttribute('show-thumbnails', value === 'true');
+			else if (key === 'showRuler' || key === 'showMarks') {
+				const current =
+					key === 'showRuler'
+						? Boolean(shell.canvas?.querySelector('.dve-ruler'))
+						: (shell.paper?.hasAttribute('data-show-marks') ?? false);
+				if (current !== (value === 'true'))
+					core.inserts.handle({ type: key === 'showRuler' ? 'ruler' : 'showMarks' });
+			} else element.setAttribute(key === 'author' ? 'review-author' : key, value);
+		},
 		hiddenActions: () => host().hiddenActions,
 		setHiddenActions: (ids) => {
 			host().hiddenActions = ids as RibbonActionId[];

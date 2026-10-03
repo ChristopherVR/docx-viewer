@@ -1,6 +1,8 @@
 import { icon, type ChromeIcon } from './chrome-icons';
 import type { FileCommand } from './file-commands';
 import { translateUiText } from './localization';
+import { renderHome } from './backstage-home';
+import { backstageFocus } from './backstage-focus';
 import {
 	renderExport,
 	renderInfo,
@@ -16,6 +18,7 @@ import {
 
 export type { BackstageHandlers } from './backstage-pages';
 export type BackstagePage =
+	| 'home'
 	| 'info'
 	| 'new'
 	| 'open'
@@ -43,6 +46,7 @@ function navButton(iconName: ChromeIcon, label: string): HTMLButtonElement {
 }
 
 const PAGES: Array<[BackstagePage, ChromeIcon, string]> = [
+	['home', 'file', 'Home'],
 	['info', 'info', 'Info'],
 	['new', 'file', 'New'],
 	['open', 'folder', 'Open'],
@@ -53,6 +57,7 @@ const PAGES: Array<[BackstagePage, ChromeIcon, string]> = [
 	['customize', 'settings', 'Customize Ribbon'],
 ];
 const RENDERERS: Record<BackstagePage, (context: PageContext) => void> = {
+	home: renderHome,
 	info: renderInfo,
 	new: renderNew,
 	open: renderOpen,
@@ -75,6 +80,7 @@ export function createBackstage(handlers: BackstageHandlers): Backstage {
 	element.setAttribute('role', 'dialog');
 	element.setAttribute('aria-modal', 'true');
 	element.hidden = true;
+	const focus = backstageFocus(element);
 	const nav = document.createElement('nav');
 	nav.className = 'dve-backstage-nav';
 	const content = document.createElement('div');
@@ -91,8 +97,20 @@ export function createBackstage(handlers: BackstageHandlers): Backstage {
 	const pageHandlers: BackstageHandlers = {
 		...handlers,
 		setOption(key, value) {
+			const active = (element.getRootNode() as Document | ShadowRoot).activeElement;
+			const label =
+				active instanceof HTMLElement && content.contains(active)
+					? active.getAttribute('aria-label')
+					: null;
 			handlers.setOption(key, value);
-			queueMicrotask(() => show(current));
+			queueMicrotask(() => {
+				if (element.hidden) return;
+				show(current);
+				if (label)
+					[...content.querySelectorAll<HTMLElement>('[aria-label]')]
+						.find((control) => control.getAttribute('aria-label') === label)
+						?.focus();
+			});
 		},
 	};
 	const show = (page: BackstagePage) => {
@@ -127,13 +145,15 @@ export function createBackstage(handlers: BackstageHandlers): Backstage {
 	element.append(nav, content);
 	return {
 		element,
-		open(page = 'info') {
+		open(page = 'home') {
+			focus.open();
 			element.hidden = false;
 			show(page);
 			back.focus();
 		},
 		close() {
 			element.hidden = true;
+			focus.close();
 		},
 		get isOpen() {
 			return !element.hidden;

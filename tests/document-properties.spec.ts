@@ -9,6 +9,7 @@ test('File > Info edits the title and author, marks the document dirty and saves
 	await openSample(page);
 	const editor = page.locator('docx-editor');
 	await editor.locator('.dve-file-tab').click();
+	await editor.locator('.dve-backstage-nav-item', { hasText: /^Info$/ }).click();
 	const title = editor.getByRole('textbox', { name: 'Title', exact: true });
 	await title.fill('Quarterly report');
 	await title.press('Tab');

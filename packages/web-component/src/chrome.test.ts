@@ -18,6 +18,33 @@ function mount(): DocxEditorElement {
 const root = (editor: DocxEditorElement) => editor.shadowRoot!;
 
 describe('Word window chrome', () => {
+	it('File Options changes live view and spelling preferences without editing the document', async () => {
+		const editor = mount();
+		const r = root(editor);
+		r.querySelector<HTMLButtonElement>('.dve-file-tab')!.click();
+		[...r.querySelectorAll<HTMLButtonElement>('.dve-backstage-nav-item')]
+			.find((button) => button.textContent === 'Options')!
+			.click();
+		const toggle = async (label: string) => {
+			r.querySelector<HTMLInputElement>(
+				`.dve-backstage-content input[aria-label="${label}"]`,
+			)!.click();
+			await Promise.resolve();
+		};
+		await toggle('Ruler');
+		expect(r.querySelector('.dve-ruler')).not.toBeNull();
+		await toggle('Show paragraph marks');
+		expect(r.querySelector('.dve-paper')?.hasAttribute('data-show-marks')).toBe(true);
+		await toggle('Page thumbnails');
+		expect(editor.hasAttribute('show-thumbnails')).toBe(true);
+		await toggle('Spelling');
+		expect(
+			(editor as unknown as { view: import('prosemirror-view').EditorView }).view.dom.spellcheck,
+		).toBe(false);
+		expect(editor.dirty).toBe(false);
+		await toggle('Ruler');
+		expect(r.querySelector('.dve-ruler')).toBeNull();
+	});
 	afterEach(() => document.body.replaceChildren());
 
 	it('shows the file name and tracks unsaved changes in the title bar', () => {

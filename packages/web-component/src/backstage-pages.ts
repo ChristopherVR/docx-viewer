@@ -5,6 +5,8 @@ import type { FileCommand } from './file-commands';
 import { pageSizeOf } from './page-size';
 import { sectionsOf } from './section-commands';
 import { ribbonControlId } from './ribbon-visibility';
+import type { BackstageOptions, BackstageOptionKey } from './backstage-options';
+export { renderOptions } from './backstage-options';
 
 /** What the File view needs from the editor; every value is read when a page opens. */
 export interface BackstageHandlers {
@@ -17,8 +19,8 @@ export interface BackstageHandlers {
 		stats: DocumentStats;
 		saveState: string;
 	};
-	options(): { locale: string; theme: string; author: string };
-	setOption(key: 'locale' | 'theme' | 'author', value: string): void;
+	options(): BackstageOptions;
+	setOption(key: BackstageOptionKey, value: string): void;
 	/** Sets a document property (title, author, tags...); an empty value clears it. */
 	setProperty(key: (typeof PROPERTY_FIELDS)[number], value: string): void;
 	/** The ribbon element, for listing its commands on Customize Ribbon. */
@@ -286,46 +288,6 @@ export function renderExport({ handlers, t, content }: PageContext): void {
 			t('Export as plain text'),
 			t('Download the text only, without formatting, pictures or notes.'),
 			primary(t('Export as plain text'), run('exportText')),
-		),
-	);
-}
-
-const LANGUAGES: Array<[string, string]> = [
-	['en', 'English'],
-	['fr', 'Français'],
-	['de', 'Deutsch'],
-	['es', 'Español'],
-	['zh-CN', '简体中文'],
-];
-
-export function renderOptions({ handlers, t, content }: PageContext): void {
-	const current = handlers.options();
-	const language = document.createElement('select');
-	for (const [value, label] of LANGUAGES) language.append(new Option(label, value));
-	language.value = current.locale;
-	language.addEventListener('change', () => handlers.setOption('locale', language.value));
-	const theme = document.createElement('select');
-	for (const [value, label] of [
-		['auto', 'Automatic'],
-		['light', 'Light'],
-		['dark', 'Dark'],
-	] as const)
-		theme.append(new Option(t(label), value));
-	theme.value = ['light', 'dark'].includes(current.theme) ? current.theme : 'auto';
-	theme.addEventListener('change', () => handlers.setOption('theme', theme.value));
-	const author = document.createElement('input');
-	author.type = 'text';
-	author.value = current.author;
-	author.addEventListener('change', () => handlers.setOption('author', author.value));
-	content.replaceChildren(
-		heading(t('Options')),
-		heading(t('General'), 'h3'),
-		labelled(t('Display language'), language),
-		labelled(t('Theme'), theme),
-		labelled(t('Author name'), author),
-		paragraph(
-			t('Options apply to this editor and are not stored between sessions.'),
-			'dve-backstage-muted',
 		),
 	);
 }

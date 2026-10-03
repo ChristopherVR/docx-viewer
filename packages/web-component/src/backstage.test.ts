@@ -44,10 +44,43 @@ const click = (root: HTMLElement, label: string) =>
 		.click();
 
 describe('File backstage', () => {
+	it('starts at Home with working local file actions', () => {
+		const { backstage, calls } = setup();
+		backstage.open();
+		expect(backstage.element.querySelector('h2')?.textContent).toBe('Home');
+		click(backstage.element, 'Open');
+		expect(calls).toEqual([['open', undefined]]);
+	});
+
+	it('keeps Tab within File and restores focus and prior inert state', () => {
+		const opener = document.createElement('button');
+		const disabledRegion = document.createElement('div');
+		disabledRegion.inert = true;
+		document.body.append(opener, disabledRegion);
+		const { backstage } = setup();
+		opener.focus();
+		backstage.open('options');
+		expect(opener.inert).toBe(true);
+		const last = backstage.element.querySelector<HTMLInputElement>('[aria-label="Author name"]')!;
+		last.focus();
+		last.dispatchEvent(
+			new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }),
+		);
+		expect(document.activeElement?.textContent).toBe('Back to document');
+		document.activeElement!.dispatchEvent(
+			new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }),
+		);
+		expect(document.activeElement).toBe(last);
+		backstage.close();
+		expect(document.activeElement).toBe(opener);
+		expect(opener.inert).toBe(false);
+		expect(disabledRegion.inert).toBe(true);
+	});
 	it("lists Word's file actions in order", () => {
 		const { backstage } = setup();
 		expect(nav(backstage.element)).toEqual([
 			'Back to document',
+			'Home',
 			'Info',
 			'New',
 			'Open',

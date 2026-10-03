@@ -21,10 +21,36 @@ test.describe('File tab', () => {
 
 	test('Info reports the document and its properties', async ({ page }) => {
 		const editor = await openFile(page);
+		await navigate(editor, 'Info');
 		const content = editor.locator('.dve-backstage-content');
 		await expect(content).toContainText('Document1.docx');
 		await expect(content).toContainText('Unsaved changes');
 		await expect(editor.locator('.dve-backstage-properties')).toContainText('3');
+	});
+
+	test('Home and Options work on a narrow screen and contain keyboard focus', async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 844 });
+		const editor = await openFile(page);
+		await expect(editor.locator('.dve-backstage-content h2')).toHaveText('Home');
+		await navigate(editor, 'Options');
+		await editor.getByRole('checkbox', { name: 'Ruler', exact: true }).check();
+		await expect(editor.locator('.dve-ruler')).toBeAttached();
+		await editor.getByRole('checkbox', { name: 'Show paragraph marks', exact: true }).check();
+		await expect(editor.locator('.dve-paper')).toHaveAttribute('data-show-marks', '');
+		const last = editor.getByRole('checkbox', { name: 'Page thumbnails', exact: true });
+		await last.focus();
+		await page.keyboard.press('Tab');
+		await expect(
+			editor.getByRole('button', { name: 'Back to document', exact: true }),
+		).toBeFocused();
+		await page.keyboard.press('Shift+Tab');
+		await expect(last).toBeFocused();
+		const overflow = await editor
+			.locator('.dve-backstage-content')
+			.evaluate((el) => el.scrollWidth > el.clientWidth);
+		expect(overflow).toBe(false);
+		await page.keyboard.press('Escape');
+		await expect(editor.locator('.dve-file-tab')).toBeFocused();
 	});
 
 	test('Save As renames the document and downloads it', async ({ page }) => {

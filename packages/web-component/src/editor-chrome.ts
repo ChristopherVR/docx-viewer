@@ -1,5 +1,6 @@
 import { saveDocx, type DocumentModel } from 'docx-core';
 import { createBackstage, type Backstage } from './backstage';
+import type { BackstageOptions, BackstageOptionKey } from './backstage-options';
 import {
 	announceFileCommand,
 	downloadBytes,
@@ -33,8 +34,8 @@ export interface ChromeHost {
 	/** Mirrors the title bar's save state into `element.dirty`. */
 	saveStateChanged?(state: SaveState): void;
 	/** Editor options shown on File > Options. */
-	options(): { locale: string; theme: string; author: string };
-	setOption(key: 'locale' | 'theme' | 'author', value: string): void;
+	options(): BackstageOptions;
+	setOption(key: BackstageOptionKey, value: string): void;
 	hiddenActions(): readonly string[];
 	setHiddenActions(ids: string[]): void;
 }
@@ -111,7 +112,7 @@ export class EditorChrome {
 		fileTab.className = 'dve-file-tab';
 		fileTab.textContent = 'File';
 		fileTab.setAttribute('aria-haspopup', 'dialog');
-		fileTab.addEventListener('click', () => this.backstage.open('info'));
+		fileTab.addEventListener('click', () => this.backstage.open('home'));
 		tabs?.prepend(fileTab);
 	}
 
@@ -153,7 +154,6 @@ export class EditorChrome {
 
 	closeBackstage(): void {
 		this.backstage.close();
-		this.host.ribbon()?.querySelector<HTMLButtonElement>('.dve-file-tab')?.focus();
 	}
 
 	/** Runs a file command unless a host cancels the `file-command` event to handle it itself. */
