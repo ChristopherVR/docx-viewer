@@ -160,7 +160,7 @@ jobs:
           # Stage the changelogs, the version bumps AND the refreshed lockfile, so package.json +
           # bun.lock in the repo always match what is published and the tag points at a commit
           # whose manifests are truthful.
-          git add packages/*/CHANGELOG.md CHANGELOG.md packages/*/package.json bun.lock
+          git add $(node -p "const p=require('./release-plan.json');p.order.filter(k=>p.packages[k].release).flatMap(k=>[p.packages[k].manifest,p.packages[k].changelog]).join(' ')") bun.lock
           if git diff --cached --quiet; then
             echo "No release changes to commit"
           else

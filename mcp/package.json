@@ -1,0 +1,38 @@
+{
+	"name": "docx-viewer-mcp",
+	"version": "0.1.0",
+	"description": "Headless DOCX MCP tools backed only by OOXML core",
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ChristopherVR/docx-viewer.git",
+		"directory": "mcp"
+	},
+	"bin": {
+		"docx-tools": "src/cli.js"
+	},
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE"
+	],
+	"type": "module",
+	"types": "./src/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.d.ts",
+			"import": "./src/index.js"
+		}
+	},
+	"scripts": {
+		"test": "node --test test/*.test.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.30.0",
+		"ooxml-core": ">=0.11.0 <1",
+		"zod": "^4.4.3"
+	},
+	"engines": {
+		"node": ">=22"
+	}
+}

@@ -39,6 +39,11 @@ the element, forward props and options, and re-emit its events.
 
 ## Working agreements
 
+- `mcp/` owns `docx-viewer-mcp`: schemas, MCP registration and its stdio CLI.
+  It delegates headless document operations and filesystem execution to
+  `ooxml-core/automation` and `/automation/node`. The combined `ooxml-mcp`
+  server imports this package's `registerTools`; never duplicate document logic here.
+
 - Published packages (the same model as pptx-viewer): `docx-core` and one
   self-contained `docx-<framework>-viewer` per framework (react, vue, angular,
   svelte, solid, vanilla; vanilla also owns the plain `<docx-editor>` entry and
