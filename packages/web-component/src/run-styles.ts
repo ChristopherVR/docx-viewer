@@ -13,6 +13,7 @@ import {
 import { appendInlineNode } from './run-adapter';
 import { ligatureStyle } from './ligature-style';
 import { scaledSegments, scaleMeasurer } from './run-scale';
+import { scaledParagraphBreaks } from './scaled-paragraph-breaks';
 
 type Theme = NonNullable<DocumentModel['theme']>;
 
@@ -130,6 +131,7 @@ export function runStylesPlugin(getModel: () => DocumentModel) {
 					start: number,
 					tableStyleRun?: RunFormatting,
 				) => {
+					let hasScale = false;
 					paragraph.forEach((child, offset) => {
 						if (!child.isText) return;
 						const run = runOf(child);
@@ -149,6 +151,7 @@ export function runStylesPlugin(getModel: () => DocumentModel) {
 							measurer,
 						);
 						if (segments.length) {
+							hasScale = true;
 							for (const segment of segments)
 								decorations.push(
 									Decoration.inline(
@@ -171,6 +174,7 @@ export function runStylesPlugin(getModel: () => DocumentModel) {
 								}),
 							);
 					});
+					if (hasScale) decorations.push(...scaledParagraphBreaks(paragraph, start));
 				};
 				state.doc.forEach((block, blockOffset) => {
 					if (block.type.name === 'paragraph') return visitParagraph(block, blockOffset + 1);

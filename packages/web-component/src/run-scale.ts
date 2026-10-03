@@ -48,6 +48,14 @@ export function scaledSegments(
 		const nativeSpacing = factor === 0 ? 0 : spacing / factor;
 		const nativeWidth = Math.max(0, glyphWidth + count * nativeSpacing);
 		const advance = Math.max(0, glyphWidth * factor + count * spacing);
+		if (token.kind === 'space')
+			return [
+				{
+					from: token.sourceStart,
+					to: token.sourceStart + token.text.length,
+					css: `display:inline;white-space:pre-wrap;font-family:${cssFontStack(font.family)};font-size:${font.sizePx}px;letter-spacing:${advance - glyphWidth}px`,
+				},
+			];
 		return [
 			{
 				from: token.sourceStart,

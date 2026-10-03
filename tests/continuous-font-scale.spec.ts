@@ -124,51 +124,49 @@ for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid'
 	});
 }
 
-test('formatting boundaries inside a scaled word do not introduce wrapping or document characters', async ({
-	page,
-}) => {
-	test.fail(
-		true,
-		'Continuous scaled words split across formatting runs still wrap at that boundary; tracked in outstanding-work.md.',
-	);
-	await page.goto('/?framework=vanilla');
-	await newDocument(page);
-	const editor = page.locator('docx-editor');
-	await editor.evaluate((element) => {
-		const host = element as DocxEditorElement;
-		host.documentModel = {
-			...host.documentModel!,
-			blocks: [
-				{
-					type: 'paragraph',
-					id: 'mixed',
-					runs: [
-						{ text: 'MMMM', fontFamily: 'Courier New', fontSize: 12, textScalePercent: 50 },
-						{
-							text: 'MMMM',
-							fontFamily: 'Courier New',
-							fontSize: 12,
-							textScalePercent: 50,
-							bold: true,
-						},
-					],
-				},
-			],
-		};
+for (const framework of ['vanilla', 'react', 'vue', 'angular', 'svelte', 'solid']) {
+	test(`${framework}: formatting boundaries inside a scaled word do not introduce wrapping or document characters`, async ({
+		page,
+	}) => {
+		await page.goto(`/?framework=${framework}`);
+		await newDocument(page);
+		const editor = page.locator('docx-editor');
+		await editor.evaluate((element) => {
+			const host = element as DocxEditorElement;
+			host.documentModel = {
+				...host.documentModel!,
+				blocks: [
+					{
+						type: 'paragraph',
+						id: 'mixed',
+						runs: [
+							{ text: 'MMMM', fontFamily: 'Courier New', fontSize: 12, textScalePercent: 50 },
+							{
+								text: 'MMMM',
+								fontFamily: 'Courier New',
+								fontSize: 12,
+								textScalePercent: 50,
+								bold: true,
+							},
+						],
+					},
+				],
+			};
+		});
+		const body = editor.locator('.dve-paper > .ProseMirror');
+		await body.evaluate((root) => {
+			(root as HTMLElement).style.width = '30px';
+		});
+		const rects = await body
+			.locator('.dve-scaled-text')
+			.evaluateAll((spans) => spans.map((span) => span.getBoundingClientRect().top));
+		expect(rects[1]).toBeCloseTo(rects[0]!, 1);
+		await expect(body).toHaveText('MMMMMMMM');
+		await body.click();
+		await page.keyboard.press('Control+a');
+		await page.keyboard.type('replacement');
+		await expect(body).toHaveText('replacement');
+		await page.keyboard.press('Control+z');
+		await expect(body).toHaveText('MMMMMMMM');
 	});
-	const body = editor.locator('.dve-paper > .ProseMirror');
-	await body.evaluate((root) => {
-		(root as HTMLElement).style.width = '30px';
-	});
-	const rects = await body
-		.locator('.dve-scaled-text')
-		.evaluateAll((spans) => spans.map((span) => span.getBoundingClientRect().top));
-	expect(rects[1]).toBeCloseTo(rects[0]!, 1);
-	await expect(body).toHaveText('MMMMMMMM');
-	await body.click();
-	await page.keyboard.press('Control+a');
-	await page.keyboard.type('replacement');
-	await expect(body).toHaveText('replacement');
-	await page.keyboard.press('Control+z');
-	await expect(body).toHaveText('MMMMMMMM');
-});
+}
