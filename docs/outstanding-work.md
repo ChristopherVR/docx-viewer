@@ -27,6 +27,16 @@ warnings identify unsupported imported content.
 
 ## Remaining gaps
 
+### Imported equations
+
+Inline and display OMML equations render as read-only MathML in the editing
+surface and story previews, with accessible equation labels. Conversion lives in
+the shared `ooxml-core/math` area. Unsupported previews show a notice rather than
+silently disappearing. Source OMML stays intact while neighboring text changes;
+save/reopen browser contracts cover all six bindings. Equation insertion and editing
+are not supported. Print Layout shows `[Equation]` and an approximation warning;
+native MathML display does not establish Word layout parity.
+
 ### Editor commands and UI
 
 Done since the merge: per-section page setup and section breaks (undoable), in-place header/footer and footnote/endnote editing, Insert Footnote/Endnote (creating the notes part when needed), headers/footers with live PAGE/NUMPAGES in Print Layout, table style rendering, picture resize and alt text, Word-style window chrome (title bar with quick access, "Tell me"
@@ -60,7 +70,12 @@ Still missing:
 - Pictures and links in headers, footers and notes are resolved, shown and saved with each part's own
   relationships; while a header, footer or note is being edited, the ribbon (formatting, Insert
   Picture, Link) targets it.
-- Tables: default cell margins (`tblCellMar`) and row properties (height with its rule, keep-together, repeat-as-header) are modeled and render in both views; Print Layout clips exact-height rows and repeats header rows. Table > Properties now edits these settings for rectangular tables, with mixed selected rows, validation and one-step undo. Row properties follow surviving rows during structural edits. Opened DOCX packages save changes to these fields while preserving unrelated table XML. Merged/nested/complex tables remain protected; individual cell margins have no controls. Exact-height rows are a minimum on the continuous editing surface and clipped in Print Layout.
+- Tables: default cell margins (`tblCellMar`) and row properties (height with its rule, keep-together, repeat-as-header) are modeled and render in both views; Print Layout clips exact-height rows and repeats header rows. Table > Properties now edits these settings for rectangular tables, with mixed selected rows, validation and one-step undo. Row properties follow surviving rows during structural edits. Opened DOCX packages save changes to these fields while preserving unrelated table XML. Merged/nested/complex tables remain protected. Table > Properties also edits selected-cell
+  margin overrides, with mixed values left blank and only changed sides applied. Use table
+  defaults removes the selected cells’ direct overrides. Row settings, table defaults and
+  cell overrides apply together as one undoable edit; imported widths, borders, shading
+  and extension XML remain preserved on save/reopen. Missing override sides inherit the
+  live table defaults in both views, including explicit zero overrides. Exact-height rows are a minimum on the continuous editing surface and clipped in Print Layout.
 - Paragraph borders (`w:pBdr`, with `w:space` and grouped `between` lines) and shading render in both views from direct formatting and styles. Home offers presets and a Borders and Shading dialog; art borders remain missing.
   In a rectangular table the Home Borders menu (including Inside vertical) and the dialog's Apply to
   Cell or Table draw per-cell edges (`w:tcBorders`): the selected cells' rectangle, one pen, the shared edge on the
@@ -154,7 +169,9 @@ What each tab offers that Word also has:
   thumbnails, Navigation pane (body headings, inherited heading styles, collapsible hierarchy,
   keyboard navigation, current-heading selection and live refresh; also works in Viewing mode),
   Zoom, Zoom to 100%, One page, Page width and Print Layout.
-- **Table (contextual):** appears only while the selection is in a table, as in Word. Properties opens row height (At least/Exactly), Allow row to break across pages, Repeat as header row, and default cell margins in inches. Row settings apply to selected rows; existing individual cell margin overrides stay in place. These controls are disabled for complex tables and Viewing mode. Word 16 COM confirmed row semantics and the 0/0/0.075/0.075-inch default cell margins.
+- **Table (contextual):** appears only while the selection is in a table, as in Word. Properties opens row height (At least/Exactly), Allow row to break across pages, Repeat as header row, default cell margins and selected-cell overrides in inches. Row settings apply to selected rows;
+  cell margins apply to selected cells. Untouched mixed overrides remain intact; Use table
+  defaults clears direct cell overrides. These controls are disabled for complex tables and Viewing mode. Word 16 COM confirmed row semantics and the 0/0/0.075/0.075-inch default cell margins.
 - **Ribbon:** collapse (button, double-click a tab, or Ctrl+F1) with click-to-peek, and tab KeyTips
   after Alt or F10 (H, N, P, S, R, W, T; F opens File); choosing a tab shows a tip on each of its
   commands (Alt, H, 1 is Bold), and Escape steps out.
@@ -265,8 +282,9 @@ Known limits of what is implemented:
   resolve the default Normal font settings, checked against Word COM. Horizontal scale now also
   renders on the continuous surface and in header/footer/note previews, with scaled glyph advances,
   spacing added after scale, word wrapping and native caret/selection. Unicode grapheme clusters
-  stay intact. A scaled word split across formatting runs can still wrap at that split in a narrow
-  column; the browser regression records this as an expected failure pending logical-word grouping.
+  stay intact. On the continuous surface, words split across formatting runs now keep their logical
+  word boundaries when wrapping, with no extra document characters. Browser regressions verify
+  narrow columns, caret placement and undo in all six bindings.
   Scaled word boxes also suppress browser automatic hyphenation inside those words; Print Layout
   remains the required reference for pagination and keeps its existing hyphenation limitation.
   The dialog directs
