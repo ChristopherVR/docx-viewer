@@ -63,6 +63,7 @@ export function tableNode(
 						widthTwips: cell.widthTwips ?? null,
 						verticalAlign: cell.verticalAlign ?? null,
 						shadingFill: visuals.shadingFill ?? null,
+						directShadingFill: cell.shadingFill ?? null,
 						borders: visuals.borders ? JSON.stringify(visuals.borders) : null,
 						directBorders: cell.borders ? JSON.stringify(cell.borders) : null,
 						margins: cell.margins ? JSON.stringify(cell.margins) : null,
@@ -118,8 +119,8 @@ export function convertSimpleTable(
 	convertParagraph: (paragraph: ProseMirrorNode) => Paragraph,
 	prior?: Table,
 ): Table['rows'] {
-	// Cell width, shading, borders and margins have no editor controls; keep each existing cell's
-	// values (matched by its source cell key) so editing text never reads as a formatting change.
+	// Preserve untouched descriptors by source cell identity; direct border and shading edits use
+	// node attributes so editing text never flattens inherited table-style formatting.
 	const priorCells = new Map<string, TableCell>();
 	for (const row of prior?.rows ?? []) for (const cell of row) priorCells.set(cellKey(cell), cell);
 	const rows: Table['rows'] = [];
@@ -142,6 +143,11 @@ export function convertSimpleTable(
 				...(direct ? { borders: JSON.parse(direct) as NonNullable<TableCell['borders']> } : {}),
 				paragraphs,
 			});
+			if (cell.attrs.shadingEdited) {
+				const target = cells[cells.length - 1]!;
+				delete target.shadingThemeFill;
+				target.shadingFill = String(cell.attrs.directShadingFill);
+			}
 		});
 		rows.push(cells);
 	});

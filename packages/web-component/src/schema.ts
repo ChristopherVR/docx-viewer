@@ -243,6 +243,8 @@ export const schema = new Schema({
 				borders: { default: null },
 				/** The cell's own `w:tcBorders` as JSON (`borders` above is the resolved display). */
 				directBorders: { default: null },
+				directShadingFill: { default: null },
+				shadingEdited: { default: false },
 				/** Cell margins (`w:tcMar`) in twips as JSON; display only. */
 				margins: { default: null },
 			},

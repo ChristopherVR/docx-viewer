@@ -1,5 +1,6 @@
 import type { EditorView } from 'prosemirror-view';
 import { checkbox, dialogButton, fieldset, labelled, row, selectOf } from './dialog-fields';
+import { readCellFill } from './table-shading';
 import { focusView } from './focus-view';
 import type { FormatDialog } from './font-dialog';
 import { localizeElement, type EditorLocale } from './localization';
@@ -80,6 +81,7 @@ export function createBordersDialog(getView: () => EditorView | undefined): Form
 		actions,
 	);
 	let locale: EditorLocale = 'en';
+	let fillChanged = false;
 	const content = [...element.childNodes];
 	element.replaceChildren();
 
@@ -107,9 +109,17 @@ export function createBordersDialog(getView: () => EditorView | undefined): Form
 		inside.insideH.wrapper.hidden = !cells;
 		inside.insideV.wrapper.hidden = !cells;
 		if (!cells) loadParagraph(view);
-		fill.disabled = cells || noFill.input.checked;
-		noFill.input.disabled = cells;
+		fillChanged = false;
+		noFill.input.indeterminate = false;
 		if (cells) {
+			const current = readCellFill(
+				tableBorderContext(view.state)!,
+				view.state,
+				scope.value as 'cell' | 'table',
+			);
+			noFill.input.checked = current === null;
+			noFill.input.indeterminate = current === undefined;
+			fill.value = current ?? '#ffff00';
 			const read = readCellBorderSettings(view.state, scope.value as 'cell' | 'table');
 			if (!read) return;
 			for (const [name, box] of Object.entries(sides))
@@ -133,7 +143,16 @@ export function createBordersDialog(getView: () => EditorView | undefined): Form
 		fill.disabled = noFill.input.checked;
 	};
 	automatic.input.addEventListener('change', syncDisabled);
-	noFill.input.addEventListener('change', syncDisabled);
+	noFill.input.addEventListener('change', () => {
+		fillChanged = true;
+		syncDisabled();
+	});
+	fill.addEventListener('input', () => {
+		fillChanged = true;
+		noFill.input.checked = false;
+		noFill.input.indeterminate = false;
+		syncDisabled();
+	});
 	const hide = () => {
 		element.hidden = true;
 		element.replaceChildren();
@@ -145,6 +164,7 @@ export function createBordersDialog(getView: () => EditorView | undefined): Form
 		if (scope.value !== 'paragraph') {
 			const cellSettings: CellBorderSettings = {
 				scope: scope.value as 'cell' | 'table',
+				...(fillChanged ? { fill: noFill.input.checked ? null : fill.value } : {}),
 				sides: {
 					...Object.fromEntries(
 						Object.entries(sides).map(([name, box]) => [name, box.input.checked]),

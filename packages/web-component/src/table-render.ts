@@ -1,5 +1,5 @@
-// Read-only visual rendering helpers for table/cell borders, shading and layout.
-// Table structure/border/shading editing is not yet supported by the writer (see write-table.ts);
+// Visual rendering helpers for table/cell borders, shading and layout.
+// Editable simple-table borders and shading are applied in the shared editor;
 // these attrs are sourced only from the parsed model and are never fed back into edits.
 interface BorderSide {
 	style?: string;

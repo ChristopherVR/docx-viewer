@@ -1,3 +1,4 @@
+import { applyCellFill } from './table-shading';
 import { closeHistory } from 'prosemirror-history';
 import type { EditorState } from 'prosemirror-state';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
@@ -120,7 +121,12 @@ const current = (ctx: TableBorderContext, state: EditorState, row: number, colum
 };
 
 /** Writes each edit to its cell and to the neighbour that shares the edge. */
-function applyEdits(view: EditorView, ctx: TableBorderContext, edits: Edit[]): boolean {
+function applyEdits(
+	view: EditorView,
+	ctx: TableBorderContext,
+	edits: Edit[],
+	shading?: { scope: 'cell' | 'table'; fill: string | null },
+): boolean {
 	const all = new Map<string, Edit>();
 	const add = (edit: Edit) => all.set(`${edit.row}:${edit.column}:${edit.side}`, edit);
 	for (const edit of edits) {
@@ -175,6 +181,7 @@ function applyEdits(view: EditorView, ctx: TableBorderContext, edits: Edit[]): b
 		});
 		rowOffset += row.nodeSize;
 	});
+	if (shading) applyCellFill(tr, ctx, shading.scope, shading.fill);
 	if (!tr.docChanged) return false;
 	view.dispatch(closeHistory(tr));
 	return true;
@@ -209,6 +216,8 @@ export interface CellBorderSettings {
 	/** Edges to draw with `pen`; the others of the scope are cleared. */
 	sides: Partial<Record<CellSide | 'insideH' | 'insideV', boolean>>;
 	pen: BorderPen;
+	/** Omitted preserves existing fill, null explicitly clears it. */
+	fill?: string | null;
 }
 
 const wholeTable = (ctx: TableBorderContext): Rect => ({
@@ -234,7 +243,12 @@ export function applyCellBorderSettings(view: EditorView, settings: CellBorderSe
 	] as const)
 		for (const edge of edgesOf(preset, rect))
 			edits.push({ ...edge, pen: settings.sides[key] ? settings.pen : null });
-	return applyEdits(view, ctx, edits);
+	return applyEdits(
+		view,
+		ctx,
+		edits,
+		settings.fill === undefined ? undefined : { scope: settings.scope, fill: settings.fill },
+	);
 }
 
 /** What the dialog shows for `scope`: which edges have a line, and the first line's pen. */
