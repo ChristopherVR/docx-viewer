@@ -1,15 +1,30 @@
 # docx-react-viewer
 
-The DOCX editor for React. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the React adapter are bundled in, so you install nothing else from this project except `docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
+[![npm version](https://img.shields.io/npm/v/docx-react-viewer.svg)](https://www.npmjs.com/package/docx-react-viewer)
+[![license](https://img.shields.io/npm/l/docx-react-viewer.svg)](https://github.com/ChristopherVR/docx-viewer/blob/main/LICENSE)
+[![types](https://img.shields.io/npm/types/docx-react-viewer.svg)](https://www.npmjs.com/package/docx-react-viewer)
 
-```sh
-npm install docx-react-viewer docx-core react
+> A browser Word document editor for React, using one shared editor and the canonical OOXML document engine.
+
+[Live demo](https://christophervr.github.io/docx-viewer/demo/) | [npm](https://www.npmjs.com/package/docx-react-viewer) | [Full docs](https://christophervr.github.io/docx-viewer/) | [Source](https://github.com/ChristopherVR/docx-viewer)
+
+## Install
+
+```bash
+npm install docx-react-viewer
 ```
+
+Use the framework peers declared by this package: `react` (`>=18`). Existing framework apps normally already provide them.
+
+The package bundles its editor UI and adapter. The core model and shared controls
+are installed as regular registry dependencies and the model API is re-exported.
+One viewer package is enough; no separate core install is required.
+
+## Quick start
 
 ```tsx
 import { useState } from 'react';
-import { createDocument } from 'docx-core';
-import { WordEditor } from 'docx-react-viewer';
+import { createDocument, WordEditor } from 'docx-react-viewer';
 
 export function Editor() {
 	const [model, setModel] = useState(() => createDocument());
@@ -17,13 +32,38 @@ export function Editor() {
 }
 ```
 
-The shared option types and the `loadDocument` / `detectDocumentFormat` helpers are exported from the package root.
+Mount in the browser and give the host a height. Use one editor package per
+application: each registers the same editor custom element.
 
-Notes:
+## Features
 
-- DOCX and legacy `.doc` files are both opened; the format is sniffed from the bytes, never from the file name. Legacy `.doc` support is limited to main-body text with constrained paragraph edits.
-- The ProseMirror libraries are regular dependencies so your package manager can dedupe them with other ProseMirror users. react is a peer dependency.
-- Use one editor package per application: each bundles its own copy of the editor and registers the `<docx-editor>` element.
-- An early editor: not Microsoft Word layout parity, and saving is not lossless for unsupported features. See the [support roadmap](https://github.com/ChristopherVR/docx-viewer/blob/main/docs/parity-roadmap.md).
+| Feature    | Description                                                                     |
+| ---------- | ------------------------------------------------------------------------------- |
+| Editing    | Shared ProseMirror editor, ribbon, dialogs and document change events.          |
+| Files      | Modern DOCX and limited legacy Word 97-2003 DOC loading through core.           |
+| Model      | `createDocument`, `loadDocx`, `saveDocx` and core types from the package entry. |
+| Frameworks | The same `<docx-editor>` UI behind six thin adapters.                           |
 
-Documentation: [bindings guide](https://github.com/ChristopherVR/docx-viewer/blob/main/docs/bindings.md), [React guide](https://github.com/ChristopherVR/docx-viewer/blob/main/docs/frameworks/react.md). Licensed under Apache-2.0.
+## API
+
+The shared props, event handlers, `loadDocument` and `detectDocumentFormat` helpers
+are available from the package. Framework handles expose `load`, `save` and
+`download`. The vanilla package supplies `mountEditor(container, options)` for
+framework-free lifecycle management. ProseMirror, `docx-core`, `ooxml-core` and `ooxml-ui` are regular
+dependencies; document and layout algorithms live in OOXML core.
+
+## Limitations
+
+This is an early editor. It does not establish Microsoft Word layout parity or
+lossless saving for unsupported features. Legacy DOC support is limited to
+main-body text with constrained paragraph edits. SmartArt is display-only and
+charts render as placeholders.
+
+## Documentation
+
+[Framework guide](https://christophervr.github.io/docx-viewer/frameworks/react) |
+[Bindings](https://christophervr.github.io/docx-viewer/bindings)
+
+## License
+
+Apache-2.0.

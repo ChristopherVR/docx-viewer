@@ -2,6 +2,10 @@
 
 # docx-viewer
 
+[![npm version](https://img.shields.io/npm/v/docx-react-viewer.svg)](https://www.npmjs.com/package/docx-react-viewer)
+[![license](https://img.shields.io/npm/l/docx-react-viewer.svg)](https://github.com/ChristopherVR/docx-viewer/blob/main/LICENSE)
+[![types](https://img.shields.io/npm/types/docx-react-viewer.svg)](https://www.npmjs.com/package/docx-react-viewer)
+
 **A browser Word document editor with one document model, one web component and thin adapters for your framework.**
 An early implementation: not Microsoft Word parity, and not lossless export.
 
@@ -39,20 +43,19 @@ An early implementation: not Microsoft Word parity, and not lossless export.
 
 ## Getting started
 
-### 1. Build from source
+### 1. Install
 
 ```bash
-git clone https://github.com/ChristopherVR/docx-viewer.git
-cd docx-viewer
-bun install
-bun run demo   # vanilla demo; add ?framework=react|vue|angular|svelte|solid
+npm install docx-react-viewer
 ```
 
-The DOCX logic comes from the published [`ooxml-core`](https://github.com/ChristopherVR/ooxml-core) package; see [AGENTS.md](AGENTS.md) and the [ooxml-core plan](docs/ooxml-core-plan.md).
+Choose the package for your framework in the package table below. The editor
+installs its core and shared UI dependencies and re-exports its model API.
+For source development, see [Development](#development).
 
 ### 2. Mount the editor
 
-Install one self-contained editor package for your framework, for example `npm install docx-react-viewer react`. The editor packages are `docx-react-viewer`, `-vue-viewer`, `-angular-viewer`, `-svelte-viewer`, `-solid-viewer` and `-vanilla-viewer`. Each one bundles the editor, layout engine and legacy `.doc` reader, brings the document model (`docx-core`) with it, and re-exports it, so a single install and a single import path are all an application needs. Install `docx-core` on its own only for headless use (parsing and serializing without an editor).
+Install one self-contained editor package for your framework, for example `npm install docx-react-viewer react`. The editor packages are `docx-react-viewer`, `-vue-viewer`, `-angular-viewer`, `-svelte-viewer`, `-solid-viewer` and `-vanilla-viewer`. Each one bundles the editor UI and adapter, delegates layout and legacy `.doc` loading to core, brings the document model (`docx-core`) with it, and re-exports it, so a single install and a single import path are all an application needs. Install `docx-core` on its own only for headless use (parsing and serializing without an editor).
 
 ```tsx
 import { createDocument, WordEditor } from 'docx-react-viewer';

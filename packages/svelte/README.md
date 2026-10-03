@@ -1,27 +1,71 @@
 # docx-svelte-viewer
 
-The DOCX editor for Svelte 5. One self-contained package: the editor web component, the layout engine, the legacy Word 97-2003 `.doc` reader and the Svelte 5 adapter are bundled in, so you install nothing else from this project except `docx-core` (the document model, `createDocument`, `loadDocx` and `saveDocx`).
+[![npm version](https://img.shields.io/npm/v/docx-svelte-viewer.svg)](https://www.npmjs.com/package/docx-svelte-viewer)
+[![license](https://img.shields.io/npm/l/docx-svelte-viewer.svg)](https://github.com/ChristopherVR/docx-viewer/blob/main/LICENSE)
+[![types](https://img.shields.io/npm/types/docx-svelte-viewer.svg)](https://www.npmjs.com/package/docx-svelte-viewer)
 
-```sh
-npm install docx-svelte-viewer docx-core svelte
+> A browser Word document editor for Svelte 5, using one shared editor and the canonical OOXML document engine.
+
+[Live demo](https://christophervr.github.io/docx-viewer/demo/) | [npm](https://www.npmjs.com/package/docx-svelte-viewer) | [Full docs](https://christophervr.github.io/docx-viewer/) | [Source](https://github.com/ChristopherVR/docx-viewer)
+
+## Install
+
+```bash
+npm install docx-svelte-viewer
 ```
+
+Use the framework peers declared by this package: `svelte` (`^5.0.0`). Existing framework apps normally already provide them.
+
+The package bundles its editor UI and adapter. The core model and shared controls
+are installed as regular registry dependencies and the model API is re-exported.
+One viewer package is enough; no separate core install is required.
+
+## Quick start
 
 ```svelte
 <script>
-  import { createDocument } from 'docx-core';
+  import { createDocument } from 'docx-svelte-viewer/runtime';
   import WordEditor from 'docx-svelte-viewer';
   let model = $state(createDocument());
 </script>
 <WordEditor documentModel={model} ondocumentchange={next => model = next} />
 ```
 
-The package root is the component (a default export). The plain-JavaScript helpers (`mountEditor`, `loadDocument`, shared types) are under `docx-svelte-viewer/runtime`.
+Mount in the browser and give the host a height. Use one editor package per
+application: each registers the same editor custom element.
 
-Notes:
+## Features
 
-- DOCX and legacy `.doc` files are both opened; the format is sniffed from the bytes, never from the file name. Legacy `.doc` support is limited to main-body text with constrained paragraph edits.
-- The ProseMirror libraries are regular dependencies so your package manager can dedupe them with other ProseMirror users. svelte is a peer dependency.
-- Use one editor package per application: each bundles its own copy of the editor and registers the `<docx-editor>` element.
-- An early editor: not Microsoft Word layout parity, and saving is not lossless for unsupported features. See the [support roadmap](https://github.com/ChristopherVR/docx-viewer/blob/main/docs/parity-roadmap.md).
+| Feature    | Description                                                                     |
+| ---------- | ------------------------------------------------------------------------------- |
+| Editing    | Shared ProseMirror editor, ribbon, dialogs and document change events.          |
+| Files      | Modern DOCX and limited legacy Word 97-2003 DOC loading through core.           |
+| Model      | `createDocument`, `loadDocx`, `saveDocx` and core types from the package entry. |
+| Frameworks | The same `<docx-editor>` UI behind six thin adapters.                           |
 
-Documentation: [bindings guide](https://github.com/ChristopherVR/docx-viewer/blob/main/docs/bindings.md), [Svelte 5 guide](https://github.com/ChristopherVR/docx-viewer/blob/main/docs/frameworks/svelte.md). Licensed under Apache-2.0.
+## API
+
+The shared props, event handlers, `loadDocument` and `detectDocumentFormat` helpers
+are available from the package. For an imperative browser integration,
+`mountEditor(container, options)` returns a binding with `load`, `save` and
+`destroy`. ProseMirror, `docx-core`, `ooxml-core` and `ooxml-ui` are regular
+dependencies; document and layout algorithms live in OOXML core.
+
+The root exports the Svelte component; JavaScript helpers and model exports are
+under `docx-svelte-viewer/runtime`.
+
+## Limitations
+
+This is an early editor. It does not establish Microsoft Word layout parity or
+lossless saving for unsupported features. Legacy DOC support is limited to
+main-body text with constrained paragraph edits. SmartArt is display-only and
+charts render as placeholders.
+
+## Documentation
+
+[Framework guide](https://christophervr.github.io/docx-viewer/frameworks/svelte) |
+[Bindings](https://christophervr.github.io/docx-viewer/bindings)
+
+## License
+
+Apache-2.0.
