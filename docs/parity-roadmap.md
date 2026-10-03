@@ -43,8 +43,15 @@ Print Layout already paginates through `ooxml-core/docx/layout`, including
 sections/columns, keep rules, table row fragmentation, repeating table headers,
 footnotes, headers/footers, page fields and supported floating pictures. The main
 editing surface remains continuous. Print Layout is a read-only paginated render;
-clicks move the cursor back into the editing surface. It is not a second Word-like
+clicks use fragment source ranges and measured glyph boundaries to move the cursor
+back into the editing surface (`print-cursor.spec.ts`). It is not a second Word-like
 editable page surface, and its pagination is approximate.
+
+Selected-cell vertical alignment is editable with save/reopen and undo coverage
+(`table-cell-alignment.spec.ts`). Toolbar/context-menu clipboard commands retain
+supported HTML formatting and tables in the body and stories (`formatted-clipboard.spec.ts`);
+plain-text-only browser APIs still work. External HTML does not guarantee preservation
+of unsupported OOXML properties or objects.
 
 ## Next implementation priorities
 

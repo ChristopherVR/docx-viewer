@@ -39,6 +39,25 @@ native MathML display does not establish Word layout parity.
 
 ### Editor commands and UI
 
+Toolbar and context-menu clipboard commands now use supported HTML when the browser
+clipboard API provides it, preserving schema-supported formatting, links, paragraph
+boundaries and tables. Copy/Cut fallback writes HTML and plain text together; a
+denied write or a changed selection never deletes content. Plain-text-only APIs
+remain supported. External HTML is not an OOXML preservation format, and unsupported
+styles, drawings and equation metadata are not promised to survive clipboard transfer.
+
+Table > Properties edits selected cells' vertical alignment (Top, Center or Bottom),
+with mixed selections left unchanged and a default option that removes direct overrides.
+Alignment applies with the other properties as one undoable edit. Save/reopen keeps
+unrelated imported cell XML. Merged and complex tables remain protected.
+
+Print Layout clicks now use fragment source ranges and displayed glyph boxes instead
+of distributing offsets across the entire column. Centered/indented short lines and
+scaled formatting runs map to the visible text boundaries; grapheme boundaries avoid
+splitting surrogate pairs or combining sequences. This improves click-to-cursor in
+the continuous editor, not editing directly on pages. Mixed-direction text and
+placeholder-to-model offsets still require broader coverage.
+
 Done since the merge: per-section page setup and section breaks (undoable), in-place header/footer and footnote/endnote editing, Insert Footnote/Endnote (creating the notes part when needed), headers/footers with live PAGE/NUMPAGES in Print Layout, table style rendering, picture resize and alt text, Word-style window chrome (title bar with quick access, "Tell me"
 command search, Editing/Viewing mode; File backstage; status bar with zoom and compatibility
 notes), Insert Picture (PNG, JPEG, GIF, BMP, and SVG with a PNG fallback), insert/edit/remove hyperlink with Ctrl+K and a
