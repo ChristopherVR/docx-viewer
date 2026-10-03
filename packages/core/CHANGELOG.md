@@ -7,6 +7,12 @@ A release listed with no entries carried no Conventional Commit in this package'
 scope: scripts/release-plan.mjs re-releases a package whenever any of its files, or an internal
 dependency it ships against, changes, not only on conventional commits.
 
+## [0.1.2](https://github.com/ChristopherVR/docx-viewer/releases/tag/docx-core@0.1.2) - 2026-10-03
+
+### Dependencies
+
+- **deps:** Consume shared equation and cell margin support (by @ChristopherVR) ([9e943fa](https://github.com/ChristopherVR/docx-viewer/commit/9e943fa61bb2f380c2a2cd1153bb1f0f6e276819))
+
 ## [0.1.1](https://github.com/ChristopherVR/docx-viewer/releases/tag/docx-core@0.1.1) - 2026-10-03
 
 ### Features

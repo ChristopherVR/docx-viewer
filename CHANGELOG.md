@@ -9,6 +9,27 @@ history lives in `packages/<name>/CHANGELOG.md`. Nothing has been published yet,
 sections: the first release run writes them.
 ## 2026-10-03
 
+_Releases: docx-core@0.1.2, docx-react-viewer@0.3.0, docx-vue-viewer@0.3.0, docx-angular-viewer@0.3.0, docx-svelte-viewer@0.3.0, docx-solid-viewer@0.3.0, docx-vanilla-viewer@0.3.0_
+
+### Features
+
+- **web-component:** Edit margins for selected table cells (by @ChristopherVR) ([52605c4](https://github.com/ChristopherVR/docx-viewer/commit/52605c40112d7c0f3a6c6c585c97dbabdafc7aed))
+- **web-component:** Display and preserve imported equations (by @ChristopherVR) ([3286dc2](https://github.com/ChristopherVR/docx-viewer/commit/3286dc25f8258e17988a7a718b79c2c9466507f3))
+
+### Bug Fixes
+
+- **web-component:** Wrap scaled words across formatting runs (by @ChristopherVR) ([7821875](https://github.com/ChristopherVR/docx-viewer/commit/7821875536909eda84493337f23c8e0d861cc2ba))
+
+### Documentation
+
+- Record equation and cell margin support boundaries (by @ChristopherVR) ([a96105e](https://github.com/ChristopherVR/docx-viewer/commit/a96105ebb9edd360d24e0c6f9be92846a630e455))
+
+### Dependencies
+
+- **deps:** Consume shared equation and cell margin support (by @ChristopherVR) ([9e943fa](https://github.com/ChristopherVR/docx-viewer/commit/9e943fa61bb2f380c2a2cd1153bb1f0f6e276819))
+
+## 2026-10-03
+
 _Releases: docx-core@0.1.1, docx-react-viewer@0.2.0, docx-vue-viewer@0.2.0, docx-angular-viewer@0.2.0, docx-svelte-viewer@0.2.0, docx-solid-viewer@0.2.0, docx-vanilla-viewer@0.2.0_
 
 ### Features
