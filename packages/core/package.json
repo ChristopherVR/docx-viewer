@@ -29,6 +29,6 @@
 		}
 	},
 	"dependencies": {
-		"ooxml-core": "^0.2.0"
+		"ooxml-core": "^0.5.0"
 	}
 }
