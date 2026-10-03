@@ -49,6 +49,8 @@ export function sameRuns(left: TextRun[], right: TextRun[]) {
 				normalized.fieldCode === undefined &&
 				!previous.image &&
 				!normalized.image &&
+				!previous.equation &&
+				!normalized.equation &&
 				sameJson(previous.link, normalized.link) &&
 				fields.every((field) => previous[field] === normalized[field]) &&
 				sameRevisionMeta(previous, normalized)
@@ -89,6 +91,7 @@ export function sameRuns(left: TextRun[], right: TextRun[]) {
 				sameNoteReference(run.noteReference, other.noteReference) &&
 				sameJson(run.link, other.link) &&
 				sameJson(run.image, other.image) &&
+				sameJson(run.equation, other.equation) &&
 				sameRevisionMeta(run, other)
 			);
 		})

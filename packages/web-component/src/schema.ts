@@ -4,6 +4,7 @@ import { fieldMarkerNodeSpec, noteReferenceNodeSpec, pageBreakNodeSpec } from '.
 import { paragraphBoxCss, tableStyle, tableCellStyle } from './table-render';
 import { imageNodeSpec } from './inline-content-schema';
 import { markSpecs } from './schema-marks';
+import { equationNodeSpec } from './equation-schema';
 
 export { wordHighlightColors } from './schema-marks';
 
@@ -203,6 +204,7 @@ export const schema = new Schema({
 		noteReference: noteReferenceNodeSpec,
 		fieldMarker: fieldMarkerNodeSpec,
 		image: imageNodeSpec,
+		equation: equationNodeSpec,
 		table: {
 			content: 'tableRow+',
 			group: 'block',
@@ -245,7 +247,7 @@ export const schema = new Schema({
 				directBorders: { default: null },
 				directShadingFill: { default: null },
 				shadingEdited: { default: false },
-				/** Cell margins (`w:tcMar`) in twips as JSON; display only. */
+				/** Direct cell margins (`w:tcMar`) in twips as JSON; missing sides inherit table defaults. */
 				margins: { default: null },
 			},
 			parseDOM: [{ tag: 'td' }, { tag: 'th' }],

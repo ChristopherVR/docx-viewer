@@ -11,6 +11,16 @@ export type NoteNumberLookup = (
 ) => { number: number; label: string };
 
 export function runToInlineNodes(run: TextRun, noteNumber?: NoteNumberLookup): ProseMirrorNode[] {
+	if (run.equation) {
+		const { text: _text, equation, ...format } = run;
+		return [
+			schema.nodes.equation.create({
+				omml: equation.omml,
+				display: equation.display,
+				format: Object.keys(format).length ? JSON.stringify(format) : null,
+			}),
+		];
+	}
 	if (run.break) return [schema.nodes.pageBreak.create({ kind: run.break })];
 	if (run.fieldChar || run.fieldCode !== undefined) {
 		const { text: _text, fieldChar, fieldCode, ...format } = run;
@@ -161,6 +171,16 @@ function setRunField<K extends keyof TextRun>(run: TextRun, field: K, value: Tex
 }
 
 export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void {
+	if (child.type.name === 'equation') {
+		const run: TextRun = {
+			text: '',
+			equation: { omml: String(child.attrs.omml), display: Boolean(child.attrs.display) },
+		};
+		if (typeof child.attrs.format === 'string')
+			Object.assign(run, JSON.parse(child.attrs.format) as Partial<TextRun>);
+		runs.push(run);
+		return;
+	}
 	if (child.type.name === 'pageBreak') {
 		runs.push({ text: '', break: child.attrs.kind === 'column' ? 'column' : 'page' });
 		return;
@@ -254,6 +274,7 @@ export function appendInlineNode(runs: TextRun[], child: ProseMirrorNode): void 
 		previous &&
 		!previous.break &&
 		!previous.image &&
+		!previous.equation &&
 		!previous.noteReference &&
 		!previous.fieldChar &&
 		previous.fieldCode === undefined &&
