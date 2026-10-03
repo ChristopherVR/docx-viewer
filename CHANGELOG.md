@@ -9,6 +9,22 @@ history lives in `packages/<name>/CHANGELOG.md`. Nothing has been published yet,
 sections: the first release run writes them.
 ## 2026-10-03
 
+_Releases: docx-viewer-mcp@0.1.1_
+
+### Features
+
+- **release:** Add core backed Word MCP tools (by @ChristopherVR) ([ebae8c7](https://github.com/ChristopherVR/docx-viewer/commit/ebae8c7a59641b3b3a59dc41c193d77e303d0bb4))
+
+### Bug Fixes
+
+- **release:** Stage planned package versions and changelogs (by @ChristopherVR) ([652c149](https://github.com/ChristopherVR/docx-viewer/commit/652c1498f4fd939c81cee0c10b7b9ad5e0525944))
+
+### Documentation
+
+- Remove stale npm publication notices (by @ChristopherVR) ([ed78f9f](https://github.com/ChristopherVR/docx-viewer/commit/ed78f9fce9198cd92ce51c79b9d36e7f6a33f37c))
+
+## 2026-10-03
+
 _Releases: docx-core@0.1.3, docx-react-viewer@0.4.0, docx-vue-viewer@0.4.0, docx-angular-viewer@0.4.0, docx-svelte-viewer@0.4.0, docx-solid-viewer@0.4.0, docx-vanilla-viewer@0.4.0_
 
 ### Features
