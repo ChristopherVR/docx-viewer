@@ -9,6 +9,27 @@ history lives in `packages/<name>/CHANGELOG.md`. Nothing has been published yet,
 sections: the first release run writes them.
 ## 2026-10-03
 
+_Releases: docx-core@0.1.3, docx-react-viewer@0.4.0, docx-vue-viewer@0.4.0, docx-angular-viewer@0.4.0, docx-svelte-viewer@0.4.0, docx-solid-viewer@0.4.0, docx-vanilla-viewer@0.4.0_
+
+### Features
+
+- **web-component:** Edit selected cell vertical alignment (by @ChristopherVR) ([f744de1](https://github.com/ChristopherVR/docx-viewer/commit/f744de14876ad306fd8791f8ff2e38b987741b0b))
+
+### Bug Fixes
+
+- **web-component:** Preserve formatting in clipboard commands (by @ChristopherVR) ([453a451](https://github.com/ChristopherVR/docx-viewer/commit/453a451c1ce24044a2896feb58704f7eb318fb5f))
+- **web-component:** Map print clicks to visible glyph boundaries (by @ChristopherVR) ([fc4e047](https://github.com/ChristopherVR/docx-viewer/commit/fc4e04778bdb4f38d6b8ec54e693c5f4f0b08220))
+
+### Documentation
+
+- Record alignment clipboard and print cursor coverage (by @ChristopherVR) ([7ba78de](https://github.com/ChristopherVR/docx-viewer/commit/7ba78de4f5d450354b55f302302a000e0af7f151))
+
+### Dependencies
+
+- **deps:** Consume shared alignment and layout source ranges (by @ChristopherVR) ([81b8c51](https://github.com/ChristopherVR/docx-viewer/commit/81b8c5148f139f9e8eadde14491eb167b042072b))
+
+## 2026-10-03
+
 _Releases: docx-core@0.1.2, docx-react-viewer@0.3.0, docx-vue-viewer@0.3.0, docx-angular-viewer@0.3.0, docx-svelte-viewer@0.3.0, docx-solid-viewer@0.3.0, docx-vanilla-viewer@0.3.0_
 
 ### Features

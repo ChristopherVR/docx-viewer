@@ -7,6 +7,21 @@ A release listed with no entries carried no Conventional Commit in this package'
 scope: scripts/release-plan.mjs re-releases a package whenever any of its files, or an internal
 dependency it ships against, changes, not only on conventional commits.
 
+## [0.4.0](https://github.com/ChristopherVR/docx-viewer/releases/tag/docx-vanilla-viewer@0.4.0) - 2026-10-03
+
+### Features
+
+- **web-component:** Edit selected cell vertical alignment (by @ChristopherVR) ([f744de1](https://github.com/ChristopherVR/docx-viewer/commit/f744de14876ad306fd8791f8ff2e38b987741b0b))
+
+### Bug Fixes
+
+- **web-component:** Preserve formatting in clipboard commands (by @ChristopherVR) ([453a451](https://github.com/ChristopherVR/docx-viewer/commit/453a451c1ce24044a2896feb58704f7eb318fb5f))
+- **web-component:** Map print clicks to visible glyph boundaries (by @ChristopherVR) ([fc4e047](https://github.com/ChristopherVR/docx-viewer/commit/fc4e04778bdb4f38d6b8ec54e693c5f4f0b08220))
+
+### Dependencies
+
+- **deps:** Consume shared alignment and layout source ranges (by @ChristopherVR) ([81b8c51](https://github.com/ChristopherVR/docx-viewer/commit/81b8c5148f139f9e8eadde14491eb167b042072b))
+
 ## [0.3.0](https://github.com/ChristopherVR/docx-viewer/releases/tag/docx-vanilla-viewer@0.3.0) - 2026-10-03
 
 ### Features
