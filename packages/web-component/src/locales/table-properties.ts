@@ -18,6 +18,10 @@ export const enTableProperties = {
 	'Cell bottom': 'Cell bottom',
 	'Cell left': 'Cell left',
 	'Cell right': 'Cell right',
+	'Cell alignment': 'Cell alignment',
+	'Cell vertical alignment': 'Cell vertical alignment',
+	'Default alignment': 'Default alignment',
+	'Justified (imported)': 'Justified (imported)',
 	'Enter a measurement within the displayed range.':
 		'Enter a measurement within the displayed range.',
 } as const;
@@ -45,6 +49,10 @@ export const frTableProperties = fromValues([
 	'Bas de cellule',
 	'Gauche de cellule',
 	'Droite de cellule',
+	'Alignement des cellules',
+	'Alignement vertical des cellules',
+	'Alignement par défaut',
+	'Justifié (importé)',
 	'Saisissez une mesure dans la plage affichée.',
 ]);
 export const deTableProperties = fromValues([
@@ -66,6 +74,10 @@ export const deTableProperties = fromValues([
 	'Zelle unten',
 	'Zelle links',
 	'Zelle rechts',
+	'Zellausrichtung',
+	'Vertikale Zellausrichtung',
+	'Standardausrichtung',
+	'Blocksatz (importiert)',
 	'Geben Sie einen Wert im angezeigten Bereich ein.',
 ]);
 export const esTableProperties = fromValues([
@@ -87,6 +99,10 @@ export const esTableProperties = fromValues([
 	'Celda inferior',
 	'Celda izquierda',
 	'Celda derecha',
+	'Alineación de celdas',
+	'Alineación vertical de celdas',
+	'Alineación predeterminada',
+	'Justificado (importado)',
 	'Introduzca una medida dentro del intervalo mostrado.',
 ]);
 export const zhTableProperties = fromValues([
@@ -108,5 +124,9 @@ export const zhTableProperties = fromValues([
 	'单元格下边距',
 	'单元格左边距',
 	'单元格右边距',
+	'单元格对齐',
+	'单元格垂直对齐',
+	'默认对齐',
+	'两端对齐（导入）',
 	'请输入显示范围内的尺寸。',
 ]);

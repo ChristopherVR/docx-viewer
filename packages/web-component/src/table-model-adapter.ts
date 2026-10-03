@@ -136,12 +136,16 @@ export function convertSimpleTable(
 				paragraphs: _previous,
 				borders: _borders,
 				margins: _margins,
+				verticalAlign: _verticalAlign,
 				...properties
 			} = source ?? { paragraphs: [] };
 			const direct = typeof cell.attrs.directBorders === 'string' ? cell.attrs.directBorders : null;
 			cells.push({
 				...structuredClone(properties),
 				...(direct ? { borders: JSON.parse(direct) as NonNullable<TableCell['borders']> } : {}),
+				...(typeof cell.attrs.verticalAlign === 'string'
+					? { verticalAlign: cell.attrs.verticalAlign as NonNullable<TableCell['verticalAlign']> }
+					: {}),
 				...(typeof cell.attrs.margins === 'string'
 					? { margins: JSON.parse(cell.attrs.margins) as NonNullable<TableCell['margins']> }
 					: {}),

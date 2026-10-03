@@ -12,6 +12,7 @@ import {
 } from './dialog-fields';
 import type { FormatDialog } from './font-dialog';
 import { focusView } from './focus-view';
+import { createCellAlignmentField } from './table-cell-alignment-dialog';
 import { createCellMarginFields } from './table-cell-margins-dialog';
 import { localizeElement, type EditorLocale } from './localization';
 import {
@@ -52,6 +53,7 @@ export function createTablePropertiesDialog(viewOf: () => EditorView | undefined
 	actions.className = 'dve-dialog-actions';
 	actions.append(cancel, ok);
 	const cellMargins = createCellMarginFields(() => validate());
+	const cellAlignment = createCellAlignmentField();
 	const content = [
 		heading,
 		fieldset(
@@ -67,6 +69,7 @@ export function createTablePropertiesDialog(viewOf: () => EditorView | undefined
 			row(labelled('Left', margins.left), labelled('Right', margins.right)),
 		),
 		cellMargins.element,
+		cellAlignment.element,
 		note,
 		message,
 		actions,
@@ -146,7 +149,8 @@ export function createTablePropertiesDialog(viewOf: () => EditorView | undefined
 		for (const side of sides)
 			if (changed.has(side))
 				marginPatch[side] = signedTwips(Math.round(Number(margins[side].value) * 1440));
-		if (applyTableProperties(view, patch, marginPatch, cellMargins.patch())) hide();
+		if (applyTableProperties(view, patch, marginPatch, cellMargins.patch(), cellAlignment.patch()))
+			hide();
 	};
 	cancel.addEventListener('click', hide);
 	ok.addEventListener('click', submit);
@@ -200,6 +204,7 @@ export function createTablePropertiesDialog(viewOf: () => EditorView | undefined
 					(context.margins[side] ?? (side === 'left' || side === 'right' ? 108 : 0)) / 1440,
 				);
 			cellMargins.load(context);
+			cellAlignment.load(context);
 			validate();
 			element.hidden = false;
 			specified.input.focus();

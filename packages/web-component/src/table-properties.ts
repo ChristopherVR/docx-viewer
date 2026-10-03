@@ -1,4 +1,4 @@
-import type { Table, TableCellMargins } from 'docx-core';
+import type { Table, TableCell, TableCellMargins } from 'docx-core';
 import { closeHistory } from 'prosemirror-history';
 import type { EditorState } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
@@ -20,7 +20,11 @@ export function tablePropertiesContext(state: EditorState) {
 		)
 			return null;
 		const rows: Array<{ pos: number; properties: TableRowProperties }> = [];
-		const cells: Array<{ pos: number; margins: TableCellMargins }> = [];
+		const cells: Array<{
+			pos: number;
+			margins: TableCellMargins;
+			verticalAlign: TableCell['verticalAlign'];
+		}> = [];
 		let pos = $from.start(depth);
 		table.forEach((row, offset, index) => {
 			if (index >= $from.index(depth) && index <= $to.index(depth))
@@ -34,6 +38,7 @@ export function tablePropertiesContext(state: EditorState) {
 					cells.push({
 						pos: cellPos,
 						margins: cell.attrs.margins ? (JSON.parse(cell.attrs.margins) as TableCellMargins) : {},
+						verticalAlign: (cell.attrs.verticalAlign ?? undefined) as TableCell['verticalAlign'],
 					});
 			});
 		});
@@ -57,13 +62,16 @@ export function applyTableProperties(
 	marginPatch: TableCellMargins,
 	/** Null removes all direct cell overrides; omitted leaves them untouched. */
 	cellMarginPatch?: TableCellMargins | null,
+	/** Null removes the direct alignment override; omitted leaves it untouched. */
+	cellAlignment?: TableCell['verticalAlign'] | null,
 ): boolean {
 	const context = tablePropertiesContext(view.state);
 	if (!view.editable || !context) return false;
 	if (
 		!Object.keys(rowPatch).length &&
 		!Object.keys(marginPatch).length &&
-		cellMarginPatch === undefined
+		cellMarginPatch === undefined &&
+		cellAlignment === undefined
 	)
 		return true;
 	const tr = closeHistory(view.state.tr);
@@ -83,13 +91,20 @@ export function applyTableProperties(
 			...context.table.attrs,
 			cellMargins: JSON.stringify({ ...context.margins, ...marginPatch }),
 		});
-	if (cellMarginPatch !== undefined)
+	if (cellMarginPatch !== undefined || cellAlignment !== undefined)
 		for (const cell of context.cells) {
 			const node = tr.doc.nodeAt(cell.pos)!;
 			tr.setNodeMarkup(cell.pos, undefined, {
 				...node.attrs,
-				margins:
-					cellMarginPatch === null ? null : JSON.stringify({ ...cell.margins, ...cellMarginPatch }),
+				...(cellMarginPatch === undefined
+					? {}
+					: {
+							margins:
+								cellMarginPatch === null
+									? null
+									: JSON.stringify({ ...cell.margins, ...cellMarginPatch }),
+						}),
+				...(cellAlignment === undefined ? {} : { verticalAlign: cellAlignment }),
 			});
 		}
 	view.dispatch(tr);
