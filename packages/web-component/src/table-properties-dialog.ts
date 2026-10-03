@@ -12,6 +12,7 @@ import {
 } from './dialog-fields';
 import type { FormatDialog } from './font-dialog';
 import { focusView } from './focus-view';
+import { createCellMarginFields } from './table-cell-margins-dialog';
 import { localizeElement, type EditorLocale } from './localization';
 import {
 	applyTableProperties,
@@ -42,7 +43,7 @@ export function createTablePropertiesDialog(viewOf: () => EditorView | undefined
 	) as Record<(typeof sides)[number], HTMLInputElement>;
 	const note = document.createElement('p');
 	note.textContent =
-		'Row settings apply to selected rows. Cell margins are table defaults; individual cell overrides are kept.';
+		'Row settings apply to selected rows. Cell margins apply to selected cells; untouched overrides are kept.';
 	const message = document.createElement('p');
 	message.setAttribute('role', 'alert');
 	const cancel = dialogButton('Cancel');
@@ -50,6 +51,7 @@ export function createTablePropertiesDialog(viewOf: () => EditorView | undefined
 	const actions = document.createElement('div');
 	actions.className = 'dve-dialog-actions';
 	actions.append(cancel, ok);
+	const cellMargins = createCellMarginFields(() => validate());
 	const content = [
 		heading,
 		fieldset(
@@ -64,6 +66,7 @@ export function createTablePropertiesDialog(viewOf: () => EditorView | undefined
 			row(labelled('Top', margins.top), labelled('Bottom', margins.bottom)),
 			row(labelled('Left', margins.left), labelled('Right', margins.right)),
 		),
+		cellMargins.element,
 		note,
 		message,
 		actions,
@@ -91,10 +94,12 @@ export function createTablePropertiesDialog(viewOf: () => EditorView | undefined
 					Number(control.value) < Number(control.min) ||
 					Number(control.value) > Number(control.max)),
 		);
-		ok.disabled = invalid;
-		message.textContent = invalid ? 'Enter a measurement within the displayed range.' : '';
+		const invalidCell = !cellMargins.valid();
+		ok.disabled = invalid || invalidCell;
+		message.textContent =
+			invalid || invalidCell ? 'Enter a measurement within the displayed range.' : '';
 		localizeElement(message, locale);
-		return !invalid;
+		return !invalid && !invalidCell;
 	};
 	for (const [key, control] of Object.entries(controls)) {
 		control.addEventListener('input', () => {
@@ -141,7 +146,7 @@ export function createTablePropertiesDialog(viewOf: () => EditorView | undefined
 		for (const side of sides)
 			if (changed.has(side))
 				marginPatch[side] = signedTwips(Math.round(Number(margins[side].value) * 1440));
-		if (applyTableProperties(view, patch, marginPatch)) hide();
+		if (applyTableProperties(view, patch, marginPatch, cellMargins.patch())) hide();
 	};
 	cancel.addEventListener('click', hide);
 	ok.addEventListener('click', submit);
@@ -194,6 +199,7 @@ export function createTablePropertiesDialog(viewOf: () => EditorView | undefined
 				margins[side].value = String(
 					(context.margins[side] ?? (side === 'left' || side === 'right' ? 108 : 0)) / 1440,
 				);
+			cellMargins.load(context);
 			validate();
 			element.hidden = false;
 			specified.input.focus();

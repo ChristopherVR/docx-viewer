@@ -1,6 +1,6 @@
 // Visual rendering helpers for table/cell borders, shading and layout.
-// Editable simple-table borders and shading are applied in the shared editor;
-// these attrs are sourced only from the parsed model and are never fed back into edits.
+// Direct margins, borders and shading are edited in the shared editor;
+// inherited visual formatting is kept separate from direct document formatting.
 interface BorderSide {
 	style?: string;
 	sizeEighthPoints?: number;
@@ -46,6 +46,7 @@ const twipsPx = (value: unknown): string | null =>
 
 export function tableStyle(attrs: Record<string, unknown>): string {
 	const borders = parseBordersJson(attrs.borders);
+	const margins = marginValues(attrs.cellMargins);
 	const declarations = [
 		'border-collapse:collapse',
 		twipsPx(attrs.widthTwips) && `width:${twipsPx(attrs.widthTwips)}`,
@@ -58,7 +59,9 @@ export function tableStyle(attrs: Record<string, unknown>): string {
 		// table's inside line; tables with no border information fall back to dashed gridlines.
 		borders && `--dve-cell-border:${cssBorderSide(borders.insideH ?? borders.top) ?? 'none'}`,
 		// Cells without their own margins use the table's (`w:tblCellMar`).
-		typeof attrs.cellMargins === 'string' && `--dve-cell-padding:${marginsCss(attrs.cellMargins)}`,
+		...(['top', 'right', 'bottom', 'left'] as const).map(
+			(side) => `--dve-cell-padding-${side}:${margins[side] ?? DEFAULT_CELL_MARGINS[side] / 15}px`,
+		),
 	].filter(Boolean);
 	return declarations.join(';');
 }
@@ -66,7 +69,7 @@ export function tableStyle(attrs: Record<string, unknown>): string {
 /** Word's default cell margins: none above/below, 0.075" (108 twips) left and right. */
 const DEFAULT_CELL_MARGINS = { top: 0, bottom: 0, left: 108, right: 108 };
 
-function marginsCss(value: unknown): string {
+function marginValues(value: unknown): Partial<typeof DEFAULT_CELL_MARGINS> {
 	let margins: Partial<typeof DEFAULT_CELL_MARGINS> = {};
 	if (typeof value === 'string')
 		try {
@@ -74,15 +77,20 @@ function marginsCss(value: unknown): string {
 		} catch {
 			margins = {};
 		}
-	const side = (key: keyof typeof DEFAULT_CELL_MARGINS) =>
-		`${(margins[key] ?? DEFAULT_CELL_MARGINS[key]) / 15}px`;
-	return `${side('top')} ${side('right')} ${side('bottom')} ${side('left')}`;
+	return Object.fromEntries(
+		Object.entries(margins).map(([key, twips]) => [key, Number(twips) / 15]),
+	);
 }
 
 function cellPadding(value: unknown): string {
-	return value == null
-		? `padding:var(--dve-cell-padding, ${marginsCss(null)})`
-		: `padding:${marginsCss(value)}`;
+	const margins = marginValues(value);
+	return `padding:${(['top', 'right', 'bottom', 'left'] as const)
+		.map((side) =>
+			margins[side] === undefined
+				? `var(--dve-cell-padding-${side}, ${DEFAULT_CELL_MARGINS[side] / 15}px)`
+				: `${margins[side]}px`,
+		)
+		.join(' ')}`;
 }
 
 export function tableCellStyle(attrs: Record<string, unknown>): string {

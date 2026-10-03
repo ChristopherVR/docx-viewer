@@ -131,12 +131,14 @@ describe('table rendering', () => {
 
 	it('pads cells with their own margins, defaulting to Word margins of 0.075 inch left and right', () => {
 		// Without its own margins a cell uses the table's (`w:tblCellMar`), else Word's default.
-		expect(tableCellStyle({})).toContain('padding:var(--dve-cell-padding, 0px 7.2px 0px 7.2px)');
+		expect(tableCellStyle({})).toContain(
+			'padding:var(--dve-cell-padding-top, 0px) var(--dve-cell-padding-right, 7.2px) var(--dve-cell-padding-bottom, 0px) var(--dve-cell-padding-left, 7.2px)',
+		);
 		expect(tableStyle({ cellMargins: JSON.stringify({ left: 0, right: 0 }) })).toContain(
-			'--dve-cell-padding:0px 0px 0px 0px',
+			'--dve-cell-padding-left:0px',
 		);
 		expect(tableCellStyle({ margins: JSON.stringify({ top: 45, left: 216 }) })).toContain(
-			'padding:3px 7.2px 0px 14.4px',
+			'padding:3px var(--dve-cell-padding-right, 7.2px) var(--dve-cell-padding-bottom, 0px) 14.4px',
 		);
 	});
 });

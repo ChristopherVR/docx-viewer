@@ -20,15 +20,28 @@ export function tablePropertiesContext(state: EditorState) {
 		)
 			return null;
 		const rows: Array<{ pos: number; properties: TableRowProperties }> = [];
+		const cells: Array<{ pos: number; margins: TableCellMargins }> = [];
 		let pos = $from.start(depth);
 		table.forEach((row, offset, index) => {
 			if (index >= $from.index(depth) && index <= $to.index(depth))
 				rows.push({ pos: pos + offset, properties: row.attrs.properties ?? {} });
+			row.forEach((cell, cellOffset) => {
+				const cellPos = pos + offset + 1 + cellOffset;
+				if (
+					Math.max(state.selection.from, cellPos + 1) <=
+					Math.min(state.selection.to, cellPos + cell.nodeSize - 1)
+				)
+					cells.push({
+						pos: cellPos,
+						margins: cell.attrs.margins ? (JSON.parse(cell.attrs.margins) as TableCellMargins) : {},
+					});
+			});
 		});
 		return {
 			pos: $from.before(depth),
 			table,
 			rows,
+			cells,
 			margins: (table.attrs.cellMargins
 				? JSON.parse(table.attrs.cellMargins)
 				: {}) as TableCellMargins,
@@ -42,10 +55,17 @@ export function applyTableProperties(
 	view: EditorView,
 	rowPatch: RowPatch,
 	marginPatch: TableCellMargins,
+	/** Null removes all direct cell overrides; omitted leaves them untouched. */
+	cellMarginPatch?: TableCellMargins | null,
 ): boolean {
 	const context = tablePropertiesContext(view.state);
 	if (!view.editable || !context) return false;
-	if (!Object.keys(rowPatch).length && !Object.keys(marginPatch).length) return true;
+	if (
+		!Object.keys(rowPatch).length &&
+		!Object.keys(marginPatch).length &&
+		cellMarginPatch === undefined
+	)
+		return true;
 	const tr = closeHistory(view.state.tr);
 	for (const row of context.rows) {
 		const node = tr.doc.nodeAt(row.pos)!;
@@ -63,6 +83,15 @@ export function applyTableProperties(
 			...context.table.attrs,
 			cellMargins: JSON.stringify({ ...context.margins, ...marginPatch }),
 		});
+	if (cellMarginPatch !== undefined)
+		for (const cell of context.cells) {
+			const node = tr.doc.nodeAt(cell.pos)!;
+			tr.setNodeMarkup(cell.pos, undefined, {
+				...node.attrs,
+				margins:
+					cellMarginPatch === null ? null : JSON.stringify({ ...cell.margins, ...cellMarginPatch }),
+			});
+		}
 	view.dispatch(tr);
 	return true;
 }

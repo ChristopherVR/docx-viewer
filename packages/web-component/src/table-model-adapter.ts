@@ -119,7 +119,7 @@ export function convertSimpleTable(
 	convertParagraph: (paragraph: ProseMirrorNode) => Paragraph,
 	prior?: Table,
 ): Table['rows'] {
-	// Preserve untouched descriptors by source cell identity; direct border and shading edits use
+	// Preserve untouched descriptors by source cell identity; direct border, shading and margin edits use
 	// node attributes so editing text never flattens inherited table-style formatting.
 	const priorCells = new Map<string, TableCell>();
 	for (const row of prior?.rows ?? []) for (const cell of row) priorCells.set(cellKey(cell), cell);
@@ -135,12 +135,16 @@ export function convertSimpleTable(
 			const {
 				paragraphs: _previous,
 				borders: _borders,
+				margins: _margins,
 				...properties
 			} = source ?? { paragraphs: [] };
 			const direct = typeof cell.attrs.directBorders === 'string' ? cell.attrs.directBorders : null;
 			cells.push({
 				...structuredClone(properties),
 				...(direct ? { borders: JSON.parse(direct) as NonNullable<TableCell['borders']> } : {}),
+				...(typeof cell.attrs.margins === 'string'
+					? { margins: JSON.parse(cell.attrs.margins) as NonNullable<TableCell['margins']> }
+					: {}),
 				paragraphs,
 			});
 			if (cell.attrs.shadingEdited) {

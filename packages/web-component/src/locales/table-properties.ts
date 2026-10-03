@@ -10,8 +10,14 @@ export const enTableProperties = {
 	'Allow row to break across pages': 'Allow row to break across pages',
 	'Repeat as header row at the top of each page': 'Repeat as header row at the top of each page',
 	'Default cell margins (inches)': 'Default cell margins (inches)',
-	'Row settings apply to selected rows. Cell margins are table defaults; individual cell overrides are kept.':
-		'Row settings apply to selected rows. Cell margins are table defaults; individual cell overrides are kept.',
+	'Row settings apply to selected rows. Cell margins apply to selected cells; untouched overrides are kept.':
+		'Row settings apply to selected rows. Cell margins apply to selected cells; untouched overrides are kept.',
+	'Selected cell margins (inches)': 'Selected cell margins (inches)',
+	'Use table defaults': 'Use table defaults',
+	'Cell top': 'Cell top',
+	'Cell bottom': 'Cell bottom',
+	'Cell left': 'Cell left',
+	'Cell right': 'Cell right',
 	'Enter a measurement within the displayed range.':
 		'Enter a measurement within the displayed range.',
 } as const;
@@ -32,7 +38,13 @@ export const frTableProperties = fromValues([
 	'Autoriser le fractionnement des lignes sur plusieurs pages',
 	'Répéter en tant que ligne d’en-tête en haut de chaque page',
 	'Marges de cellule par défaut (pouces)',
-	'Les paramètres de ligne s’appliquent aux lignes sélectionnées. Les marges de cellule sont les valeurs par défaut du tableau ; les réglages individuels sont conservés.',
+	'Les paramètres de ligne s’appliquent aux lignes sélectionnées. Les marges s’appliquent aux cellules sélectionnées ; les réglages inchangés sont conservés.',
+	'Marges des cellules sélectionnées (pouces)',
+	'Utiliser les valeurs du tableau',
+	'Haut de cellule',
+	'Bas de cellule',
+	'Gauche de cellule',
+	'Droite de cellule',
 	'Saisissez une mesure dans la plage affichée.',
 ]);
 export const deTableProperties = fromValues([
@@ -47,7 +59,13 @@ export const deTableProperties = fromValues([
 	'Zeilenwechsel auf Seiten zulassen',
 	'Als Überschrift auf jeder Seite wiederholen',
 	'Standardzellränder (Zoll)',
-	'Die Zeileneinstellungen gelten für ausgewählte Zeilen. Zellränder sind Tabellenstandardwerte; individuelle Zelleneinstellungen bleiben erhalten.',
+	'Die Zeileneinstellungen gelten für ausgewählte Zeilen. Zellränder gelten für ausgewählte Zellen; unveränderte Einstellungen bleiben erhalten.',
+	'Ränder ausgewählter Zellen (Zoll)',
+	'Tabellenstandard verwenden',
+	'Zelle oben',
+	'Zelle unten',
+	'Zelle links',
+	'Zelle rechts',
 	'Geben Sie einen Wert im angezeigten Bereich ein.',
 ]);
 export const esTableProperties = fromValues([
@@ -62,7 +80,13 @@ export const esTableProperties = fromValues([
 	'Permitir dividir filas entre páginas',
 	'Repetir como fila de encabezado en cada página',
 	'Márgenes de celda predeterminados (pulgadas)',
-	'Los ajustes de fila se aplican a las filas seleccionadas. Los márgenes son los predeterminados de la tabla; se conservan los ajustes individuales de celda.',
+	'Los ajustes de fila se aplican a las filas seleccionadas. Los márgenes se aplican a las celdas seleccionadas; se conservan los ajustes sin cambios.',
+	'Márgenes de las celdas seleccionadas (pulgadas)',
+	'Usar valores de tabla',
+	'Celda superior',
+	'Celda inferior',
+	'Celda izquierda',
+	'Celda derecha',
 	'Introduzca una medida dentro del intervalo mostrado.',
 ]);
 export const zhTableProperties = fromValues([
@@ -77,6 +101,12 @@ export const zhTableProperties = fromValues([
 	'允许跨页断行',
 	'在各页顶端以标题行形式重复出现',
 	'默认单元格边距（英寸）',
-	'行设置应用于所选行。单元格边距为表格默认值；保留单个单元格的设置。',
+	'行设置应用于所选行。单元格边距应用于所选单元格；保留未更改的设置。',
+	'所选单元格边距（英寸）',
+	'使用表格默认值',
+	'单元格上边距',
+	'单元格下边距',
+	'单元格左边距',
+	'单元格右边距',
 	'请输入显示范围内的尺寸。',
 ]);
