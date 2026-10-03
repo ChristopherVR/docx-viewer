@@ -1,5 +1,6 @@
 import { readFile, readdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import { workspacePackageNames } from './workspace-packages.mjs';
 const root = new URL('../', import.meta.url);
 async function sources(directory) {
 	const result = [];
@@ -54,7 +55,7 @@ for (const name of [...PUBLISHED, ...INTERNAL]) {
 	}
 }
 assert.deepEqual(
-	(await readdir(new URL('packages/', root))).sort(),
+	await workspacePackageNames(new URL('packages/', root)),
 	[...PUBLISHED, ...INTERNAL].sort(),
 	'every workspace package must be classified as published or internal',
 );
