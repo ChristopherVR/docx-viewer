@@ -1,6 +1,6 @@
 {
 	"name": "docx-core",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Framework-neutral DOCX document model, parser and serializer (thin entry point over ooxml-core/docx)",
 	"license": "Apache-2.0",
 	"author": "ChristopherVR",

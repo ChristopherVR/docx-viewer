@@ -1,6 +1,6 @@
 {
 	"name": "docx-vue-viewer",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Vue 3 component for the DOCX editor. Self-contained: includes the editor, layout engine and legacy .doc reader.",
 	"keywords": [
 		"doc",
@@ -36,7 +36,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"docx-core": "^0.1.0",
+		"docx-core": "^0.1.1",
 		"ooxml-core": "^0.5.0",
 		"ooxml-ui": "^0.1.4",
 		"prosemirror-collab": "^1.3.1",
