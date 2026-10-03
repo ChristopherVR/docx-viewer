@@ -14,7 +14,7 @@
 	"dependencies": {
 		"docx-core": "workspace:*",
 		"docx-web-component": "workspace:*",
-		"ooxml-core": "^0.6.0"
+		"ooxml-core": "^0.8.0"
 	},
 	"peerDependencies": {
 		"@angular/core": ">=19",
