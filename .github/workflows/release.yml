@@ -164,7 +164,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No release changes to commit"
           else
-            git commit -m "chore(release): bump versions and update changelogs [skip ci]" -m "Co-Authored-By: Codex <noreply@openai.com>"
+            git commit -m "chore(release): bump versions and update changelogs [skip ci]"
             # `main` can move between checkout and here; rebase onto the new tip and retry.
             pushed=false
             for attempt in 1 2 3; do
