@@ -1,6 +1,6 @@
 {
 	"name": "docx-vanilla-viewer",
-	"version": "0.4.0",
+	"version": "0.4.1",
 	"description": "The plain <docx-editor> web component and mountEditor() for the DOCX editor, with no framework. Self-contained: includes the editor, layout engine and legacy .doc reader.",
 	"keywords": [
 		"custom-element",
@@ -37,7 +37,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"docx-core": "^0.1.3",
+		"docx-core": "^0.1.4",
 		"ooxml-core": "^0.8.0",
 		"ooxml-ui": "^0.1.7",
 		"prosemirror-collab": "^1.3.1",

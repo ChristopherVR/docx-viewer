@@ -1,6 +1,6 @@
 {
 	"name": "docx-viewer-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Headless DOCX MCP tools backed only by OOXML core",
 	"license": "Apache-2.0",
 	"repository": {

@@ -9,6 +9,18 @@ history lives in `packages/<name>/CHANGELOG.md`. Nothing has been published yet,
 sections: the first release run writes them.
 ## 2026-10-03
 
+_Releases: docx-viewer-mcp@0.1.2, docx-core@0.1.4, docx-react-viewer@0.4.1, docx-vue-viewer@0.4.1, docx-angular-viewer@0.4.1, docx-svelte-viewer@0.4.1, docx-solid-viewer@0.4.1, docx-vanilla-viewer@0.4.1_
+
+### Documentation
+
+- **packages:** Align npm readmes with powerpoint structure (by @ChristopherVR) ([e6c664c](https://github.com/ChristopherVR/docx-viewer/commit/e6c664ccc06d5e207e4fd7c5a455433ab8868976))
+
+### Chores
+
+- **repo:** Remove Codex co-author trailers (by @ChristopherVR) ([cfa6b9f](https://github.com/ChristopherVR/docx-viewer/commit/cfa6b9f7268bdc39593bdb87a9818a7c3d1c3da5))
+
+## 2026-10-03
+
 _Releases: docx-viewer-mcp@0.1.1_
 
 ### Features

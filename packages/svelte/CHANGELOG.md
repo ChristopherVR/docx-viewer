@@ -7,6 +7,12 @@ A release listed with no entries carried no Conventional Commit in this package'
 scope: scripts/release-plan.mjs re-releases a package whenever any of its files, or an internal
 dependency it ships against, changes, not only on conventional commits.
 
+## [0.4.1](https://github.com/ChristopherVR/docx-viewer/releases/tag/docx-svelte-viewer@0.4.1) - 2026-10-03
+
+### Documentation
+
+- **packages:** Align npm readmes with powerpoint structure (by @ChristopherVR) ([e6c664c](https://github.com/ChristopherVR/docx-viewer/commit/e6c664ccc06d5e207e4fd7c5a455433ab8868976))
+
 ## [0.4.0](https://github.com/ChristopherVR/docx-viewer/releases/tag/docx-svelte-viewer@0.4.0) - 2026-10-03
 
 ### Features
