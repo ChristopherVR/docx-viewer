@@ -3,7 +3,7 @@ import type { RibbonAction } from './ribbon';
 import { runRibbonCommand } from './editor-commands';
 import { runListAction } from './list-commands';
 import { focusView } from './focus-view';
-import { copyOrCut, pasteText } from './context-menu-actions';
+import { copyOrCut, pasteClipboard } from './context-menu-actions';
 import { translate } from './localization';
 import { emit } from './events';
 import { insertCoverPage } from './cover-page';
@@ -31,7 +31,7 @@ export function routeRibbonAction(core: EditorCore, action: RibbonAction): void 
 		parts.runHistory(action.key);
 	} else if (action.type === 'clipboard') {
 		if (!target || (action.key !== 'copy' && !target.editable)) return;
-		const done = action.key === 'paste' ? pasteText(target) : copyOrCut(target, action.key);
+		const done = action.key === 'paste' ? pasteClipboard(target) : copyOrCut(target, action.key);
 		void done.then((ok) => {
 			if (!ok)
 				emit(core.element, 'document-warning', translate(core.locale, 'menu.clipboardDenied'));

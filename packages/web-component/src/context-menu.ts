@@ -4,7 +4,7 @@
  * dismissal and viewport clamping.
  */
 import type { EditorView } from 'prosemirror-view';
-import { clipboardReadAllowed, copyOrCut, pasteText } from './context-menu-actions';
+import { clipboardReadAllowed, copyOrCut, pasteClipboard } from './context-menu-actions';
 import {
 	clampToViewport,
 	computeMenuItems,
@@ -65,7 +65,8 @@ export function createContextMenu(host: ContextMenuHost): ContextMenu {
 			removeLink(view);
 			view.focus();
 		} else if (command.op === 'paste') {
-			if (!(await pasteText(view))) host.warn(translate(host.locale(), 'menu.clipboardDenied'));
+			if (!(await pasteClipboard(view)))
+				host.warn(translate(host.locale(), 'menu.clipboardDenied'));
 		} else if (!(await copyOrCut(view, command.op)))
 			host.warn(translate(host.locale(), 'menu.clipboardDenied'));
 	};

@@ -108,7 +108,9 @@ export function menuStateFromView(view: EditorView, readOnly: boolean): MenuStat
 		onLink: Boolean(linkAtSelection(view)),
 		inTable: selectionInTable(view),
 		canReadClipboard:
-			typeof navigator !== 'undefined' && typeof navigator.clipboard?.readText === 'function',
+			typeof navigator !== 'undefined' &&
+			(typeof navigator.clipboard?.read === 'function' ||
+				typeof navigator.clipboard?.readText === 'function'),
 		canTable: (command) => canExecuteTableCommand(view, command),
 	};
 }
