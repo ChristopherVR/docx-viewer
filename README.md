@@ -18,8 +18,6 @@ An early implementation: not Microsoft Word parity, and not lossless export.
 
 </div>
 
-> **Not published to npm yet.** Nothing has been released or tagged. Build from this repository to try the editor; the install commands and import paths below are the intended API of the packages the release workflow will publish.
-
 ## Why docx-viewer?
 
 - **One editor, every framework.** A ProseMirror-backed `<docx-editor>` web component owns rendering, selection, commands, history and styling. React, Vue, Angular, Svelte, Solid and vanilla adapters only handle lifecycle and events.
@@ -52,7 +50,7 @@ bun run demo   # vanilla demo; add ?framework=react|vue|angular|svelte|solid
 
 The DOCX logic comes from the published [`ooxml-core`](https://github.com/ChristopherVR/ooxml-core) package; see [AGENTS.md](AGENTS.md) and the [ooxml-core plan](docs/ooxml-core-plan.md).
 
-### 2. Mount the editor (intended API)
+### 2. Mount the editor
 
 Install one self-contained editor package for your framework, for example `npm install docx-react-viewer react`. The editor packages are `docx-react-viewer`, `-vue-viewer`, `-angular-viewer`, `-svelte-viewer`, `-solid-viewer` and `-vanilla-viewer`. Each one bundles the editor, layout engine and legacy `.doc` reader, brings the document model (`docx-core`) with it, and re-exports it, so a single install and a single import path are all an application needs. Install `docx-core` on its own only for headless use (parsing and serializing without an editor).
 
@@ -151,7 +149,7 @@ See the [bindings guide](docs/bindings.md) for props, events, saving and file co
 
 ## Packages
 
-Seven packages are published (nothing has been released yet), each versioned independently:
+Seven packages are published on npm, each versioned independently:
 
 | Package               | What it is                                                                                                            |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------- |

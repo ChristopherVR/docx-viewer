@@ -36,7 +36,7 @@ The shared `ole2` package has no React, Word, or PowerPoint UI dependency and ow
 
 ## Build and release boundary
 
-Seven packages are published (`docx-core` and the six framework packages; see [releasing](/releasing)), and nothing has been released yet. PowerPoint's migration to `docx-core/embedded` is deferred until the Word packages are published and its consumer integration is ready. The shared CFB package contains no DOCX codec.
+Seven packages are published (`docx-core` and the six framework packages; see [releasing](/releasing)), with automated npm releases. PowerPoint's migration to `docx-core/embedded` depends on its consumer integration being ready. The shared CFB package contains no DOCX codec.
 
 `docx-core` stays a real dependency of every framework package rather than being bundled: applications import `createDocument` and the model types from it directly, so one shared copy keeps `DocumentModel` identical on both sides. The ProseMirror libraries are real dependencies too, not bundled, so a package manager can dedupe one copy for the editor and for any other ProseMirror code in the application. `ooxml-core` is a real dependency too (it brings layout, loading and collab). Everything else internal is bundled so downstream consumers need no sibling source checkouts and no unpublished packages; ole2 is inlined inside the core and is not a dependency of anything here.
 
