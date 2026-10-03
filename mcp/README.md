@@ -25,3 +25,5 @@ Programmatic integration: `createServer({ rootDir })` or
 start a transport. The OOXML combined MCP calls this same registration function.
 
 This package ships JavaScript source and needs no separate build step.
+
+Package releases use npm trusted publishing with provenance.

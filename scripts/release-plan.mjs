@@ -307,6 +307,8 @@ export function planRelease({ root, packages: table, globalTriggers = [], npm })
 		plan[key] = {
 			npm: meta.npm,
 			dir: meta.dir,
+			manifest: `${meta.dir}/package.json`,
+			changelog: `${meta.dir}/CHANGELOG.md`,
 			baseline: base,
 			release,
 			reason: release ? reason : null,

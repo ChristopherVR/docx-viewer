@@ -160,11 +160,11 @@ jobs:
           # Stage the changelogs, the version bumps AND the refreshed lockfile, so package.json +
           # bun.lock in the repo always match what is published and the tag points at a commit
           # whose manifests are truthful.
-          git add $(node -p "const p=require('./release-plan.json');p.order.filter(k=>p.packages[k].release).flatMap(k=>[p.packages[k].manifest,p.packages[k].changelog]).join(' ')") bun.lock
+          git add $(node -p "const p=require('./release-plan.json');p.order.filter(k=>p.packages[k].release).flatMap(k=>[p.packages[k].manifest,p.packages[k].changelog]).join(' ')") CHANGELOG.md bun.lock
           if git diff --cached --quiet; then
             echo "No release changes to commit"
           else
-            git commit -m "chore(release): bump versions and update changelogs [skip ci]"
+            git commit -m "chore(release): bump versions and update changelogs [skip ci]" -m "Co-Authored-By: Codex <noreply@openai.com>"
             # `main` can move between checkout and here; rebase onto the new tip and retry.
             pushed=false
             for attempt in 1 2 3; do

@@ -202,3 +202,11 @@ test('a change in a bundled internal directory releases the package that inlines
 	assert.equal(p.packages.mid.version, '9.1.0');
 	assert.ok(p.packages.mid.includePaths.includes('packages/solo/**'));
 });
+
+test('release plan supplies the paths staged by the release workflow', () => {
+	const p = plan(() => '1.0.0');
+	for (const entry of Object.values(p.packages)) {
+		assert.equal(entry.manifest, entry.dir + '/package.json');
+		assert.equal(entry.changelog, entry.dir + '/CHANGELOG.md');
+	}
+});
